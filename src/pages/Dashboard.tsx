@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Plus, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { CreateWebsiteWizard } from '@/components/wizard/CreateWebsiteWizard';
 
 export default function Dashboard() {
+  const [wizardOpen, setWizardOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -58,10 +61,12 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center pt-4">
-            <Button size="lg" className="h-12 px-8">
+            <Button size="lg" className="h-12 px-8" onClick={() => setWizardOpen(true)}>
               <Plus className="w-5 h-5 mr-2" />
               Create New Website
             </Button>
+            
+            <CreateWebsiteWizard open={wizardOpen} onOpenChange={setWizardOpen} />
             <p className="text-sm text-muted-foreground mt-4">
               No credit card required • Free to start
             </p>
