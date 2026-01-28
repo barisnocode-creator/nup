@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           form_data: Json | null
+          generated_content: Json | null
           id: string
           name: string
           profession: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           created_at?: string
           form_data?: Json | null
+          generated_content?: Json | null
           id?: string
           name?: string
           profession: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           created_at?: string
           form_data?: Json | null
+          generated_content?: Json | null
           id?: string
           name?: string
           profession?: string
