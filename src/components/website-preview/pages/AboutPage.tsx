@@ -1,13 +1,15 @@
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Lock } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
 
 interface AboutPageProps {
   content: GeneratedContent['pages']['about'];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  onLockedFeature?: (feature: string) => void;
 }
 
-export function AboutPage({ content, isDark, isNeutral }: AboutPageProps) {
+export function AboutPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature }: AboutPageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -16,6 +18,12 @@ export function AboutPage({ content, isDark, isNeutral }: AboutPageProps) {
 
   const cardBg = isDark ? 'bg-slate-800' : isNeutral ? 'bg-white' : 'bg-white';
   const cardBorder = isDark ? 'border-slate-700' : 'border-gray-100';
+
+  const handleLockedClick = () => {
+    if (onLockedFeature) {
+      onLockedFeature('Edit About page content');
+    }
+  };
 
   return (
     <div>
@@ -35,9 +43,24 @@ export function AboutPage({ content, isDark, isNeutral }: AboutPageProps) {
       <section className="py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold mb-6 text-center">
-              {content.story.title}
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-center flex-1">
+                {content.story.title}
+              </h2>
+              {isEditable && (
+                <button
+                  onClick={handleLockedClick}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    isDark 
+                      ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <Lock className="w-3 h-3" />
+                  Edit
+                </button>
+              )}
+            </div>
             <p className={`text-lg leading-relaxed ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
               {content.story.content}
             </p>
@@ -53,8 +76,18 @@ export function AboutPage({ content, isDark, isNeutral }: AboutPageProps) {
             {content.values.map((value, index) => (
               <div 
                 key={index}
-                className={`p-6 rounded-xl ${cardBg} border ${cardBorder} shadow-sm`}
+                className={`p-6 rounded-xl ${cardBg} border ${cardBorder} shadow-sm relative group`}
               >
+                {isEditable && (
+                  <button
+                    onClick={handleLockedClick}
+                    className={`absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${
+                      isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    <Lock className="w-3 h-3" />
+                  </button>
+                )}
                 <div className="flex items-start gap-4">
                   <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
                   <div>

@@ -1,10 +1,13 @@
 import { WebsitePage } from '@/types/generated-website';
+import { EditableField } from './EditableField';
 
 interface WebsiteHeaderProps {
   siteName: string;
   currentPage: WebsitePage;
   onNavigate: (page: WebsitePage) => void;
   isDark: boolean;
+  isEditable?: boolean;
+  onFieldEdit?: (fieldPath: string, newValue: string) => void;
 }
 
 const pages: { id: WebsitePage; label: string }[] = [
@@ -14,18 +17,41 @@ const pages: { id: WebsitePage; label: string }[] = [
   { id: 'contact', label: 'Contact' },
 ];
 
-export function WebsiteHeader({ siteName, currentPage, onNavigate, isDark }: WebsiteHeaderProps) {
+export function WebsiteHeader({ 
+  siteName, 
+  currentPage, 
+  onNavigate, 
+  isDark,
+  isEditable = false,
+  onFieldEdit
+}: WebsiteHeaderProps) {
+  const handleSiteNameEdit = (fieldPath: string, newValue: string) => {
+    if (onFieldEdit) {
+      onFieldEdit('metadata.siteName', newValue);
+    }
+  };
+
   return (
     <header className={`sticky top-0 z-10 backdrop-blur-md ${isDark ? 'bg-slate-900/90 border-slate-700' : 'bg-white/90 border-gray-200'} border-b`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <button 
-            onClick={() => onNavigate('home')}
-            className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
-          >
-            {siteName}
-          </button>
+          {isEditable ? (
+            <EditableField
+              value={siteName}
+              fieldPath="metadata.siteName"
+              onSave={handleSiteNameEdit}
+              className="text-xl font-bold tracking-tight"
+              isEditable={isEditable}
+            />
+          ) : (
+            <button 
+              onClick={() => onNavigate('home')}
+              className="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
+            >
+              {siteName}
+            </button>
+          )}
 
           {/* Navigation */}
           <nav className="flex items-center gap-1">

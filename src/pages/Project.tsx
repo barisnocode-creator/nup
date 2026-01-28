@@ -1,12 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, Save } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
+import { LockedFeatureButton } from '@/components/website-preview/LockedFeatureButton';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,6 +35,9 @@ export default function Project() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch project data
   useEffect(() => {
@@ -103,6 +108,84 @@ export default function Project() {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Deep update helper for nested object paths like "pages.home.hero.title"
+  const updateNestedValue = (obj: any, path: string, value: string): any => {
+    const keys = path.split('.');
+    const result = JSON.parse(JSON.stringify(obj)); // Deep clone
+    
+    let current = result;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+    
+    return result;
+  };
+
+  // Handle field edits
+  const handleFieldEdit = useCallback((fieldPath: string, newValue: string) => {
+    if (!project?.generated_content) return;
+
+    const updatedContent = updateNestedValue(project.generated_content, fieldPath, newValue);
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    setHasUnsavedChanges(true);
+    
+    // Auto-save after a short delay
+    debouncedSave(updatedContent);
+  }, [project]);
+
+  // Debounced save function
+  const debouncedSave = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (content: GeneratedContent) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => saveChanges(content), 1500);
+      };
+    })(),
+    [id]
+  );
+
+  // Save changes to Supabase
+  const saveChanges = async (content: GeneratedContent) => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          generated_content: content as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Save error:', error);
+        toast({
+          title: 'Failed to save',
+          description: 'Your changes could not be saved. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        setHasUnsavedChanges(false);
+        toast({
+          title: 'Saved',
+          description: 'Your changes have been saved.',
+        });
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -221,16 +304,32 @@ export default function Project() {
               </div>
               <span className="font-bold">Open Lucius</span>
               <span className="text-muted-foreground">•</span>
-              <span className="text-sm text-muted-foreground">Preview Mode</span>
+              <span className="text-sm text-muted-foreground">Editor</span>
+              {isSaving && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Saving...
+                  </span>
+                </>
+              )}
+              {!isSaving && hasUnsavedChanges && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <span className="text-xs text-amber-500">Unsaved changes</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>
-              <Button size="sm" disabled className="opacity-60">
-                Edit Website
-              </Button>
+              <LockedFeatureButton 
+                label="Publish" 
+                onClick={() => setUpgradeModalOpen(true)}
+              />
             </div>
           </div>
         </div>
@@ -242,6 +341,8 @@ export default function Project() {
           <WebsitePreview 
             content={project.generated_content} 
             colorPreference={colorPreference}
+            isEditable={isAuthenticated}
+            onFieldEdit={handleFieldEdit}
           />
         )}
       </div>
@@ -260,6 +361,13 @@ export default function Project() {
       <AuthModal 
         isOpen={authModalOpen} 
         onClose={() => setAuthModalOpen(false)} 
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature="Publish website"
       />
     </div>
   );
