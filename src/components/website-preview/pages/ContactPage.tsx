@@ -1,13 +1,16 @@
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
+import { EditableField } from '../EditableField';
 
 interface ContactPageProps {
   content: GeneratedContent['pages']['contact'];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  onFieldEdit?: (fieldPath: string, newValue: string) => void;
 }
 
-export function ContactPage({ content, isDark, isNeutral }: ContactPageProps) {
+export function ContactPage({ content, isDark, isNeutral, isEditable = false, onFieldEdit }: ContactPageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -17,6 +20,12 @@ export function ContactPage({ content, isDark, isNeutral }: ContactPageProps) {
   const cardBg = isDark ? 'bg-slate-800' : isNeutral ? 'bg-white' : 'bg-white';
   const cardBorder = isDark ? 'border-slate-700' : 'border-gray-100';
   const inputBg = isDark ? 'bg-slate-700 border-slate-600' : 'bg-gray-50 border-gray-200';
+
+  const handleFieldEdit = (fieldPath: string, newValue: string) => {
+    if (onFieldEdit) {
+      onFieldEdit(fieldPath, newValue);
+    }
+  };
 
   return (
     <div>
@@ -60,11 +69,21 @@ export function ContactPage({ content, isDark, isNeutral }: ContactPageProps) {
                   }`}>
                     <Phone className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold mb-1">Phone</h3>
-                    <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {content.info.phone}
-                    </p>
+                    {isEditable ? (
+                      <EditableField
+                        value={content.info.phone}
+                        fieldPath="pages.contact.info.phone"
+                        onSave={handleFieldEdit}
+                        className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}
+                        isEditable={isEditable}
+                      />
+                    ) : (
+                      <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {content.info.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -74,11 +93,21 @@ export function ContactPage({ content, isDark, isNeutral }: ContactPageProps) {
                   }`}>
                     <Mail className="w-5 h-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="font-semibold mb-1">Email</h3>
-                    <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                      {content.info.email}
-                    </p>
+                    {isEditable ? (
+                      <EditableField
+                        value={content.info.email}
+                        fieldPath="pages.contact.info.email"
+                        onSave={handleFieldEdit}
+                        className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}
+                        isEditable={isEditable}
+                      />
+                    ) : (
+                      <p className={`${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {content.info.email}
+                      </p>
+                    )}
                   </div>
                 </div>
 

@@ -1,10 +1,12 @@
-import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye } from 'lucide-react';
+import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye, Lock } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
 
 interface ServicesPageProps {
   content: GeneratedContent['pages']['services'];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  onLockedFeature?: (feature: string) => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -24,7 +26,7 @@ function getIcon(iconName: string) {
   return iconMap[normalizedName] || Activity;
 }
 
-export function ServicesPage({ content, isDark, isNeutral }: ServicesPageProps) {
+export function ServicesPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature }: ServicesPageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -33,6 +35,12 @@ export function ServicesPage({ content, isDark, isNeutral }: ServicesPageProps) 
 
   const cardBg = isDark ? 'bg-slate-800' : isNeutral ? 'bg-white' : 'bg-white';
   const cardBorder = isDark ? 'border-slate-700' : 'border-gray-100';
+
+  const handleLockedClick = () => {
+    if (onLockedFeature) {
+      onLockedFeature('Edit services list');
+    }
+  };
 
   return (
     <div>
@@ -63,14 +71,39 @@ export function ServicesPage({ content, isDark, isNeutral }: ServicesPageProps) 
       {/* Services Grid */}
       <section className={`py-16 ${isDark ? 'bg-slate-800/50' : isNeutral ? 'bg-stone-100' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-4">
+          {isEditable && (
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={handleLockedClick}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  isDark 
+                    ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' 
+                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                <Lock className="w-4 h-4" />
+                Edit Services (Premium)
+              </button>
+            </div>
+          )}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {content.servicesList.map((service, index) => {
               const Icon = getIcon(service.icon);
               return (
                 <div 
                   key={index}
-                  className={`p-6 rounded-xl ${cardBg} border ${cardBorder} shadow-sm hover:shadow-md transition-all hover:-translate-y-1`}
+                  className={`p-6 rounded-xl ${cardBg} border ${cardBorder} shadow-sm hover:shadow-md transition-all hover:-translate-y-1 relative group`}
                 >
+                  {isEditable && (
+                    <button
+                      onClick={handleLockedClick}
+                      className={`absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${
+                        isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      <Lock className="w-3 h-3" />
+                    </button>
+                  )}
                   <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${
                     isDark ? 'bg-primary/20' : 'bg-primary/10'
                   }`}>

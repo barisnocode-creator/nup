@@ -1,10 +1,13 @@
 import { Heart, Shield, Clock, Star, Users, Award } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
+import { EditableField } from '../EditableField';
 
 interface HomePageProps {
   content: GeneratedContent['pages']['home'];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  onFieldEdit?: (fieldPath: string, newValue: string) => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -21,7 +24,7 @@ function getIcon(iconName: string) {
   return iconMap[normalizedName] || Heart;
 }
 
-export function HomePage({ content, isDark, isNeutral }: HomePageProps) {
+export function HomePage({ content, isDark, isNeutral, isEditable = false, onFieldEdit }: HomePageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -31,20 +34,66 @@ export function HomePage({ content, isDark, isNeutral }: HomePageProps) {
   const cardBg = isDark ? 'bg-slate-800' : isNeutral ? 'bg-white' : 'bg-white';
   const cardBorder = isDark ? 'border-slate-700' : 'border-gray-100';
 
+  const handleFieldEdit = (fieldPath: string, newValue: string) => {
+    if (onFieldEdit) {
+      onFieldEdit(fieldPath, newValue);
+    }
+  };
+
   return (
     <div>
       {/* Hero Section */}
       <section className={`py-20 md:py-32 bg-gradient-to-br ${heroGradient}`}>
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-            {content.hero.title}
-          </h1>
-          <p className={`text-xl md:text-2xl mb-4 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
-            {content.hero.subtitle}
-          </p>
-          <p className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-            {content.hero.description}
-          </p>
+          {isEditable ? (
+            <div className="mb-6">
+              <EditableField
+                value={content.hero.title}
+                fieldPath="pages.home.hero.title"
+                onSave={handleFieldEdit}
+                className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight"
+                as="h1"
+                isEditable={isEditable}
+              />
+            </div>
+          ) : (
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+              {content.hero.title}
+            </h1>
+          )}
+          
+          {isEditable ? (
+            <div className={`mb-4 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+              <EditableField
+                value={content.hero.subtitle}
+                fieldPath="pages.home.hero.subtitle"
+                onSave={handleFieldEdit}
+                className="text-xl md:text-2xl"
+                as="p"
+                isEditable={isEditable}
+              />
+            </div>
+          ) : (
+            <p className={`text-xl md:text-2xl mb-4 ${isDark ? 'text-slate-300' : 'text-gray-600'}`}>
+              {content.hero.subtitle}
+            </p>
+          )}
+          
+          {isEditable ? (
+            <div className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              <EditableField
+                value={content.hero.description}
+                fieldPath="pages.home.hero.description"
+                onSave={handleFieldEdit}
+                as="p"
+                isEditable={isEditable}
+              />
+            </div>
+          ) : (
+            <p className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+              {content.hero.description}
+            </p>
+          )}
         </div>
       </section>
 
