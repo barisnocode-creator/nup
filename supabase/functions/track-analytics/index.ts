@@ -128,10 +128,11 @@ Deno.serve(async (req) => {
 
     // Allow analytics for published projects OR project owners viewing their own projects
     if (!project.is_published && !isOwner) {
-      console.log(`Attempted analytics for unpublished project: ${project_id}`);
+      console.log(`Skipping analytics for unpublished project: ${project_id}`);
+      // Return success but don't track - soft failure to avoid frontend errors
       return new Response(
-        JSON.stringify({ error: "Project is not published" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, reason: "not_tracked", message: "Project not published or not owned by user" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
