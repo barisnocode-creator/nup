@@ -1,236 +1,212 @@
 
-# Enhanced AI Website Generation with Images & Blog Support
+# AI Destekli Görsel Oluşturma ve Detaylı Landing Page Planı
 
-## Overview
-Upgrade the website builder to create higher quality, more visually appealing websites by adding AI-generated images, a blog system, and enhanced content generation. This will significantly improve the professional appearance and value of generated websites.
+## Sorun Analizi
 
----
+Şu anda sistemde iki ana eksiklik var:
 
-## Current State Analysis
-
-The system currently generates:
-- 4 pages: Home, About, Services, Contact
-- Text-only content based on profession and preferences
-- Basic layout with icon placeholders
-- No images or visual media
-- No blog functionality
+1. **Görseller oluşturulmuyor**: `generate-images` edge function'ı hazır ancak hiçbir yerden çağrılmıyor
+2. **Landing page'ler basit**: Mesleğe özgü detaylı bölümler eksik
 
 ---
 
-## New Features to Add
+## Çözüm Planı
 
-### 1. AI-Generated Images
+### Adım 1: Görsel Oluşturma Entegrasyonu
 
-**Hero Images for Each Page:**
-- Homepage: Professional hero banner related to the profession
-- About: Team/clinic environment image
-- Services: Medical/healthcare themed imagery
-- Contact: Welcoming, professional atmosphere
+**Değişiklik:** `src/pages/Project.tsx`
 
-**Service/Highlight Icons:**
-- Replace text-based icon names with actual AI-generated icons or use high-quality stock imagery from Unsplash
+Website içeriği oluşturulduktan sonra otomatik olarak görsel oluşturma işlemini başlat:
 
-**Implementation Approach:**
-- Use Lovable AI's image generation model (`google/gemini-2.5-flash-image`)
-- Generate profession-specific images during website creation
-- Store image URLs in the `generated_content` JSON
-
-### 2. Blog System
-
-**New Blog Page:**
-- Add a "Blog" page to the website structure
-- AI generates 3-5 initial blog posts based on profession
-- Posts include: title, excerpt, full content, featured image, category, publish date
-
-**Blog Post Topics by Profession:**
-- **Doctor**: Health tips, preventive care, medical news
-- **Dentist**: Oral hygiene tips, dental procedures explained
-- **Pharmacist**: Medication guides, health supplements, wellness advice
-
-### 3. Enhanced Content Quality
-
-**Richer Text Content:**
-- Longer, more detailed descriptions
-- FAQ sections
-- Testimonial placeholders
-- Call-to-action sections (informational, not sales)
-
-**SEO-Ready Meta Content:**
-- Meta descriptions for each page
-- Open Graph data for social sharing
-
----
-
-## Technical Implementation
-
-### Database Changes
-
-```sql
--- Extend generated_content structure to include:
--- - images: Object containing all generated image URLs
--- - blog: Object containing blog posts array
--- No schema change needed - uses existing JSONB column
+```
+generateWebsite() başarılı olduğunda → generate-images fonksiyonunu çağır (arka planda)
 ```
 
-### Updated Type Definitions
+Eklenecek özellikler:
+- Görsel oluşturma durumu için yeni state (`generatingImages`)
+- Görseller hazırlanırken kullanıcıya bilgi mesajı
+- Görseller tamamlandığında sayfayı güncelle
+
+### Adım 2: "Görselleri Yenile" Butonu
+
+Kullanıcıların istedikleri zaman görselleri yeniden oluşturabilmesi için editör toolbar'ına buton ekle:
+
+```
+[🖼️ Generate Images] butonu → generate-images fonksiyonunu tetikler
+```
+
+### Adım 3: Mesleğe Özgü Detaylı Bölümler
+
+**Yeni Bileşenler ve İçerikler:**
+
+| Meslek | Yeni Bölümler |
+|--------|---------------|
+| **Dişçi** | Tedavi galerisi, Önce/Sonra konsepti, Diş sağlığı istatistikleri |
+| **Doktor** | Uzmanlık alanları grid'i, Sağlık ipuçları bölümü, Muayene süreci |
+| **Eczacı** | İlaç kategorileri, Sağlık ürünleri, Danışmanlık hizmetleri |
+
+**Değişiklik:** `supabase/functions/generate-website/index.ts`
+
+Prompt'u zenginleştir:
+- Daha uzun ve detaylı açıklamalar iste
+- Mesleğe özgü terminoloji kullan
+- Testimonial/referans şablonları ekle
+- Çalışma saatleri ve konum detayları
+
+### Adım 4: UI Geliştirmeleri
+
+**Değişiklik:** Tüm sayfa bileşenleri
+
+| Dosya | Geliştirme |
+|-------|------------|
+| `HomePage.tsx` | Hero görsel desteği zaten var, istatistik kartları ekle |
+| `AboutPage.tsx` | Ekip üyesi placeholder'ları, timeline bölümü |
+| `ServicesPage.tsx` | Hizmet kartlarına görsel desteği, fiyat kartı yapısı (bilgilendirme amaçlı) |
+| `ContactPage.tsx` | Harita placeholder, çalışma saatleri tablosu |
+
+---
+
+## Teknik Uygulama Detayları
+
+### 1. Project.tsx Güncellemesi
 
 ```typescript
-// src/types/generated-website.ts - Extended structure
-export interface GeneratedContent {
-  pages: {
-    home: { /* existing + heroImage */ };
-    about: { /* existing + images */ };
-    services: { /* existing + images */ };
-    contact: { /* existing */ };
-    blog: {
-      hero: { title: string; subtitle: string; };
-      posts: BlogPost[];
-    };
-  };
-  images: {
-    heroHome: string;
-    heroAbout: string;
-    heroServices: string;
-    // Additional images...
-  };
-  metadata: { /* existing + seo fields */ };
-}
+// Yeni state'ler
+const [generatingImages, setGeneratingImages] = useState(false);
 
-interface BlogPost {
-  id: string;
-  title: string;
-  excerpt: string;
-  content: string;
-  category: string;
-  featuredImage: string;
-  publishedAt: string;
-}
+// Website oluşturulduktan sonra görselleri başlat
+const generateWebsite = async (projectId: string) => {
+  // ... mevcut kod ...
+  
+  if (data?.content) {
+    // Görselleri arka planda oluştur
+    generateImages(projectId);
+  }
+};
+
+// Yeni fonksiyon
+const generateImages = async (projectId: string) => {
+  setGeneratingImages(true);
+  try {
+    const { data } = await supabase.functions.invoke('generate-images', {
+      body: { projectId },
+    });
+    
+    if (data?.images) {
+      // generated_content'i güncelle
+      setProject(prev => prev ? {
+        ...prev,
+        generated_content: {
+          ...prev.generated_content,
+          images: data.images,
+        },
+      } : null);
+    }
+  } finally {
+    setGeneratingImages(false);
+  }
+};
 ```
 
-### New & Updated Files
+### 2. Editör Toolbar'a Buton
 
-| File | Action | Description |
-|------|--------|-------------|
-| `supabase/functions/generate-website/index.ts` | Update | Enhanced prompt + image generation calls |
-| `supabase/functions/generate-images/index.ts` | Create | Separate edge function for image generation |
-| `src/types/generated-website.ts` | Update | Add blog, images, and enhanced fields |
-| `src/components/website-preview/pages/BlogPage.tsx` | Create | New blog page component |
-| `src/components/website-preview/pages/BlogPostPage.tsx` | Create | Individual blog post view |
-| `src/components/website-preview/WebsitePreview.tsx` | Update | Add blog page routing |
-| `src/components/website-preview/WebsiteHeader.tsx` | Update | Add Blog nav link |
-| `src/components/website-preview/pages/HomePage.tsx` | Update | Add hero image display |
-| `src/components/website-preview/pages/AboutPage.tsx` | Update | Add team/clinic images |
-| `src/components/website-preview/pages/ServicesPage.tsx` | Update | Add service images |
+```typescript
+// Authenticated header içinde
+<Button 
+  variant="outline" 
+  size="sm"
+  onClick={() => generateImages(id)}
+  disabled={generatingImages}
+>
+  {generatingImages ? (
+    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+  ) : (
+    <ImageIcon className="w-4 h-4 mr-2" />
+  )}
+  {generatingImages ? 'Generating...' : 'Add Images'}
+</Button>
+```
 
----
+### 3. Geliştirilmiş AI Prompt
 
-## Implementation Flow
+```typescript
+// generate-website/index.ts içinde
+const prompt = `
+...mevcut prompt...
 
-```text
-1. User completes wizard
-        |
-        v
-2. generate-website Edge Function called
-        |
-        v
-3. AI generates enhanced text content (including blog posts)
-        |
-        v
-4. generate-images Edge Function called (parallel)
-   - Hero images for each page
-   - Blog post featured images
-        |
-        v
-5. Images uploaded to Supabase Storage
-        |
-        v
-6. Content + Image URLs saved to project
-        |
-        v
-7. Enhanced website displayed with images & blog
+ADDITIONAL REQUIREMENTS FOR ${profession.toUpperCase()}:
+${profession === 'doctor' ? `
+- Include medical credentials section
+- Add patient care philosophy
+- Describe consultation process step by step
+- Include health statistics relevant to specialty
+` : profession === 'dentist' ? `
+- Describe dental procedures in patient-friendly language
+- Include smile transformation concepts
+- Add pediatric dentistry section if applicable
+- Emphasize pain-free treatment approaches
+` : `
+- List pharmacy service categories
+- Include health consultation services
+- Add medication management information
+- Describe prescription services process
+`}
+
+Make all content sound authentic and professional.
+`;
+```
+
+### 4. Yeni Sayfa Bölümleri
+
+**HomePage - İstatistik Bölümü:**
+```typescript
+// Yeni statistics section
+<section className="py-16">
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+    <StatCard value="10+" label="Years Experience" />
+    <StatCard value="5000+" label="Happy Patients" />
+    <StatCard value="15+" label="Services" />
+    <StatCard value="4.9" label="Rating" />
+  </div>
+</section>
+```
+
+**ServicesPage - Süreç Bölümü:**
+```typescript
+// Tedavi/hizmet süreci
+<section>
+  <h2>How It Works</h2>
+  <ProcessStep number={1} title="Book Consultation" />
+  <ProcessStep number={2} title="Initial Assessment" />
+  <ProcessStep number={3} title="Treatment Plan" />
+  <ProcessStep number={4} title="Follow-up Care" />
+</section>
 ```
 
 ---
 
-## AI Prompts Enhancement
+## Dosya Değişiklikleri Özeti
 
-**Content Generation Prompt (Enhanced):**
-- Request longer, more detailed content
-- Include FAQ section for services
-- Generate testimonial templates
-- Create SEO metadata
-- Generate 3 initial blog posts with full content
-
-**Image Generation Prompts:**
-- "Professional medical clinic reception area, modern, clean, warm lighting, healthcare"
-- "Friendly doctor consulting with patient, professional, trustworthy"
-- "Modern dental office interior, comfortable, bright, welcoming"
-- "Pharmacy counter with pharmacist, organized, professional, healthcare"
+| Dosya | İşlem | Açıklama |
+|-------|-------|----------|
+| `src/pages/Project.tsx` | Güncelle | Görsel oluşturma entegrasyonu + buton |
+| `supabase/functions/generate-website/index.ts` | Güncelle | Zenginleştirilmiş prompt |
+| `src/components/website-preview/pages/HomePage.tsx` | Güncelle | İstatistik bölümü + görsel entegrasyonu |
+| `src/components/website-preview/pages/AboutPage.tsx` | Güncelle | Ekip ve timeline bölümleri |
+| `src/components/website-preview/pages/ServicesPage.tsx` | Güncelle | Süreç bölümü + görsel desteği |
+| `src/components/website-preview/pages/ContactPage.tsx` | Güncelle | Çalışma saatleri tablosu |
+| `src/types/generated-website.ts` | Güncelle | Yeni içerik alanları için tipler |
 
 ---
 
-## Storage Setup
+## Beklenen Sonuç
 
-**New Supabase Storage Bucket:**
-```sql
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('website-images', 'website-images', true);
-```
+Bu değişikliklerden sonra:
 
-**RLS Policy:**
-- Public read access for all images
-- Insert only via service role (edge function)
-
----
-
-## UI Enhancements
-
-### Hero Sections with Images
-- Full-width hero images with overlay text
-- Gradient overlays for text readability
-- Responsive image sizing
-
-### Blog Page Layout
-- Grid of blog post cards
-- Featured image thumbnails
-- Category badges
-- Excerpt text
-- Read more links
-
-### Blog Post Page
-- Full featured image banner
-- Rich text content display
-- Related posts section
-- Back to blog navigation
-
----
-
-## Technical Details
-
-### Image Generation Approach
-Since AI image generation can be slow, we'll use a two-phase approach:
-1. **Quick generation**: Text content generated first, placeholder images shown
-2. **Background processing**: Images generated asynchronously, updated when ready
-
-### Image Sizing
-- Hero images: 1920x600px (landscape)
-- Blog thumbnails: 800x450px (16:9)
-- Service images: 600x400px
-
-### Fallback Images
-- Use profession-specific Unsplash images as fallbacks
-- Graceful degradation if AI image generation fails
-
----
-
-## Summary of Changes
-
-| Category | Changes |
-|----------|---------|
-| **Edge Functions** | 1 updated, 1 new (image generation) |
-| **Types** | Extended `GeneratedContent` with blog + images |
-| **Components** | 2 new (BlogPage, BlogPostPage), 5 updated |
-| **Storage** | 1 new bucket (website-images) |
-| **Database** | No schema changes (uses existing JSONB) |
-
-This enhancement will transform basic text-only websites into visually rich, professional healthcare sites with engaging blog content.
+1. **Otomatik Görsel Oluşturma**: Website oluşturulduğunda AI görseller de otomatik oluşturulacak
+2. **Manuel Görsel Yenileme**: Kullanıcılar isterlerse "Add Images" butonuyla yeni görseller oluşturabilecek
+3. **Profesyonel Landing Page'ler**: 
+   - Dişçi siteleri: Diş tedavileri, gülüş tasarımı konseptleri
+   - Doktor siteleri: Uzmanlık alanları, muayene süreci
+   - Eczacı siteleri: İlaç kategorileri, sağlık danışmanlığı
+4. **Zengin İçerik**: İstatistikler, süreç açıklamaları, testimonial şablonları
