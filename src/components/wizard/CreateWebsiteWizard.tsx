@@ -8,14 +8,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { WizardProgress } from './WizardProgress';
 import { ProfessionStep } from './steps/ProfessionStep';
-import { BusinessInfoStep } from './steps/BusinessInfoStep';
-import { ProfessionalDetailsStep } from './steps/ProfessionalDetailsStep';
+import { AIChatStep } from './steps/AIChatStep';
 import { PreferencesStep } from './steps/PreferencesStep';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import type { WizardFormData, Profession } from '@/types/wizard';
+import type { WizardFormData, Profession, ExtractedBusinessData } from '@/types/wizard';
 import { initialWizardData } from '@/types/wizard';
 
 interface CreateWebsiteWizardProps {
@@ -23,7 +22,7 @@ interface CreateWebsiteWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardProps) {
   const navigate = useNavigate();
@@ -36,15 +35,10 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     1: false,
     2: false,
     3: false,
-    4: false,
   });
   
   const [formData, setFormData] = useState<Partial<WizardFormData>>(() => ({
     ...initialWizardData,
-    businessInfo: {
-      ...initialWizardData.businessInfo!,
-      email: user?.email || '',
-    },
   }));
 
   const handleProfessionChange = (profession: Profession) => {
@@ -52,20 +46,28 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     setStepValidity((prev) => ({ ...prev, 1: true }));
   };
 
-  const handleBusinessInfoChange = useCallback((data: WizardFormData['businessInfo']) => {
-    setFormData((prev) => ({ ...prev, businessInfo: data }));
+  const handleAIChatComplete = useCallback((extractedData: ExtractedBusinessData) => {
+    setFormData((prev) => ({
+      ...prev,
+      extractedData,
+      // Also populate legacy fields for compatibility
+      businessInfo: {
+        businessName: extractedData.businessName,
+        city: extractedData.city,
+        country: extractedData.country,
+        phone: extractedData.phone,
+        email: extractedData.email,
+      },
+      professionalDetails: {
+        specialty: extractedData.specialty,
+        yearsExperience: extractedData.yearsExperience,
+        services: extractedData.services,
+      },
+    }));
   }, []);
 
-  const handleBusinessInfoValidityChange = useCallback((isValid: boolean) => {
+  const handleAIChatValidityChange = useCallback((isValid: boolean) => {
     setStepValidity((prev) => ({ ...prev, 2: isValid }));
-  }, []);
-
-  const handleProfessionalDetailsChange = useCallback((data: WizardFormData['professionalDetails']) => {
-    setFormData((prev) => ({ ...prev, professionalDetails: data }));
-  }, []);
-
-  const handleProfessionalDetailsValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 3: isValid }));
   }, []);
 
   const handlePreferencesChange = useCallback((data: WizardFormData['websitePreferences']) => {
@@ -73,7 +75,7 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   }, []);
 
   const handlePreferencesValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 4: isValid }));
+    setStepValidity((prev) => ({ ...prev, 3: isValid }));
   }, []);
 
   const canProceed = stepValidity[currentStep];
@@ -93,8 +95,8 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   const handleSubmit = async () => {
     if (!user) {
       toast({
-        title: 'Error',
-        description: 'You must be logged in to create a project.',
+        title: 'Hata',
+        description: 'Proje oluşturmak için giriş yapmalısınız.',
         variant: 'destructive',
       });
       return;
@@ -105,13 +107,14 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     try {
       const projectData = {
         user_id: user.id,
-        name: formData.businessInfo?.businessName || 'Untitled Project',
+        name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
         profession: formData.profession!,
         status: 'draft',
         form_data: {
           businessInfo: formData.businessInfo,
           professionalDetails: formData.professionalDetails,
           websitePreferences: formData.websitePreferences,
+          extractedData: formData.extractedData,
         },
       };
 
@@ -124,8 +127,8 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
       if (error) throw error;
 
       toast({
-        title: 'Project created!',
-        description: 'Your website is being prepared.',
+        title: 'Proje oluşturuldu!',
+        description: 'Web siteniz hazırlanıyor.',
       });
 
       onOpenChange(false);
@@ -133,8 +136,8 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     } catch (error: any) {
       console.error('Error creating project:', error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to create project. Please try again.',
+        title: 'Hata',
+        description: error.message || 'Proje oluşturulamadı. Lütfen tekrar deneyin.',
         variant: 'destructive',
       });
     } finally {
@@ -144,21 +147,15 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
 
   const handleClose = () => {
     setCurrentStep(1);
-    setFormData({
-      ...initialWizardData,
-      businessInfo: {
-        ...initialWizardData.businessInfo!,
-        email: user?.email || '',
-      },
-    });
-    setStepValidity({ 1: false, 2: false, 3: false, 4: false });
+    setFormData({ ...initialWizardData });
+    setStepValidity({ 1: false, 2: false, 3: false });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogTitle className="sr-only">Create Your Website</DialogTitle>
+        <DialogTitle className="sr-only">Web Sitenizi Oluşturun</DialogTitle>
         
         <WizardProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
@@ -170,24 +167,15 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
             />
           )}
 
-          {currentStep === 2 && (
-            <BusinessInfoStep
-              value={formData.businessInfo!}
-              onChange={handleBusinessInfoChange}
-              onValidityChange={handleBusinessInfoValidityChange}
-            />
-          )}
-
-          {currentStep === 3 && formData.profession && (
-            <ProfessionalDetailsStep
+          {currentStep === 2 && formData.profession && (
+            <AIChatStep
               profession={formData.profession}
-              value={formData.professionalDetails || {}}
-              onChange={handleProfessionalDetailsChange}
-              onValidityChange={handleProfessionalDetailsValidityChange}
+              onComplete={handleAIChatComplete}
+              onValidityChange={handleAIChatValidityChange}
             />
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <PreferencesStep
               value={{
                 language: formData.websitePreferences?.language || '',
@@ -207,12 +195,12 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
             disabled={currentStep === 1}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Geri
           </Button>
 
           {currentStep < TOTAL_STEPS ? (
             <Button onClick={handleNext} disabled={!canProceed}>
-              Continue
+              Devam Et
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           ) : (
@@ -220,10 +208,10 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Creating...
+                  Oluşturuluyor...
                 </>
               ) : (
-                'Create Website'
+                'Web Sitesi Oluştur'
               )}
             </Button>
           )}
