@@ -1,227 +1,264 @@
 
-# Website Yayınlama (Publish) Sistemi Planı
 
-## Mevcut Durum
+# Landing Page Yeniden Tasarim Plani
 
-Şu anda "Publish" butonu tıklandığında sadece bir upgrade modal açılıyor. Gerçek bir yayınlama sistemi mevcut değil:
-- Database'de yayınlama ile ilgili alanlar yok
-- Subdomain sistemi yok
-- Public erişim mekanizması yok
+Durable.co sitesinin minimalist ve profesyonel tasarimini referans alarak Open Lucius landing page'ini yeniden tasarlayacagiz.
 
 ---
 
-## Önerilen Yayınlama Sistemi
+## Mevcut Durum vs Hedef Tasarim
 
-### Yayınlama Seçenekleri
+| Ozellik | Mevcut | Hedef (Durable Tarzi) |
+|---------|--------|----------------------|
+| Tipografi | Sans-serif, gradient text | Serif basliklar, temiz sans-serif govde |
+| Hero | Gradient arka plan, badge | Minimalist beyaz, input alani ile CTA |
+| Trust Signals | Icon + text | Yildiz rating + kullanici sayisi |
+| Website Showcase | Yok | Ornek site kartlari galeri/carousel |
+| Feature Sections | Kart grid | Buyuk 2-kolonlu feature bloklari |
+| Renk Paleti | Mor/pembe gradient | Siyah/beyaz + turuncu aksanlar |
 
-| Seçenek | Açıklama | Örnek URL |
-|---------|----------|-----------|
-| **Platform Subdomain** | Her site benzersiz bir subdomain alır | `klinik-adi.openlucius.app` |
-| **Custom Domain** (Premium) | Kullanıcı kendi domain'ini bağlar | `www.klinikadi.com` |
+---
+
+## Yeni Sayfa Yapisi
+
+```text
++--------------------------------------------------+
+|  HEADER (Logo + Sign In + Start for free)        |
++--------------------------------------------------+
+|                                                  |
+|         "AI that builds your                     |
+|          healthcare website"                     |
+|                                                  |
+|  [Ne tur klinik/muayenehane?          ] [Baslat] |
+|                                                  |
+|  ⭐⭐⭐⭐⭐ 4.8 Stars  •  Trusted by 1000+ doctors |
++--------------------------------------------------+
+|                                                  |
+|        [Website Showcase Carousel]               |
+|   [Dental] [Doctor] [Pharmacy] [Clinic]          |
+|                                                  |
++--------------------------------------------------+
+|                                                  |
+|  "Your AI healthcare partner"                    |
+|  Get online in record time                       |
+|                                                  |
+|  [Icon] [Icon] [Icon] [Icon]                    |
+|                                                  |
++--------------------------------------------------+
+|                                                  |
+|  The #1 AI website builder for healthcare        |
+|                                                  |
+|  +--------------------+  +--------------------+  |
+|  | AI Websites       |  | AI Content         |  |
+|  | Designed for you  |  | Written for you    |  |
+|  | [Mockup Image]    |  | [Content Preview]  |  |
+|  +--------------------+  +--------------------+  |
+|                                                  |
++--------------------------------------------------+
+|                                                  |
+|  [How It Works - 3 Steps]                        |
+|                                                  |
++--------------------------------------------------+
+|                                                  |
+|  [Final CTA Section]                             |
+|  Start building your healthcare website today    |
+|                                                  |
++--------------------------------------------------+
+|  FOOTER                                          |
++--------------------------------------------------+
+```
+
+---
+
+## Dosya Degisiklikleri
+
+### 1. Guncellenecek Dosyalar
+
+| Dosya | Degisiklik |
+|-------|------------|
+| `src/components/landing/Header.tsx` | Daha minimal header, navigation ekleme |
+| `src/components/landing/Hero.tsx` | Serif font, input CTA, trust badges |
+| `src/components/landing/Features.tsx` | 2-kolonlu buyuk feature kartlari |
+
+### 2. Yeni Olusturulacak Dosyalar
+
+| Dosya | Aciklama |
+|-------|----------|
+| `src/components/landing/WebsiteShowcase.tsx` | Ornek website kartlari carousel |
+| `src/components/landing/TrustSection.tsx` | Icon strip + istatistikler |
+| `src/components/landing/HowItWorks.tsx` | 3 adimli surec aciklamasi |
+| `src/components/landing/CTASection.tsx` | Son call-to-action bolumu |
+| `src/components/landing/Footer.tsx` | Footer component |
+
+### 3. CSS Guncellemeleri
+
+| Dosya | Degisiklik |
+|-------|------------|
+| `src/index.css` | Serif font ekleme, yeni utility class'lar |
+| `tailwind.config.ts` | Serif font ailesi ekleme |
+
+---
+
+## Detayli Tasarim Ogeleri
+
+### Hero Section (Yeni)
+
+- **Baslik**: Buyuk serif font, siyah renk
+- **Alt Baslik**: Acik gri, kisa aciklama
+- **Input Alani**: Genis input + "Ucretsiz Basla" butonu
+- **Trust Badges**: Yildiz rating + kullanici sayisi
+
+```text
+              AI that builds your
+           healthcare website for you
+
+Your AI partner for professional medical websites.
+        Get online in 30 seconds.
+
++-----------------------------------------------+
+| Ne tur klinik/muayenehane aciyorsunuz?        |
+|                              [Ucretsiz Basla] |
++-----------------------------------------------+
+
+⭐⭐⭐⭐⭐ 4.8 Rating  •  1000+ Saglik Profesyoneli
+```
+
+### Website Showcase Section
+
+Ornek olusturulmus websiteler gosteren yatay scroll/carousel:
+- 4-6 ornek website karti
+- Her kart: baslik, kisa aciklama, mockup gorunum
+- Saglik sektorune ozel ornekler (Dis Klinigi, Aile Hekimi, Eczane)
+
+### Trust/Features Strip
+
+Renkli iconlar ile ozellik gosterimi:
+- 4 icon (gorsel, tipografi, SEO, hosting)
+- Minimal aciklamalar
+- Animasyonlu appearance
+
+### Two-Column Feature Blocks
+
+Durable'daki gibi buyuk 2-kolonlu feature kartlari:
+
+**Sol Kolon - "AI Websites"**
+- Baslik: "Sizin icin tasarlandi"
+- Aciklama: Profesyonel web sitesi, kodlama gerektirmez
+- Alt kisim: Mockup/onizleme gorunum
+
+**Sag Kolon - "AI Content"**
+- Baslik: "Sizin icin yazildi"
+- Aciklama: Icerik otomatik olusturulur
+- Alt kisim: Icerik onizleme
+
+### How It Works Section
+
+3 adimli basit surec:
+1. Mesleginizi secin (Doktor, Dis Hekimi, Eczaci)
+2. Bilgilerinizi girin (isim, adres, hizmetler)
+3. AI sitenizi olusturur - yayinlayin!
+
+### CTA Section
+
+Son call-to-action bolumu:
+- Buyuk serif baslik
+- Tekrar input + buton
+- Trust badge tekrari
+
+---
+
+## Tipografi Degisiklikleri
+
+### Yeni Font Stack
+
+```css
+/* Serif: Basliklar icin */
+font-family: 'Playfair Display', Georgia, serif;
+
+/* Sans-serif: Govde metni icin (mevcut) */
+font-family: 'Inter', system-ui, sans-serif;
+```
+
+### Font Boyutlari
+
+| Element | Boyut |
+|---------|-------|
+| Hero Baslik | 4rem - 6rem (responsive) |
+| Section Baslik | 2.5rem - 3.5rem |
+| Govde Metni | 1.125rem - 1.25rem |
+| Alt Baslik | 1.25rem - 1.5rem |
+
+---
+
+## Renk Semas Guncellemesi
+
+Durable'in temiz gorunumu icin minimal renk paleti:
+
+| Renk | Kullanim |
+|------|----------|
+| Siyah (#1a1a1a) | Basliklar |
+| Koyu Gri (#4a4a4a) | Govde metni |
+| Acik Gri (#6b7280) | Ikincil metin |
+| Turuncu (#f97316) | Aksan rengi, badge'ler |
+| Beyaz (#ffffff) | Arka plan |
+| Acik Gri BG (#f9fafb) | Alternatif section bg |
 
 ---
 
 ## Teknik Uygulama
 
-### 1. Database Değişiklikleri
-
-```sql
-ALTER TABLE projects ADD COLUMN subdomain TEXT UNIQUE;
-ALTER TABLE projects ADD COLUMN is_published BOOLEAN DEFAULT false;
-ALTER TABLE projects ADD COLUMN published_at TIMESTAMP WITH TIME ZONE;
-ALTER TABLE projects ADD COLUMN custom_domain TEXT;
-```
-
-### 2. Yeni Dosyalar
-
-| Dosya | Açıklama |
-|-------|----------|
-| `src/pages/PublicWebsite.tsx` | Yayınlanmış siteyi gösteren public sayfa |
-| `src/components/website-preview/PublishModal.tsx` | Yayınlama ayarları modal'ı |
-| `supabase/functions/check-subdomain/index.ts` | Subdomain müsaitlik kontrolü |
-
-### 3. Güncellenen Dosyalar
-
-| Dosya | Değişiklik |
-|-------|------------|
-| `src/pages/Project.tsx` | Publish butonunu gerçek işleve bağla |
-| `src/App.tsx` | Public website route'u ekle |
-| `src/components/website-preview/UpgradeModal.tsx` | Premium özellikler için güncelle |
-
----
-
-## Yayınlama Akışı
-
-```text
-1. Kullanıcı "Publish" butonuna tıklar
-        |
-        v
-2. PublishModal açılır
-   - Subdomain girişi (benzersizlik kontrolü ile)
-   - Site önizleme linki
-   - Yayınla butonu
-        |
-        v
-3. Subdomain müsait mi kontrolü (edge function)
-        |
-        v
-4. Database güncellenir:
-   - subdomain = kullanıcının seçtiği
-   - is_published = true
-   - published_at = now()
-        |
-        v
-5. Kullanıcıya paylaşılabilir link gösterilir
-   - Kopyala butonu
-   - Yeni sekmede aç butonu
-```
-
----
-
-## Public Website Görüntüleme
-
-### URL Yapısı
-
-```
-https://[subdomain].openlucius.app
-```
-
-veya (mevcut domain üzerinden):
-
-```
-https://yourapp.com/site/[subdomain]
-```
-
-### Public Sayfa Özellikleri
-
-- Giriş gerektirmez
-- WebsitePreview componentini read-only kullanır
-- SEO meta tagları
-- Analytics tracking devam eder
-
----
-
-## Publish Modal Tasarımı
-
-```
-┌────────────────────────────────────────┐
-│  🌐 Publish Your Website               │
-├────────────────────────────────────────┤
-│                                        │
-│  Choose your website address:          │
-│                                        │
-│  ┌──────────────────┐.openlucius.app  │
-│  │ clinic-name      │                  │
-│  └──────────────────┘                  │
-│  ✓ Available                           │
-│                                        │
-│  Your website will be live at:         │
-│  https://clinic-name.openlucius.app    │
-│                                        │
-│  ┌─────────────────────────────────┐   │
-│  │         🚀 Publish Now          │   │
-│  └─────────────────────────────────┘   │
-│                                        │
-│  🔒 Want a custom domain?              │
-│  Upgrade to Premium →                  │
-│                                        │
-└────────────────────────────────────────┘
-```
-
----
-
-## Dosya Detayları
-
-### PublishModal.tsx
+### Landing.tsx Guncellemesi
 
 ```typescript
-// Özellikler:
-- Subdomain input (auto-slug from business name)
-- Real-time availability check (debounced)
-- Validation (3-50 karakter, sadece harf/rakam/tire)
-- Publish butonu
-- Başarılı yayınlama sonrası share options
+// Yeni bolum sirasi
+<Header />
+<Hero />           // Yeni tasarim
+<WebsiteShowcase /> // Yeni component
+<TrustSection />    // Yeni component
+<Features />        // Yeni 2-kolon tasarim
+<HowItWorks />      // Yeni component
+<CTASection />      // Yeni component
+<Footer />          // Yeni component
 ```
 
-### PublicWebsite.tsx
+### Google Fonts Ekleme (index.html)
 
-```typescript
-// URL: /site/:subdomain
-// Özellikler:
-- Subdomain'den projeyi çek (is_published = true)
-- WebsitePreview'i render et (isEditable = false)
-- 404 if not found or not published
-- Analytics tracking
-```
-
-### check-subdomain Edge Function
-
-```typescript
-// Input: { subdomain: string }
-// Output: { available: boolean, suggestion?: string }
-// Kontroller:
-- Mevcut subdomain'lerle çakışma
-- Reserved keywords (admin, www, api, etc.)
-- Format validation
+```html
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
 ```
 
 ---
 
-## Premium Özellikler (Gelecek)
+## Animasyonlar
 
-| Özellik | Free | Premium |
-|---------|------|---------|
-| Platform subdomain | ✓ | ✓ |
-| Custom domain | ✗ | ✓ |
-| Remove "Powered by" badge | ✗ | ✓ |
-| Analytics export | ✗ | ✓ |
-| Priority support | ✗ | ✓ |
+Durable'daki gibi subtle animasyonlar:
+- Scroll-triggered fade-in
+- Icon hover efektleri
+- Carousel smooth scroll
+- Button hover transitions
 
 ---
 
-## Güvenlik Önlemleri
+## Responsive Tasarim
 
-### RLS Policies
-
-```sql
--- Public okuma (yayınlanmış siteler için)
-CREATE POLICY "Anyone can view published websites"
-ON projects FOR SELECT
-USING (is_published = true);
-
--- Sadece site sahibi yayınlayabilir/güncelleyebilir
-CREATE POLICY "Owners can publish their websites"
-ON projects FOR UPDATE
-USING (auth.uid() = user_id);
-```
-
-### Subdomain Kuralları
-
-- Minimum 3, maksimum 50 karakter
-- Sadece küçük harf, rakam ve tire
-- Tire ile başlayamaz/bitemez
-- Reserved keywords engellenir: admin, api, www, mail, ftp, etc.
+| Breakpoint | Degisiklikler |
+|------------|---------------|
+| Mobile (<640px) | Tek kolon, kucuk basliklar |
+| Tablet (640-1024px) | 2 kolon feature kartlari |
+| Desktop (>1024px) | Tam genislik, buyuk tipografi |
 
 ---
 
-## Uygulama Sırası
+## Uygulama Sirasi
 
-1. **Database migration** - Yeni kolonlar ekle
-2. **check-subdomain edge function** - Müsaitlik kontrolü
-3. **PublishModal component** - Kullanıcı arayüzü
-4. **PublicWebsite page** - Public görüntüleme
-5. **Project.tsx güncelleme** - Publish akışını bağla
-6. **App.tsx routing** - Public route ekle
-7. **Dashboard güncelleme** - Yayınlanmış siteleri göster
+1. **Tailwind config & CSS** - Serif font ve yeni utility'ler
+2. **Header.tsx** - Minimal tasarim
+3. **Hero.tsx** - Input CTA ile yeni tasarim
+4. **WebsiteShowcase.tsx** - Ornek site carousel
+5. **TrustSection.tsx** - Icon strip
+6. **Features.tsx** - 2-kolon kartlar
+7. **HowItWorks.tsx** - Surec adimlari
+8. **CTASection.tsx** - Final CTA
+9. **Footer.tsx** - Footer
+10. **Landing.tsx** - Tum parcalari birlestir
 
----
-
-## Beklenen Sonuç
-
-Bu implementasyon sonrasında:
-
-1. Kullanıcılar sitelerini tek tıkla yayınlayabilecek
-2. Her site benzersiz bir subdomain alacak (örn: `dr-ahmet.openlucius.app`)
-3. Yayınlanan siteler herkese açık olacak
-4. Dashboard'da yayın durumu görünecek
-5. Premium kullanıcılar custom domain bağlayabilecek (gelecek faz)
