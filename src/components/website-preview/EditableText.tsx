@@ -15,7 +15,7 @@ interface EditableTextProps {
   fieldLabel: string;
   sectionTitle: string;
   sectionId: string;
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div';
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'p' | 'span' | 'div' | 'button';
   isEditable?: boolean;
   isSelected?: boolean;
   onSelect?: (selection: EditorSelection) => void;

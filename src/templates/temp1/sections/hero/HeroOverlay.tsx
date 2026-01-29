@@ -106,9 +106,18 @@ export function HeroOverlay({
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center py-20">
         <div className="max-w-4xl mx-auto space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/10 backdrop-blur-sm text-white border border-white/20">
-            ✨ Welcome to our practice
-          </div>
+          <EditableText
+            value="Welcome to our practice"
+            fieldPath="pages.home.welcome.title"
+            fieldLabel="Welcome Badge"
+            sectionTitle="Welcome"
+            sectionId="welcome"
+            as="span"
+            isEditable={isEditable}
+            isSelected={editorSelection?.fields.some(f => f.fieldPath === 'pages.home.welcome.title')}
+            onSelect={onEditorSelect}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/10 backdrop-blur-sm text-white border border-white/20"
+          />
 
           <EditableText
             value={title}
@@ -167,12 +176,39 @@ export function HeroOverlay({
           />
 
           <div className="flex flex-wrap justify-center gap-4 pt-6">
-            <button className="px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 shadow-lg bg-white text-gray-900 hover:bg-gray-100">
-              Get Started
-            </button>
-            <button className="px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 border-2 border-white/50 text-white hover:bg-white/10 backdrop-blur-sm">
-              Learn More
-            </button>
+            <EditableText
+              value="Get Started"
+              fieldPath="pages.home.hero.ctaButton"
+              fieldLabel="Primary Button"
+              sectionTitle="Hero Buttons"
+              sectionId="hero"
+              as="button"
+              isEditable={isEditable}
+              isSelected={editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.ctaButton')}
+              onSelect={onEditorSelect}
+              additionalFields={[
+                {
+                  label: 'Secondary Button',
+                  fieldPath: 'pages.home.hero.secondaryButton',
+                  value: 'Learn More',
+                  type: 'text',
+                  canRegenerate: false,
+                },
+              ]}
+              className="px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 hover:scale-105 shadow-lg bg-white text-gray-900 hover:bg-gray-100"
+            />
+            <EditableText
+              value="Learn More"
+              fieldPath="pages.home.hero.secondaryButton"
+              fieldLabel="Secondary Button"
+              sectionTitle="Hero Buttons"
+              sectionId="hero"
+              as="button"
+              isEditable={isEditable}
+              isSelected={editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.secondaryButton')}
+              onSelect={onEditorSelect}
+              className="px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 border-2 border-white/50 text-white hover:bg-white/10 backdrop-blur-sm"
+            />
           </div>
         </div>
       </div>

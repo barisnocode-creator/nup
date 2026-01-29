@@ -102,6 +102,8 @@ export function HealthcareModernTemplate({
         isDark={isDark}
         isEditable={isEditable}
         onFieldEdit={handleFieldEdit}
+        editorSelection={editorSelection}
+        onEditorSelect={onEditorSelect}
         hasBlog={hasBlog}
       />
 

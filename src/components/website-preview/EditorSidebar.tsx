@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Wand2, ImageIcon, Loader2, Type, Sparkles } from 'lucide-react';
+import { ArrowLeft, Wand2, ImageIcon, Loader2, Type, Sparkles, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 export interface ImageData {
@@ -16,6 +17,12 @@ export interface ImageData {
   altText?: string;
   positionX?: number;
   positionY?: number;
+}
+
+export interface ImageOption {
+  url: string;
+  thumbnail: string;
+  alt: string;
 }
 
 export interface EditableFieldData {
@@ -50,7 +57,7 @@ interface EditorSidebarProps {
   onFieldUpdate: (fieldPath: string, value: string) => void;
   onRegenerateField: (fieldPath: string) => void;
   onImageRegenerate: () => void;
-  onImageChange: () => void;
+  onImageChange: (imagePath: string) => void;
   onUpdateAltText: (text: string) => void;
   onUpdatePosition: (x: number, y: number) => void;
   isRegenerating?: boolean;
@@ -59,6 +66,10 @@ interface EditorSidebarProps {
   // Layout variant props
   currentHeroVariant?: HeroVariant;
   onHeroVariantChange?: (variant: HeroVariant) => void;
+  // Image options
+  imageOptions?: ImageOption[];
+  isLoadingImageOptions?: boolean;
+  onSelectImageOption?: (url: string) => void;
 }
 
 const heroLayoutOptions: { id: HeroVariant; label: string; description: string }[] = [
@@ -66,6 +77,20 @@ const heroLayoutOptions: { id: HeroVariant; label: string; description: string }
   { id: 'overlay', label: 'Overlay', description: 'Text over image' },
   { id: 'centered', label: 'Centered', description: 'Centered text, image below' },
   { id: 'gradient', label: 'Gradient', description: 'No image, gradient background' },
+];
+
+const fontSizeOptions = [
+  { value: 'sm', label: 'Small' },
+  { value: 'base', label: 'Medium' },
+  { value: 'lg', label: 'Large' },
+  { value: 'xl', label: 'X-Large' },
+  { value: '2xl', label: '2X-Large' },
+];
+
+const textColorOptions = [
+  { value: 'primary', label: 'Primary', color: 'bg-primary' },
+  { value: 'secondary', label: 'Secondary', color: 'bg-secondary' },
+  { value: 'muted', label: 'Muted', color: 'bg-muted-foreground' },
 ];
 
 export function EditorSidebar({
@@ -83,11 +108,17 @@ export function EditorSidebar({
   isDark = false,
   currentHeroVariant = 'overlay',
   onHeroVariantChange,
+  imageOptions = [],
+  isLoadingImageOptions = false,
+  onSelectImageOption,
 }: EditorSidebarProps) {
   const [localFields, setLocalFields] = useState<Record<string, string>>({});
   const [altText, setAltText] = useState('');
   const [positionX, setPositionX] = useState(50);
   const [positionY, setPositionY] = useState(50);
+  const [fontSize, setFontSize] = useState('base');
+  const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
+  const [textColor, setTextColor] = useState('primary');
 
   // Sync state when selection changes
   useEffect(() => {
@@ -251,17 +282,61 @@ export function EditorSidebar({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={onImageChange}
-                      disabled={isRegenerating}
+                      onClick={() => selection.imageData && onImageChange(selection.imageData.imagePath)}
+                      disabled={isRegenerating || isLoadingImageOptions}
                       className={cn(
                         'gap-2',
                         isDark && 'border-slate-600 hover:bg-slate-800'
                       )}
                     >
-                      <ImageIcon className="w-4 h-4" />
+                      {isLoadingImageOptions ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <ImageIcon className="w-4 h-4" />
+                      )}
                       Change
                     </Button>
                   </div>
+
+                  {/* Image Options Grid */}
+                  {imageOptions.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className={cn(
+                        'text-sm font-medium',
+                        isDark ? 'text-slate-300' : 'text-gray-700'
+                      )}>
+                        Choose an alternative
+                      </Label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {imageOptions.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => onSelectImageOption?.(option.url)}
+                            className={cn(
+                              'relative aspect-video rounded-md overflow-hidden border-2 transition-all hover:border-primary',
+                              isDark ? 'border-slate-700 hover:border-primary' : 'border-gray-200'
+                            )}
+                          >
+                            <img
+                              src={option.thumbnail}
+                              alt={option.alt}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isLoadingImageOptions && (
+                    <div className={cn(
+                      'flex items-center justify-center py-4 gap-2',
+                      isDark ? 'text-slate-400' : 'text-gray-500'
+                    )}>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading alternatives...</span>
+                    </div>
+                  )}
 
                   {/* Alt Text */}
                   <div className="space-y-2">
@@ -397,8 +472,9 @@ export function EditorSidebar({
               ))}
             </TabsContent>
 
-            <TabsContent value="style" className="flex-1 overflow-y-auto p-4 mt-0">
-              {isHeroSection && onHeroVariantChange ? (
+            <TabsContent value="style" className="flex-1 overflow-y-auto p-4 mt-0 space-y-6">
+              {/* Hero Layout Options */}
+              {isHeroSection && onHeroVariantChange && (
                 <div className="space-y-4">
                   <Label className={cn(
                     'text-sm font-medium',
@@ -432,21 +508,114 @@ export function EditorSidebar({
                     ))}
                   </div>
                 </div>
-              ) : (
-                <div className={cn(
-                  'flex flex-col items-center justify-center h-full text-center space-y-3',
-                  isDark ? 'text-slate-400' : 'text-gray-500'
+              )}
+
+              {/* Font Size */}
+              <div className="space-y-3">
+                <Label className={cn(
+                  'text-sm font-medium',
+                  isDark ? 'text-slate-300' : 'text-gray-700'
                 )}>
-                  <div className={cn(
-                    'w-12 h-12 rounded-full flex items-center justify-center',
-                    isDark ? 'bg-slate-800' : 'bg-gray-100'
+                  Font Size
+                </Label>
+                <Select value={fontSize} onValueChange={setFontSize}>
+                  <SelectTrigger className={cn(
+                    isDark && 'bg-slate-800 border-slate-700 text-white'
                   )}>
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Style options coming soon</p>
-                    <p className="text-sm">Customize fonts, colors, and spacing</p>
-                  </div>
+                    <SelectValue placeholder="Select size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontSizeOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Text Alignment */}
+              <div className="space-y-3">
+                <Label className={cn(
+                  'text-sm font-medium',
+                  isDark ? 'text-slate-300' : 'text-gray-700'
+                )}>
+                  Text Alignment
+                </Label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'left', icon: AlignLeft },
+                    { value: 'center', icon: AlignCenter },
+                    { value: 'right', icon: AlignRight },
+                  ].map(({ value, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => setTextAlign(value as 'left' | 'center' | 'right')}
+                      className={cn(
+                        'flex-1 p-2 rounded-lg border transition-all flex items-center justify-center',
+                        textAlign === value
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : isDark 
+                            ? 'border-slate-700 hover:border-slate-600 text-slate-400' 
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Text Color */}
+              <div className="space-y-3">
+                <Label className={cn(
+                  'text-sm font-medium',
+                  isDark ? 'text-slate-300' : 'text-gray-700'
+                )}>
+                  Text Color
+                </Label>
+                <div className="flex gap-2">
+                  {textColorOptions.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTextColor(option.value)}
+                      className={cn(
+                        'flex-1 p-2 rounded-lg border transition-all flex items-center justify-center gap-2',
+                        textColor === option.value
+                          ? 'border-primary bg-primary/10'
+                          : isDark 
+                            ? 'border-slate-700 hover:border-slate-600' 
+                            : 'border-gray-200 hover:border-gray-300'
+                      )}
+                    >
+                      <div className={cn('w-4 h-4 rounded-full', option.color)} />
+                      <span className={cn(
+                        'text-xs font-medium',
+                        isDark ? 'text-slate-300' : 'text-gray-700'
+                      )}>
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Coming Soon Message for non-hero sections */}
+              {!isHeroSection && (
+                <div className={cn(
+                  'p-4 rounded-lg border text-center',
+                  isDark ? 'border-slate-700 bg-slate-800/50' : 'border-gray-200 bg-gray-50'
+                )}>
+                  <Sparkles className={cn(
+                    'w-6 h-6 mx-auto mb-2',
+                    isDark ? 'text-slate-500' : 'text-gray-400'
+                  )} />
+                  <p className={cn(
+                    'text-sm',
+                    isDark ? 'text-slate-400' : 'text-gray-500'
+                  )}>
+                    More style options for this section coming soon
+                  </p>
                 </div>
               )}
             </TabsContent>
