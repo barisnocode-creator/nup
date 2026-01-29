@@ -111,7 +111,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      hash_visitor_id: { Args: { raw_visitor_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
