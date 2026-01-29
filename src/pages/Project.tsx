@@ -18,6 +18,7 @@ import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSideba
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface Project {
   id: string;
@@ -617,6 +618,9 @@ export default function Project() {
   const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
   const isAuthenticated = !!user;
   const isDark = colorPreference === 'dark';
+
+  // Apply theme colors from site settings in real-time
+  useThemeColors(project.generated_content?.siteSettings);
 
   // TEST MODE: Upgrade prompts disabled for testing
   const handleLockedFeature = (feature: string) => {

@@ -127,7 +127,7 @@
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
-      hsl(var(--accent)) 100%
+      hsl(var(--color-secondary-custom, var(--accent))) 100%
     );
   }
 
@@ -135,7 +135,7 @@
     background: linear-gradient(
       135deg,
       hsl(var(--primary)) 0%,
-      hsl(var(--accent)) 100%
+      hsl(var(--color-secondary-custom, var(--accent))) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -154,5 +154,23 @@
 
   .container-narrow {
     @apply max-w-5xl mx-auto px-4;
+  }
+
+  /* Font family utilities for dynamic fonts */
+  .font-heading-dynamic {
+    font-family: var(--font-heading, 'Playfair Display', Georgia, serif);
+  }
+
+  .font-body-dynamic {
+    font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  }
+
+  /* Reduced motion for animations toggle */
+  .reduce-motion *,
+  .reduce-motion *::before,
+  .reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
