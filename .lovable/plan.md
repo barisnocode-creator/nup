@@ -1,123 +1,129 @@
 
 
-# Sektör Seçimi ve AI Soru Güncellemesi
+# AI Chatbot Hızlandırma Planı
 
-## Mevcut Durum
+## Mevcut Durum Analizi
 
-| Bileşen | Mevcut |
-|---------|--------|
-| Sektör Seçenekleri | Doctor, Dentist, Pharmacist (sadece sağlık) |
-| Soru Sayısı | 10 |
-| Soru Tipi | Mesleğe özel (sağlık odaklı) |
+| Sorun | Neden |
+|-------|-------|
+| Yavaş ilk mesaj | Her seferinde AI Gateway'e istek atılıyor |
+| Yavaş yanıtlar | Tam yanıt beklenip sonra gösteriliyor (streaming yok) |
+| Büyük sistem promptu | ~2000 karakter prompt her istekte gönderiliyor |
+| Model seçimi | `gemini-3-flash-preview` kullanılıyor |
 
-## Yapılacak Değişiklikler
+## Hızlandırma Stratejileri
 
-### 1. Yeni Sektör Seçenekleri
+### 1. Streaming Yanıtlar (En Etkili)
 
-Sağlık sektörü yerine tüm sektörleri kapsayan genel kategoriler:
+Mevcut durumda AI'ın tüm yanıtı tamamlanana kadar bekliyoruz. Streaming ile karakterler geldiği anda gösterilecek.
 
-| Sektör ID | Etiket | Açıklama | İkon |
-|-----------|--------|----------|------|
-| `service` | Hizmet Sektörü | Danışmanlık, eğitim, tamir vb. | Briefcase |
-| `retail` | Perakende & Satış | Mağaza, e-ticaret, showroom | ShoppingBag |
-| `food` | Yiyecek & İçecek | Restoran, kafe, catering | UtensilsCrossed |
-| `creative` | Kreatif & Medya | Tasarım, fotoğraf, video | Palette |
-| `technology` | Teknoloji | Yazılım, IT, dijital hizmetler | Monitor |
-| `other` | Diğer | Diğer tüm sektörler | Building2 |
+**Kullanıcı deneyimi farkı:**
+- Mevcut: 5-8 saniye bekleme → tam mesaj
+- Streaming: 0.5 saniye → kelimeler akıyor
 
-### 2. Soru Sayısı: 10 → 5
+### 2. İlk Mesajı Önceden Hazırlama
 
-Yarıya indirilmiş, daha detaylı ve genel sorular:
+İlk karşılama mesajı her zaman aynı olduğu için bunu hardcode edebiliriz:
 
-| # | Konu | Soru İçeriği |
-|---|------|--------------|
-| 1 | İşletme Kimliği | İşletme adı, sektör detayı, konum, deneyim süresi |
-| 2 | Sunulan Değer | Ana hizmetler/ürünler, hedef kitle, rakiplerden fark |
-| 3 | İletişim & Erişim | Telefon, e-posta, çalışma saatleri, adres |
-| 4 | Marka Hikayesi | Kuruluş hikayesi, vizyon, değerler, başarılar |
-| 5 | Site Hedefleri | Web sitesinden beklentiler, öne çıkarılacak öğeler, CTA'lar |
+```text
+"Merhaba! Ben profesyonel web sitesi danışmanınızım. 
+İşletmeniz için harika bir web sitesi oluşturmak üzere 
+size 5 soru soracağım.
 
-### 3. Dosya Değişiklikleri
+Soru 1/5: İşletme Kimliği
+- İşletmenizin adı nedir?
+- Hangi sektörde faaliyet gösteriyorsunuz?
+- Hangi şehirde bulunuyorsunuz?
+- Kaç yıldır bu alanda çalışıyorsunuz?"
+```
+
+Bu sayede wizard açıldığında **anında** mesaj görünür, AI çağrısı yapılmaz.
+
+### 3. Daha Hızlı Model
+
+| Model | Hız | Kalite |
+|-------|-----|--------|
+| `gemini-3-flash-preview` (mevcut) | Orta | Yüksek |
+| `gemini-2.5-flash-lite` | **Çok Hızlı** | İyi |
+
+`flash-lite` modeli basit sohbet için yeterli ve çok daha hızlı.
+
+### 4. max_tokens Azaltma
+
+Mevcut: `max_tokens: 1000`
+Önerilen: `max_tokens: 500`
+
+Kısa sorular için 500 token fazlasıyla yeterli.
+
+## Uygulama Planı
+
+### Adım 1: İlk Mesajı Hardcode Et
+
+`AIChatStep.tsx` - İlk mesaj anında gösterilecek, AI çağrısı yapılmayacak
+
+### Adım 2: Streaming Ekle
+
+**Edge Function değişiklikleri:**
+- `stream: true` parametresi ekle
+- SSE (Server-Sent Events) formatında yanıt döndür
+
+**Frontend değişiklikleri:**
+- ReadableStream ile yanıtı oku
+- Her chunk geldiğinde mesajı güncelle
+
+### Adım 3: Model ve Token Optimizasyonu
+
+- Model: `gemini-2.5-flash-lite`
+- max_tokens: 500
+- temperature: 0.5 (daha tutarlı yanıtlar)
+
+## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/types/wizard.ts` | Profession tipi güncelleme (6 yeni sektör) |
-| `src/components/wizard/steps/ProfessionStep.tsx` | Yeni sektör seçenekleri ve ikonlar |
-| `supabase/functions/wizard-chat/index.ts` | 5 soruluk yeni sistem prompt |
+| `supabase/functions/wizard-chat/index.ts` | Streaming desteği, model değişikliği |
+| `src/components/wizard/steps/AIChatStep.tsx` | Hardcode ilk mesaj, streaming okuma |
+
+## Beklenen İyileştirmeler
+
+| Metrik | Önce | Sonra |
+|--------|------|-------|
+| İlk mesaj süresi | 5-8 sn | **0 sn** (anında) |
+| Sonraki yanıtlar | 5-8 sn bekleme | **0.3 sn**'de başlama |
+| Kullanıcı deneyimi | Bekle → Oku | Anında okumaya başla |
 
 ## Teknik Detaylar
 
-### Yeni Profession Tipi
+### Streaming Edge Function
 
 ```typescript
-export type Profession = 'service' | 'retail' | 'food' | 'creative' | 'technology' | 'other';
+// Stream modunu aç
+body: JSON.stringify({
+  model: 'google/gemini-2.5-flash-lite',
+  messages: conversationMessages,
+  stream: true,
+  max_tokens: 500,
+}),
+
+// SSE olarak döndür
+return new Response(response.body, {
+  headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+});
 ```
 
-### Yeni AI Sistem Promptu
+### Frontend Streaming Okuma
 
-AI artık mesleğe özel değil, kurulacak siteye yönelik sorular soracak:
+```typescript
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
 
-```text
-SORU 1/5: İşletme Kimliği
-- İşletmenizin adı nedir?
-- Tam olarak hangi sektörde/alanda faaliyet gösteriyorsunuz?
-- Hangi şehir/ülkede bulunuyorsunuz?
-- Kaç yıldır bu alanda faaliyet gösteriyorsunuz?
-
-SORU 2/5: Sunulan Değer
-- Ana ürün veya hizmetleriniz nelerdir? (en az 3 tane)
-- Hedef kitleniz kimler? (yaş, gelir düzeyi, ilgi alanları)
-- Sizi rakiplerinizden ayıran en önemli 2-3 özellik nedir?
-
-SORU 3/5: İletişim & Erişim
-- Telefon numaranız?
-- E-posta adresiniz?
-- Çalışma günleri ve saatleriniz?
-- Fiziksel adresiniz var mı? (varsa detay)
-
-SORU 4/5: Marka Hikayesi
-- İşletmeniz nasıl kuruldu? (kısa hikaye)
-- Vizyonunuz ve değerleriniz neler?
-- Elde ettiğiniz önemli başarılar veya sertifikalar var mı?
-
-SORU 5/5: Site Hedefleri
-- Web sitenizden ne bekliyorsunuz? (bilgilendirme, satış, randevu vb.)
-- Ziyaretçilerin sitede yapmasını istediğiniz en önemli aksiyon nedir?
-- Öne çıkarmak istediğiniz ek bilgiler var mı?
-```
-
-### Güncel ExtractedData Formatı
-
-```json
-{
-  "businessName": "...",
-  "sector": "...",
-  "city": "...",
-  "country": "...",
-  "yearsExperience": "...",
-  "services": ["...", "...", "..."],
-  "targetAudience": "...",
-  "uniqueValue": "...",
-  "phone": "...",
-  "email": "...",
-  "workingHours": "...",
-  "address": "...",
-  "story": "...",
-  "vision": "...",
-  "achievements": "...",
-  "siteGoals": "...",
-  "mainCTA": "...",
-  "additionalInfo": "..."
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  
+  const chunk = decoder.decode(value);
+  // Her chunk'ı parse et ve mesajı güncelle
+  updateMessage(chunk);
 }
 ```
-
-## UI Değişiklikleri
-
-### ProfessionStep Başlık Değişikliği
-
-Mevcut:
-> "What's your profession?"
-
-Yeni:
-> "Hangi sektörde faaliyet gösteriyorsunuz?"
 
