@@ -6,5 +6,8 @@ verify_jwt = false
 [functions.generate-images]
 verify_jwt = false
 
+[functions.fetch-images]
+verify_jwt = false
+
 [functions.check-subdomain]
 verify_jwt = false
