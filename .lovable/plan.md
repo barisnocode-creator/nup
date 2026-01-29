@@ -1,245 +1,309 @@
 
-# Hero Varyasyonları ve Section Variants Sistemi
+# Durable.co Tarzı Customize, Pages ve Add Menüleri
 
 ## Hedef
 
-Yazının resmin üstünde durduğu (overlay), centered, full-width gibi farklı hero tarzları ve diğer section'lar için varyasyonlar eklemek. Ayrıca kullanıcıların hazır template örnekleri yükleyerek yeni tasarımlar ekleyebilmesi.
+Durable.co ekran görüntülerindeki 3 ana sidebar/panel sistemini implement etmek:
+1. **Customize** - Site geneli ayarlar (Colors, Fonts, Buttons, Corners, Animations, vb.)
+2. **Pages** - Sayfa ayarları (Title, Label, SEO, Social image)
+3. **Add** - Yeni sayfa/blog post/folder ekleme
 
-## Yeni Hero Varyasyonları
+## Durable.co Referans Analizi
 
-| Varyasyon | Görünüm | Kullanım |
-|-----------|---------|----------|
-| `split` (mevcut) | Yazı solda, resim sağda | Klasik profesyonel |
-| `overlay` | Tam genişlik resim, üzerinde yazı | Modern, etkileyici |
-| `centered` | Ortada yazı, arkada büyük resim | Minimal, şık |
-| `video` | Arka planda video, üzerinde yazı | Dinamik |
-| `gradient` | Gradient arka plan, resim yok | Hızlı yükleme |
+### 1. Customize Panel (Screenshot 2)
+```
++------------------------+
+| Customize         X    |
++------------------------+
+| > Colors               |
+| > Fonts                |
+| > Buttons              |
+| > Corners              |
+| > Animations           |
+| > Browser icon         |
+| > Manage widgets       |
+| > Regenerate text      |
+| > Regenerate website   |
+| > Keywords             |
++------------------------+
+```
+
+### 2. Page Settings Panel (Screenshot 3)
+```
++------------------------+
+| Page              X    |
++------------------------+
+| Title  [Regenerate ✨] |
+| [Experience Affordable]|
+| (SEO title, 50-60 chars)|
+|                        |
+| Label                  |
+| [Home]                 |
+| (Navigation label)     |
+|                        |
+| Show link              |
+| [o] Header [o] Footer  |
+|                        |
+| --- SEO ---            |
+| Description, keywords  |
+|                        |
+| --- Image ---          |
+| Social media share img |
+| [Image thumbnail]      |
++------------------------+
+```
+
+### 3. Add Panel (Screenshot 4)
+```
++------------------------+
+| Add               X    |
++------------------------+
+| > Page                 |
+|   Select page type...  |
+|                        |
+| + Blog post            |
+|   Educate visitors...  |
+|                        |
+| + Folder               |
+|   Add folder to group  |
++------------------------+
+```
+
+## Yeni Bileşenler
+
+### 1. CustomizeSidebar.tsx
+Site geneli özelleştirme paneli:
+- Colors: Renk paleti seçimi
+- Fonts: Heading/Body font seçimi
+- Buttons: Köşe stili (rounded/sharp)
+- Corners: Global border radius
+- Animations: Sayfa geçiş animasyonları
+- Browser icon: Favicon ayarı
+- Regenerate text: Tüm metinleri yeniden oluştur
+- Regenerate website: Tüm siteyi yeniden oluştur
+
+### 2. PageSettingsSidebar.tsx
+Sayfa bazlı ayarlar:
+- Title: SEO başlığı + Regenerate butonu
+- Label: Navigasyonda görünen isim
+- Show link: Header/Footer toggle'ları
+- SEO section: Meta description
+- Social image: OG image seçimi
+
+### 3. AddContentSidebar.tsx
+Yeni içerik ekleme:
+- Page: Sayfa tipi seçimi (About, Services, Contact, vb.)
+- Blog post: Yeni blog yazısı oluştur
+- Folder: Sayfa grupları (Phase 2)
 
 ## Dosya Yapısı
 
 ```
-src/templates/temp1/sections/hero/
-├── index.ts              # Hero registry
-├── HeroSplit.tsx         # Mevcut (rename)
-├── HeroOverlay.tsx       # YENİ - Resim üzerinde yazı
-├── HeroCentered.tsx      # YENİ - Ortalanmış
-├── HeroGradient.tsx      # YENİ - Gradient arka plan
-└── types.ts              # Hero props types
+src/components/website-preview/
+├── EditorSidebar.tsx (mevcut - element editing)
+├── CustomizeSidebar.tsx (YENİ - site settings)
+├── PageSettingsSidebar.tsx (YENİ - page settings)
+├── AddContentSidebar.tsx (YENİ - add content)
+└── EditorToolbar.tsx (güncelleme - sidebar bağlantıları)
 ```
 
-## Yeni Hero Bileşenleri
-
-### 1. HeroOverlay.tsx (Yazı resmin üzerinde)
-
-```
-+------------------------------------------+
-|                                          |
-|     [Full-width background image]        |
-|                                          |
-|         ✨ Welcome to our practice       |
-|                                          |
-|       Advanced Treatments for            |
-|          Global Patients                 |
-|                                          |
-|      Delivering cutting-edge care...     |
-|                                          |
-|      [Get Started]  [Learn More]         |
-|                                          |
-+------------------------------------------+
-```
-
-- Tam genişlik arka plan görseli
-- Koyu gradient overlay (okunabilirlik için)
-- Yazılar ortalanmış, resmin üzerinde
-- min-height: 100vh
-
-### 2. HeroCentered.tsx (Ortalanmış)
-
-```
-+------------------------------------------+
-|                                          |
-|     ✨ Welcome to our practice           |
-|                                          |
-|     Advanced Treatments for              |
-|        Global Patients                   |
-|                                          |
-|   [Get Started]  [Learn More]            |
-|                                          |
-|   +------------------------------+       |
-|   |                              |       |
-|   |     [Large centered image]   |       |
-|   |                              |       |
-|   +------------------------------+       |
-|                                          |
-+------------------------------------------+
-```
-
-- Yazılar üstte, ortalanmış
-- Görsel altta, büyük ve rounded
-- Temiz, minimal görünüm
-
-### 3. HeroGradient.tsx (Gradient)
-
-```
-+------------------------------------------+
-|  ████████████████████████████████████   |
-|  ██   Gradient Background Only     ██   |
-|  ██                                 ██   |
-|  ██   Advanced Treatments for       ██   |
-|  ██      Global Patients            ██   |
-|  ██                                 ██   |
-|  ██   [Get Started] [Learn More]    ██   |
-|  ██                                 ██   |
-|  ████████████████████████████████████   |
-+------------------------------------------+
-```
-
-- Görsel yok, sadece gradient
-- Çok hızlı yükleme
-- Modern ve temiz
-
-## Hero Registry Sistemi
+## State Yönetimi
 
 ```typescript
-// src/templates/temp1/sections/hero/index.ts
-import { HeroSplit } from './HeroSplit';
-import { HeroOverlay } from './HeroOverlay';
-import { HeroCentered } from './HeroCentered';
-import { HeroGradient } from './HeroGradient';
+// Project.tsx'e eklenecek state'ler
+const [customizeSidebarOpen, setCustomizeSidebarOpen] = useState(false);
+const [pageSettingsSidebarOpen, setPageSettingsSidebarOpen] = useState(false);
+const [addContentSidebarOpen, setAddContentSidebarOpen] = useState(false);
 
-export const heroVariants = {
-  split: HeroSplit,
-  overlay: HeroOverlay,
-  centered: HeroCentered,
-  gradient: HeroGradient,
-} as const;
-
-export type HeroVariant = keyof typeof heroVariants;
-
-export function getHeroComponent(variant: HeroVariant) {
-  return heroVariants[variant] || heroVariants.split;
+// Site ayarları (GeneratedContent'e eklenecek)
+interface SiteSettings {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  fonts: {
+    heading: string;
+    body: string;
+  };
+  corners: 'rounded' | 'sharp' | 'pill';
+  animations: boolean;
+  favicon?: string;
 }
-```
 
-## GeneratedContent Güncelleme
-
-```typescript
-// src/types/generated-website.ts
-export interface GeneratedContent {
-  // ... mevcut alanlar
-  
-  // YENİ: Section varyasyonları
-  sectionVariants?: {
-    hero?: 'split' | 'overlay' | 'centered' | 'gradient';
-    services?: 'grid' | 'list' | 'cards';
-    about?: 'inline' | 'fullwidth' | 'timeline';
-    // ... diğer section'lar
+// Sayfa ayarları
+interface PageSettings {
+  [pageName: string]: {
+    title: string;        // SEO title
+    label: string;        // Nav label
+    showInHeader: boolean;
+    showInFooter: boolean;
+    seoDescription?: string;
+    socialImage?: string;
   };
 }
 ```
 
-## FullLandingPage Güncelleme
+## GeneratedContent Güncellemesi
 
 ```typescript
-// src/templates/temp1/pages/FullLandingPage.tsx
-import { getHeroComponent } from '../sections/hero';
-
-export function FullLandingPage({ content, ... }) {
-  // Varyasyonu al veya default kullan
-  const heroVariant = content.sectionVariants?.hero || 'split';
-  const HeroComponent = getHeroComponent(heroVariant);
+export interface GeneratedContent {
+  // ... mevcut alanlar
   
-  return (
-    <div>
-      <EditableSection sectionId="hero" ...>
-        <HeroComponent
-          title={pages.home.hero.title}
-          subtitle={pages.home.hero.subtitle}
-          description={pages.home.hero.description}
-          heroImage={images?.heroHome}
-          // ... diğer props
-        />
-      </EditableSection>
-      {/* ... diğer section'lar */}
-    </div>
-  );
+  // YENİ: Site geneli ayarlar
+  siteSettings?: {
+    colors?: {
+      primary?: string;
+      secondary?: string;
+      accent?: string;
+    };
+    fonts?: {
+      heading?: string;
+      body?: string;
+    };
+    corners?: 'rounded' | 'sharp' | 'pill';
+    animations?: boolean;
+    favicon?: string;
+  };
+  
+  // YENİ: Sayfa ayarları
+  pageSettings?: {
+    [key: string]: {
+      title?: string;
+      label?: string;
+      showInHeader?: boolean;
+      showInFooter?: boolean;
+      seoDescription?: string;
+      socialImage?: string;
+    };
+  };
 }
 ```
 
-## Editor'da Varyasyon Değiştirme
+## EditorToolbar Güncellemesi
 
-EditorSidebar'da section seçildiğinde "Layout" seçeneği:
+```typescript
+// Mevcut butonların yeni fonksiyonları
+<Button onClick={() => setCustomizeSidebarOpen(true)}>
+  <Palette /> Customize
+</Button>
+
+<DropdownMenu>
+  <DropdownMenuTrigger>
+    <Layout /> Pages
+  </DropdownMenuTrigger>
+  <DropdownMenuContent>
+    {/* Her sayfa için */}
+    <DropdownMenuItem onClick={() => openPageSettings('home')}>
+      Home
+    </DropdownMenuItem>
+    <DropdownMenuItem onClick={() => openPageSettings('about')}>
+      About
+    </DropdownMenuItem>
+    {/* ... */}
+  </DropdownMenuContent>
+</DropdownMenu>
+
+<Button onClick={() => setAddContentSidebarOpen(true)}>
+  <Plus /> Add
+</Button>
+```
+
+## CustomizeSidebar UI
 
 ```
-+------------------------+
-| < Hero           Done  |
-+------------------------+
-| Content | Style        |
-+------------------------+
-| Layout:                |
-| [Split] [Overlay]      |
-| [Centered] [Gradient]  |
-+------------------------+
-| Headline  [Regenerate] |
-| [Advanced Treatments.] |
-| ...                    |
-+------------------------+
++-----------------------------------+
+| Customize                      X  |
++-----------------------------------+
+| > Colors                      >   |
+|   Primary, secondary, accent      |
+|                                   |
+| > Fonts                       >   |
+|   Heading: Inter                  |
+|   Body: Inter                     |
+|                                   |
+| > Buttons                     >   |
+|   Rounded corners                 |
+|                                   |
+| > Corners                     >   |
+|   Border radius                   |
+|                                   |
+| > Animations                  >   |
+|   Page transitions                |
+|                                   |
+| > Browser icon                >   |
+|   Upload favicon                  |
+|                                   |
++-----------------------------------+
+| [Sparkles] Regenerate text        |
++-----------------------------------+
+| [Sparkles] Regenerate website     |
++-----------------------------------+
+| > Keywords                    >   |
+|   SEO keywords                    |
++-----------------------------------+
 ```
 
 ## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/templates/temp1/sections/hero/index.ts` | YENİ - Hero registry |
-| `src/templates/temp1/sections/hero/types.ts` | YENİ - Shared props |
-| `src/templates/temp1/sections/hero/HeroSplit.tsx` | Mevcut kodu taşı |
-| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | YENİ |
-| `src/templates/temp1/sections/hero/HeroCentered.tsx` | YENİ |
-| `src/templates/temp1/sections/hero/HeroGradient.tsx` | YENİ |
-| `src/types/generated-website.ts` | sectionVariants ekle |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | Dinamik hero seçimi |
-| `src/components/website-preview/EditorSidebar.tsx` | Layout seçici ekle |
+| `src/components/website-preview/CustomizeSidebar.tsx` | YENİ |
+| `src/components/website-preview/PageSettingsSidebar.tsx` | YENİ |
+| `src/components/website-preview/AddContentSidebar.tsx` | YENİ |
+| `src/components/website-preview/EditorToolbar.tsx` | Güncelle - sidebar açma fonksiyonları |
+| `src/pages/Project.tsx` | Yeni state'ler ve sidebar render |
+| `src/types/generated-website.ts` | siteSettings ve pageSettings ekle |
 
-## HeroOverlay Detaylı Tasarım
+## Implementasyon Aşamaları
 
-```typescript
-// Görsel üzerinde yazı için temel yapı
-<section className="relative min-h-[100vh] flex items-center">
-  {/* Arka plan görseli */}
-  <div className="absolute inset-0">
-    <EditableImage
-      src={heroImage}
-      className="w-full h-full object-cover"
-    />
-    {/* Koyu overlay - yazıların okunabilirliği için */}
-    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
-  </div>
-  
-  {/* İçerik - resmin üzerinde */}
-  <div className="relative z-10 container mx-auto text-center text-white">
-    <EditableText value={title} ... />
-    <EditableText value={subtitle} ... />
-    <EditableText value={description} ... />
-    {/* Butonlar */}
-  </div>
-</section>
-```
+### Aşama 1: Temel Yapı
+1. GeneratedContent type'ını güncelle
+2. Üç yeni sidebar bileşeni oluştur (boş iskelet)
+3. EditorToolbar'ı güncelle
+4. Project.tsx'e state'leri ekle
 
-## Template Örneği Yükleme (Gelecek Özellik)
+### Aşama 2: Customize Sidebar
+1. Collapsible menü listesi
+2. Colors alt paneli (renk seçici)
+3. Fonts alt paneli (dropdown)
+4. Corners alt paneli (seçenekler)
+5. Regenerate butonları
 
-Kullanıcıların hazır template yükleyebilmesi için:
+### Aşama 3: Page Settings Sidebar
+1. Title input + Regenerate
+2. Label input
+3. Show link toggle'ları
+4. SEO section
+5. Social image uploader
 
-1. Template dosyası formatı tanımla (JSON/YAML)
-2. Upload modal ekle
-3. Template parser oluştur
-4. Kod üreteci ekle
+### Aşama 4: Add Content Sidebar
+1. Page type seçici
+2. Blog post oluşturucu
+3. Folder sistemi (Phase 2)
 
-Bu özellik Phase 2 olarak eklenebilir.
+## UI/UX Detayları
+
+### Sidebar Stili
+- Width: 320px
+- Sağdan slide-in animasyonu
+- Koyu tema desteği
+- Accordion/collapsible menüler
+
+### Renk Seçici
+- Önceden tanımlı renk paletleri
+- Custom color picker
+- Renk preview'ı
+
+### Font Seçici
+- Google Fonts listesi
+- Font preview
+- Heading/Body ayrımı
 
 ## Beklenen Sonuç
 
-1. 4 farklı hero varyasyonu kullanılabilir
-2. Overlay hero ile yazı resmin üzerinde görünür
-3. Editor'dan layout değiştirilebilir
-4. Gelecekte daha fazla varyasyon eklenebilir
-5. Diğer section'lar için de benzer sistem uygulanabilir
+1. Customize butonuna tıklandığında site geneli ayarlar açılır
+2. Pages menüsünden sayfa seçildiğinde o sayfanın ayarları açılır
+3. Add butonuna tıklandığında yeni içerik ekleme paneli açılır
+4. Tüm paneller Durable.co tarzında, modern ve kullanıcı dostu
+5. Dark mode desteği
