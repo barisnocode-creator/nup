@@ -112,17 +112,15 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
         extractedData: formData.extractedData,
       };
 
-      const insertData = {
-        user_id: user.id,
-        name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
-        profession: formData.profession!,
-        status: 'draft',
-        form_data: projectFormData,
-      };
-
       const { data, error } = await supabase
         .from('projects')
-        .insert(insertData)
+        .insert([{
+          user_id: user.id,
+          name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
+          profession: formData.profession! as string,
+          status: 'draft' as const,
+          form_data: projectFormData as any,
+        }])
         .select('id')
         .single();
 
