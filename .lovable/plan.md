@@ -1,212 +1,227 @@
 
-# AI Destekli Görsel Oluşturma ve Detaylı Landing Page Planı
+# Website Yayınlama (Publish) Sistemi Planı
 
-## Sorun Analizi
+## Mevcut Durum
 
-Şu anda sistemde iki ana eksiklik var:
-
-1. **Görseller oluşturulmuyor**: `generate-images` edge function'ı hazır ancak hiçbir yerden çağrılmıyor
-2. **Landing page'ler basit**: Mesleğe özgü detaylı bölümler eksik
+Şu anda "Publish" butonu tıklandığında sadece bir upgrade modal açılıyor. Gerçek bir yayınlama sistemi mevcut değil:
+- Database'de yayınlama ile ilgili alanlar yok
+- Subdomain sistemi yok
+- Public erişim mekanizması yok
 
 ---
 
-## Çözüm Planı
+## Önerilen Yayınlama Sistemi
 
-### Adım 1: Görsel Oluşturma Entegrasyonu
+### Yayınlama Seçenekleri
 
-**Değişiklik:** `src/pages/Project.tsx`
+| Seçenek | Açıklama | Örnek URL |
+|---------|----------|-----------|
+| **Platform Subdomain** | Her site benzersiz bir subdomain alır | `klinik-adi.openlucius.app` |
+| **Custom Domain** (Premium) | Kullanıcı kendi domain'ini bağlar | `www.klinikadi.com` |
 
-Website içeriği oluşturulduktan sonra otomatik olarak görsel oluşturma işlemini başlat:
+---
 
-```
-generateWebsite() başarılı olduğunda → generate-images fonksiyonunu çağır (arka planda)
-```
+## Teknik Uygulama
 
-Eklenecek özellikler:
-- Görsel oluşturma durumu için yeni state (`generatingImages`)
-- Görseller hazırlanırken kullanıcıya bilgi mesajı
-- Görseller tamamlandığında sayfayı güncelle
+### 1. Database Değişiklikleri
 
-### Adım 2: "Görselleri Yenile" Butonu
-
-Kullanıcıların istedikleri zaman görselleri yeniden oluşturabilmesi için editör toolbar'ına buton ekle:
-
-```
-[🖼️ Generate Images] butonu → generate-images fonksiyonunu tetikler
+```sql
+ALTER TABLE projects ADD COLUMN subdomain TEXT UNIQUE;
+ALTER TABLE projects ADD COLUMN is_published BOOLEAN DEFAULT false;
+ALTER TABLE projects ADD COLUMN published_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE projects ADD COLUMN custom_domain TEXT;
 ```
 
-### Adım 3: Mesleğe Özgü Detaylı Bölümler
+### 2. Yeni Dosyalar
 
-**Yeni Bileşenler ve İçerikler:**
+| Dosya | Açıklama |
+|-------|----------|
+| `src/pages/PublicWebsite.tsx` | Yayınlanmış siteyi gösteren public sayfa |
+| `src/components/website-preview/PublishModal.tsx` | Yayınlama ayarları modal'ı |
+| `supabase/functions/check-subdomain/index.ts` | Subdomain müsaitlik kontrolü |
 
-| Meslek | Yeni Bölümler |
-|--------|---------------|
-| **Dişçi** | Tedavi galerisi, Önce/Sonra konsepti, Diş sağlığı istatistikleri |
-| **Doktor** | Uzmanlık alanları grid'i, Sağlık ipuçları bölümü, Muayene süreci |
-| **Eczacı** | İlaç kategorileri, Sağlık ürünleri, Danışmanlık hizmetleri |
+### 3. Güncellenen Dosyalar
 
-**Değişiklik:** `supabase/functions/generate-website/index.ts`
-
-Prompt'u zenginleştir:
-- Daha uzun ve detaylı açıklamalar iste
-- Mesleğe özgü terminoloji kullan
-- Testimonial/referans şablonları ekle
-- Çalışma saatleri ve konum detayları
-
-### Adım 4: UI Geliştirmeleri
-
-**Değişiklik:** Tüm sayfa bileşenleri
-
-| Dosya | Geliştirme |
+| Dosya | Değişiklik |
 |-------|------------|
-| `HomePage.tsx` | Hero görsel desteği zaten var, istatistik kartları ekle |
-| `AboutPage.tsx` | Ekip üyesi placeholder'ları, timeline bölümü |
-| `ServicesPage.tsx` | Hizmet kartlarına görsel desteği, fiyat kartı yapısı (bilgilendirme amaçlı) |
-| `ContactPage.tsx` | Harita placeholder, çalışma saatleri tablosu |
+| `src/pages/Project.tsx` | Publish butonunu gerçek işleve bağla |
+| `src/App.tsx` | Public website route'u ekle |
+| `src/components/website-preview/UpgradeModal.tsx` | Premium özellikler için güncelle |
 
 ---
 
-## Teknik Uygulama Detayları
+## Yayınlama Akışı
 
-### 1. Project.tsx Güncellemesi
-
-```typescript
-// Yeni state'ler
-const [generatingImages, setGeneratingImages] = useState(false);
-
-// Website oluşturulduktan sonra görselleri başlat
-const generateWebsite = async (projectId: string) => {
-  // ... mevcut kod ...
-  
-  if (data?.content) {
-    // Görselleri arka planda oluştur
-    generateImages(projectId);
-  }
-};
-
-// Yeni fonksiyon
-const generateImages = async (projectId: string) => {
-  setGeneratingImages(true);
-  try {
-    const { data } = await supabase.functions.invoke('generate-images', {
-      body: { projectId },
-    });
-    
-    if (data?.images) {
-      // generated_content'i güncelle
-      setProject(prev => prev ? {
-        ...prev,
-        generated_content: {
-          ...prev.generated_content,
-          images: data.images,
-        },
-      } : null);
-    }
-  } finally {
-    setGeneratingImages(false);
-  }
-};
-```
-
-### 2. Editör Toolbar'a Buton
-
-```typescript
-// Authenticated header içinde
-<Button 
-  variant="outline" 
-  size="sm"
-  onClick={() => generateImages(id)}
-  disabled={generatingImages}
->
-  {generatingImages ? (
-    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-  ) : (
-    <ImageIcon className="w-4 h-4 mr-2" />
-  )}
-  {generatingImages ? 'Generating...' : 'Add Images'}
-</Button>
-```
-
-### 3. Geliştirilmiş AI Prompt
-
-```typescript
-// generate-website/index.ts içinde
-const prompt = `
-...mevcut prompt...
-
-ADDITIONAL REQUIREMENTS FOR ${profession.toUpperCase()}:
-${profession === 'doctor' ? `
-- Include medical credentials section
-- Add patient care philosophy
-- Describe consultation process step by step
-- Include health statistics relevant to specialty
-` : profession === 'dentist' ? `
-- Describe dental procedures in patient-friendly language
-- Include smile transformation concepts
-- Add pediatric dentistry section if applicable
-- Emphasize pain-free treatment approaches
-` : `
-- List pharmacy service categories
-- Include health consultation services
-- Add medication management information
-- Describe prescription services process
-`}
-
-Make all content sound authentic and professional.
-`;
-```
-
-### 4. Yeni Sayfa Bölümleri
-
-**HomePage - İstatistik Bölümü:**
-```typescript
-// Yeni statistics section
-<section className="py-16">
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-    <StatCard value="10+" label="Years Experience" />
-    <StatCard value="5000+" label="Happy Patients" />
-    <StatCard value="15+" label="Services" />
-    <StatCard value="4.9" label="Rating" />
-  </div>
-</section>
-```
-
-**ServicesPage - Süreç Bölümü:**
-```typescript
-// Tedavi/hizmet süreci
-<section>
-  <h2>How It Works</h2>
-  <ProcessStep number={1} title="Book Consultation" />
-  <ProcessStep number={2} title="Initial Assessment" />
-  <ProcessStep number={3} title="Treatment Plan" />
-  <ProcessStep number={4} title="Follow-up Care" />
-</section>
+```text
+1. Kullanıcı "Publish" butonuna tıklar
+        |
+        v
+2. PublishModal açılır
+   - Subdomain girişi (benzersizlik kontrolü ile)
+   - Site önizleme linki
+   - Yayınla butonu
+        |
+        v
+3. Subdomain müsait mi kontrolü (edge function)
+        |
+        v
+4. Database güncellenir:
+   - subdomain = kullanıcının seçtiği
+   - is_published = true
+   - published_at = now()
+        |
+        v
+5. Kullanıcıya paylaşılabilir link gösterilir
+   - Kopyala butonu
+   - Yeni sekmede aç butonu
 ```
 
 ---
 
-## Dosya Değişiklikleri Özeti
+## Public Website Görüntüleme
 
-| Dosya | İşlem | Açıklama |
-|-------|-------|----------|
-| `src/pages/Project.tsx` | Güncelle | Görsel oluşturma entegrasyonu + buton |
-| `supabase/functions/generate-website/index.ts` | Güncelle | Zenginleştirilmiş prompt |
-| `src/components/website-preview/pages/HomePage.tsx` | Güncelle | İstatistik bölümü + görsel entegrasyonu |
-| `src/components/website-preview/pages/AboutPage.tsx` | Güncelle | Ekip ve timeline bölümleri |
-| `src/components/website-preview/pages/ServicesPage.tsx` | Güncelle | Süreç bölümü + görsel desteği |
-| `src/components/website-preview/pages/ContactPage.tsx` | Güncelle | Çalışma saatleri tablosu |
-| `src/types/generated-website.ts` | Güncelle | Yeni içerik alanları için tipler |
+### URL Yapısı
+
+```
+https://[subdomain].openlucius.app
+```
+
+veya (mevcut domain üzerinden):
+
+```
+https://yourapp.com/site/[subdomain]
+```
+
+### Public Sayfa Özellikleri
+
+- Giriş gerektirmez
+- WebsitePreview componentini read-only kullanır
+- SEO meta tagları
+- Analytics tracking devam eder
+
+---
+
+## Publish Modal Tasarımı
+
+```
+┌────────────────────────────────────────┐
+│  🌐 Publish Your Website               │
+├────────────────────────────────────────┤
+│                                        │
+│  Choose your website address:          │
+│                                        │
+│  ┌──────────────────┐.openlucius.app  │
+│  │ clinic-name      │                  │
+│  └──────────────────┘                  │
+│  ✓ Available                           │
+│                                        │
+│  Your website will be live at:         │
+│  https://clinic-name.openlucius.app    │
+│                                        │
+│  ┌─────────────────────────────────┐   │
+│  │         🚀 Publish Now          │   │
+│  └─────────────────────────────────┘   │
+│                                        │
+│  🔒 Want a custom domain?              │
+│  Upgrade to Premium →                  │
+│                                        │
+└────────────────────────────────────────┘
+```
+
+---
+
+## Dosya Detayları
+
+### PublishModal.tsx
+
+```typescript
+// Özellikler:
+- Subdomain input (auto-slug from business name)
+- Real-time availability check (debounced)
+- Validation (3-50 karakter, sadece harf/rakam/tire)
+- Publish butonu
+- Başarılı yayınlama sonrası share options
+```
+
+### PublicWebsite.tsx
+
+```typescript
+// URL: /site/:subdomain
+// Özellikler:
+- Subdomain'den projeyi çek (is_published = true)
+- WebsitePreview'i render et (isEditable = false)
+- 404 if not found or not published
+- Analytics tracking
+```
+
+### check-subdomain Edge Function
+
+```typescript
+// Input: { subdomain: string }
+// Output: { available: boolean, suggestion?: string }
+// Kontroller:
+- Mevcut subdomain'lerle çakışma
+- Reserved keywords (admin, www, api, etc.)
+- Format validation
+```
+
+---
+
+## Premium Özellikler (Gelecek)
+
+| Özellik | Free | Premium |
+|---------|------|---------|
+| Platform subdomain | ✓ | ✓ |
+| Custom domain | ✗ | ✓ |
+| Remove "Powered by" badge | ✗ | ✓ |
+| Analytics export | ✗ | ✓ |
+| Priority support | ✗ | ✓ |
+
+---
+
+## Güvenlik Önlemleri
+
+### RLS Policies
+
+```sql
+-- Public okuma (yayınlanmış siteler için)
+CREATE POLICY "Anyone can view published websites"
+ON projects FOR SELECT
+USING (is_published = true);
+
+-- Sadece site sahibi yayınlayabilir/güncelleyebilir
+CREATE POLICY "Owners can publish their websites"
+ON projects FOR UPDATE
+USING (auth.uid() = user_id);
+```
+
+### Subdomain Kuralları
+
+- Minimum 3, maksimum 50 karakter
+- Sadece küçük harf, rakam ve tire
+- Tire ile başlayamaz/bitemez
+- Reserved keywords engellenir: admin, api, www, mail, ftp, etc.
+
+---
+
+## Uygulama Sırası
+
+1. **Database migration** - Yeni kolonlar ekle
+2. **check-subdomain edge function** - Müsaitlik kontrolü
+3. **PublishModal component** - Kullanıcı arayüzü
+4. **PublicWebsite page** - Public görüntüleme
+5. **Project.tsx güncelleme** - Publish akışını bağla
+6. **App.tsx routing** - Public route ekle
+7. **Dashboard güncelleme** - Yayınlanmış siteleri göster
 
 ---
 
 ## Beklenen Sonuç
 
-Bu değişikliklerden sonra:
+Bu implementasyon sonrasında:
 
-1. **Otomatik Görsel Oluşturma**: Website oluşturulduğunda AI görseller de otomatik oluşturulacak
-2. **Manuel Görsel Yenileme**: Kullanıcılar isterlerse "Add Images" butonuyla yeni görseller oluşturabilecek
-3. **Profesyonel Landing Page'ler**: 
-   - Dişçi siteleri: Diş tedavileri, gülüş tasarımı konseptleri
-   - Doktor siteleri: Uzmanlık alanları, muayene süreci
-   - Eczacı siteleri: İlaç kategorileri, sağlık danışmanlığı
-4. **Zengin İçerik**: İstatistikler, süreç açıklamaları, testimonial şablonları
+1. Kullanıcılar sitelerini tek tıkla yayınlayabilecek
+2. Her site benzersiz bir subdomain alacak (örn: `dr-ahmet.openlucius.app`)
+3. Yayınlanan siteler herkese açık olacak
+4. Dashboard'da yayın durumu görünecek
+5. Premium kullanıcılar custom domain bağlayabilecek (gelecek faz)
