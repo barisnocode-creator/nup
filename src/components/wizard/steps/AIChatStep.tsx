@@ -12,24 +12,11 @@ interface ChatMessage {
   content: string;
 }
 
-interface ExtractedData {
-  businessName: string;
-  city: string;
-  country: string;
-  specialty: string;
-  yearsExperience: string;
-  services: string[];
-  targetAudience: string;
-  uniqueValue: string;
-  phone: string;
-  email: string;
-  workingHours: string;
-  additionalInfo: string;
-}
+import type { ExtractedBusinessData } from '@/types/wizard';
 
 interface AIChatStepProps {
   profession: Profession;
-  onComplete: (data: ExtractedData) => void;
+  onComplete: (data: ExtractedBusinessData) => void;
   onValidityChange: (isValid: boolean) => void;
 }
 
@@ -169,7 +156,7 @@ export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatS
     }
   };
 
-  const progressPercentage = Math.min((questionNumber / 10) * 100, 100);
+  const progressPercentage = Math.min((questionNumber / 5) * 100, 100);
 
   return (
     <div className="flex flex-col h-[400px]">
@@ -178,7 +165,7 @@ export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatS
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">AI Asistan</h2>
           <span className="text-sm text-muted-foreground">
-            Soru {Math.min(questionNumber, 10)}/10
+            Soru {Math.min(questionNumber, 5)}/5
           </span>
         </div>
         <Progress value={progressPercentage} className="h-2" />
