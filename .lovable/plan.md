@@ -1,185 +1,57 @@
 
+# Image Editor Sidebar Düzeltme Planı
 
-# Durable.co Tarzı Sağ Sidebar Editor Planı
+## Tespit Edilen Sorunlar
 
-## Hedef
+Kodu inceledikten sonra aşağıdaki sorunları tespit ettim:
 
-Ekran görüntülerindeki gibi, bir görsele veya düzenlenebilir elemana tıklandığında sağdan açılan bir editing panel oluşturmak.
+### 1. Sidebar Görünmeme Sorunu
+`ImageEditorSidebar` bileşeni `imageData` null olduğunda hiçbir şey render etmiyor (`if (!imageData) return null`). Bu doğru bir davranış, ancak sidebar'ın `isOpen` prop'u ile birlikte çalışması gerekiyor - şu anda sadece `imageData` varlığına bakıyor.
 
-## Mevcut Durum Analizi
+### 2. isOpen Kontrolü Eksik
+Sidebar component'inde `isOpen` prop'u CSS transition için kullanılıyor, ancak `imageData` null olduğunda tüm component null döndürülüyor. Bu, açılış/kapanış animasyonlarını engelliyor.
 
-Şu anda editör yapısı:
-- `EditorToolbar`: Üst toolbar (Customize, Pages, Add, Preview, Publish)
-- `EditableSection`: Hover'da mavi border + section badge gösteriyor
-- `EditableField`: Inline text editing yapıyor
-- Görseller için özel bir edit paneli YOK
+### 3. Template'den Props Geçişi Sorunlu
+`temp1/index.tsx` dosyasında `selectedImage` ve `onImageSelect` props'ları `FullLandingPage`'e geçiriliyor, ancak template'in kendisinde bu props'lar tanımlanmamış olabilir.
 
-## Durable.co Referans Özellikleri
+## Çözüm Planı
 
-Ekran görüntülerinden görülen özellikler:
+### Adım 1: ImageEditorSidebar'ı Düzelt
+- `isOpen` kontrolünü `imageData` kontrolünden ayır
+- Sidebar'ın her zaman DOM'da olmasını sağla (sadece gizle/göster)
 
-| Bileşen | Özellik |
-|---------|---------|
-| Panel Header | "< Image" başlığı + Done butonu |
-| Image Preview | Küçük thumbnail gösterim |
-| Regenerate/Change | AI ile yeni görsel veya mevcut değiştirme |
-| Alt Text | SEO için açıklama alanı |
-| Image Position | Horizontal/Vertical slider'lar |
-| Carousel Nav | 1/3, oklar ile geçiş |
+### Adım 2: TemplateProps'ı Kontrol Et
+- `types.ts` dosyasında `selectedImage` ve `onImageSelect` props'larının doğru tanımlandığından emin ol
 
-## Teknik Uygulama
+### Adım 3: temp1/index.tsx'i Güncelle
+- Props'ların doğru şekilde FullLandingPage'e geçirildiğinden emin ol
 
-### Yeni Bileşenler
+### Adım 4: Debug için Console Log Ekle
+- Geçici olarak console.log ekleyerek props akışını doğrula
 
-**1. ImageEditorSidebar.tsx**
-Görsele tıklandığında açılan ana sidebar:
-```
-- Slide-in animasyonla sağdan açılır
-- Width: 320px (kompakt ama kullanışlı)
-- Top: 56px (toolbar altında)
-- Z-index: 40 (overlay değil, yan panel)
-```
-
-**2. EditableImage.tsx**
-Tıklanabilir görsel wrapper:
-```
-- Görsel üzerinde hover'da edit ikonları
-- Tıklandığında sidebar'ı açar
-- Seçili durumda mavi border
-```
-
-### Sidebar İçeriği
-
-```text
-+------------------------+
-| < Image         Done   |
-+------------------------+
-| [Thumbnail Preview]    |
-| +--------------------+ |
-| |                    | |
-| |      (image)       | |
-| |                    | |
-| +--------------------+ |
-|                        |
-| [Regenerate] [Change]  |
-+------------------------+
-| Alt text               |
-| +--------------------+ |
-| | dentist treatment  | |
-| +--------------------+ |
-| (SEO description)      |
-+------------------------+
-| Image position         |
-| Horizontal  ----o----  |
-| Vertical    ---o-----  |
-+------------------------+
-```
-
-### State Yönetimi
-
-Project.tsx'e eklenecek state:
-```typescript
-const [selectedImage, setSelectedImage] = useState<{
-  type: 'hero' | 'about' | 'gallery' | 'cta';
-  index?: number;
-  imagePath: string;
-  currentUrl: string;
-} | null>(null);
-```
-
-### Props Akışı
-
-```text
-Project.tsx
-    │
-    ├── selectedImage state
-    ├── setSelectedImage callback
-    │
-    ▼
-WebsitePreview
-    │
-    ├── onImageSelect callback
-    │
-    ▼
-Template (temp1)
-    │
-    ├── onImageSelect geçir
-    │
-    ▼
-HeroSplitSection / ImageGallerySection
-    │
-    └── EditableImage wrapper kullan
-```
-
-### Görsel Değiştirme Seçenekleri
-
-**Regenerate**: AI ile yeni görsel oluştur
-```typescript
-// generate-images edge function'ı çağır
-// Belirli bir slot için yeni görsel üret
-```
-
-**Change**: Manuel seçim
-- Galeri modal açılır
-- Pixabay'dan arama yapılabilir
-- Kullanıcı seçer
-
-**Position Sliders**: object-position CSS
-```typescript
-// Horizontal: object-position-x (0-100%)
-// Vertical: object-position-y (0-100%)
-```
-
-## Dosya Değişiklikleri
+## Teknik Değişiklikler
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/website-preview/ImageEditorSidebar.tsx` | YENİ - Ana sidebar bileşeni |
-| `src/components/website-preview/EditableImage.tsx` | YENİ - Tıklanabilir görsel wrapper |
-| `src/pages/Project.tsx` | selectedImage state + sidebar render |
-| `src/components/website-preview/WebsitePreview.tsx` | onImageSelect prop ekle |
-| `src/templates/types.ts` | onImageSelect type ekle |
-| `src/templates/temp1/index.tsx` | onImageSelect'i geçir |
-| `src/templates/temp1/sections/HeroSplitSection.tsx` | EditableImage kullan |
-| `src/templates/temp1/sections/ImageGallerySection.tsx` | EditableImage kullan |
-| `src/templates/temp1/sections/AboutInlineSection.tsx` | EditableImage kullan |
-| `src/templates/temp1/sections/CTASection.tsx` | EditableImage kullan |
+| `ImageEditorSidebar.tsx` | `imageData` null kontrolünü kaldır, `isOpen` ile birlikte çalışacak şekilde güncelle |
+| `types.ts` | Props tanımlarını doğrula |
+| `temp1/index.tsx` | Props geçişini doğrula ve düzelt |
 
-## ImageEditorSidebar Tasarımı
+## Kod Değişiklikleri
 
+### ImageEditorSidebar.tsx
 ```typescript
-interface ImageEditorSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  imageData: {
-    type: string;
-    index?: number;
-    imagePath: string;
-    currentUrl: string;
-    altText?: string;
-  } | null;
-  onRegenerate: () => void;
-  onChangeImage: (newUrl: string) => void;
-  onUpdateAltText: (text: string) => void;
-  onUpdatePosition: (x: number, y: number) => void;
-  isRegenerating?: boolean;
-}
+// ESKİ:
+if (!imageData) return null;
+
+// YENİ:
+// Component her zaman render olacak, ama içerik imageData yoksa gösterilmeyecek
 ```
 
-## Animasyon
-
-Sheet bileşeni kullanarak sağdan slide-in:
-```css
-/* Overlay YOK - sadece panel kayar */
-transform: translateX(100%) -> translateX(0)
-transition: 300ms ease-out
-```
+Sidebar'ın DOM'da kalması lazım ki CSS transition'lar çalışsın. `imageData` null olduğunda içeriği gizleyeceğiz ama container'ı tutacağız.
 
 ## Beklenen Sonuç
 
-- Görsele tıklandığında sağdan 320px genişliğinde panel açılır
-- Panel içinde thumbnail, Regenerate/Change butonları, alt text ve position slider'ları
-- Done butonuyla kapatılır
-- Website preview hala görünür (overlay değil yan panel)
-- Durable.co'daki gibi temiz ve kullanışlı UX
-
+- Görsellere tıklandığında sağ taraftan sidebar açılacak
+- Sidebar içinde görsel önizleme, Regenerate/Change butonları, Alt text ve position slider'ları görünecek
+- Done butonuyla sidebar kapanacak
