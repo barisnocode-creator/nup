@@ -11,55 +11,75 @@ interface ChatMessage {
 }
 
 interface RequestBody {
-  profession: string;
+  profession: string; // Now represents sector
   messages: ChatMessage[];
   questionNumber: number;
 }
 
-const PROFESSION_LABELS: Record<string, string> = {
-  doctor: 'Doktor',
-  dentist: 'Diş Hekimi',
-  pharmacist: 'Eczacı',
+const SECTOR_LABELS: Record<string, string> = {
+  service: 'Hizmet Sektörü',
+  retail: 'Perakende & Satış',
+  food: 'Yiyecek & İçecek',
+  creative: 'Kreatif & Medya',
+  technology: 'Teknoloji',
+  other: 'Genel',
 };
 
-const getSystemPrompt = (profession: string) => {
-  const professionLabel = PROFESSION_LABELS[profession] || profession;
+const getSystemPrompt = (sector: string) => {
+  const sectorLabel = SECTOR_LABELS[sector] || sector;
   
-  return `Sen bir profesyonel web sitesi danışmanısın. ${professionLabel} için web sitesi oluşturmak üzere kullanıcıyla sohbet ediyorsun.
+  return `Sen bir profesyonel web sitesi danışmanısın. ${sectorLabel} alanında faaliyet gösteren bir işletme için web sitesi oluşturmak üzere kullanıcıyla sohbet ediyorsun.
 
 GÖREV:
-- Toplam 10 soru sor (birer birer, sırayla)
-- Her seferde SADECE BİR soru sor
-- Sorular ${professionLabel} mesleğine özel olsun
+- Toplam 5 detaylı soru sor (birer birer, sırayla)
+- Her seferde SADECE BİR soru sor (birden fazla alt soru içerebilir)
+- Sorular kurulacak web sitesine yönelik olsun
 - Doğal, samimi ve profesyonel bir dil kullan
 - Kullanıcının cevabını aldıktan sonra kısa bir onay ver ve sonraki soruya geç
 - Türkçe konuş
 
 SORU KONULARI (bu sırayla sor):
-1. İşletme/Klinik/Eczane adı
-2. Şehir ve ülke (konum)
-3. Uzmanlık alanı veya ana hizmet
-4. Mesleki deneyim süresi (yıl)
-5. Sunulan hizmetler (en az 3 tane)
-6. Hedef müşteri/hasta profili
-7. Rekabet avantajı (sizi farklı kılan)
-8. İletişim bilgileri (telefon ve e-posta)
-9. Çalışma saatleri
-10. Web sitesinde öne çıkarmak istediğiniz ek bilgiler
+
+SORU 1/5: İşletme Kimliği
+- İşletmenizin adı nedir?
+- Tam olarak hangi sektörde/alanda faaliyet gösteriyorsunuz?
+- Hangi şehir/ülkede bulunuyorsunuz?
+- Kaç yıldır bu alanda faaliyet gösteriyorsunuz?
+
+SORU 2/5: Sunulan Değer
+- Ana ürün veya hizmetleriniz nelerdir? (en az 3 tane)
+- Hedef kitleniz kimler? (yaş, gelir düzeyi, ilgi alanları)
+- Sizi rakiplerinizden ayıran en önemli 2-3 özellik nedir?
+
+SORU 3/5: İletişim & Erişim
+- Telefon numaranız?
+- E-posta adresiniz?
+- Çalışma günleri ve saatleriniz?
+- Fiziksel adresiniz var mı? (varsa detay)
+
+SORU 4/5: Marka Hikayesi
+- İşletmeniz nasıl kuruldu? (kısa hikaye)
+- Vizyonunuz ve değerleriniz neler?
+- Elde ettiğiniz önemli başarılar veya sertifikalar var mı?
+
+SORU 5/5: Site Hedefleri
+- Web sitenizden ne bekliyorsunuz? (bilgilendirme, satış, randevu vb.)
+- Ziyaretçilerin sitede yapmasını istediğiniz en önemli aksiyon nedir?
+- Öne çıkarmak istediğiniz ek bilgiler var mı?
 
 ÖNEMLİ KURALLAR:
-- İlk mesajda kendini tanıt ve 1. soruyu sor
-- Her cevaptan sonra kısaca onay ver ("Harika!", "Anladım!", vb.) ve hemen sonraki soruyu sor
-- Soru numarasını belirt: "Soru 3/10:" gibi
-- 10. soru cevaplandıktan sonra "CHAT_COMPLETE" yaz ve ardından toplanan tüm bilgileri JSON formatında özetle
+- İlk mesajda kendini kısaca tanıt ve 1. soruyu sor
+- Her cevaptan sonra kısaca onay ver ("Harika!", "Anladım!", vb.) ve hemen sonraki soruya geç
+- Soru numarasını belirt: "Soru 2/5:" gibi
+- 5. soru cevaplandıktan sonra "CHAT_COMPLETE" yaz ve ardından toplanan tüm bilgileri JSON formatında özetle
 
-JSON FORMATI (10. sorudan sonra):
+JSON FORMATI (5. sorudan sonra):
 CHAT_COMPLETE
 {
   "businessName": "...",
+  "sector": "...",
   "city": "...",
   "country": "...",
-  "specialty": "...",
   "yearsExperience": "...",
   "services": ["...", "...", "..."],
   "targetAudience": "...",
@@ -67,6 +87,12 @@ CHAT_COMPLETE
   "phone": "...",
   "email": "...",
   "workingHours": "...",
+  "address": "...",
+  "story": "...",
+  "vision": "...",
+  "achievements": "...",
+  "siteGoals": "...",
+  "mainCTA": "...",
   "additionalInfo": "..."
 }`;
 };
@@ -83,16 +109,16 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { profession, messages, questionNumber }: RequestBody = await req.json();
+    const { profession: sector, messages, questionNumber }: RequestBody = await req.json();
 
-    if (!profession) {
-      throw new Error('Profession is required');
+    if (!sector) {
+      throw new Error('Sector is required');
     }
 
-    console.log(`[wizard-chat] Profession: ${profession}, Question: ${questionNumber}, Messages: ${messages.length}`);
+    console.log(`[wizard-chat] Sector: ${sector}, Question: ${questionNumber}, Messages: ${messages.length}`);
 
     // Build the conversation with system prompt
-    const systemPrompt = getSystemPrompt(profession);
+    const systemPrompt = getSystemPrompt(sector);
     const conversationMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...messages,
@@ -163,8 +189,8 @@ serve(async (req) => {
       cleanResponse += '\n\n✨ Harika! Tüm bilgileri topladım. Şimdi web sitenizi oluşturmaya hazırız!';
     }
 
-    // Determine next question number
-    const nextQuestionNumber = isComplete ? 10 : Math.min(questionNumber + 1, 10);
+    // Determine next question number (now 5 total instead of 10)
+    const nextQuestionNumber = isComplete ? 5 : Math.min(questionNumber + 1, 5);
 
     return new Response(
       JSON.stringify({

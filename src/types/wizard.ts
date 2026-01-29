@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-// Profession types
-export type Profession = 'doctor' | 'dentist' | 'pharmacist';
+// Sector types (previously Profession)
+export type Profession = 'service' | 'retail' | 'food' | 'creative' | 'technology' | 'other';
 
-// Step 1: Profession Selection
+// Step 1: Sector Selection
 export const professionSchema = z.object({
-  profession: z.enum(['doctor', 'dentist', 'pharmacist'], {
-    required_error: 'Please select your profession',
+  profession: z.enum(['service', 'retail', 'food', 'creative', 'technology', 'other'], {
+    required_error: 'Lütfen bir sektör seçin',
   }),
 });
 
@@ -47,9 +47,9 @@ export const preferencesSchema = z.object({
 // AI Chat extracted data
 export interface ExtractedBusinessData {
   businessName: string;
+  sector: string;
   city: string;
   country: string;
-  specialty: string;
   yearsExperience: string;
   services: string[];
   targetAudience: string;
@@ -57,6 +57,12 @@ export interface ExtractedBusinessData {
   phone: string;
   email: string;
   workingHours: string;
+  address: string;
+  story: string;
+  vision: string;
+  achievements: string;
+  siteGoals: string;
+  mainCTA: string;
   additionalInfo: string;
 }
 

@@ -1,4 +1,4 @@
-import { Stethoscope, Smile, Pill } from 'lucide-react';
+import { Briefcase, ShoppingBag, UtensilsCrossed, Palette, Monitor, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Profession } from '@/types/wizard';
 
@@ -8,24 +8,42 @@ interface ProfessionStepProps {
   error?: string;
 }
 
-const professions = [
+const sectors = [
   {
-    id: 'doctor' as const,
-    label: 'Doctor',
-    description: 'Medical practitioner or physician',
-    icon: Stethoscope,
+    id: 'service' as const,
+    label: 'Hizmet Sektörü',
+    description: 'Danışmanlık, eğitim, tamir vb.',
+    icon: Briefcase,
   },
   {
-    id: 'dentist' as const,
-    label: 'Dentist',
-    description: 'Dental care professional',
-    icon: Smile,
+    id: 'retail' as const,
+    label: 'Perakende & Satış',
+    description: 'Mağaza, e-ticaret, showroom',
+    icon: ShoppingBag,
   },
   {
-    id: 'pharmacist' as const,
-    label: 'Pharmacist',
-    description: 'Pharmacy and medications expert',
-    icon: Pill,
+    id: 'food' as const,
+    label: 'Yiyecek & İçecek',
+    description: 'Restoran, kafe, catering',
+    icon: UtensilsCrossed,
+  },
+  {
+    id: 'creative' as const,
+    label: 'Kreatif & Medya',
+    description: 'Tasarım, fotoğraf, video',
+    icon: Palette,
+  },
+  {
+    id: 'technology' as const,
+    label: 'Teknoloji',
+    description: 'Yazılım, IT, dijital hizmetler',
+    icon: Monitor,
+  },
+  {
+    id: 'other' as const,
+    label: 'Diğer',
+    description: 'Diğer tüm sektörler',
+    icon: Building2,
   },
 ];
 
@@ -33,22 +51,22 @@ export function ProfessionStep({ value, onChange, error }: ProfessionStepProps) 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">What's your profession?</h2>
+        <h2 className="text-2xl font-bold">Hangi sektörde faaliyet gösteriyorsunuz?</h2>
         <p className="text-muted-foreground">
-          Select your professional field to personalize your website
+          Web sitenizi kişiselleştirmek için sektörünüzü seçin
         </p>
       </div>
 
-      <div className="grid gap-4">
-        {professions.map((profession) => {
-          const Icon = profession.icon;
-          const isSelected = value === profession.id;
+      <div className="grid gap-3">
+        {sectors.map((sector) => {
+          const Icon = sector.icon;
+          const isSelected = value === sector.id;
 
           return (
             <button
-              key={profession.id}
+              key={sector.id}
               type="button"
-              onClick={() => onChange(profession.id)}
+              onClick={() => onChange(sector.id)}
               className={cn(
                 'flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
                 'hover:border-primary/50 hover:bg-accent/50',
@@ -59,29 +77,29 @@ export function ProfessionStep({ value, onChange, error }: ProfessionStepProps) 
             >
               <div
                 className={cn(
-                  'w-14 h-14 rounded-xl flex items-center justify-center transition-colors',
+                  'w-12 h-12 rounded-xl flex items-center justify-center transition-colors',
                   isSelected ? 'gradient-hero' : 'bg-muted'
                 )}
               >
                 <Icon
                   className={cn(
-                    'w-7 h-7 transition-colors',
+                    'w-6 h-6 transition-colors',
                     isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
                   )}
                 />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">{profession.label}</h3>
-                <p className="text-sm text-muted-foreground">{profession.description}</p>
+                <h3 className="font-semibold">{sector.label}</h3>
+                <p className="text-sm text-muted-foreground">{sector.description}</p>
               </div>
               <div
                 className={cn(
-                  'w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors',
+                  'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors',
                   isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/30'
                 )}
               >
                 {isSelected && (
-                  <div className="w-2.5 h-2.5 rounded-full bg-primary-foreground" />
+                  <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                 )}
               </div>
             </button>

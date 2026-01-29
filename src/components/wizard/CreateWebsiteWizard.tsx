@@ -59,8 +59,6 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
         email: extractedData.email,
       },
       professionalDetails: {
-        specialty: extractedData.specialty,
-        yearsExperience: extractedData.yearsExperience,
         services: extractedData.services,
       },
     }));
