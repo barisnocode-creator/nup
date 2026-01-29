@@ -28,69 +28,118 @@ interface FormData {
   };
 }
 
+function getProfessionSpecificInstructions(profession: string, details: FormData['professionalDetails']): string {
+  if (profession === 'doctor') {
+    return `
+PROFESSION-SPECIFIC REQUIREMENTS FOR DOCTOR:
+- Specialty: ${details?.specialty || 'General Practice'}
+- Experience: ${details?.yearsExperience || '5+'} years
+- Include detailed medical credentials and qualifications
+- Add patient care philosophy section
+- Describe consultation process step by step (Initial Assessment → Diagnosis → Treatment Plan → Follow-up)
+- Include health statistics relevant to the specialty
+- Use medical terminology appropriately but explain in patient-friendly language
+- Add testimonial placeholders mentioning specific treatments
+- Include "What to Expect" section for first-time patients
+- Generate statistics: Years of Experience, Patients Treated, Specializations, Success Rate`;
+  }
+  
+  if (profession === 'dentist') {
+    return `
+PROFESSION-SPECIFIC REQUIREMENTS FOR DENTIST:
+- Services: ${details?.services?.join(', ') || 'General Dentistry'}
+- Describe dental procedures in patient-friendly, non-scary language
+- Include smile transformation concepts and cosmetic dentistry benefits
+- Add pediatric dentistry section if applicable
+- Emphasize pain-free and comfortable treatment approaches
+- Include before/after concept descriptions for treatments
+- Add "First Visit Guide" for new patients
+- Generate statistics: Years of Experience, Smiles Transformed, Dental Procedures, Patient Satisfaction
+- Include sections about modern dental technology and equipment
+- Mention emergency dental services availability`;
+  }
+  
+  // Pharmacist
+  return `
+PROFESSION-SPECIFIC REQUIREMENTS FOR PHARMACIST:
+- Pharmacy Type: ${details?.pharmacyType || 'Community Pharmacy'}
+- List detailed pharmacy service categories (Prescription Services, OTC Medications, Health Consultations)
+- Include health consultation and medication counseling services
+- Add medication management and drug interaction information
+- Describe prescription services process clearly
+- Include sections about health screenings and vaccinations if applicable
+- Generate statistics: Years Serving Community, Medications Dispensed, Health Consultations, Customer Satisfaction
+- Add wellness product categories (Vitamins, Supplements, Personal Care)
+- Include information about medication delivery services
+- Mention pharmacist availability for health questions`;
+}
+
 function buildPrompt(profession: string, formData: FormData): string {
   const businessInfo = formData.businessInfo;
   const details = formData.professionalDetails;
   const prefs = formData.websitePreferences;
 
-  const professionDetails =
-    profession === "doctor"
-      ? `Medical Specialty: ${details?.specialty || "General Practice"}
-Years of Experience: ${details?.yearsExperience || "5+"}`
-      : profession === "dentist"
-        ? `Dental Services: ${details?.services?.join(", ") || "General Dentistry"}`
-        : `Pharmacy Type: ${details?.pharmacyType || "Local/Community"}`;
+  const professionInstructions = getProfessionSpecificInstructions(profession, details);
 
   const blogTopics = profession === "doctor"
-    ? "health tips, preventive care advice, common medical conditions explained, wellness guidance"
+    ? "health tips, preventive care advice, common medical conditions explained, wellness guidance, seasonal health advice"
     : profession === "dentist"
-      ? "oral hygiene tips, dental procedures explained, smile care advice, dental health for families"
-      : "medication guides, health supplements information, wellness tips, pharmacy services explained";
+      ? "oral hygiene tips, dental procedures explained, smile care advice, dental health for families, cosmetic dentistry trends"
+      : "medication guides, health supplements information, wellness tips, pharmacy services explained, seasonal health products";
 
   return `You are a professional website content writer specializing in healthcare websites.
 
-Generate comprehensive website content for a ${profession}'s informational website with the following details:
+Generate comprehensive, detailed, and authentic website content for a ${profession}'s informational website.
 
-Business Name: ${businessInfo?.businessName || "Healthcare Practice"}
-Location: ${businessInfo?.city || "City"}, ${businessInfo?.country || "Country"}
-Contact Phone: ${businessInfo?.phone || ""}
-Contact Email: ${businessInfo?.email || ""}
-${professionDetails}
+BUSINESS INFORMATION:
+- Business Name: ${businessInfo?.businessName || "Healthcare Practice"}
+- Location: ${businessInfo?.city || "City"}, ${businessInfo?.country || "Country"}
+- Contact Phone: ${businessInfo?.phone || ""}
+- Contact Email: ${businessInfo?.email || ""}
 
-Website Preferences:
-- Language: ${prefs?.language || "English"}
-- Tone: ${prefs?.tone || "professional"} (use this tone throughout)
-- This is an INFORMATIONAL website only - NO prices, NO e-commerce, NO booking systems
+${professionInstructions}
 
-Generate content for 5 pages (Home, About, Services, Contact, and Blog) in JSON format. Each page should have compelling, professional content appropriate for a healthcare ${profession}.
+WEBSITE PREFERENCES:
+- Language: ${prefs?.language || "English"} - ALL content MUST be in this language
+- Tone: ${prefs?.tone || "professional"} - use this tone consistently throughout
+- This is INFORMATIONAL only - NO prices, NO e-commerce, NO booking systems
 
-IMPORTANT RULES:
-1. All content must be in ${prefs?.language || "English"}
-2. Use a ${prefs?.tone || "professional"} tone throughout
-3. No pricing information
-4. No "book now" or appointment booking CTAs
-5. Focus on building trust and providing information
-6. Include relevant sections for each page
-7. Make content specific to the ${profession} profession
-8. Generate 3 blog posts about ${blogTopics}
-9. Each blog post should have 3-4 paragraphs of detailed, helpful content
-10. Include an FAQ section in services with 3-4 common questions
+CONTENT REQUIREMENTS:
+1. ALL content must be in ${prefs?.language || "English"}
+2. Use ${prefs?.tone || "professional"} tone throughout
+3. NO pricing information anywhere
+4. NO "book now" or appointment booking CTAs
+5. Focus on building trust and providing valuable information
+6. Make content specific, detailed, and authentic for ${profession}
+7. Include compelling statistics section with 4 key metrics
+8. Generate 3-5 detailed blog posts about ${blogTopics}
+9. Each blog post should have 4-5 paragraphs of genuinely helpful content
+10. Include FAQ section with 4-5 common questions and detailed answers
+11. Make highlights section have 4-6 items with detailed descriptions
+12. Services should have 5-8 detailed service descriptions
+13. Add a process/workflow section describing how patients/customers interact
 
 Return ONLY valid JSON in this exact format:
 {
   "pages": {
     "home": {
       "hero": {
-        "title": "string (compelling headline)",
-        "subtitle": "string (value proposition)",
-        "description": "string (2-3 sentences about the practice)"
+        "title": "string (compelling, benefit-focused headline)",
+        "subtitle": "string (clear value proposition)",
+        "description": "string (2-3 sentences about what makes this practice special)"
       },
       "welcome": {
-        "title": "string",
-        "content": "string (detailed paragraph about welcoming patients)"
+        "title": "string (welcoming headline)",
+        "content": "string (2-3 paragraph detailed welcome message)"
       },
       "highlights": [
-        { "title": "string", "description": "string (2-3 sentences)", "icon": "heart|shield|clock|star|users|award" }
+        { "title": "string", "description": "string (2-3 detailed sentences)", "icon": "heart|shield|clock|star|users|award" }
+      ],
+      "statistics": [
+        { "value": "string (e.g., '15+')", "label": "string (e.g., 'Years Experience')" }
+      ],
+      "process": [
+        { "step": 1, "title": "string", "description": "string (what happens at this step)" }
       ]
     },
     "about": {
@@ -100,15 +149,18 @@ Return ONLY valid JSON in this exact format:
       },
       "story": {
         "title": "string",
-        "content": "string (2-3 paragraphs about the practice history and mission)"
+        "content": "string (3-4 detailed paragraphs about history, mission, and vision)"
       },
       "values": [
-        { "title": "string", "description": "string (1-2 sentences)" }
+        { "title": "string", "description": "string (2-3 sentences explaining the value)" }
       ],
       "team": {
         "title": "string",
-        "description": "string (paragraph about the team)"
-      }
+        "description": "string (paragraph about the professional team)"
+      },
+      "timeline": [
+        { "year": "string", "title": "string", "description": "string" }
+      ]
     },
     "services": {
       "hero": {
@@ -117,13 +169,16 @@ Return ONLY valid JSON in this exact format:
       },
       "intro": {
         "title": "string",
-        "content": "string (overview of services)"
+        "content": "string (detailed overview of services and approach)"
       },
       "servicesList": [
-        { "title": "string", "description": "string (2-3 sentences)", "icon": "stethoscope|pill|smile|activity|microscope|syringe|heart|brain|eye" }
+        { "title": "string", "description": "string (3-4 sentences describing the service)", "icon": "stethoscope|pill|smile|activity|microscope|syringe|heart|brain|eye" }
+      ],
+      "process": [
+        { "step": 1, "title": "string", "description": "string" }
       ],
       "faq": [
-        { "question": "string", "answer": "string (helpful answer)" }
+        { "question": "string", "answer": "string (detailed, helpful answer)" }
       ]
     },
     "contact": {
@@ -132,36 +187,39 @@ Return ONLY valid JSON in this exact format:
         "subtitle": "string"
       },
       "info": {
-        "address": "string (use provided city/country)",
-        "phone": "string (use provided phone)",
-        "email": "string (use provided email)",
-        "hours": "string (typical business hours)"
+        "address": "string (full address using provided location)",
+        "phone": "string",
+        "email": "string",
+        "hours": "string (detailed working hours)"
       },
       "form": {
         "title": "string",
         "subtitle": "string"
-      }
+      },
+      "workingHours": [
+        { "day": "string", "hours": "string" }
+      ]
     },
     "blog": {
       "hero": {
-        "title": "string (e.g., 'Health Insights & Tips')",
-        "subtitle": "string (e.g., 'Stay informed with our latest articles')"
+        "title": "string",
+        "subtitle": "string"
       },
       "posts": [
         {
           "id": "post-1",
-          "title": "string (engaging article title)",
-          "excerpt": "string (2-3 sentence summary)",
-          "content": "string (3-4 detailed paragraphs with useful health information)",
-          "category": "string (e.g., 'Health Tips', 'Wellness', 'Prevention')",
+          "title": "string (engaging, SEO-friendly title)",
+          "excerpt": "string (compelling 2-3 sentence summary)",
+          "content": "string (4-5 detailed paragraphs with genuinely useful information)",
+          "category": "string",
           "publishedAt": "2024-01-15"
         }
       ]
     }
   },
   "metadata": {
-    "siteName": "string (business name)",
-    "tagline": "string (short tagline)",
+    "siteName": "string",
+    "tagline": "string (memorable tagline)",
     "seoDescription": "string (meta description for SEO, 150-160 characters)"
   }
 }`;

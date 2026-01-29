@@ -125,6 +125,45 @@ export function ContactPage({ content, isDark, isNeutral, isEditable = false, on
                   </div>
                 </div>
               </div>
+
+              {/* Working Hours Table */}
+              {content.workingHours && content.workingHours.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="font-semibold mb-4">Detailed Schedule</h3>
+                  <div className={`rounded-xl ${cardBg} border ${cardBorder} overflow-hidden`}>
+                    <table className="w-full">
+                      <tbody>
+                        {content.workingHours.map((item, index) => (
+                          <tr 
+                            key={index}
+                            className={`border-b last:border-b-0 ${isDark ? 'border-slate-700' : 'border-gray-100'}`}
+                          >
+                            <td className={`px-4 py-3 font-medium ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                              {item.day}
+                            </td>
+                            <td className={`px-4 py-3 text-right ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                              {item.hours}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Map Placeholder */}
+              <div className="mt-8">
+                <h3 className="font-semibold mb-4">Find Us</h3>
+                <div className={`h-48 rounded-xl ${isDark ? 'bg-slate-700' : 'bg-gray-200'} flex items-center justify-center`}>
+                  <div className="text-center">
+                    <MapPin className={`w-8 h-8 mx-auto mb-2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
+                    <p className={`text-sm ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                      Map placeholder
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Contact Form (Display Only) */}
@@ -159,6 +198,17 @@ export function ContactPage({ content, isDark, isNeutral, isEditable = false, on
                 </div>
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
+                    Phone Number
+                  </label>
+                  <input 
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    disabled
+                    className={`w-full px-4 py-3 rounded-lg border ${inputBg} cursor-not-allowed opacity-75`}
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-slate-300' : 'text-gray-700'}`}>
                     Message
                   </label>
                   <textarea 
@@ -174,6 +224,9 @@ export function ContactPage({ content, isDark, isNeutral, isEditable = false, on
                 >
                   Send Message
                 </button>
+                <p className={`text-xs text-center ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                  This form is for preview only. Contact functionality available in premium version.
+                </p>
               </div>
             </div>
           </div>

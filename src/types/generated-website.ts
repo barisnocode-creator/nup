@@ -8,6 +8,28 @@ export interface BlogPost {
   publishedAt: string;
 }
 
+export interface Statistic {
+  value: string;
+  label: string;
+}
+
+export interface ProcessStep {
+  step: number;
+  title: string;
+  description: string;
+}
+
+export interface TimelineItem {
+  year: string;
+  title: string;
+  description: string;
+}
+
+export interface WorkingHoursItem {
+  day: string;
+  hours: string;
+}
+
 export interface GeneratedContent {
   pages: {
     home: {
@@ -25,6 +47,8 @@ export interface GeneratedContent {
         description: string;
         icon: string;
       }>;
+      statistics?: Statistic[];
+      process?: ProcessStep[];
     };
     about: {
       hero: {
@@ -43,6 +67,7 @@ export interface GeneratedContent {
         title: string;
         description: string;
       };
+      timeline?: TimelineItem[];
     };
     services: {
       hero: {
@@ -58,6 +83,7 @@ export interface GeneratedContent {
         description: string;
         icon: string;
       }>;
+      process?: ProcessStep[];
       faq?: Array<{
         question: string;
         answer: string;
@@ -78,6 +104,7 @@ export interface GeneratedContent {
         title: string;
         subtitle: string;
       };
+      workingHours?: WorkingHoursItem[];
     };
     blog?: {
       hero: {
