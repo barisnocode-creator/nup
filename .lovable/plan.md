@@ -1,118 +1,111 @@
 
 
-# Durable Benzeri Dashboard Arayüzü Planı
+# Lovable AI ile AI Chatbot Wizard Implementasyonu
 
-## Genel Bakış
+## Mevcut Durum
 
-Mevcut basit Dashboard'u, Durable'ın profesyonel arayüzüne benzer şekilde yeniden tasarlayacağız. Sizin ürününüz sağlık profesyonelleri için web sitesi oluşturucu olduğundan, bazı özellikleri uyarlayacağız.
+| Bileşen | Durum |
+|---------|-------|
+| LOVABLE_API_KEY | Zaten tanımlı |
+| AI Gateway | https://ai.gateway.lovable.dev/v1/chat/completions |
+| Model | google/gemini-3-flash-preview (varsayılan) |
 
-## Durable Dashboard Analizi (Ekran Görüntüsünden)
+Ekstra API key eklemeye **GEREK YOK**!
 
-| Bileşen | Durable'da | Open Lucius'ta Karşılığı |
-|---------|-----------|-------------------------|
-| Sol Sidebar | Home, Website, Contacts, Invoices, Studio, Chats | Home, Website, Settings, Help |
-| Üst Karşılama | "Good afternoon, welcome to Durable" | "Günaydın, Open Lucius'a hoş geldiniz" |
-| Website Önizleme | Preview kartı + durum badge + Edit butonu | Aynı yapı |
-| Get Started Checklist | 5 adımlı checklist | "Başlangıç Rehberi" |
-| Latest Contacts | Kişi listesi | (Şimdilik dahil etmeyeceğiz) |
-| Alt Kartlar | Invoices, Chats, Assets | (Open Lucius'a uygun değil) |
-| Upgrade Kartı | Sol sidebar altı | Aynı yapı |
-
-## Uyarlanmış Open Lucius Dashboard Yapısı
+## Yeni Wizard Akışı
 
 ```text
-+------------------+--------------------------------+------------------+
-|                  |                                |                  |
-|   SOL SIDEBAR    |        ANA IÇERIK              |   SAĞ SIDEBAR    |
-|                  |                                |                  |
-|  - Logo          |  "Günaydın, [isim]"            |  Başlangıç       |
-|  - Home          |  "Open Lucius'a hoş geldiniz"  |  Rehberi         |
-|  - Website       |                                |                  |
-|  - Analytics     |  +-------------------------+   |  [x] Website     |
-|  - Settings      |  | Website Preview Card    |   |  [ ] Yayınla     |
-|  - Help          |  | [Durumu] [Edit butonu]  |   |  [ ] Analitik    |
-|                  |  +-------------------------+   |  [ ] Özelleştir  |
-|  --------------- |                                |                  |
-|  Upgrade Card    |                                |                  |
-+------------------+--------------------------------+------------------+
+Adım 1: Meslek Seçimi (mevcut)
+         ↓
+Adım 2: AI Sohbet (10 soru) ← YENİ
+         ↓
+Adım 3: Tercihler (dil, ton, renk)
+         ↓
+     Website Oluştur
 ```
 
 ## Uygulama Adımları
 
-### Adım 1: Yeni Dashboard Layout Bileşeni
-Sidebar + Main + Right Panel içeren ana layout oluşturma.
+### 1. Edge Function: wizard-chat
 
-**Yeni dosyalar:**
-- `src/components/dashboard/DashboardLayout.tsx` - Ana layout wrapper
-- `src/components/dashboard/DashboardSidebar.tsx` - Sol sidebar
-- `src/components/dashboard/DashboardRightPanel.tsx` - Sağ panel (Get Started)
-- `src/components/dashboard/WebsitePreviewCard.tsx` - Website önizleme kartı
-- `src/components/dashboard/GettingStartedChecklist.tsx` - Başlangıç rehberi
+`supabase/functions/wizard-chat/index.ts`
 
-### Adım 2: Dashboard Sayfası Güncelleme
-`src/pages/Dashboard.tsx` dosyasını yeni layout kullanacak şekilde güncelleme.
+- Lovable AI Gateway kullanacak
+- Mesleğe göre 10 soru soracak
+- Sohbet geçmişini takip edecek
+- 10 soru sonunda extractedData JSON döndürecek
 
-### Adım 3: Sidebar Navigasyon Öğeleri
+### 2. Chat UI Bileşeni
 
-| Icon | Etiket | Route |
-|------|--------|-------|
-| Home | Home | /dashboard |
-| Globe | Website | /project/:id (aktif proje) |
-| BarChart | Analytics | /project/:id/analytics |
-| Settings | Settings | /settings (yeni sayfa) |
-| HelpCircle | Help | Modal veya sayfa |
+`src/components/wizard/steps/AIChatStep.tsx`
 
-### Adım 4: Get Started Checklist
+- Mesaj baloncukları (AI sol, kullanıcı sağ)
+- İlerleme göstergesi (Soru 3/10)
+- Metin girişi + Gönder butonu
+- Loading durumu
 
-Kullanıcının tamamlaması gereken adımlar:
-1. Website oluştur (mevcut wizard)
-2. Bilgileri düzenle (proje sayfası)
-3. Görselleri ekle (AI images)
-4. Yayınla (publish)
-5. Analitik kontrol (analytics)
+### 3. Wizard Güncelleme
 
-Bu adımların tamamlanıp tamamlanmadığını projeden kontrol edeceğiz.
+`src/components/wizard/CreateWebsiteWizard.tsx`
+
+- Adım 2: BusinessInfoStep + ProfessionalDetailsStep → AIChatStep
+- Toplam adım: 4 → 3
+
+### 4. Config Güncelleme
+
+`supabase/config.toml`
+
+- wizard-chat function ekleme
 
 ## Dosya Değişiklikleri
 
 | Dosya | İşlem |
 |-------|-------|
-| `src/components/dashboard/DashboardLayout.tsx` | Yeni |
-| `src/components/dashboard/DashboardSidebar.tsx` | Yeni |
-| `src/components/dashboard/DashboardRightPanel.tsx` | Yeni |
-| `src/components/dashboard/WebsitePreviewCard.tsx` | Yeni |
-| `src/components/dashboard/GettingStartedChecklist.tsx` | Yeni |
-| `src/pages/Dashboard.tsx` | Güncelle |
-| `src/pages/Settings.tsx` | Yeni (opsiyonel) |
-| `src/App.tsx` | Güncelle (yeni route) |
+| `supabase/functions/wizard-chat/index.ts` | Yeni |
+| `src/components/wizard/steps/AIChatStep.tsx` | Yeni |
+| `src/components/wizard/CreateWebsiteWizard.tsx` | Güncelle |
+| `src/types/wizard.ts` | Güncelle |
+| `supabase/config.toml` | Güncelle |
 
-## Teknik Notlar
+## AI Soru Stratejisi
 
-- Shadcn/ui `Sidebar` bileşeni zaten projede mevcut, kullanılacak
-- Responsive tasarım: Mobilde sidebar drawer olarak açılacak
-- Dark/Light mode desteği korunacak
-- Mevcut authentication sistemi aynen kullanılacak
-- `NavLink` bileşeni active route styling için kullanılacak
+AI şu 10 konuda soru soracak:
 
-## Eksik Özellikler (Durable'da olup Open Lucius'ta olmayan)
+1. İşletme/Klinik Adı
+2. Konum (Şehir, Ülke)
+3. Uzmanlık Alanı
+4. Deneyim Süresi
+5. Sunulan Hizmetler
+6. Hedef Müşteri Profili
+7. Rekabet Avantajı
+8. İletişim Bilgileri (Telefon, Email)
+9. Çalışma Saatleri
+10. Öne Çıkarılacak Özel Bilgiler
 
-Şu özellikler Durable'da var ama sizin ürün için gerekli olmayabilir:
-- **Contacts**: İletişim yönetimi (CRM)
-- **Invoices**: Fatura kesimi
-- **Studio**: Asset oluşturma
-- **Chats**: AI sohbet kategorileri (General, Marketing, Finance)
+## Extracted Data Formatı
 
-Bu özellikler daha sonra eklenebilir ama temel dashboard için gerekli değil.
+```json
+{
+  "businessName": "City Dental",
+  "city": "İstanbul",
+  "country": "Türkiye",
+  "specialty": "Ortodonti",
+  "yearsExperience": "15",
+  "services": ["Diş Beyazlatma", "İmplant"],
+  "targetAudience": "Yetişkinler ve aileler",
+  "uniqueValue": "Ağrısız tedavi garantisi",
+  "phone": "+90 555 123 4567",
+  "email": "info@citydental.com",
+  "workingHours": "Pazartesi-Cuma 09:00-18:00",
+  "additionalInfo": "20 yıllık deneyimli ekip"
+}
+```
 
-## Sonraki Adımlar
+## Avantajlar
 
-Detaylı ekran görüntülerini paylaştığınızda:
-1. Her bileşenin pixel-perfect tasarımını yapabiliriz
-2. Animasyonları ve geçişleri ekleyebiliriz
-3. Eksik özellikleri belirleyebiliriz
-
-**Not**: Durable'ın tüm özelliklerini birebir kopyalayamayız çünkü:
-- Bazıları sizin ürün kapsamı dışında (invoices, CRM)
-- Bazıları backend altyapı gerektirir (AI chats)
-- Ancak görsel tasarım ve UX akışını çok benzer yapabiliriz
+- Ek API key gerekmez (Lovable AI zaten mevcut)
+- Doğal sohbet deneyimi
+- Mesleğe özel dinamik sorular
+- Daha detaylı bilgi toplama
+- Kişiselleştirilmiş website içeriği
 
