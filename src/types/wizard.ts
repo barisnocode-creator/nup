@@ -10,7 +10,7 @@ export const professionSchema = z.object({
   }),
 });
 
-// Step 2: Business Information
+// Step 2: Business Information (legacy - kept for backwards compatibility)
 export const businessInfoSchema = z.object({
   businessName: z.string().min(1, 'Business name is required').max(100, 'Name must be less than 100 characters'),
   city: z.string().min(1, 'City is required'),
@@ -19,7 +19,7 @@ export const businessInfoSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
 
-// Step 3: Professional Details (conditional schemas)
+// Step 3: Professional Details (conditional schemas - legacy)
 export const doctorDetailsSchema = z.object({
   specialty: z.string().min(1, 'Please select your specialty'),
   yearsExperience: z.string().min(1, 'Please select years of experience'),
@@ -44,6 +44,22 @@ export const preferencesSchema = z.object({
   }),
 });
 
+// AI Chat extracted data
+export interface ExtractedBusinessData {
+  businessName: string;
+  city: string;
+  country: string;
+  specialty: string;
+  yearsExperience: string;
+  services: string[];
+  targetAudience: string;
+  uniqueValue: string;
+  phone: string;
+  email: string;
+  workingHours: string;
+  additionalInfo: string;
+}
+
 // Combined form data type
 export interface WizardFormData {
   profession: Profession;
@@ -55,6 +71,8 @@ export interface WizardFormData {
     pharmacyType?: string;
   };
   websitePreferences: z.infer<typeof preferencesSchema>;
+  // New: AI extracted data
+  extractedData?: ExtractedBusinessData;
 }
 
 // Initial empty state
@@ -73,6 +91,7 @@ export const initialWizardData: Partial<WizardFormData> = {
     tone: 'professional',
     colorPreference: 'light',
   },
+  extractedData: undefined,
 };
 
 // Options for dropdowns
@@ -133,5 +152,6 @@ export const LANGUAGES = [
   'Portuguese',
   'Italian',
   'Dutch',
+  'Turkish',
   'Other',
 ];

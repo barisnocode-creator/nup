@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.check-subdomain]
 verify_jwt = false
+
+[functions.wizard-chat]
+verify_jwt = false
