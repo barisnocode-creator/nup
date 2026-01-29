@@ -11,11 +11,6 @@ interface PublicProject {
   name: string;
   profession: string;
   subdomain: string;
-  form_data: {
-    websitePreferences?: {
-      colorPreference?: string;
-    };
-  } | null;
   generated_content: GeneratedContent | null;
 }
 
@@ -25,7 +20,7 @@ export default function PublicWebsite() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Fetch published project by subdomain
+  // Fetch published project by subdomain using secure public view
   useEffect(() => {
     async function fetchProject() {
       if (!subdomain) {
@@ -34,11 +29,11 @@ export default function PublicWebsite() {
         return;
       }
 
+      // Use the secure public_projects view that excludes sensitive fields (user_id, form_data)
       const { data, error } = await supabase
-        .from('projects')
-        .select('id, name, profession, subdomain, form_data, generated_content')
+        .from('public_projects')
+        .select('id, name, profession, subdomain, generated_content')
         .eq('subdomain', subdomain)
-        .eq('is_published', true)
         .maybeSingle();
 
       if (error) {
@@ -108,8 +103,8 @@ export default function PublicWebsite() {
     );
   }
 
-  // Render the public website
-  const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
+  // Use default light theme since form_data is not exposed in public view for security
+  const colorPreference = 'light';
 
   return (
     <>
