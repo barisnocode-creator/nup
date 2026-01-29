@@ -1,25 +1,10 @@
 import { EditableText } from '@/components/website-preview/EditableText';
 import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
-import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
+import type { HeroProps } from './types';
+import type { ImageData } from '@/components/website-preview/EditorSidebar';
 
-interface HeroSplitSectionProps {
-  title: string;
-  subtitle: string;
-  description: string;
-  heroImage?: string;
-  isDark: boolean;
-  isNeutral: boolean;
-  isEditable: boolean;
-  onFieldEdit?: (fieldPath: string, newValue: string) => void;
-  editorSelection?: EditorSelection | null;
-  onEditorSelect?: (selection: EditorSelection) => void;
-  // Legacy props
-  selectedImage?: ImageData | null;
-  onImageSelect?: (data: ImageData) => void;
-}
-
-export function HeroSplitSection({
+export function HeroSplit({
   title,
   subtitle,
   description,
@@ -27,12 +12,11 @@ export function HeroSplitSection({
   isDark,
   isNeutral,
   isEditable,
-  onFieldEdit,
   editorSelection,
   onEditorSelect,
   selectedImage,
   onImageSelect,
-}: HeroSplitSectionProps) {
+}: HeroProps) {
   const isImageSelected = selectedImage?.imagePath === 'images.heroHome' || 
     editorSelection?.imageData?.imagePath === 'images.heroHome';
   
@@ -40,7 +24,6 @@ export function HeroSplitSection({
     editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.title');
 
   const handleImageSelect = (data: ImageData) => {
-    // If using new unified system
     if (onEditorSelect) {
       onEditorSelect({
         type: 'image',
@@ -50,7 +33,6 @@ export function HeroSplitSection({
         fields: [],
       });
     }
-    // Legacy fallback
     if (onImageSelect) {
       onImageSelect(data);
     }

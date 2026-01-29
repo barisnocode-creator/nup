@@ -1,6 +1,6 @@
 import { GeneratedContent } from '@/types/generated-website';
 import { EditableSection } from '@/components/website-preview/EditableSection';
-import { HeroSplitSection } from '../sections/HeroSplitSection';
+import { getHeroComponent, HeroVariant } from '../sections/hero';
 import { StatisticsSection } from '../sections/StatisticsSection';
 import { AboutInlineSection } from '../sections/AboutInlineSection';
 import { ServicesGridSection } from '../sections/ServicesGridSection';
@@ -38,7 +38,11 @@ export function FullLandingPage({
   selectedImage,
   onImageSelect,
 }: FullLandingPageProps) {
-  const { pages, images, metadata } = content;
+  const { pages, images, metadata, sectionVariants } = content;
+
+  // Get the appropriate hero component based on variant
+  const heroVariant: HeroVariant = sectionVariants?.hero || 'overlay';
+  const HeroComponent = getHeroComponent(heroVariant);
 
   return (
     <div>
@@ -50,7 +54,7 @@ export function FullLandingPage({
         onLockedFeature={onLockedFeature}
         isFirst
       >
-        <HeroSplitSection
+        <HeroComponent
           title={pages.home.hero.title}
           subtitle={pages.home.hero.subtitle}
           description={pages.home.hero.description}
