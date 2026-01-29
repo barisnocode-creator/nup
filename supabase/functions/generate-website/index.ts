@@ -29,15 +29,9 @@ interface FormData {
 }
 
 // Template selection logic - automatically picks the best template
-function selectTemplate(profession: string, _tone?: string): string {
-  // For now we only have temp1, but this can be expanded
-  // to match profession/tone combinations to specific templates
-  const templateMap: Record<string, string> = {
-    doctor: 'temp1',
-    dentist: 'temp1',
-    pharmacist: 'temp1',
-  };
-  return templateMap[profession] || 'temp1';
+function selectTemplate(_profession: string, _tone?: string): string {
+  // All sectors use temp1 for now
+  return 'temp1';
 }
 
 function getProfessionSpecificInstructions(profession: string, details: FormData['professionalDetails']): string {
@@ -237,9 +231,73 @@ Return ONLY valid JSON in this exact format:
 }`;
 }
 
-// Pixabay image fetching functions
-const professionSearchTerms: Record<string, Record<string, string>> = {
+// Sector-based search terms for Pixabay images
+const sectorSearchTerms: Record<string, Record<string, string>> = {
+  service: {
+    heroSplit: "professional business consulting office",
+    aboutImage: "business team meeting collaboration",
+    ctaImage: "success handshake professional",
+    heroHome: "professional office business meeting",
+    heroAbout: "business team collaboration",
+    heroServices: "consulting professional services",
+    heroBlog: "business insights professional",
+    heroContact: "business customer service",
+  },
+  retail: {
+    heroSplit: "modern retail store interior shopping",
+    aboutImage: "retail team customer service friendly",
+    ctaImage: "happy customer shopping bags",
+    heroHome: "modern store interior shopping",
+    heroAbout: "retail team customer service",
+    heroServices: "retail products display",
+    heroBlog: "shopping retail trends",
+    heroContact: "retail customer support",
+  },
+  food: {
+    heroSplit: "restaurant interior modern dining ambiance",
+    aboutImage: "chef cooking kitchen professional",
+    ctaImage: "delicious food presentation restaurant",
+    heroHome: "restaurant interior modern dining",
+    heroAbout: "chef cooking kitchen",
+    heroServices: "food presentation gourmet",
+    heroBlog: "food culinary cooking",
+    heroContact: "restaurant dining experience",
+  },
+  creative: {
+    heroSplit: "creative design studio workspace modern",
+    aboutImage: "designer artist team working creative",
+    ctaImage: "creative project success celebration",
+    heroHome: "creative design studio workspace",
+    heroAbout: "designer artist team working",
+    heroServices: "creative portfolio design",
+    heroBlog: "design trends creative",
+    heroContact: "creative agency collaboration",
+  },
+  technology: {
+    heroSplit: "modern tech office startup workspace",
+    aboutImage: "software developer team coding",
+    ctaImage: "technology innovation success",
+    heroHome: "modern tech office startup",
+    heroAbout: "software developer team",
+    heroServices: "technology software development",
+    heroBlog: "technology innovation digital",
+    heroContact: "tech support customer",
+  },
+  other: {
+    heroSplit: "professional modern business office",
+    aboutImage: "team collaboration workspace meeting",
+    ctaImage: "business success professional",
+    heroHome: "professional business modern",
+    heroAbout: "team collaboration workspace",
+    heroServices: "professional services business",
+    heroBlog: "business insights professional",
+    heroContact: "business customer support",
+  },
+  // Legacy profession mappings
   doctor: {
+    heroSplit: "medical clinic reception modern healthcare",
+    aboutImage: "medical team doctor nurse professional",
+    ctaImage: "healthcare medical professional clinic",
     heroHome: "medical clinic reception modern healthcare",
     heroAbout: "doctor team professional hospital",
     heroServices: "medical equipment modern clinic",
@@ -247,6 +305,9 @@ const professionSearchTerms: Record<string, Record<string, string>> = {
     heroContact: "medical consultation doctor patient",
   },
   dentist: {
+    heroSplit: "dental clinic modern reception",
+    aboutImage: "dental team professional dentist",
+    ctaImage: "dental smile healthy teeth",
     heroHome: "dental clinic modern reception",
     heroAbout: "dentist team professional clinic",
     heroServices: "dental equipment modern technology",
@@ -254,12 +315,92 @@ const professionSearchTerms: Record<string, Record<string, string>> = {
     heroContact: "dental consultation patient",
   },
   pharmacist: {
+    heroSplit: "pharmacy modern drugstore interior",
+    aboutImage: "pharmacy team professional",
+    ctaImage: "pharmacy medicine healthcare",
     heroHome: "pharmacy modern drugstore interior",
     heroAbout: "pharmacist professional team",
     heroServices: "pharmacy medications medicine",
     heroBlog: "medicine health supplements",
     heroContact: "pharmacy consultation customer",
   },
+};
+
+// Gallery search terms by sector (6 images each)
+const gallerySearchTerms: Record<string, string[]> = {
+  service: [
+    "business consulting meeting",
+    "professional office workspace",
+    "team collaboration success",
+    "client presentation meeting",
+    "modern office interior",
+    "business handshake deal",
+  ],
+  retail: [
+    "store interior modern display",
+    "shopping customer experience",
+    "retail products showcase",
+    "store checkout friendly",
+    "product display creative",
+    "shopping bags happy customer",
+  ],
+  food: [
+    "restaurant interior ambiance",
+    "chef preparing food kitchen",
+    "food presentation plate",
+    "cafe coffee atmosphere",
+    "dining experience restaurant",
+    "fresh ingredients cooking",
+  ],
+  creative: [
+    "design studio workspace",
+    "creative team brainstorming",
+    "art gallery exhibition",
+    "photography studio setup",
+    "creative project mockup",
+    "design tools workspace",
+  ],
+  technology: [
+    "tech startup office modern",
+    "coding programming developer",
+    "server room technology",
+    "tech team collaboration",
+    "digital innovation workspace",
+    "modern computer setup",
+  ],
+  other: [
+    "professional office modern",
+    "business meeting room",
+    "team success celebration",
+    "workspace productivity",
+    "corporate building exterior",
+    "professional handshake",
+  ],
+  // Legacy
+  doctor: [
+    "modern medical clinic interior",
+    "hospital waiting room modern",
+    "medical examination room",
+    "doctor patient consultation",
+    "medical technology equipment",
+    "healthcare facility modern",
+  ],
+  dentist: [
+    "dental clinic interior modern",
+    "dental chair equipment",
+    "dental office waiting room",
+    "dental treatment room",
+    "dental technology equipment",
+    "dental clinic reception",
+  ],
+  pharmacist: [
+    "pharmacy interior modern",
+    "pharmacy shelves medicine",
+    "pharmacy consultation area",
+    "pharmacy counter service",
+    "pharmacy products display",
+    "pharmacy healthcare products",
+  ],
 };
 
 const blogCategorySearchTerms: Record<string, string> = {
@@ -269,7 +410,12 @@ const blogCategorySearchTerms: Record<string, string> = {
   nutrition: "nutrition healthy food",
   wellness: "wellness fitness health",
   prevention: "preventive healthcare medical",
-  default: "healthcare medical professional",
+  business: "business professional insights",
+  technology: "technology digital innovation",
+  design: "design creative portfolio",
+  food: "food culinary restaurant",
+  retail: "retail shopping products",
+  default: "professional business modern",
 };
 
 async function fetchPixabayImage(
@@ -302,31 +448,61 @@ async function fetchPixabayImage(
   }
 }
 
+async function fetchMultipleImagesParallel(
+  queries: string[],
+  apiKey: string,
+  minWidth: number = 1200
+): Promise<string[]> {
+  const promises = queries.map(query => fetchPixabayImage(query, apiKey, minWidth));
+  const results = await Promise.all(promises);
+  return results.filter((url): url is string => url !== null);
+}
+
 async function fetchAllImages(
-  profession: string,
+  sector: string,
   blogPosts: Array<{ title: string; category?: string }>,
   apiKey: string
-): Promise<{ images: Record<string, string>; updatedPosts: Array<{ featuredImage?: string }> }> {
-  const searchTerms = professionSearchTerms[profession] || professionSearchTerms.doctor;
-  const images: Record<string, string> = {};
+): Promise<{ images: Record<string, string | string[]>; updatedPosts: Array<{ featuredImage?: string }> }> {
+  const searchTerms = sectorSearchTerms[sector] || sectorSearchTerms.other;
+  const galleryTerms = gallerySearchTerms[sector] || gallerySearchTerms.other;
+  const images: Record<string, string | string[]> = {};
 
   // Fetch hero images in parallel
   const heroPromises = Object.entries(searchTerms).map(async ([key, query]) => {
     const imageUrl = await fetchPixabayImage(query, apiKey, 1920);
+    return { key, imageUrl };
+  });
+
+  // Fetch gallery images in parallel
+  const galleryPromise = fetchMultipleImagesParallel(galleryTerms, apiKey, 1200);
+
+  // Fetch blog images in parallel
+  const blogPromises = blogPosts.map(async (post) => {
+    const categoryTerms = blogCategorySearchTerms[(post.category || "default").toLowerCase()] || blogCategorySearchTerms.default;
+    const featuredImage = await fetchPixabayImage(categoryTerms, apiKey, 1200);
+    return { ...post, featuredImage: featuredImage || undefined };
+  });
+
+  // Wait for ALL images in parallel
+  const [heroResults, galleryImages, updatedPosts] = await Promise.all([
+    Promise.all(heroPromises),
+    galleryPromise,
+    Promise.all(blogPromises),
+  ]);
+
+  // Process hero results
+  heroResults.forEach(({ key, imageUrl }) => {
     if (imageUrl) {
       images[key] = imageUrl;
     }
   });
 
-  await Promise.all(heroPromises);
-
-  // Fetch blog post images
-  const updatedPosts = [];
-  for (const post of blogPosts) {
-    const categoryTerms = blogCategorySearchTerms[(post.category || "default").toLowerCase()] || blogCategorySearchTerms.default;
-    const featuredImage = await fetchPixabayImage(categoryTerms, apiKey, 1200);
-    updatedPosts.push({ ...post, featuredImage: featuredImage || undefined });
+  // Add gallery images
+  if (galleryImages.length > 0) {
+    images.galleryImages = galleryImages;
   }
+
+  console.log(`Fetched ${heroResults.filter(r => r.imageUrl).length} hero images, ${galleryImages.length} gallery images, ${updatedPosts.length} blog images`);
 
   return { images, updatedPosts };
 }
