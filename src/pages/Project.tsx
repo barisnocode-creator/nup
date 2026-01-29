@@ -737,8 +737,33 @@ export default function Project() {
       <CustomizeSidebar
         isOpen={customizeSidebarOpen}
         onClose={() => setCustomizeSidebarOpen(false)}
-        siteSettings={project.generated_content?.siteSettings}
-        onSettingsChange={handleSiteSettingsChange}
+        currentColors={{
+          primary: project.generated_content?.siteSettings?.colors?.primary || '#3b82f6',
+          secondary: project.generated_content?.siteSettings?.colors?.secondary || '#6366f1',
+          accent: project.generated_content?.siteSettings?.colors?.accent || '#f59e0b',
+        }}
+        currentFonts={{
+          heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
+          body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
+        }}
+        onColorChange={(colorType, value) => {
+          handleSiteSettingsChange({
+            ...project.generated_content?.siteSettings,
+            colors: {
+              ...project.generated_content?.siteSettings?.colors,
+              [colorType]: value,
+            },
+          });
+        }}
+        onFontChange={(fontType, value) => {
+          handleSiteSettingsChange({
+            ...project.generated_content?.siteSettings,
+            fonts: {
+              ...project.generated_content?.siteSettings?.fonts,
+              [fontType]: value,
+            },
+          });
+        }}
         onRegenerateText={handleRegenerateAllText}
         onRegenerateWebsite={handleRegenerateWebsite}
       />

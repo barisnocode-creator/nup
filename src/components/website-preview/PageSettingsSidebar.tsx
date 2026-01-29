@@ -1,6 +1,6 @@
-import { X, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { X, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -84,15 +84,13 @@ export function PageSettingsSidebar({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-[320px] sm:w-[320px] p-0 overflow-y-auto">
-        <SheetHeader className="p-4 border-b sticky top-0 bg-background z-10">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-lg font-semibold">{displayLabel} Page</SheetTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </SheetHeader>
+      <SheetContent side="left" noOverlay hideCloseButton className="w-[280px] p-0 overflow-y-auto shadow-xl border-r">
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-background sticky top-0 z-10">
+          <span className="text-sm font-medium">{displayLabel} Page</span>
+          <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
 
         <div className="p-4 space-y-6">
           {/* Title Section */}

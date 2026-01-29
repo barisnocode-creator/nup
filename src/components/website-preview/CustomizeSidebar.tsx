@@ -1,301 +1,378 @@
-import { X, Palette, Type, Square, Sparkles, Image, ChevronRight, RefreshCw, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useState } from 'react';
-
-interface SiteSettings {
-  colors?: {
-    primary?: string;
-    secondary?: string;
-    accent?: string;
-  };
-  fonts?: {
-    heading?: string;
-    body?: string;
-  };
-  corners?: 'rounded' | 'sharp' | 'pill';
-  animations?: boolean;
-  favicon?: string;
-}
+import { 
+  ArrowLeft, 
+  X, 
+  Palette, 
+  Type, 
+  ToggleLeft, 
+  Square, 
+  Zap, 
+  Image, 
+  LayoutGrid, 
+  Sparkles, 
+  RefreshCw, 
+  FileText,
+  ChevronRight,
+  Loader2
+} from 'lucide-react';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 
 interface CustomizeSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  siteSettings?: SiteSettings;
-  onSettingsChange: (settings: SiteSettings) => void;
-  onRegenerateText: () => void;
-  onRegenerateWebsite: () => void;
+  currentColors?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  currentFonts?: {
+    heading: string;
+    body: string;
+  };
+  onColorChange?: (colorType: string, value: string) => void;
+  onFontChange?: (fontType: string, value: string) => void;
+  onRegenerateText?: () => void;
+  onRegenerateWebsite?: () => void;
   isRegenerating?: boolean;
 }
 
+type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 'animations' | 'browser-icon' | 'widgets' | 'keywords' | null;
+
 const colorPresets = [
-  { name: 'Ocean', primary: '201 96% 32%', secondary: '199 89% 48%', accent: '43 74% 66%' },
-  { name: 'Forest', primary: '142 76% 36%', secondary: '142 69% 58%', accent: '48 96% 53%' },
-  { name: 'Sunset', primary: '22 93% 53%', secondary: '14 100% 57%', accent: '45 93% 47%' },
-  { name: 'Royal', primary: '262 83% 58%', secondary: '280 87% 65%', accent: '199 89% 48%' },
-  { name: 'Midnight', primary: '224 71% 4%', secondary: '215 28% 17%', accent: '199 89% 48%' },
-  { name: 'Rose', primary: '350 89% 60%', secondary: '330 81% 60%', accent: '280 87% 65%' },
+  { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#06b6d4', accent: '#14b8a6' },
+  { id: 'forest', name: 'Forest', primary: '#22c55e', secondary: '#10b981', accent: '#059669' },
+  { id: 'sunset', name: 'Sunset', primary: '#f97316', secondary: '#fb923c', accent: '#fbbf24' },
+  { id: 'royal', name: 'Royal', primary: '#8b5cf6', secondary: '#a78bfa', accent: '#c4b5fd' },
+  { id: 'midnight', name: 'Midnight', primary: '#3b82f6', secondary: '#6366f1', accent: '#8b5cf6' },
 ];
 
-const fontPresets = [
-  { heading: 'Playfair Display', body: 'Inter' },
-  { heading: 'Montserrat', body: 'Open Sans' },
-  { heading: 'Poppins', body: 'Roboto' },
-  { heading: 'Raleway', body: 'Lato' },
-  { heading: 'Merriweather', body: 'Source Sans Pro' },
-];
-
-const cornerOptions = [
-  { value: 'sharp' as const, label: 'Sharp', icon: '◻' },
-  { value: 'rounded' as const, label: 'Rounded', icon: '▢' },
-  { value: 'pill' as const, label: 'Pill', icon: '◯' },
+const fontOptions = [
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Poppins', label: 'Poppins' },
+  { value: 'Playfair Display', label: 'Playfair Display' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Merriweather', label: 'Merriweather' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Montserrat', label: 'Montserrat' },
 ];
 
 export function CustomizeSidebar({
   isOpen,
   onClose,
-  siteSettings,
-  onSettingsChange,
+  currentColors = { primary: '#3b82f6', secondary: '#6366f1', accent: '#f59e0b' },
+  currentFonts = { heading: 'Inter', body: 'Inter' },
+  onColorChange,
+  onFontChange,
   onRegenerateText,
   onRegenerateWebsite,
   isRegenerating = false,
 }: CustomizeSidebarProps) {
-  const [openSections, setOpenSections] = useState<string[]>(['colors']);
+  const [activePanel, setActivePanel] = useState<SubPanel>(null);
 
-  const toggleSection = (section: string) => {
-    setOpenSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
+  const menuItems = [
+    { id: 'colors' as const, icon: Palette, label: 'Colors' },
+    { id: 'fonts' as const, icon: Type, label: 'Fonts' },
+    { id: 'buttons' as const, icon: ToggleLeft, label: 'Buttons' },
+    { id: 'corners' as const, icon: Square, label: 'Corners' },
+    { id: 'animations' as const, icon: Zap, label: 'Animations' },
+    { id: 'browser-icon' as const, icon: Image, label: 'Browser icon' },
+    { id: 'widgets' as const, icon: LayoutGrid, label: 'Manage widgets' },
+  ];
+
+  const handleClose = () => {
+    setActivePanel(null);
+    onClose();
   };
 
-  const handleColorPreset = (preset: typeof colorPresets[0]) => {
-    onSettingsChange({
-      ...siteSettings,
-      colors: {
-        primary: preset.primary,
-        secondary: preset.secondary,
-        accent: preset.accent,
-      },
-    });
+  const handleBack = () => {
+    setActivePanel(null);
   };
 
-  const handleFontPreset = (preset: typeof fontPresets[0]) => {
-    onSettingsChange({
-      ...siteSettings,
-      fonts: {
-        heading: preset.heading,
-        body: preset.body,
-      },
-    });
+  const handlePresetSelect = (preset: typeof colorPresets[0]) => {
+    onColorChange?.('primary', preset.primary);
+    onColorChange?.('secondary', preset.secondary);
+    onColorChange?.('accent', preset.accent);
   };
 
-  const handleCornersChange = (corners: 'rounded' | 'sharp' | 'pill') => {
-    onSettingsChange({
-      ...siteSettings,
-      corners,
-    });
-  };
+  // Render sub-panel content
+  const renderSubPanel = () => {
+    switch (activePanel) {
+      case 'colors':
+        return (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-background">
+              <button onClick={handleBack} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <span className="text-sm font-medium flex-1">Colors</span>
+              <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
 
-  const handleAnimationsChange = (enabled: boolean) => {
-    onSettingsChange({
-      ...siteSettings,
-      animations: enabled,
-    });
-  };
-
-  return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-[320px] sm:w-[320px] p-0 overflow-y-auto">
-        <SheetHeader className="p-4 border-b sticky top-0 bg-background z-10">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-lg font-semibold">Customize</SheetTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </SheetHeader>
-
-        <div className="divide-y">
-          {/* Colors Section */}
-          <Collapsible open={openSections.includes('colors')} onOpenChange={() => toggleSection('colors')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Palette className="w-5 h-5 text-muted-foreground" />
-                <div className="text-left">
-                  <div className="font-medium">Colors</div>
-                  <div className="text-xs text-muted-foreground">Primary, secondary, accent</div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Presets */}
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Presets</Label>
+                <div className="grid grid-cols-5 gap-2">
+                  {colorPresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => handlePresetSelect(preset)}
+                      className="group flex flex-col items-center gap-1.5"
+                      title={preset.name}
+                    >
+                      <div 
+                        className="w-10 h-10 rounded-full border-2 border-transparent group-hover:border-foreground/20 transition-colors shadow-sm"
+                        style={{ background: `linear-gradient(135deg, ${preset.primary} 0%, ${preset.secondary} 100%)` }}
+                      />
+                      <span className="text-[10px] text-muted-foreground">{preset.name}</span>
+                    </button>
+                  ))}
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${openSections.includes('colors') ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <div className="grid grid-cols-3 gap-2">
-                {colorPresets.map((preset) => (
-                  <button
-                    key={preset.name}
-                    onClick={() => handleColorPreset(preset)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg border hover:border-primary transition-colors"
-                  >
-                    <div className="flex gap-0.5">
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: `hsl(${preset.primary})` }} 
+
+              {/* Custom Colors */}
+              <div className="space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Custom</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Primary</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={currentColors.primary}
+                        onChange={(e) => onColorChange?.('primary', e.target.value)}
+                        className="w-24 h-8 text-xs font-mono"
                       />
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: `hsl(${preset.secondary})` }} 
-                      />
-                      <div 
-                        className="w-4 h-4 rounded-full" 
-                        style={{ backgroundColor: `hsl(${preset.accent})` }} 
+                      <input
+                        type="color"
+                        value={currentColors.primary}
+                        onChange={(e) => onColorChange?.('primary', e.target.value)}
+                        className="w-8 h-8 rounded border cursor-pointer"
                       />
                     </div>
-                    <span className="text-xs">{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Fonts Section */}
-          <Collapsible open={openSections.includes('fonts')} onOpenChange={() => toggleSection('fonts')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Type className="w-5 h-5 text-muted-foreground" />
-                <div className="text-left">
-                  <div className="font-medium">Fonts</div>
-                  <div className="text-xs text-muted-foreground">
-                    {siteSettings?.fonts?.heading || 'Playfair Display'} / {siteSettings?.fonts?.body || 'Inter'}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Secondary</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={currentColors.secondary}
+                        onChange={(e) => onColorChange?.('secondary', e.target.value)}
+                        className="w-24 h-8 text-xs font-mono"
+                      />
+                      <input
+                        type="color"
+                        value={currentColors.secondary}
+                        onChange={(e) => onColorChange?.('secondary', e.target.value)}
+                        className="w-8 h-8 rounded border cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Accent</span>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="text"
+                        value={currentColors.accent}
+                        onChange={(e) => onColorChange?.('accent', e.target.value)}
+                        className="w-24 h-8 text-xs font-mono"
+                      />
+                      <input
+                        type="color"
+                        value={currentColors.accent}
+                        onChange={(e) => onColorChange?.('accent', e.target.value)}
+                        className="w-8 h-8 rounded border cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${openSections.includes('fonts') ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
+            </div>
+          </div>
+        );
+
+      case 'fonts':
+        return (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-background">
+              <button onClick={handleBack} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <span className="text-sm font-medium flex-1">Fonts</span>
+              <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div className="space-y-2">
-                {fontPresets.map((preset) => (
-                  <button
-                    key={preset.heading}
-                    onClick={() => handleFontPreset(preset)}
-                    className={`w-full text-left p-3 rounded-lg border hover:border-primary transition-colors ${
-                      siteSettings?.fonts?.heading === preset.heading ? 'border-primary bg-primary/5' : ''
-                    }`}
-                  >
-                    <div className="font-medium" style={{ fontFamily: preset.heading }}>{preset.heading}</div>
-                    <div className="text-sm text-muted-foreground" style={{ fontFamily: preset.body }}>{preset.body}</div>
-                  </button>
-                ))}
+                <Label className="text-sm">Heading</Label>
+                <Select value={currentFonts.heading} onValueChange={(value) => onFontChange?.('heading', value)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CollapsibleContent>
-          </Collapsible>
 
-          {/* Buttons/Corners Section */}
-          <Collapsible open={openSections.includes('corners')} onOpenChange={() => toggleSection('corners')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Square className="w-5 h-5 text-muted-foreground" />
-                <div className="text-left">
-                  <div className="font-medium">Corners</div>
-                  <div className="text-xs text-muted-foreground">Button and card styles</div>
-                </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Body</Label>
+                <Select value={currentFonts.body} onValueChange={(value) => onFontChange?.('body', value)}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fontOptions.map((font) => (
+                      <SelectItem key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                        {font.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${openSections.includes('corners') ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <div className="flex gap-2">
-                {cornerOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => handleCornersChange(option.value)}
-                    className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-lg border transition-colors ${
-                      siteSettings?.corners === option.value ? 'border-primary bg-primary/5' : 'hover:border-primary'
-                    }`}
-                  >
-                    <span className="text-2xl">{option.icon}</span>
-                    <span className="text-xs">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
 
-          {/* Animations Section */}
-          <Collapsible open={openSections.includes('animations')} onOpenChange={() => toggleSection('animations')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Zap className="w-5 h-5 text-muted-foreground" />
-                <div className="text-left">
-                  <div className="font-medium">Animations</div>
-                  <div className="text-xs text-muted-foreground">Page transitions & effects</div>
-                </div>
+              {/* Preview */}
+              <div className="mt-6 p-4 border rounded-lg bg-muted/30">
+                <h3 className="text-lg font-semibold mb-2" style={{ fontFamily: currentFonts.heading }}>
+                  Heading Preview
+                </h3>
+                <p className="text-sm text-muted-foreground" style={{ fontFamily: currentFonts.body }}>
+                  This is how your body text will look. The quick brown fox jumps over the lazy dog.
+                </p>
               </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${openSections.includes('animations') ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="animations-toggle">Enable animations</Label>
-                <Switch
-                  id="animations-toggle"
-                  checked={siteSettings?.animations ?? true}
-                  onCheckedChange={handleAnimationsChange}
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
+          </div>
+        );
 
-          {/* Browser Icon Section */}
-          <Collapsible open={openSections.includes('favicon')} onOpenChange={() => toggleSection('favicon')}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <Image className="w-5 h-5 text-muted-foreground" />
-                <div className="text-left">
-                  <div className="font-medium">Browser icon</div>
-                  <div className="text-xs text-muted-foreground">Favicon for tabs</div>
-                </div>
-              </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${openSections.includes('favicon') ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50">
-                  {siteSettings?.favicon ? (
-                    <img src={siteSettings.favicon} alt="Favicon" className="w-8 h-8" />
-                  ) : (
-                    <Image className="w-6 h-6 text-muted-foreground" />
-                  )}
-                </div>
-                <Button variant="outline" size="sm">Upload</Button>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
+      case 'buttons':
+      case 'corners':
+      case 'animations':
+      case 'browser-icon':
+      case 'widgets':
+      case 'keywords':
+        return (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-background">
+              <button onClick={handleBack} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <span className="text-sm font-medium flex-1 capitalize">{activePanel?.replace('-', ' ')}</span>
+              <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
 
-        {/* Regenerate Actions */}
-        <div className="p-4 space-y-2 border-t mt-4">
-          <Button 
-            variant="outline" 
-            className="w-full justify-start gap-2"
-            onClick={onRegenerateText}
-            disabled={isRegenerating}
-          >
-            <Sparkles className="w-4 h-4" />
-            Regenerate all text
-          </Button>
-          <Button 
-            variant="outline" 
-            className="w-full justify-start gap-2"
-            onClick={onRegenerateWebsite}
-            disabled={isRegenerating}
-          >
-            <RefreshCw className="w-4 h-4" />
-            Regenerate website
-          </Button>
-        </div>
+            <div className="flex-1 flex items-center justify-center p-4">
+              <div className="text-center text-muted-foreground">
+                <p className="text-sm">Coming soon</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Main menu
+  const renderMainMenu = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-background">
+        <span className="text-sm font-medium">Customize</span>
+        <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+          <X className="w-4 h-4 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Menu Items */}
+      <div className="flex-1 overflow-y-auto py-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActivePanel(item.id)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left"
+            >
+              <Icon className="w-4 h-4 text-muted-foreground" />
+              <span className="flex-1 text-sm">{item.label}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+            </button>
+          );
+        })}
+
+        {/* Divider */}
+        <div className="my-2 mx-4 border-t" />
+
+        {/* Action Items */}
+        <button
+          onClick={onRegenerateText}
+          disabled={isRegenerating}
+          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left disabled:opacity-50"
+        >
+          {isRegenerating ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4 text-muted-foreground" />
+          )}
+          <span className="flex-1 text-sm">Regenerate text</span>
+        </button>
+
+        <button
+          onClick={onRegenerateWebsite}
+          disabled={isRegenerating}
+          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left disabled:opacity-50"
+        >
+          {isRegenerating ? (
+            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+          ) : (
+            <RefreshCw className="w-4 h-4 text-muted-foreground" />
+          )}
+          <span className="flex-1 text-sm">Regenerate entire website</span>
+        </button>
+
+        {/* Divider */}
+        <div className="my-2 mx-4 border-t" />
+
+        {/* Keywords */}
+        <button
+          onClick={() => setActivePanel('keywords')}
+          className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left"
+        >
+          <FileText className="w-4 h-4 text-muted-foreground" />
+          <span className="flex-1 text-sm">Keywords</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <SheetContent 
+        side="left" 
+        noOverlay 
+        hideCloseButton
+        className="w-[280px] p-0 shadow-xl border-r"
+      >
+        {activePanel ? renderSubPanel() : renderMainMenu()}
       </SheetContent>
     </Sheet>
   );
