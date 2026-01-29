@@ -14,15 +14,17 @@
 - Tüm template başlıklarına font-display class'ı eklendi
 - Google Fonts dinamik yükleme çalışıyor
 
+### Adım 3: Buttons & Corners - TAMAMLANDI
+- Border-radius CSS değişkeni (--radius) useThemeColors'ta tanımlı
+- CustomizeSidebar'da Corners panel UI eklendi (sharp/rounded/pill)
+- Gerçek zamanlı önizleme aktif
+
+### Adım 4: Animations Toggle - TAMAMLANDI
+- Site geneli animasyon kontrolü eklendi
+- reduce-motion class sistemi useThemeColors'ta implemente edildi
+- CustomizeSidebar'da Animations toggle switch eklendi
+
 ## 📋 Kalan Adımlar
-
-### Adım 3: Buttons & Corners
-- Border-radius CSS değişkeni (--radius)
-- Button padding/shape (pill, rounded, sharp)
-
-### Adım 4: Animations Toggle
-- Site geneli animasyon kontrolü
-- reduce-motion class sistemi
 
 ### Adım 5: Browser Icon & Widgets
 - Favicon yönetimi

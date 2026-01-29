@@ -750,6 +750,8 @@ export default function Project() {
           heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
           body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
         }}
+        currentCorners={project.generated_content?.siteSettings?.corners || 'rounded'}
+        currentAnimations={project.generated_content?.siteSettings?.animations !== false}
         onColorChange={(colorType, value) => {
           handleSiteSettingsChange({
             ...project.generated_content?.siteSettings,
@@ -766,6 +768,18 @@ export default function Project() {
               ...project.generated_content?.siteSettings?.fonts,
               [fontType]: value,
             },
+          });
+        }}
+        onCornersChange={(corners) => {
+          handleSiteSettingsChange({
+            ...project.generated_content?.siteSettings,
+            corners,
+          });
+        }}
+        onAnimationsChange={(animations) => {
+          handleSiteSettingsChange({
+            ...project.generated_content?.siteSettings,
+            animations,
           });
         }}
         onRegenerateText={handleRegenerateAllText}

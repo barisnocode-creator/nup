@@ -32,8 +32,12 @@ interface CustomizeSidebarProps {
     heading: string;
     body: string;
   };
+  currentCorners?: 'rounded' | 'sharp' | 'pill';
+  currentAnimations?: boolean;
   onColorChange?: (colorType: string, value: string) => void;
   onFontChange?: (fontType: string, value: string) => void;
+  onCornersChange?: (corners: 'rounded' | 'sharp' | 'pill') => void;
+  onAnimationsChange?: (enabled: boolean) => void;
   onRegenerateText?: () => void;
   onRegenerateWebsite?: () => void;
   isRegenerating?: boolean;
@@ -65,8 +69,12 @@ export function CustomizeSidebar({
   onClose,
   currentColors = { primary: '#3b82f6', secondary: '#6366f1', accent: '#f59e0b' },
   currentFonts = { heading: 'Inter', body: 'Inter' },
+  currentCorners = 'rounded',
+  currentAnimations = true,
   onColorChange,
   onFontChange,
+  onCornersChange,
+  onAnimationsChange,
   onRegenerateText,
   onRegenerateWebsite,
   isRegenerating = false,
@@ -258,9 +266,106 @@ export function CustomizeSidebar({
           </div>
         );
 
-      case 'buttons':
       case 'corners':
+        return (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-background">
+              <button onClick={handleBack} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <span className="text-sm font-medium flex-1">Corners</span>
+              <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <Label className="text-xs text-muted-foreground uppercase tracking-wide">Border Radius</Label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'sharp' as const, label: 'Sharp', preview: 'rounded-none' },
+                  { id: 'rounded' as const, label: 'Rounded', preview: 'rounded-lg' },
+                  { id: 'pill' as const, label: 'Pill', preview: 'rounded-full' },
+                ].map((corner) => (
+                  <button
+                    key={corner.id}
+                    onClick={() => onCornersChange?.(corner.id)}
+                    className={`flex flex-col items-center gap-2 p-3 border rounded-lg transition-colors ${
+                      currentCorners === corner.id 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <div className={`w-12 h-8 bg-primary ${corner.preview}`} />
+                    <span className="text-xs">{corner.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Preview */}
+              <div className="mt-6 space-y-3">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Preview</Label>
+                <div className="flex gap-3">
+                  <button className={`px-4 py-2 bg-primary text-primary-foreground text-sm ${
+                    currentCorners === 'sharp' ? 'rounded-none' : currentCorners === 'pill' ? 'rounded-full' : 'rounded-lg'
+                  }`}>
+                    Button
+                  </button>
+                  <div className={`w-16 h-10 border bg-muted ${
+                    currentCorners === 'sharp' ? 'rounded-none' : currentCorners === 'pill' ? 'rounded-full' : 'rounded-lg'
+                  }`} />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
       case 'animations':
+        return (
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b bg-background">
+              <button onClick={handleBack} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+              </button>
+              <span className="text-sm font-medium flex-1">Animations</span>
+              <button onClick={handleClose} className="p-1.5 hover:bg-muted rounded-md transition-colors">
+                <X className="w-4 h-4 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <span className="text-sm font-medium">Enable Animations</span>
+                  <p className="text-xs text-muted-foreground">Toggle page transitions and hover effects</p>
+                </div>
+                <button
+                  onClick={() => onAnimationsChange?.(!currentAnimations)}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    currentAnimations ? 'bg-primary' : 'bg-muted'
+                  }`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    currentAnimations ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+
+              {/* Animation Preview */}
+              <div className="mt-4 p-4 border rounded-lg bg-muted/30">
+                <Label className="text-xs text-muted-foreground uppercase tracking-wide mb-3 block">Preview</Label>
+                <div className={`w-12 h-12 bg-primary rounded-lg ${currentAnimations ? 'animate-float' : ''}`} />
+                <p className="text-xs text-muted-foreground mt-3">
+                  {currentAnimations ? 'Animations are enabled' : 'Animations are disabled'}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'buttons':
       case 'browser-icon':
       case 'widgets':
       case 'keywords':
