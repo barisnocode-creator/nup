@@ -65,12 +65,14 @@ export function EditableImage({
       className={cn(
         'relative group',
         containerClassName,
-        isEditable && 'cursor-pointer',
+        isEditable && 'cursor-pointer z-10',
         isSelected && 'ring-2 ring-primary ring-offset-2'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
+      role={isEditable ? "button" : undefined}
+      tabIndex={isEditable ? 0 : undefined}
     >
       {src ? (
         <img
