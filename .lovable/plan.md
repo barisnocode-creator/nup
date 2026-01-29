@@ -1,112 +1,185 @@
 
 
-# AI Asistanı Daha Akıllı ve İnsancıl Yapma Planı
+# Durable.co Tarzı Sağ Sidebar Editor Planı
 
-## Mevcut Sorun
+## Hedef
 
-Şu anda AI asistan:
-- **Robotik davranıyor**: "Avukatlık ofisi" dediğinizde bile sektör soruyor
-- **Ezberci sorular soruyor**: Her cevaptan bağımsız aynı soruları soruyor
-- **Bağlam anlamıyor**: Kullanıcının cevabından çıkarım yapmıyor
+Ekran görüntülerindeki gibi, bir görsele veya düzenlenebilir elemana tıklandığında sağdan açılan bir editing panel oluşturmak.
 
-## Çözüm: Akıllı ve Samimi Prompt
+## Mevcut Durum Analizi
 
-AI'ın davranışını değiştirmek için system prompt'u tamamen yenileyeceğiz:
+Şu anda editör yapısı:
+- `EditorToolbar`: Üst toolbar (Customize, Pages, Add, Preview, Publish)
+- `EditableSection`: Hover'da mavi border + section badge gösteriyor
+- `EditableField`: Inline text editing yapıyor
+- Görseller için özel bir edit paneli YOK
 
-### 1. Bağlamsal Anlama
+## Durable.co Referans Özellikleri
 
-| Kullanıcı Cevabı | AI'ın Yapması Gereken |
-|------------------|----------------------|
-| "Avukatlık Ofisi Yılmaz" | Sektörü otomatik anla (hizmet), sektör sormayı atla |
-| "Kafe işletiyorum" | Yiyecek/içecek sektörü, bunu anla ve devam et |
-| "İstanbul'da web tasarım yapıyoruz" | Hem konum (İstanbul) hem sektör (teknoloji) çıkar |
+Ekran görüntülerinden görülen özellikler:
 
-### 2. Yeni Prompt Karakteristikleri
+| Bileşen | Özellik |
+|---------|---------|
+| Panel Header | "< Image" başlığı + Done butonu |
+| Image Preview | Küçük thumbnail gösterim |
+| Regenerate/Change | AI ile yeni görsel veya mevcut değiştirme |
+| Alt Text | SEO için açıklama alanı |
+| Image Position | Horizontal/Vertical slider'lar |
+| Carousel Nav | 1/3, oklar ile geçiş |
 
-**Ezberci yerine akıllı:**
-```text
-❌ Eski: "Sektörünüz nedir?" (her zaman sor)
-✅ Yeni: "Avukatlık dediyseniz hukuk alanında uzmanlaştığınızı anladım, harika!"
+## Teknik Uygulama
+
+### Yeni Bileşenler
+
+**1. ImageEditorSidebar.tsx**
+Görsele tıklandığında açılan ana sidebar:
+```
+- Slide-in animasyonla sağdan açılır
+- Width: 320px (kompakt ama kullanışlı)
+- Top: 56px (toolbar altında)
+- Z-index: 40 (overlay değil, yan panel)
 ```
 
-**Samimi ve doğal:**
-```text
-❌ Eski: "Soru 2/10: Sektörünüz?"
-✅ Yeni: "Avukatlık ofisi güzel! 👔 Hangi şehirde hizmet veriyorsunuz?"
+**2. EditableImage.tsx**
+Tıklanabilir görsel wrapper:
+```
+- Görsel üzerinde hover'da edit ikonları
+- Tıklandığında sidebar'ı açar
+- Seçili durumda mavi border
 ```
 
-**Akıcı geçişler:**
-```text
-❌ Eski: "Anladım! Soru 3/10: Konum?"
-✅ Yeni: "İstanbul, harika bir pazar! Peki hangi hukuki alanlarda uzmansınız - boşanma, ticaret hukuku gibi?"
-```
-
-### 3. Yeni System Prompt
+### Sidebar İçeriği
 
 ```text
-Sen sıcakkanlı ve zeki bir web sitesi danışmanısın. Kullanıcıyla doğal 
-sohbet ederek işletmesi için bilgi topluyorsun.
-
-TEMEL PRENSİP: Kullanıcının söylediklerinden maksimum bilgi çıkar!
-- "Avukatlık ofisi" = sektör hizmet, sormana gerek yok
-- "İstanbul'da kafe" = konum + sektör, ikisini de anladın
-- "Yazılım şirketi kuruyoruz" = teknoloji sektörü
-
-SOHBET TARZI:
-- Samimi ama profesyonel (dostça bir danışman gibi)
-- Kısa ve öz cevaplar (2-3 cümle max)
-- Kullanıcının cevabına uygun tepkiler ("Vay be!", "Harika bir alan!")
-- Gereksiz soru sorma - zaten anladığını tekrar sorma!
-
-TOPLANACAK BİLGİLER (sırayla ama ESNEK):
-1. İşletme adı
-2. Sektör (genellikle isimden anlaşılır!)
-3. Konum (şehir/ülke)
-4. Ana hizmetler/ürünler
-5. Hedef kitle
-6. İletişim (tel, mail, saatler)
-7. Kısa tanıtım cümlesi
-8. Site amacı
-9. Renk/tema tercihi
-10. Dil tercihi
-
-ÖRNEK DİYALOG:
-Kullanıcı: "Yılmaz Hukuk Bürosu"
-Sen: "Yılmaz Hukuk Bürosu, profesyonel bir isim! 👔 Hangi şehirde müvekkillerinize hizmet veriyorsunuz?"
-(Sektörü sormadın çünkü "hukuk bürosu" zaten belli etti)
-
-KURAL: Sadece bilmediğini sor, anladığını varsay!
++------------------------+
+| < Image         Done   |
++------------------------+
+| [Thumbnail Preview]    |
+| +--------------------+ |
+| |                    | |
+| |      (image)       | |
+| |                    | |
+| +--------------------+ |
+|                        |
+| [Regenerate] [Change]  |
++------------------------+
+| Alt text               |
+| +--------------------+ |
+| | dentist treatment  | |
+| +--------------------+ |
+| (SEO description)      |
++------------------------+
+| Image position         |
+| Horizontal  ----o----  |
+| Vertical    ---o-----  |
++------------------------+
 ```
 
-## Dosya Değişikliği
+### State Yönetimi
+
+Project.tsx'e eklenecek state:
+```typescript
+const [selectedImage, setSelectedImage] = useState<{
+  type: 'hero' | 'about' | 'gallery' | 'cta';
+  index?: number;
+  imagePath: string;
+  currentUrl: string;
+} | null>(null);
+```
+
+### Props Akışı
+
+```text
+Project.tsx
+    │
+    ├── selectedImage state
+    ├── setSelectedImage callback
+    │
+    ▼
+WebsitePreview
+    │
+    ├── onImageSelect callback
+    │
+    ▼
+Template (temp1)
+    │
+    ├── onImageSelect geçir
+    │
+    ▼
+HeroSplitSection / ImageGallerySection
+    │
+    └── EditableImage wrapper kullan
+```
+
+### Görsel Değiştirme Seçenekleri
+
+**Regenerate**: AI ile yeni görsel oluştur
+```typescript
+// generate-images edge function'ı çağır
+// Belirli bir slot için yeni görsel üret
+```
+
+**Change**: Manuel seçim
+- Galeri modal açılır
+- Pixabay'dan arama yapılabilir
+- Kullanıcı seçer
+
+**Position Sliders**: object-position CSS
+```typescript
+// Horizontal: object-position-x (0-100%)
+// Vertical: object-position-y (0-100%)
+```
+
+## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `supabase/functions/wizard-chat/index.ts` | System prompt'u akıllı ve samimi versiyonla değiştir |
+| `src/components/website-preview/ImageEditorSidebar.tsx` | YENİ - Ana sidebar bileşeni |
+| `src/components/website-preview/EditableImage.tsx` | YENİ - Tıklanabilir görsel wrapper |
+| `src/pages/Project.tsx` | selectedImage state + sidebar render |
+| `src/components/website-preview/WebsitePreview.tsx` | onImageSelect prop ekle |
+| `src/templates/types.ts` | onImageSelect type ekle |
+| `src/templates/temp1/index.tsx` | onImageSelect'i geçir |
+| `src/templates/temp1/sections/HeroSplitSection.tsx` | EditableImage kullan |
+| `src/templates/temp1/sections/ImageGallerySection.tsx` | EditableImage kullan |
+| `src/templates/temp1/sections/AboutInlineSection.tsx` | EditableImage kullan |
+| `src/templates/temp1/sections/CTASection.tsx` | EditableImage kullan |
 
-## Teknik Detaylar
+## ImageEditorSidebar Tasarımı
 
-### Temperature Ayarı
-- Mevcut: `0.5` (çok düşük, robotik)
-- Yeni: `0.7` (daha yaratıcı ve doğal)
+```typescript
+interface ImageEditorSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  imageData: {
+    type: string;
+    index?: number;
+    imagePath: string;
+    currentUrl: string;
+    altText?: string;
+  } | null;
+  onRegenerate: () => void;
+  onChangeImage: (newUrl: string) => void;
+  onUpdateAltText: (text: string) => void;
+  onUpdatePosition: (x: number, y: number) => void;
+  isRegenerating?: boolean;
+}
+```
 
-### Max Tokens
-- Mevcut: `300`
-- Yeni: `400` (daha detaylı ama yine kısa cevaplar için)
+## Animasyon
 
-### Bağlamsal Çıkarım Örnekleri
-
-```text
-"Kafe Botanik" → sector: "food", konum sorusu atla
-"İstanbul Web Tasarım" → sector: "technology", city: "İstanbul"  
-"Dr. Ayşe Kaya Diş Kliniği" → sector: "service" (sağlık), isim çıkarıldı
-"Antalya'da butik otel" → sector: "service", city: "Antalya"
+Sheet bileşeni kullanarak sağdan slide-in:
+```css
+/* Overlay YOK - sadece panel kayar */
+transform: translateX(100%) -> translateX(0)
+transition: 300ms ease-out
 ```
 
 ## Beklenen Sonuç
 
-- AI kullanıcının cevabından sektör, konum gibi bilgileri otomatik çıkaracak
-- Gereksiz sorular atlanacak (daha hızlı akış)
-- Sohbet daha doğal ve samimi olacak
-- Robotik "Soru X/10" formatı yerine akıcı geçişler
+- Görsele tıklandığında sağdan 320px genişliğinde panel açılır
+- Panel içinde thumbnail, Regenerate/Change butonları, alt text ve position slider'ları
+- Done butonuyla kapatılır
+- Website preview hala görünür (overlay değil yan panel)
+- Durable.co'daki gibi temiz ve kullanışlı UX
 
