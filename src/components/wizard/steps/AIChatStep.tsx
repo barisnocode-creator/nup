@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,20 +17,27 @@ interface AIChatStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
+// Hardcoded first message for instant display
+const INITIAL_MESSAGE = `Merhaba! 👋 Ben profesyonel web sitesi danışmanınızım. İşletmeniz için harika bir web sitesi oluşturmak üzere size 5 soru soracağım.
+
+**Soru 1/5: İşletme Kimliği**
+- İşletmenizin adı nedir?
+- Tam olarak hangi sektörde/alanda faaliyet gösteriyorsunuz?
+- Hangi şehir/ülkede bulunuyorsunuz?
+- Kaç yıldır bu alanda faaliyet gösteriyorsunuz?`;
+
 export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', content: INITIAL_MESSAGE }
+  ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [streamingContent, setStreamingContent] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Start conversation on mount
-  useEffect(() => {
-    startConversation();
-  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -40,7 +47,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, streamingContent]);
 
   // Focus input after AI responds
   useEffect(() => {
@@ -49,41 +56,79 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     }
   }, [isLoading, isComplete]);
 
-  const startConversation = async () => {
-    setIsLoading(true);
-    setError(null);
+  const parseSSEStream = useCallback(async (
+    response: Response,
+    onDelta: (text: string) => void,
+    onDone: (fullText: string) => void
+  ) => {
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No reader available');
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/wizard-chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            messages: [],
-            questionNumber: 0,
-          }),
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let fullContent = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete lines
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        let line = buffer.slice(0, newlineIndex);
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') {
+          onDone(fullContent);
+          return;
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start conversation');
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            fullContent += content;
+            onDelta(content);
+          }
+        } catch {
+          // Incomplete JSON, put back and wait
+          buffer = line + '\n' + buffer;
+          break;
+        }
       }
-
-      const data = await response.json();
-      setMessages([{ role: 'assistant', content: data.response }]);
-      setQuestionNumber(data.questionNumber);
-    } catch (err) {
-      console.error('Failed to start conversation:', err);
-      setError(err instanceof Error ? err.message : 'Bağlantı hatası oluştu');
-    } finally {
-      setIsLoading(false);
     }
-  };
+
+    // Final flush
+    onDone(fullContent);
+  }, []);
+
+  const processCompletedResponse = useCallback((content: string) => {
+    const isCompleteResponse = content.includes('CHAT_COMPLETE');
+    let cleanResponse = content;
+    let extractedData = null;
+
+    if (isCompleteResponse) {
+      const jsonMatch = content.match(/CHAT_COMPLETE\s*(\{[\s\S]*\})/);
+      if (jsonMatch) {
+        try {
+          extractedData = JSON.parse(jsonMatch[1]);
+        } catch (e) {
+          console.error('Failed to parse extracted data:', e);
+        }
+      }
+      cleanResponse = content.split('CHAT_COMPLETE')[0].trim();
+      cleanResponse += '\n\n✨ Harika! Tüm bilgileri topladım. Şimdi web sitenizi oluşturmaya hazırız!';
+    }
+
+    return { isCompleteResponse, cleanResponse, extractedData };
+  }, []);
 
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading || isComplete) return;
@@ -91,6 +136,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     const userMessage = inputValue.trim();
     setInputValue('');
     setError(null);
+    setStreamingContent('');
 
     // Add user message immediately
     const updatedMessages: ChatMessage[] = [
@@ -112,6 +158,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
           body: JSON.stringify({
             messages: updatedMessages,
             questionNumber,
+            stream: true,
           }),
         }
       );
@@ -121,25 +168,64 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         throw new Error(errorData.error || 'Failed to send message');
       }
 
-      const data = await response.json();
+      // Check if streaming response
+      const contentType = response.headers.get('content-type');
       
-      setMessages([
-        ...updatedMessages,
-        { role: 'assistant', content: data.response },
-      ]);
-      setQuestionNumber(data.questionNumber);
+      if (contentType?.includes('text/event-stream')) {
+        // Handle streaming response
+        let accumulatedContent = '';
+        
+        await parseSSEStream(
+          response,
+          (delta) => {
+            accumulatedContent += delta;
+            setStreamingContent(accumulatedContent);
+          },
+          (fullText) => {
+            const { isCompleteResponse, cleanResponse, extractedData } = processCompletedResponse(fullText);
+            
+            setStreamingContent('');
+            setMessages([
+              ...updatedMessages,
+              { role: 'assistant', content: cleanResponse },
+            ]);
+            
+            if (isCompleteResponse) {
+              setQuestionNumber(5);
+              setIsComplete(true);
+              onValidityChange(true);
+              if (extractedData) {
+                onComplete(extractedData);
+              }
+            } else {
+              setQuestionNumber(prev => Math.min(prev + 1, 5));
+            }
+            
+            setIsLoading(false);
+          }
+        );
+      } else {
+        // Handle non-streaming response (fallback)
+        const data = await response.json();
+        
+        setMessages([
+          ...updatedMessages,
+          { role: 'assistant', content: data.response },
+        ]);
+        setQuestionNumber(data.questionNumber);
 
-      if (data.isComplete && data.extractedData) {
-        setIsComplete(true);
-        onValidityChange(true);
-        onComplete(data.extractedData);
+        if (data.isComplete && data.extractedData) {
+          setIsComplete(true);
+          onValidityChange(true);
+          onComplete(data.extractedData);
+        }
+        
+        setIsLoading(false);
       }
     } catch (err) {
       console.error('Failed to send message:', err);
       setError(err instanceof Error ? err.message : 'Mesaj gönderilemedi');
-      // Remove the user message on error
       setMessages(messages);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -152,6 +238,11 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   };
 
   const progressPercentage = Math.min((questionNumber / 5) * 100, 100);
+
+  // Display content: either streaming or final messages
+  const displayMessages = streamingContent 
+    ? [...messages, { role: 'assistant' as const, content: streamingContent }]
+    : messages;
 
   return (
     <div className="flex flex-col h-[400px]">
@@ -169,7 +260,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       {/* Messages */}
       <ScrollArea className="flex-1 py-4" ref={scrollRef}>
         <div className="space-y-4 pr-4">
-          {messages.map((message, index) => (
+          {displayMessages.map((message, index) => (
             <div
               key={index}
               className={cn(
@@ -204,7 +295,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             </div>
           ))}
 
-          {isLoading && (
+          {isLoading && !streamingContent && (
             <div className="flex gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
                 <Bot className="h-4 w-4" />
@@ -221,14 +312,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       {error && (
         <div className="py-2">
           <p className="text-sm text-destructive">{error}</p>
-          <Button
-            variant="link"
-            size="sm"
-            onClick={startConversation}
-            className="p-0 h-auto"
-          >
-            Tekrar dene
-          </Button>
         </div>
       )}
 
