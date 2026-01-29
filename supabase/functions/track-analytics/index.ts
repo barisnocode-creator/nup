@@ -90,12 +90,13 @@ Deno.serve(async (req) => {
     // Create Supabase client with service role (to bypass RLS for validation)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify the project exists and is published
+    // Verify the project exists and get ownership info
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select("id, is_published")
+      .select("id, is_published, user_id")
       .eq("id", project_id)
       .single();
 
@@ -107,7 +108,26 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!project.is_published) {
+    // Check if user is the project owner (for unpublished projects)
+    let isOwner = false;
+    const authHeader = req.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } },
+        });
+        const token = authHeader.replace("Bearer ", "");
+        const { data: claimsData } = await authClient.auth.getClaims(token);
+        if (claimsData?.claims?.sub === project.user_id) {
+          isOwner = true;
+        }
+      } catch {
+        // Ignore auth errors - user is not authenticated
+      }
+    }
+
+    // Allow analytics for published projects OR project owners viewing their own projects
+    if (!project.is_published && !isOwner) {
       console.log(`Attempted analytics for unpublished project: ${project_id}`);
       return new Response(
         JSON.stringify({ error: "Project is not published" }),
