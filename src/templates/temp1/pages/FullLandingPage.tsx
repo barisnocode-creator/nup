@@ -10,7 +10,7 @@ import { TestimonialsSection } from '../sections/TestimonialsSection';
 import { FAQSection } from '../sections/FAQSection';
 import { ContactInlineSection } from '../sections/ContactInlineSection';
 import { CTASection } from '../sections/CTASection';
-import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
+import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
 
 interface FullLandingPageProps {
   content: GeneratedContent;
@@ -19,6 +19,9 @@ interface FullLandingPageProps {
   isEditable: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
   onLockedFeature?: (feature: string) => void;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
+  // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
 }
@@ -30,13 +33,12 @@ export function FullLandingPage({
   isEditable,
   onFieldEdit,
   onLockedFeature,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: FullLandingPageProps) {
   const { pages, images, metadata } = content;
-
-  // Debug log for props
-  console.log('FullLandingPage props:', { isEditable, hasOnImageSelect: !!onImageSelect, selectedImage });
 
   return (
     <div>
@@ -57,6 +59,8 @@ export function FullLandingPage({
           isNeutral={isNeutral}
           isEditable={isEditable}
           onFieldEdit={onFieldEdit}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />
@@ -74,6 +78,9 @@ export function FullLandingPage({
             statistics={pages.home.statistics}
             isDark={isDark}
             isNeutral={isNeutral}
+            isEditable={isEditable}
+            editorSelection={editorSelection}
+            onEditorSelect={onEditorSelect}
           />
         </EditableSection>
       )}
@@ -93,6 +100,8 @@ export function FullLandingPage({
           isNeutral={isNeutral}
           isEditable={isEditable}
           onFieldEdit={onFieldEdit}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />
@@ -111,6 +120,8 @@ export function FullLandingPage({
           isDark={isDark}
           isNeutral={isNeutral}
           isEditable={isEditable}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
         />
       </EditableSection>
 
@@ -126,6 +137,9 @@ export function FullLandingPage({
             steps={pages.home.process}
             isDark={isDark}
             isNeutral={isNeutral}
+            isEditable={isEditable}
+            editorSelection={editorSelection}
+            onEditorSelect={onEditorSelect}
           />
         </EditableSection>
       )}
@@ -142,6 +156,8 @@ export function FullLandingPage({
           isDark={isDark}
           isNeutral={isNeutral}
           isEditable={isEditable}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />
@@ -172,6 +188,9 @@ export function FullLandingPage({
             faqs={pages.services.faq}
             isDark={isDark}
             isNeutral={isNeutral}
+            isEditable={isEditable}
+            editorSelection={editorSelection}
+            onEditorSelect={onEditorSelect}
           />
         </EditableSection>
       )}
@@ -207,6 +226,8 @@ export function FullLandingPage({
           isDark={isDark}
           isNeutral={isNeutral}
           isEditable={isEditable}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />

@@ -1,7 +1,7 @@
-import { EditableField } from '@/components/website-preview/EditableField';
+import { EditableText } from '@/components/website-preview/EditableText';
 import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
-import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
+import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
 
 interface HeroSplitSectionProps {
   title: string;
@@ -12,6 +12,9 @@ interface HeroSplitSectionProps {
   isNeutral: boolean;
   isEditable: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
+  // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
 }
@@ -25,10 +28,33 @@ export function HeroSplitSection({
   isNeutral,
   isEditable,
   onFieldEdit,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: HeroSplitSectionProps) {
-  const isImageSelected = selectedImage?.imagePath === 'images.heroHome';
+  const isImageSelected = selectedImage?.imagePath === 'images.heroHome' || 
+    editorSelection?.imageData?.imagePath === 'images.heroHome';
+  
+  const isTitleSelected = editorSelection?.sectionId === 'hero' && 
+    editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.title');
+
+  const handleImageSelect = (data: ImageData) => {
+    // If using new unified system
+    if (onEditorSelect) {
+      onEditorSelect({
+        type: 'image',
+        title: 'Hero Image',
+        sectionId: 'hero',
+        imageData: data,
+        fields: [],
+      });
+    }
+    // Legacy fallback
+    if (onImageSelect) {
+      onImageSelect(data);
+    }
+  };
 
   return (
     <section className={cn(
@@ -46,36 +72,65 @@ export function HeroSplitSection({
               ✨ Welcome to our practice
             </div>
 
-            <EditableField
+            <EditableText
               value={title}
               fieldPath="pages.home.hero.title"
-              isEditable={isEditable}
-              onSave={onFieldEdit}
+              fieldLabel="Headline"
+              sectionTitle="Hero"
+              sectionId="hero"
               as="h1"
+              isEditable={isEditable}
+              isSelected={isTitleSelected}
+              onSelect={onEditorSelect}
+              additionalFields={[
+                {
+                  label: 'Subtitle',
+                  fieldPath: 'pages.home.hero.subtitle',
+                  value: subtitle,
+                  type: 'text',
+                  canRegenerate: true,
+                },
+                {
+                  label: 'Description',
+                  fieldPath: 'pages.home.hero.description',
+                  value: description,
+                  type: 'textarea',
+                  canRegenerate: true,
+                },
+              ]}
               className={cn(
                 'text-4xl md:text-5xl lg:text-6xl font-bold leading-tight',
                 isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
               )}
             />
 
-            <EditableField
+            <EditableText
               value={subtitle}
               fieldPath="pages.home.hero.subtitle"
-              isEditable={isEditable}
-              onSave={onFieldEdit}
+              fieldLabel="Subtitle"
+              sectionTitle="Hero"
+              sectionId="hero"
               as="p"
+              isEditable={isEditable}
+              isSelected={editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.subtitle')}
+              onSelect={onEditorSelect}
               className={cn(
                 'text-xl md:text-2xl font-medium',
                 isDark ? 'text-slate-300' : isNeutral ? 'text-stone-700' : 'text-gray-700'
               )}
             />
 
-            <EditableField
+            <EditableText
               value={description}
               fieldPath="pages.home.hero.description"
-              isEditable={isEditable}
-              onSave={onFieldEdit}
+              fieldLabel="Description"
+              sectionTitle="Hero"
+              sectionId="hero"
               as="p"
+              multiline
+              isEditable={isEditable}
+              isSelected={editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.description')}
+              onSelect={onEditorSelect}
               className={cn(
                 'text-lg leading-relaxed max-w-xl',
                 isDark ? 'text-slate-400' : isNeutral ? 'text-stone-600' : 'text-gray-600'
@@ -115,7 +170,7 @@ export function HeroSplitSection({
                 containerClassName="w-full h-full"
                 isEditable={isEditable}
                 isSelected={isImageSelected}
-                onSelect={onImageSelect}
+                onSelect={handleImageSelect}
                 fallback={
                   <div className={cn(
                     'w-full h-full flex items-center justify-center',

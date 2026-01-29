@@ -1,6 +1,6 @@
 import { GeneratedContent } from '@/types/generated-website';
 import { getTemplate } from '@/templates';
-import type { ImageData } from './ImageEditorSidebar';
+import type { EditorSelection, ImageData } from './EditorSidebar';
 
 interface WebsitePreviewProps {
   content: GeneratedContent;
@@ -8,6 +8,9 @@ interface WebsitePreviewProps {
   templateId?: string;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
+  // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
 }
@@ -18,10 +21,11 @@ export function WebsitePreview({
   templateId = 'temp1',
   isEditable = false,
   onFieldEdit,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: WebsitePreviewProps) {
-  // Get the template component based on templateId
   const Template = getTemplate(templateId);
 
   const handleFieldEdit = (fieldPath: string, newValue: string) => {
@@ -36,6 +40,8 @@ export function WebsitePreview({
       colorPreference={colorPreference}
       isEditable={isEditable}
       onFieldEdit={handleFieldEdit}
+      editorSelection={editorSelection}
+      onEditorSelect={onEditorSelect}
       selectedImage={selectedImage}
       onImageSelect={onImageSelect}
     />

@@ -2,7 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
-import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
+import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
 
 interface CTASectionProps {
   siteName: string;
@@ -11,6 +11,9 @@ interface CTASectionProps {
   isDark: boolean;
   isNeutral: boolean;
   isEditable?: boolean;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
+  // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
 }
@@ -22,10 +25,28 @@ export function CTASection({
   isDark,
   isNeutral,
   isEditable = false,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: CTASectionProps) {
-  const isImageSelected = selectedImage?.imagePath === 'images.ctaImage';
+  const isImageSelected = selectedImage?.imagePath === 'images.ctaImage' ||
+    editorSelection?.imageData?.imagePath === 'images.ctaImage';
+
+  const handleImageSelect = (data: ImageData) => {
+    if (onEditorSelect) {
+      onEditorSelect({
+        type: 'image',
+        title: 'CTA Background',
+        sectionId: 'cta',
+        imageData: data,
+        fields: [],
+      });
+    }
+    if (onImageSelect) {
+      onImageSelect(data);
+    }
+  };
 
   return (
     <section className={cn(
@@ -44,7 +65,7 @@ export function CTASection({
             containerClassName="w-full h-full"
             isEditable={isEditable}
             isSelected={isImageSelected}
-            onSelect={onImageSelect}
+            onSelect={handleImageSelect}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70" />
         </div>

@@ -1,12 +1,15 @@
 import { cn } from '@/lib/utils';
 import { EditableImage } from '@/components/website-preview/EditableImage';
-import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
+import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
 
 interface ImageGallerySectionProps {
   images: string[];
   isDark: boolean;
   isNeutral: boolean;
   isEditable?: boolean;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
+  // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
 }
@@ -16,6 +19,8 @@ export function ImageGallerySection({
   isDark,
   isNeutral,
   isEditable = false,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: ImageGallerySectionProps) {
@@ -23,6 +28,21 @@ export function ImageGallerySection({
   const displayImages = images && images.length > 0 
     ? images.slice(0, 6) 
     : Array(6).fill(null);
+
+  const handleImageSelect = (data: ImageData) => {
+    if (onEditorSelect) {
+      onEditorSelect({
+        type: 'image',
+        title: `Gallery Image ${(data.index || 0) + 1}`,
+        sectionId: 'gallery',
+        imageData: data,
+        fields: [],
+      });
+    }
+    if (onImageSelect) {
+      onImageSelect(data);
+    }
+  };
 
   return (
     <section className={cn(
@@ -50,7 +70,8 @@ export function ImageGallerySection({
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {displayImages.map((image, index) => {
             const imagePath = `images.galleryImages[${index}]`;
-            const isThisSelected = selectedImage?.imagePath === imagePath;
+            const isThisSelected = selectedImage?.imagePath === imagePath ||
+              editorSelection?.imageData?.imagePath === imagePath;
 
             return (
               <div
@@ -74,7 +95,7 @@ export function ImageGallerySection({
                     containerClassName="w-full h-full group cursor-pointer"
                     isEditable={isEditable}
                     isSelected={isThisSelected}
-                    onSelect={onImageSelect}
+                    onSelect={handleImageSelect}
                   />
                 ) : (
                   <div className={cn(

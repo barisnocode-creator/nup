@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ImageData } from './ImageEditorSidebar';
+import type { ImageData } from './EditorSidebar';
 
 interface EditableImageProps {
   src: string;

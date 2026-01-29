@@ -1,16 +1,24 @@
 import { ProcessStep } from '@/types/generated-website';
+import { EditableItem } from '@/components/website-preview/EditableItem';
 import { cn } from '@/lib/utils';
+import type { EditorSelection } from '@/components/website-preview/EditorSidebar';
 
 interface ProcessSectionProps {
   steps: ProcessStep[];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
 }
 
 export function ProcessSection({
   steps,
   isDark,
   isNeutral,
+  isEditable = false,
+  editorSelection,
+  onEditorSelect,
 }: ProcessSectionProps) {
   if (!steps || steps.length === 0) return null;
 
@@ -47,40 +55,60 @@ export function ProcessSection({
 
             {/* Steps */}
             <div className="space-y-12">
-              {steps.map((step, index) => (
-                <div key={index} className="relative flex gap-8">
-                  {/* Step Number */}
-                  <div className={cn(
-                    'relative z-10 flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold',
-                    'bg-primary text-primary-foreground shadow-lg'
-                  )}>
-                    {step.step}
-                  </div>
+              {steps.map((step, index) => {
+                const isSelected = editorSelection?.sectionId === 'process' && 
+                  editorSelection?.itemIndex === index;
 
-                  {/* Content */}
-                  <div className={cn(
-                    'flex-1 p-6 rounded-xl border',
-                    isDark 
-                      ? 'bg-slate-800 border-slate-700' 
-                      : isNeutral 
-                        ? 'bg-white border-stone-200' 
-                        : 'bg-gray-50 border-gray-200'
-                  )}>
-                    <h3 className={cn(
-                      'text-xl font-semibold mb-3',
-                      isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
+                return (
+                  <EditableItem
+                    key={index}
+                    itemType="process"
+                    itemIndex={index}
+                    sectionId="process"
+                    itemData={{
+                      title: step.title,
+                      titlePath: `pages.home.process[${index}].title`,
+                      description: step.description,
+                      descriptionPath: `pages.home.process[${index}].description`,
+                    }}
+                    isEditable={isEditable}
+                    isSelected={isSelected}
+                    onSelect={onEditorSelect}
+                    className="relative flex gap-8"
+                  >
+                    {/* Step Number */}
+                    <div className={cn(
+                      'relative z-10 flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold',
+                      'bg-primary text-primary-foreground shadow-lg'
                     )}>
-                      {step.title}
-                    </h3>
-                    <p className={cn(
-                      'text-base',
-                      isDark ? 'text-slate-400' : isNeutral ? 'text-stone-600' : 'text-gray-600'
+                      {step.step}
+                    </div>
+
+                    {/* Content */}
+                    <div className={cn(
+                      'flex-1 p-6 rounded-xl border',
+                      isDark 
+                        ? 'bg-slate-800 border-slate-700' 
+                        : isNeutral 
+                          ? 'bg-white border-stone-200' 
+                          : 'bg-gray-50 border-gray-200'
                     )}>
-                      {step.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                      <h3 className={cn(
+                        'text-xl font-semibold mb-3',
+                        isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
+                      )}>
+                        {step.title}
+                      </h3>
+                      <p className={cn(
+                        'text-base',
+                        isDark ? 'text-slate-400' : isNeutral ? 'text-stone-600' : 'text-gray-600'
+                      )}>
+                        {step.description}
+                      </p>
+                    </div>
+                  </EditableItem>
+                );
+              })}
             </div>
           </div>
         </div>

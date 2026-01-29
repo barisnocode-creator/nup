@@ -10,7 +10,7 @@ import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
-import { ImageEditorSidebar, type ImageData } from '@/components/website-preview/ImageEditorSidebar';
+import { EditorSidebar, type EditorSelection, type ImageData } from '@/components/website-preview/EditorSidebar';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -49,9 +49,10 @@ export default function Project() {
   const [lockedFeature, setLockedFeature] = useState('');
   const [currentSection, setCurrentSection] = useState('hero');
 
-  // Image Editor Sidebar State
-  const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
+  // Unified Editor Sidebar State
+  const [editorSelection, setEditorSelection] = useState<EditorSelection | null>(null);
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
+  const [isRegeneratingField, setIsRegeneratingField] = useState<string | null>(null);
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -262,29 +263,26 @@ export default function Project() {
     }
   };
 
-  // Image Editor handlers
-  const handleImageSelect = useCallback((data: ImageData) => {
-    setSelectedImage(data);
+  // Unified Editor handlers
+  const handleEditorSelect = useCallback((selection: EditorSelection) => {
+    setEditorSelection(selection);
   }, []);
 
-  const handleImageClose = useCallback(() => {
-    setSelectedImage(null);
+  const handleEditorClose = useCallback(() => {
+    setEditorSelection(null);
   }, []);
 
   const handleImageRegenerate = useCallback(async () => {
-    if (!selectedImage || !id) return;
+    if (!editorSelection?.imageData || !id) return;
     
     setIsRegeneratingImage(true);
     try {
-      // For now, just show a toast - regeneration would call the generate-images function
       toast({
         title: 'Regenerating image...',
         description: 'AI is creating a new image for you.',
       });
 
       // TODO: Implement single image regeneration via edge function
-      // This would call a dedicated endpoint to regenerate just one image
-      
       setTimeout(() => {
         setIsRegeneratingImage(false);
         toast({
@@ -296,10 +294,9 @@ export default function Project() {
       console.error('Image regeneration error:', err);
       setIsRegeneratingImage(false);
     }
-  }, [selectedImage, id, toast]);
+  }, [editorSelection, id, toast]);
 
   const handleImageChange = useCallback(() => {
-    // Open image picker modal (for now just show toast)
     toast({
       title: 'Image picker',
       description: 'Image picker coming soon. You can regenerate for now.',
@@ -307,17 +304,44 @@ export default function Project() {
   }, [toast]);
 
   const handleUpdateAltText = useCallback((text: string) => {
-    if (!selectedImage) return;
-    // Alt text would be stored in a separate field or metadata
-    // For now we just update local state
-    setSelectedImage(prev => prev ? { ...prev, altText: text } : null);
+    if (!editorSelection?.imageData) return;
+    setEditorSelection(prev => prev ? { 
+      ...prev, 
+      imageData: prev.imageData ? { ...prev.imageData, altText: text } : undefined 
+    } : null);
   }, []);
 
   const handleUpdateImagePosition = useCallback((x: number, y: number) => {
-    if (!selectedImage) return;
-    // Position would be stored per-image
-    setSelectedImage(prev => prev ? { ...prev, positionX: x, positionY: y } : null);
+    if (!editorSelection?.imageData) return;
+    setEditorSelection(prev => prev ? { 
+      ...prev, 
+      imageData: prev.imageData ? { ...prev.imageData, positionX: x, positionY: y } : undefined 
+    } : null);
   }, []);
+
+  const handleRegenerateField = useCallback(async (fieldPath: string) => {
+    if (!id || !project) return;
+    
+    setIsRegeneratingField(fieldPath);
+    try {
+      toast({
+        title: 'Regenerating content...',
+        description: 'AI is creating new content for you.',
+      });
+
+      // TODO: Implement content regeneration via edge function
+      setTimeout(() => {
+        setIsRegeneratingField(null);
+        toast({
+          title: 'Content regenerated',
+          description: 'Your new content has been applied.',
+        });
+      }, 2000);
+    } catch (err) {
+      console.error('Content regeneration error:', err);
+      setIsRegeneratingField(null);
+    }
+  }, [id, project, toast]);
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
@@ -468,8 +492,8 @@ export default function Project() {
             templateId={project.template_id || 'temp1'}
             isEditable={isAuthenticated}
             onFieldEdit={handleFieldEdit}
-            selectedImage={selectedImage}
-            onImageSelect={handleImageSelect}
+            editorSelection={editorSelection}
+            onEditorSelect={handleEditorSelect}
           />
         )}
       </div>
@@ -484,16 +508,19 @@ export default function Project() {
         />
       )}
 
-      {/* Image Editor Sidebar */}
-      <ImageEditorSidebar
-        isOpen={!!selectedImage}
-        onClose={handleImageClose}
-        imageData={selectedImage}
-        onRegenerate={handleImageRegenerate}
-        onChangeImage={handleImageChange}
+      {/* Unified Editor Sidebar */}
+      <EditorSidebar
+        isOpen={!!editorSelection}
+        onClose={handleEditorClose}
+        selection={editorSelection}
+        onFieldUpdate={handleFieldEdit}
+        onRegenerateField={handleRegenerateField}
+        onImageRegenerate={handleImageRegenerate}
+        onImageChange={handleImageChange}
         onUpdateAltText={handleUpdateAltText}
         onUpdatePosition={handleUpdateImagePosition}
         isRegenerating={isRegeneratingImage}
+        isRegeneratingField={isRegeneratingField}
         isDark={isDark}
       />
 

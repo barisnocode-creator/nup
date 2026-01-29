@@ -3,7 +3,9 @@ import {
   Stethoscope, Pill, Smile, Activity, Microscope, 
   Syringe, Brain, Eye 
 } from 'lucide-react';
+import { EditableItem } from '@/components/website-preview/EditableItem';
 import { cn } from '@/lib/utils';
+import type { EditorSelection } from '@/components/website-preview/EditorSidebar';
 
 interface ServiceItem {
   title: string;
@@ -20,6 +22,8 @@ interface ServicesGridSectionProps {
   isDark: boolean;
   isNeutral: boolean;
   isEditable: boolean;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -45,6 +49,8 @@ export function ServicesGridSection({
   isDark,
   isNeutral,
   isEditable,
+  editorSelection,
+  onEditorSelect,
 }: ServicesGridSectionProps) {
   return (
     <section className={cn(
@@ -78,10 +84,24 @@ export function ServicesGridSection({
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {services.slice(0, 8).map((service, index) => {
             const IconComponent = iconMap[service.icon.toLowerCase()] || Heart;
+            const isSelected = editorSelection?.sectionId === 'services' && 
+              editorSelection?.itemIndex === index;
             
             return (
-              <div
+              <EditableItem
                 key={index}
+                itemType="service"
+                itemIndex={index}
+                sectionId="services"
+                itemData={{
+                  title: service.title,
+                  titlePath: `pages.services.servicesList[${index}].title`,
+                  description: service.description,
+                  descriptionPath: `pages.services.servicesList[${index}].description`,
+                }}
+                isEditable={isEditable}
+                isSelected={isSelected}
+                onSelect={onEditorSelect}
                 className={cn(
                   'group p-6 rounded-xl border transition-all duration-300',
                   'hover:shadow-xl hover:-translate-y-1 hover:border-primary/50',
@@ -112,7 +132,7 @@ export function ServicesGridSection({
                 )}>
                   {service.description}
                 </p>
-              </div>
+              </EditableItem>
             );
           })}
         </div>
