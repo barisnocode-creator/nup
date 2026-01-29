@@ -140,6 +140,34 @@ export interface GeneratedContent {
     tagline: string;
     seoDescription?: string;
   };
+  
+  // Site-wide settings
+  siteSettings?: {
+    colors?: {
+      primary?: string;
+      secondary?: string;
+      accent?: string;
+    };
+    fonts?: {
+      heading?: string;
+      body?: string;
+    };
+    corners?: 'rounded' | 'sharp' | 'pill';
+    animations?: boolean;
+    favicon?: string;
+  };
+  
+  // Per-page settings
+  pageSettings?: {
+    [key: string]: {
+      title?: string;
+      label?: string;
+      showInHeader?: boolean;
+      showInFooter?: boolean;
+      seoDescription?: string;
+      socialImage?: string;
+    };
+  };
 }
 
 export type WebsitePage = 'home' | 'about' | 'services' | 'contact' | 'blog' | 'blog-post';

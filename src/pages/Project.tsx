@@ -11,6 +11,9 @@ import { AuthModal } from '@/components/auth/AuthModal';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 import { EditorSidebar, type EditorSelection, type ImageData, type HeroVariant } from '@/components/website-preview/EditorSidebar';
+import { CustomizeSidebar } from '@/components/website-preview/CustomizeSidebar';
+import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
+import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -53,6 +56,12 @@ export default function Project() {
   const [editorSelection, setEditorSelection] = useState<EditorSelection | null>(null);
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
   const [isRegeneratingField, setIsRegeneratingField] = useState<string | null>(null);
+
+  // New Sidebar States
+  const [customizeSidebarOpen, setCustomizeSidebarOpen] = useState(false);
+  const [pageSettingsSidebarOpen, setPageSettingsSidebarOpen] = useState(false);
+  const [addContentSidebarOpen, setAddContentSidebarOpen] = useState(false);
+  const [selectedPageForSettings, setSelectedPageForSettings] = useState<string>('home');
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -369,6 +378,95 @@ export default function Project() {
     });
   }, [project, debouncedSave, toast]);
 
+  // Handle site settings change
+  const handleSiteSettingsChange = useCallback((siteSettings: GeneratedContent['siteSettings']) => {
+    if (!project?.generated_content) return;
+
+    const updatedContent = {
+      ...project.generated_content,
+      siteSettings,
+    };
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+  }, [project, debouncedSave]);
+
+  // Handle page settings change
+  const handlePageSettingsChange = useCallback((pageName: string, settings: NonNullable<GeneratedContent['pageSettings']>[string]) => {
+    if (!project?.generated_content) return;
+
+    const updatedContent = {
+      ...project.generated_content,
+      pageSettings: {
+        ...project.generated_content.pageSettings,
+        [pageName]: settings,
+      },
+    };
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+  }, [project, debouncedSave]);
+
+  // Handle page settings sidebar open
+  const handleOpenPageSettings = useCallback((pageName: string) => {
+    setSelectedPageForSettings(pageName);
+    setPageSettingsSidebarOpen(true);
+  }, []);
+
+  // Handle add page
+  const handleAddPage = useCallback((pageType: string) => {
+    toast({
+      title: 'Page added',
+      description: `${pageType} page has been added to your website.`,
+    });
+  }, [toast]);
+
+  // Handle add blog post
+  const handleAddBlogPost = useCallback(() => {
+    toast({
+      title: 'Blog post',
+      description: 'Blog post editor will open soon.',
+    });
+  }, [toast]);
+
+  // Handle regenerate all text
+  const handleRegenerateAllText = useCallback(async () => {
+    toast({
+      title: 'Regenerating text...',
+      description: 'AI is regenerating all website content.',
+    });
+    // TODO: Implement via edge function
+  }, [toast]);
+
+  // Handle regenerate website
+  const handleRegenerateWebsite = useCallback(async () => {
+    if (!id) return;
+    toast({
+      title: 'Regenerating website...',
+      description: 'This may take a moment.',
+    });
+    await generateWebsite(id);
+  }, [id, toast]);
+
+  // Handle regenerate page title
+  const handleRegeneratePageTitle = useCallback(() => {
+    toast({
+      title: 'Regenerating title...',
+      description: 'AI is creating a new title.',
+    });
+    // TODO: Implement via edge function
+  }, [toast]);
+
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
     if (error) {
@@ -500,12 +598,14 @@ export default function Project() {
           projectName={project.name}
           currentSection={currentSection}
           onNavigate={handleNavigate}
-          onCustomize={() => handleLockedFeature('Customize')}
-          onAddSection={() => handleLockedFeature('Add section')}
+          onCustomize={() => setCustomizeSidebarOpen(true)}
+          onAddSection={() => setAddContentSidebarOpen(true)}
+          onPageSettings={handleOpenPageSettings}
           onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
           onPublish={() => setPublishModalOpen(true)}
           onDashboard={() => navigate('/dashboard')}
           isPublished={project.is_published}
+          existingPages={['home', 'about', 'services', 'contact', 'blog']}
         />
       )}
 
@@ -580,6 +680,35 @@ export default function Project() {
         isOpen={upgradeModalOpen}
         onClose={() => setUpgradeModalOpen(false)}
         feature={lockedFeature}
+      />
+
+      {/* Customize Sidebar */}
+      <CustomizeSidebar
+        isOpen={customizeSidebarOpen}
+        onClose={() => setCustomizeSidebarOpen(false)}
+        siteSettings={project.generated_content?.siteSettings}
+        onSettingsChange={handleSiteSettingsChange}
+        onRegenerateText={handleRegenerateAllText}
+        onRegenerateWebsite={handleRegenerateWebsite}
+      />
+
+      {/* Page Settings Sidebar */}
+      <PageSettingsSidebar
+        isOpen={pageSettingsSidebarOpen}
+        onClose={() => setPageSettingsSidebarOpen(false)}
+        pageName={selectedPageForSettings}
+        pageSettings={project.generated_content?.pageSettings?.[selectedPageForSettings]}
+        onSettingsChange={(settings) => handlePageSettingsChange(selectedPageForSettings, settings)}
+        onRegenerateTitle={handleRegeneratePageTitle}
+      />
+
+      {/* Add Content Sidebar */}
+      <AddContentSidebar
+        isOpen={addContentSidebarOpen}
+        onClose={() => setAddContentSidebarOpen(false)}
+        onAddPage={handleAddPage}
+        onAddBlogPost={handleAddBlogPost}
+        existingPages={['home', 'about', 'services', 'contact', 'blog']}
       />
     </div>
   );

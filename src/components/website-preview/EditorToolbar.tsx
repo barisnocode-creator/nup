@@ -1,10 +1,11 @@
-import { Home, Palette, Layout, Plus, HelpCircle, Eye, Globe, ChevronDown } from 'lucide-react';
+import { Home, Palette, Layout, Plus, HelpCircle, Eye, Globe, ChevronDown, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
 interface EditorToolbarProps {
@@ -13,10 +14,12 @@ interface EditorToolbarProps {
   onNavigate: (section: string) => void;
   onCustomize: () => void;
   onAddSection: () => void;
+  onPageSettings: (pageName: string) => void;
   onPreview: () => void;
   onPublish: () => void;
   onDashboard: () => void;
   isPublished?: boolean;
+  existingPages?: string[];
 }
 
 const sections = [
@@ -33,16 +36,26 @@ const sections = [
   { id: 'cta', label: 'CTA' },
 ];
 
+const pages = [
+  { id: 'home', label: 'Home' },
+  { id: 'about', label: 'About' },
+  { id: 'services', label: 'Services' },
+  { id: 'contact', label: 'Contact' },
+  { id: 'blog', label: 'Blog' },
+];
+
 export function EditorToolbar({
   projectName,
   currentSection,
   onNavigate,
   onCustomize,
   onAddSection,
+  onPageSettings,
   onPreview,
   onPublish,
   onDashboard,
   isPublished = false,
+  existingPages = ['home', 'about', 'services', 'contact'],
 }: EditorToolbarProps) {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
@@ -81,12 +94,28 @@ export function EditorToolbar({
                 <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48 bg-background border shadow-lg z-[100]">
+            <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg z-[100]">
+              {/* Page Settings */}
+              {pages.map((page) => (
+                <DropdownMenuItem
+                  key={page.id}
+                  onClick={() => onPageSettings(page.id)}
+                  className="flex items-center justify-between"
+                >
+                  <span>{page.label}</span>
+                  <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              {/* Section Navigation */}
+              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                Jump to section
+              </div>
               {sections.map((section) => (
                 <DropdownMenuItem
                   key={section.id}
                   onClick={() => onNavigate(section.id)}
-                  className={currentSection === section.id ? 'bg-accent' : ''}
+                  className={`text-sm ${currentSection === section.id ? 'bg-accent' : ''}`}
                 >
                   {section.label}
                 </DropdownMenuItem>
