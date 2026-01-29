@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, Save, BarChart3 } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, Save, BarChart3, ImageIcon } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -38,6 +38,7 @@ export default function Project() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [generatingImages, setGeneratingImages] = useState(false);
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -101,6 +102,9 @@ export default function Project() {
           title: 'Website generated!',
           description: 'Your professional website has been created.',
         });
+
+        // Auto-generate images in background
+        generateImages(projectId);
       }
     } catch (err) {
       console.error('Generation error:', err);
@@ -111,6 +115,45 @@ export default function Project() {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Generate AI images for the website
+  const generateImages = async (projectId: string) => {
+    setGeneratingImages(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-images', {
+        body: { projectId },
+      });
+
+      if (error) {
+        console.error('Image generation error:', error);
+        toast({
+          title: 'Image generation failed',
+          description: 'Could not generate images. You can try again later.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (data?.images) {
+        setProject(prev => prev ? {
+          ...prev,
+          generated_content: {
+            ...prev.generated_content!,
+            images: data.images,
+          },
+        } : null);
+        
+        toast({
+          title: 'Images generated!',
+          description: 'AI-generated images have been added to your website.',
+        });
+      }
+    } catch (err) {
+      console.error('Image generation error:', err);
+    } finally {
+      setGeneratingImages(false);
     }
   };
 
@@ -334,6 +377,19 @@ export default function Project() {
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Analytics
                 </Link>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => id && generateImages(id)}
+                disabled={generatingImages}
+              >
+                {generatingImages ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                )}
+                {generatingImages ? 'Generating...' : 'Add Images'}
               </Button>
               <LockedFeatureButton 
                 label="Publish" 

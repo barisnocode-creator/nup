@@ -1,4 +1,4 @@
-import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye, Lock, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
 import { useState } from 'react';
 
@@ -82,9 +82,43 @@ export function ServicesPage({ content, isDark, isNeutral, isEditable = false, o
         </div>
       </section>
 
+      {/* Process Section */}
+      {content.process && content.process.length > 0 && (
+        <section className={`py-16 ${isDark ? 'bg-slate-800/30' : isNeutral ? 'bg-stone-50' : 'bg-gray-50'}`}>
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Our Process</h2>
+            <div className="max-w-4xl mx-auto">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {content.process.map((step, index) => (
+                  <div key={index} className="relative">
+                    <div className={`p-6 rounded-xl ${cardBg} border ${cardBorder} shadow-sm h-full`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-4 ${
+                        isDark ? 'bg-primary/20 text-primary' : 'bg-primary text-primary-foreground'
+                      }`}>
+                        <span className="font-bold">{step.step}</span>
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {step.description}
+                      </p>
+                    </div>
+                    {index < content.process!.length - 1 && (
+                      <div className="hidden lg:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                        <ArrowRight className={`w-6 h-6 ${isDark ? 'text-slate-600' : 'text-gray-300'}`} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Services Grid */}
       <section className={`py-16 ${isDark ? 'bg-slate-800/50' : isNeutral ? 'bg-stone-100' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-8">Our Services</h2>
           {isEditable && (
             <div className="flex justify-center mb-8">
               <button
@@ -148,7 +182,9 @@ export function ServicesPage({ content, isDark, isNeutral, isEditable = false, o
                   >
                     <button
                       onClick={() => toggleFaq(index)}
-                      className="w-full px-6 py-4 text-left flex items-center justify-between font-medium hover:bg-gray-50/50 transition-colors"
+                      className={`w-full px-6 py-4 text-left flex items-center justify-between font-medium transition-colors ${
+                        isDark ? 'hover:bg-slate-700/50' : 'hover:bg-gray-50'
+                      }`}
                     >
                       <span>{item.question}</span>
                       {openFaq === index ? (
