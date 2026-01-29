@@ -58,34 +58,46 @@ export type Database = {
       projects: {
         Row: {
           created_at: string
+          custom_domain: string | null
           form_data: Json | null
           generated_content: Json | null
           id: string
+          is_published: boolean | null
           name: string
           profession: string
+          published_at: string | null
           status: string
+          subdomain: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          custom_domain?: string | null
           form_data?: Json | null
           generated_content?: Json | null
           id?: string
+          is_published?: boolean | null
           name?: string
           profession: string
+          published_at?: string | null
           status?: string
+          subdomain?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          custom_domain?: string | null
           form_data?: Json | null
           generated_content?: Json | null
           id?: string
+          is_published?: boolean | null
           name?: string
           profession?: string
+          published_at?: string | null
           status?: string
+          subdomain?: string | null
           updated_at?: string
           user_id?: string
         }
