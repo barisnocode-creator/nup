@@ -11,26 +11,22 @@ interface ChatMessage {
 }
 
 interface RequestBody {
-  profession: string; // Now represents sector
   messages: ChatMessage[];
   questionNumber: number;
 }
 
-const SECTOR_LABELS: Record<string, string> = {
-  service: 'Hizmet Sektörü',
-  retail: 'Perakende & Satış',
-  food: 'Yiyecek & İçecek',
-  creative: 'Kreatif & Medya',
-  technology: 'Teknoloji',
-  other: 'Genel',
-};
-
-const getSystemPrompt = (sector: string) => {
-  const sectorLabel = SECTOR_LABELS[sector] || sector;
-  
-  return `Sen bir profesyonel web sitesi danışmanısın. ${sectorLabel} alanında faaliyet gösteren bir işletme için web sitesi oluşturmak üzere kullanıcıyla sohbet ediyorsun.
+const getSystemPrompt = () => {
+  return `Sen bir profesyonel web sitesi danışmanısın. Kullanıcının işletmesi için web sitesi oluşturmak üzere sohbet ediyorsun.
 
 GÖREV:
+- Toplam 5 detaylı soru sor (birer birer, sırayla)
+- Her seferde SADECE BİR soru sor (birden fazla alt soru içerebilir)
+- Sorular kurulacak web sitesine yönelik olsun
+- Doğal, samimi ve profesyonel bir dil kullan
+- Kullanıcının cevabını aldıktan sonra kısa bir onay ver ve sonraki soruya geç
+- Türkçe konuş
+
+SORU KONULARI (bu sırayla sor):
 - Toplam 5 detaylı soru sor (birer birer, sırayla)
 - Her seferde SADECE BİR soru sor (birden fazla alt soru içerebilir)
 - Sorular kurulacak web sitesine yönelik olsun
@@ -109,16 +105,12 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { profession: sector, messages, questionNumber }: RequestBody = await req.json();
+    const { messages, questionNumber }: RequestBody = await req.json();
 
-    if (!sector) {
-      throw new Error('Sector is required');
-    }
-
-    console.log(`[wizard-chat] Sector: ${sector}, Question: ${questionNumber}, Messages: ${messages.length}`);
+    console.log(`[wizard-chat] Question: ${questionNumber}, Messages: ${messages.length}`);
 
     // Build the conversation with system prompt
-    const systemPrompt = getSystemPrompt(sector);
+    const systemPrompt = getSystemPrompt();
     const conversationMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...messages,

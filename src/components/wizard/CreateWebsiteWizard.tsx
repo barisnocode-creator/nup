@@ -4,17 +4,17 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { WizardProgress } from './WizardProgress';
-import { ProfessionStep } from './steps/ProfessionStep';
 import { AIChatStep } from './steps/AIChatStep';
 import { PreferencesStep } from './steps/PreferencesStep';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import type { WizardFormData, Profession, ExtractedBusinessData } from '@/types/wizard';
+import type { WizardFormData, ExtractedBusinessData } from '@/types/wizard';
 import { initialWizardData } from '@/types/wizard';
 
 interface CreateWebsiteWizardProps {
@@ -22,7 +22,7 @@ interface CreateWebsiteWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardProps) {
   const navigate = useNavigate();
@@ -34,22 +34,17 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   const [stepValidity, setStepValidity] = useState<Record<number, boolean>>({
     1: false,
     2: false,
-    3: false,
   });
   
   const [formData, setFormData] = useState<Partial<WizardFormData>>(() => ({
     ...initialWizardData,
   }));
 
-  const handleProfessionChange = (profession: Profession) => {
-    setFormData((prev) => ({ ...prev, profession }));
-    setStepValidity((prev) => ({ ...prev, 1: true }));
-  };
-
   const handleAIChatComplete = useCallback((extractedData: ExtractedBusinessData) => {
     setFormData((prev) => ({
       ...prev,
       extractedData,
+      profession: (extractedData.sector as any) || 'other',
       // Also populate legacy fields for compatibility
       businessInfo: {
         businessName: extractedData.businessName,
@@ -65,7 +60,7 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   }, []);
 
   const handleAIChatValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 2: isValid }));
+    setStepValidity((prev) => ({ ...prev, 1: isValid }));
   }, []);
 
   const handlePreferencesChange = useCallback((data: WizardFormData['websitePreferences']) => {
@@ -73,7 +68,7 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   }, []);
 
   const handlePreferencesValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 3: isValid }));
+    setStepValidity((prev) => ({ ...prev, 2: isValid }));
   }, []);
 
   const canProceed = stepValidity[currentStep];
@@ -143,37 +138,36 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     }
   };
 
-  const handleClose = () => {
+  const resetWizard = () => {
     setCurrentStep(1);
     setFormData({ ...initialWizardData });
-    setStepValidity({ 1: false, 2: false, 3: false });
+    setStepValidity({ 1: false, 2: false });
     onOpenChange(false);
+  };
+
+  const handleClose = () => {
+    resetWizard();
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogTitle className="sr-only">Web Sitenizi Oluşturun</DialogTitle>
+        <DialogDescription className="sr-only">
+          AI asistanla sohbet ederek web sitenizi oluşturun
+        </DialogDescription>
         
         <WizardProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
         <div className="min-h-[300px]">
           {currentStep === 1 && (
-            <ProfessionStep
-              value={formData.profession}
-              onChange={handleProfessionChange}
-            />
-          )}
-
-          {currentStep === 2 && formData.profession && (
             <AIChatStep
-              profession={formData.profession}
               onComplete={handleAIChatComplete}
               onValidityChange={handleAIChatValidityChange}
             />
           )}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <PreferencesStep
               value={{
                 language: formData.websitePreferences?.language || '',
