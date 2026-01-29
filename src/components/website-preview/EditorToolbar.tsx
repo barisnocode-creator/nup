@@ -15,6 +15,7 @@ interface EditorToolbarProps {
   onCustomize: () => void;
   onAddSection: () => void;
   onPageSettings: (pageName: string) => void;
+  onPageEditor: (pageName: string) => void;
   onPreview: () => void;
   onPublish: () => void;
   onDashboard: () => void;
@@ -51,6 +52,7 @@ export function EditorToolbar({
   onCustomize,
   onAddSection,
   onPageSettings,
+  onPageEditor,
   onPreview,
   onPublish,
   onDashboard,
@@ -95,15 +97,15 @@ export function EditorToolbar({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 bg-background border shadow-lg z-[100]">
-              {/* Page Settings */}
+              {/* Page Editors */}
               {pages.map((page) => (
                 <DropdownMenuItem
                   key={page.id}
-                  onClick={() => onPageSettings(page.id)}
+                  onClick={() => onPageEditor(page.id)}
                   className="flex items-center justify-between"
                 >
                   <span>{page.label}</span>
-                  <Settings className="w-3.5 h-3.5 text-muted-foreground" />
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground rotate-[-90deg]" />
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
