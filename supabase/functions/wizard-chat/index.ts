@@ -13,20 +13,13 @@ interface ChatMessage {
 interface RequestBody {
   messages: ChatMessage[];
   questionNumber: number;
+  stream?: boolean;
 }
 
 const getSystemPrompt = () => {
   return `Sen bir profesyonel web sitesi danışmanısın. Kullanıcının işletmesi için web sitesi oluşturmak üzere sohbet ediyorsun.
 
 GÖREV:
-- Toplam 5 detaylı soru sor (birer birer, sırayla)
-- Her seferde SADECE BİR soru sor (birden fazla alt soru içerebilir)
-- Sorular kurulacak web sitesine yönelik olsun
-- Doğal, samimi ve profesyonel bir dil kullan
-- Kullanıcının cevabını aldıktan sonra kısa bir onay ver ve sonraki soruya geç
-- Türkçe konuş
-
-SORU KONULARI (bu sırayla sor):
 - Toplam 5 detaylı soru sor (birer birer, sırayla)
 - Her seferde SADECE BİR soru sor (birden fazla alt soru içerebilir)
 - Sorular kurulacak web sitesine yönelik olsun
@@ -64,7 +57,6 @@ SORU 5/5: Site Hedefleri
 - Öne çıkarmak istediğiniz ek bilgiler var mı?
 
 ÖNEMLİ KURALLAR:
-- İlk mesajda kendini kısaca tanıt ve 1. soruyu sor
 - Her cevaptan sonra kısaca onay ver ("Harika!", "Anladım!", vb.) ve hemen sonraki soruya geç
 - Soru numarasını belirt: "Soru 2/5:" gibi
 - 5. soru cevaplandıktan sonra "CHAT_COMPLETE" yaz ve ardından toplanan tüm bilgileri JSON formatında özetle
@@ -105,9 +97,9 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const { messages, questionNumber }: RequestBody = await req.json();
+    const { messages, questionNumber, stream = true }: RequestBody = await req.json();
 
-    console.log(`[wizard-chat] Question: ${questionNumber}, Messages: ${messages.length}`);
+    console.log(`[wizard-chat] Question: ${questionNumber}, Messages: ${messages.length}, Stream: ${stream}`);
 
     // Build the conversation with system prompt
     const systemPrompt = getSystemPrompt();
@@ -116,7 +108,7 @@ serve(async (req) => {
       ...messages,
     ];
 
-    // Call Lovable AI Gateway
+    // Call Lovable AI Gateway with streaming
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -124,10 +116,11 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-flash-preview',
+        model: 'google/gemini-2.5-flash-lite',
         messages: conversationMessages,
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: 0.5,
+        max_tokens: 500,
+        stream: stream,
       }),
     });
 
@@ -151,6 +144,20 @@ serve(async (req) => {
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
+    // If streaming, pass through the SSE stream
+    if (stream) {
+      console.log('[wizard-chat] Returning streaming response');
+      return new Response(response.body, {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Non-streaming fallback
     const data = await response.json();
     const assistantMessage = data.choices?.[0]?.message?.content || '';
 
@@ -177,11 +184,9 @@ serve(async (req) => {
     let cleanResponse = assistantMessage;
     if (isComplete) {
       cleanResponse = assistantMessage.split('CHAT_COMPLETE')[0].trim();
-      // Add a completion message
       cleanResponse += '\n\n✨ Harika! Tüm bilgileri topladım. Şimdi web sitenizi oluşturmaya hazırız!';
     }
 
-    // Determine next question number (now 5 total instead of 10)
     const nextQuestionNumber = isComplete ? 5 : Math.min(questionNumber + 1, 5);
 
     return new Response(
