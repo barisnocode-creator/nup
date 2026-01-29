@@ -80,7 +80,8 @@ export function ImageEditorSidebar({
     return labels[type] || 'Image';
   };
 
-  if (!imageData) return null;
+  // Always render, but control visibility with isOpen
+  const shouldShow = isOpen && imageData;
 
   return (
     <>
@@ -88,7 +89,7 @@ export function ImageEditorSidebar({
       <div
         className={cn(
           'fixed inset-0 z-40 transition-opacity duration-300',
-          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+          shouldShow ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
           'bg-black/20'
         )}
         onClick={onClose}
@@ -98,7 +99,7 @@ export function ImageEditorSidebar({
       <div
         className={cn(
           'fixed right-0 top-14 bottom-0 w-80 z-50 shadow-2xl transition-transform duration-300 ease-out',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
+          shouldShow ? 'translate-x-0' : 'translate-x-full',
           isDark 
             ? 'bg-slate-900 border-l border-slate-700' 
             : 'bg-white border-l border-gray-200'
@@ -139,14 +140,16 @@ export function ImageEditorSidebar({
               'relative aspect-video rounded-lg overflow-hidden border',
               isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-100'
             )}>
-              <img
-                src={imageData.currentUrl}
-                alt={altText || 'Preview'}
-                className="w-full h-full object-cover"
-                style={{
-                  objectPosition: `${positionX}% ${positionY}%`
-                }}
-              />
+              {imageData && (
+                <img
+                  src={imageData.currentUrl}
+                  alt={altText || 'Preview'}
+                  className="w-full h-full object-cover"
+                  style={{
+                    objectPosition: `${positionX}% ${positionY}%`
+                  }}
+                />
+              )}
               {isRegenerating && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <Loader2 className="w-8 h-8 text-white animate-spin" />
