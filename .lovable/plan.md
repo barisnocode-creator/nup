@@ -1,192 +1,229 @@
 
-
-# Hero Arka Plan Görselini Doğrudan Tıklanabilir Yapma
+# Editor Sidebar Geliştirmesi: AI İçerik Regenerasyonu ve Gelişmiş Stil Seçenekleri
 
 ## Amaç
-Hero bölümündeki arka plan görselinin doğrudan tıklanabilir olmasını sağlamak ve ayrı bir "Edit Background" butonu yerine görselin kendisine tıklanarak düzenleme sidebar'ının açılmasını mümkün kılmak. Ayrıca Customize menüsüne de bu seçeneği eklemek.
+Editör sidebar'ını genişleterek:
+1. AI tabanlı içerik regenerasyonu (Headline, Subtitle, Description için çalışan Generate butonları)
+2. Gelişmiş stil seçenekleri (her bölüm için font, boyut, renk)
+3. Daha fazla düzenlenebilir alan (Welcome, Buttons, Statistics, About Story)
+4. Görsel için Pixabay'dan alternatif seçenekler sunulması
+5. Gerçek zamanlı görsel pozisyonlama
 
 ---
 
 ## Yapılacak Değişiklikler
 
-### 1. HeroOverlay.tsx - Arka Plan Görselini Tıklanabilir Yap
+### 1. Yeni Edge Function: `regenerate-content`
+Tek bir alan veya bölüm için AI ile içerik yenileme fonksiyonu.
 
-**Mevcut durum:** Sol altta ayrı bir "Edit Background" butonu var
+**Özellikler:**
+- Mevcut içerik ve bağlamı alarak yeni alternatifler üretir
+- `fieldPath` parametresi ile hangi alanın regenerate edileceğini belirler
+- LOVABLE_API_KEY kullanarak AI Gateway'e istek gönderir
+- Sektör ve ton bilgisini kullanarak uygun içerik üretir
 
-**Yeni durum:**
-- "Edit Background" butonunu tamamen kaldır
-- Arka plan görsel container'ına (`<div className="absolute inset-0">`) tıklama özelliği ekle
-- Görsel üzerine hover yapıldığında düzenlenebilir olduğunu gösteren görsel ipucu (cursor, hafif overlay) ekle
-- Tıklandığında `handleImageSelect` fonksiyonunu çağır
-
+**Endpoint:** `POST /regenerate-content`
 ```text
-Arka plan görselinin yapısı:
-+------------------------------------------+
-|  [Arka Plan Görseli - Tıklanabilir Alan] |
-|                                          |
-|    Hover: cursor-pointer + overlay       |
-|    Tıklama: EditorSidebar açılır         |
-|                                          |
-+------------------------------------------+
-```
-
-### 2. HeroSplit.tsx ve HeroCentered.tsx - Tutarlılık
-
-Bu hero varyantlarında görsel zaten `EditableImage` bileşeni ile tıklanabilir durumda. Değişiklik gerekmez.
-
-### 3. HeroGradient.tsx - Arka Plan Yok
-
-Bu varyant gradient arka plan kullanıyor, görsel yok. Değişiklik gerekmez.
-
-### 4. CustomizeSidebar.tsx - Edit Background Seçeneği Ekle
-
-**Mevcut menü öğeleri:**
-- Colors
-- Fonts
-- Buttons
-- Corners
-- Animations
-- Browser icon
-- Manage widgets
-
-**Yeni menü öğesi ekleme:**
-- "Background Image" seçeneği menüye eklenir
-- Image ikonu kullanılır
-- Tıklandığında hero arka plan görselini düzenlemek için callback tetiklenir
-
-### 5. Project.tsx - CustomizeSidebar'a Background Handler Ekle
-
-CustomizeSidebar'a yeni bir prop eklenir:
-- `onEditBackground`: Hero arka planını düzenlemek için EditorSidebar'ı açar
-- Mevcut hero görsel bilgisini kullanarak selection oluşturur
-
----
-
-## Teknik Detaylar
-
-### HeroOverlay.tsx Değişiklikleri
-
-```typescript
-// Arka plan container'ını tıklanabilir yap
-<div 
-  className={cn(
-    "absolute inset-0",
-    isEditable && "cursor-pointer group"
-  )}
-  onClick={isEditable ? (e) => {
-    e.stopPropagation();
-    handleImageSelect({
-      type: 'hero',
-      imagePath: 'images.heroHome',
-      currentUrl: heroImage || '',
-      altText: 'Hero Background',
-      positionX: 50,
-      positionY: 50,
-    });
-  } : undefined}
->
-  {/* Görsel */}
-  {heroImage ? (
-    <img ... />
-  ) : (
-    <div ... />
-  )}
-  
-  {/* Hover overlay - düzenlenebilirlik ipucu */}
-  {isEditable && (
-    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center">
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-        <ImageIcon className="w-4 h-4" />
-        <span className="text-sm font-medium">Edit Background</span>
-      </div>
-    </div>
-  )}
-</div>
-
-// Mevcut "Edit Background" butonunu SİL
-```
-
-### CustomizeSidebar.tsx Değişiklikleri
-
-```typescript
-// Props'a ekle
-interface CustomizeSidebarProps {
-  // ... mevcut props
-  onEditBackground?: () => void;
-  heroImageUrl?: string;
+Request:
+{
+  "projectId": "uuid",
+  "fieldPath": "pages.home.hero.title",
+  "context": {
+    "profession": "pharmacist",
+    "siteName": "Super Brands Pharmacy",
+    "tone": "professional"
+  }
 }
 
-// Menü öğelerine ekle
-const menuItems = [
-  { id: 'colors', icon: Palette, label: 'Colors' },
-  { id: 'fonts', icon: Type, label: 'Fonts' },
-  { id: 'background', icon: Image, label: 'Background Image', action: true },
-  // ... diğerleri
-];
-
-// Tıklama handler'ında action öğelerini ayır
-onClick={() => {
-  if (item.action && item.id === 'background') {
-    onEditBackground?.();
-    handleClose();
-  } else {
-    setActivePanel(item.id);
-  }
-}}
+Response:
+{
+  "newValue": "Your Trusted Community Pharmacy",
+  "fieldPath": "pages.home.hero.title"
+}
 ```
 
-### Project.tsx Değişiklikleri
+### 2. Yeni Edge Function: `fetch-image-options`
+Pixabay'dan belirli bir görsel slotu için 2-3 alternatif görsel getirir.
 
-```typescript
-// handleEditHeroBackground fonksiyonu
-const handleEditHeroBackground = useCallback(() => {
-  const heroImage = project?.generated_content?.images?.heroHome || '';
-  handleEditorSelect({
-    type: 'image',
-    title: 'Hero Background',
-    sectionId: 'hero',
-    imageData: {
-      type: 'hero',
-      imagePath: 'images.heroHome',
-      currentUrl: heroImage,
-      altText: 'Hero Background',
-      positionX: 50,
-      positionY: 50,
-    },
-    fields: [],
-  });
-  setCustomizeSidebarOpen(false);
-}, [project, handleEditorSelect]);
+**Özellikler:**
+- Sektöre ve görsel tipine göre arama yapar
+- 2-3 farklı seçenek döner
+- Thumbnail URL'leri ile birlikte gelir
 
-// CustomizeSidebar'a prop geç
-<CustomizeSidebar
-  // ... mevcut props
-  onEditBackground={handleEditHeroBackground}
-  heroImageUrl={project.generated_content?.images?.heroHome}
-/>
+**Endpoint:** `POST /fetch-image-options`
+```text
+Request:
+{
+  "projectId": "uuid",
+  "imageType": "about" | "hero" | "gallery" | "cta",
+  "count": 3
+}
+
+Response:
+{
+  "options": [
+    { "url": "...", "thumbnail": "...", "alt": "..." },
+    { "url": "...", "thumbnail": "...", "alt": "..." },
+    { "url": "...", "thumbnail": "...", "alt": "..." }
+  ]
+}
 ```
+
+### 3. EditorSidebar.tsx Güncellemesi
+
+**Content Tab Değişiklikleri:**
+- Generate butonları için `onRegenerateField` çağrısı zaten mevcut, backend entegrasyonu eklenecek
+- Loading state'i her alan için ayrı gösterilecek
+
+**Style Tab Değişiklikleri:**
+- Hero dışındaki bölümler için de stil seçenekleri
+- Font boyutu slider'ı (small, medium, large, xlarge)
+- Metin rengi seçici (primary, secondary, custom)
+- Text alignment seçenekleri
+
+**Image Section Değişiklikleri:**
+- "Change" butonuna tıklandığında Pixabay'dan 2-3 alternatif gösterilir
+- Alternatifler küçük thumbnail olarak sidebar içinde listelenir
+- Seçilen görsel anında uygulanır
+
+### 4. Project.tsx Handler Güncellemeleri
+
+**handleRegenerateField fonksiyonu:**
+- Mevcut TODO kodunu gerçek edge function çağrısıyla değiştir
+- Regenerate edilecek alan için bağlam bilgisini topla
+- Response'u `handleFieldEdit` ile uygula
+
+**handleImageChange fonksiyonu:**
+- Pixabay'dan alternatifler getir
+- State'e kaydet ve sidebar'da göster
+- Seçim yapıldığında güncelle
+
+**handleUpdateImagePosition fonksiyonu:**
+- Mevcut implementasyon görsel state'ini güncelliyor
+- Değişikliği `generated_content.images` içine kaydet
+
+### 5. Yeni Düzenlenebilir Alanlar
+
+**FullLandingPage.tsx'e eklenecekler:**
+
+| Bölüm | Alan | fieldPath |
+|-------|------|-----------|
+| Welcome | Title | `pages.home.welcome.title` |
+| Welcome | Content | `pages.home.welcome.content` |
+| Statistics | Her stat value | `pages.home.statistics[i].value` |
+| Statistics | Her stat label | `pages.home.statistics[i].label` |
+| About | Story Title | `pages.about.story.title` |
+| About | Story Content | `pages.about.story.content` |
+| CTA | Headline | Yeni alan eklenecek |
+| Header | Site Name | `metadata.siteName` |
+
+**HeroOverlay.tsx'e eklenecekler:**
+- "Get Started" butonu için text editing
+- "Learn More" butonu için text editing
+
+### 6. Görsel Pozisyonlama Gerçek Zamanlı Senkronizasyonu
+
+**Mevcut Durum:**
+- Slider değişikliği `handleUpdateImagePosition` çağırıyor
+- Sadece EditorSidebar içindeki preview güncelleniyor
+
+**Yenilik:**
+- `generated_content.images` içine position bilgisi eklenir
+- Her görsel için `positionX` ve `positionY` değerleri saklanır
+- Görsel bileşenleri bu değerleri `objectPosition` olarak kullanır
 
 ---
 
 ## Dosya Değişiklikleri Özeti
 
+### Yeni Dosyalar
+| Dosya | Açıklama |
+|-------|----------|
+| `supabase/functions/regenerate-content/index.ts` | AI içerik yenileme edge function |
+| `supabase/functions/fetch-image-options/index.ts` | Pixabay alternatif görsel edge function |
+
+### Düzenlenecek Dosyalar
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | Arka planı tıklanabilir yap, butonu kaldır |
-| `src/components/website-preview/CustomizeSidebar.tsx` | "Background Image" menü öğesi ekle |
-| `src/pages/Project.tsx` | `handleEditHeroBackground` fonksiyonu ve prop aktarımı |
+| `src/pages/Project.tsx` | Handler'ları edge function'lara bağla |
+| `src/components/website-preview/EditorSidebar.tsx` | Style tab genişletme, image options UI |
+| `src/templates/temp1/pages/FullLandingPage.tsx` | Welcome ve diğer bölümler için editör bağlantısı |
+| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | Buton text editing, position senkronizasyonu |
+| `src/templates/temp1/sections/AboutInlineSection.tsx` | Daha fazla field için editör |
+| `src/templates/temp1/sections/StatisticsSection.tsx` | Her stat için değiştirilebilir |
+| `src/types/generated-website.ts` | Image position fields ekleme |
+| `supabase/config.toml` | Yeni edge function tanımları |
 
 ---
 
-## Kullanıcı Deneyimi
+## Teknik Detaylar
 
-**Değişiklik öncesi:**
-- Kullanıcı "Edit Background" butonunu aramalıydı
-- Buton sol altta sabit konumdaydı
+### regenerate-content Edge Function
 
-**Değişiklik sonrası:**
-- Arka plan görseline hover yapıldığında "Edit Background" ipucu görünür
-- Görsele tıklayınca doğrudan düzenleme sidebar'ı açılır
-- Customize menüsünden de "Background Image" seçeneği ile erişilebilir
-- Daha sezgisel ve doğrudan etkileşim
+```typescript
+// Prompt yapısı
+const prompt = `You are a professional content writer. 
+Generate a new ${fieldType} for a ${profession} website.
 
+Current content: "${currentValue}"
+Site name: ${siteName}
+Tone: ${tone}
+
+Requirements:
+- Keep the same approximate length
+- Maintain professional ${tone} tone
+- Make it different but equally engaging
+- Language: ${language}
+
+Return ONLY the new text, no explanation.`;
+```
+
+### Görsel Pozisyonlama Data Yapısı
+
+```typescript
+// GeneratedContent.images genişletmesi
+images?: {
+  heroHome?: string;
+  heroHomePosition?: { x: number; y: number };
+  aboutImage?: string;
+  aboutImagePosition?: { x: number; y: number };
+  // ... diğer görseller
+};
+```
+
+### EditorSidebar Style Tab Genişletmesi
+
+```typescript
+// Section-specific style options
+interface SectionStyleOptions {
+  fontSize: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+  textColor: 'primary' | 'secondary' | 'muted' | 'custom';
+  customColor?: string;
+  textAlign: 'left' | 'center' | 'right';
+  fontWeight: 'normal' | 'medium' | 'semibold' | 'bold';
+}
+```
+
+---
+
+## Kullanıcı Deneyimi Akışı
+
+### İçerik Regenerasyonu
+1. Kullanıcı bir text alanına tıklar → EditorSidebar açılır
+2. "Regenerate" butonuna tıklar
+3. Loading spinner görünür (o spesifik alanda)
+4. AI yeni içerik üretir
+5. İçerik anında sayfada güncellenir
+
+### Görsel Değiştirme
+1. Kullanıcı görsele tıklar → EditorSidebar açılır
+2. "Change" butonuna tıklar
+3. Sidebar'da 2-3 alternatif thumbnail görünür
+4. Birini seçer → Görsel anında değişir
+5. Horizontal/Vertical slider'lar ile pozisyon ayarlanır (gerçek zamanlı)
+
+### Stil Düzenleme
+1. Kullanıcı bir bölüme tıklar
+2. Style tab'a geçer
+3. Font boyutu, renk, hizalama seçenekleri görünür
+4. Değişiklikler anında yansır
