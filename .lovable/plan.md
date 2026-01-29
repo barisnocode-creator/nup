@@ -1,200 +1,236 @@
 
-
-# Step 2: Professional Question Flow - Implementation Plan
+# Enhanced AI Website Generation with Images & Blog Support
 
 ## Overview
-Building a multi-step wizard that collects professional information when users click "Create your first website" on the dashboard. All data will be stored in a structured JSON format within an expanded `projects` table.
+Upgrade the website builder to create higher quality, more visually appealing websites by adding AI-generated images, a blog system, and enhanced content generation. This will significantly improve the professional appearance and value of generated websites.
 
 ---
 
-## Database Changes
+## Current State Analysis
 
-### Expand the `projects` Table
-Add new columns to store all collected form data:
+The system currently generates:
+- 4 pages: Home, About, Services, Contact
+- Text-only content based on profession and preferences
+- Basic layout with icon placeholders
+- No images or visual media
+- No blog functionality
+
+---
+
+## New Features to Add
+
+### 1. AI-Generated Images
+
+**Hero Images for Each Page:**
+- Homepage: Professional hero banner related to the profession
+- About: Team/clinic environment image
+- Services: Medical/healthcare themed imagery
+- Contact: Welcoming, professional atmosphere
+
+**Service/Highlight Icons:**
+- Replace text-based icon names with actual AI-generated icons or use high-quality stock imagery from Unsplash
+
+**Implementation Approach:**
+- Use Lovable AI's image generation model (`google/gemini-2.5-flash-image`)
+- Generate profession-specific images during website creation
+- Store image URLs in the `generated_content` JSON
+
+### 2. Blog System
+
+**New Blog Page:**
+- Add a "Blog" page to the website structure
+- AI generates 3-5 initial blog posts based on profession
+- Posts include: title, excerpt, full content, featured image, category, publish date
+
+**Blog Post Topics by Profession:**
+- **Doctor**: Health tips, preventive care, medical news
+- **Dentist**: Oral hygiene tips, dental procedures explained
+- **Pharmacist**: Medication guides, health supplements, wellness advice
+
+### 3. Enhanced Content Quality
+
+**Richer Text Content:**
+- Longer, more detailed descriptions
+- FAQ sections
+- Testimonial placeholders
+- Call-to-action sections (informational, not sales)
+
+**SEO-Ready Meta Content:**
+- Meta descriptions for each page
+- Open Graph data for social sharing
+
+---
+
+## Technical Implementation
+
+### Database Changes
 
 ```sql
-ALTER TABLE public.projects ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}';
+-- Extend generated_content structure to include:
+-- - images: Object containing all generated image URLs
+-- - blog: Object containing blog posts array
+-- No schema change needed - uses existing JSONB column
 ```
 
-The `form_data` JSONB column will store all wizard answers in a structured format:
-```json
-{
-  "businessInfo": {
-    "businessName": "City Dental Clinic",
-    "city": "New York",
-    "country": "United States", 
-    "phone": "+1 555-0123",
-    "email": "contact@citydental.com"
-  },
-  "professionalDetails": {
-    // Doctor: { specialty, yearsExperience }
-    // Dentist: { services: [...] }
-    // Pharmacist: { pharmacyType }
-  },
-  "websitePreferences": {
-    "language": "English",
-    "tone": "professional",
-    "colorPreference": "light"
-  }
+### Updated Type Definitions
+
+```typescript
+// src/types/generated-website.ts - Extended structure
+export interface GeneratedContent {
+  pages: {
+    home: { /* existing + heroImage */ };
+    about: { /* existing + images */ };
+    services: { /* existing + images */ };
+    contact: { /* existing */ };
+    blog: {
+      hero: { title: string; subtitle: string; };
+      posts: BlogPost[];
+    };
+  };
+  images: {
+    heroHome: string;
+    heroAbout: string;
+    heroServices: string;
+    // Additional images...
+  };
+  metadata: { /* existing + seo fields */ };
+}
+
+interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  featuredImage: string;
+  publishedAt: string;
 }
 ```
 
+### New & Updated Files
+
+| File | Action | Description |
+|------|--------|-------------|
+| `supabase/functions/generate-website/index.ts` | Update | Enhanced prompt + image generation calls |
+| `supabase/functions/generate-images/index.ts` | Create | Separate edge function for image generation |
+| `src/types/generated-website.ts` | Update | Add blog, images, and enhanced fields |
+| `src/components/website-preview/pages/BlogPage.tsx` | Create | New blog page component |
+| `src/components/website-preview/pages/BlogPostPage.tsx` | Create | Individual blog post view |
+| `src/components/website-preview/WebsitePreview.tsx` | Update | Add blog page routing |
+| `src/components/website-preview/WebsiteHeader.tsx` | Update | Add Blog nav link |
+| `src/components/website-preview/pages/HomePage.tsx` | Update | Add hero image display |
+| `src/components/website-preview/pages/AboutPage.tsx` | Update | Add team/clinic images |
+| `src/components/website-preview/pages/ServicesPage.tsx` | Update | Add service images |
+
 ---
 
-## Component Architecture
-
-### New Files to Create
+## Implementation Flow
 
 ```text
-src/
-  components/
-    wizard/
-      CreateWebsiteWizard.tsx      # Main wizard container
-      WizardProgress.tsx           # Progress indicator (Step 1 of 4)
-      steps/
-        ProfessionStep.tsx         # Step 1: Select profession
-        BusinessInfoStep.tsx       # Step 2: Business details
-        ProfessionalDetailsStep.tsx # Step 3: Profession-specific
-        PreferencesStep.tsx        # Step 4: Website preferences
-  pages/
-    Project.tsx                    # New page: /project/:id
-  types/
-    wizard.ts                      # TypeScript types for form data
+1. User completes wizard
+        |
+        v
+2. generate-website Edge Function called
+        |
+        v
+3. AI generates enhanced text content (including blog posts)
+        |
+        v
+4. generate-images Edge Function called (parallel)
+   - Hero images for each page
+   - Blog post featured images
+        |
+        v
+5. Images uploaded to Supabase Storage
+        |
+        v
+6. Content + Image URLs saved to project
+        |
+        v
+7. Enhanced website displayed with images & blog
 ```
 
 ---
 
-## Step-by-Step Wizard Flow
+## AI Prompts Enhancement
 
-### Step 1: Profession Selection
-- **UI**: 3 large, clickable cards (Doctor, Dentist, Pharmacist)
-- **Icons**: Stethoscope, Smile, Pill (from lucide-react)
-- **Behavior**: Single selection, highlight selected card
-- **Validation**: Must select one to proceed
+**Content Generation Prompt (Enhanced):**
+- Request longer, more detailed content
+- Include FAQ section for services
+- Generate testimonial templates
+- Create SEO metadata
+- Generate 3 initial blog posts with full content
 
-### Step 2: Basic Business Information
-| Field | Type | Validation |
-|-------|------|------------|
-| Business/Clinic/Pharmacy Name | Text input | Required, max 100 chars |
-| City | Text input | Required |
-| Country | Select dropdown | Required, list of countries |
-| Phone Number | Text input | Required, basic format |
-| Email | Text input | Pre-filled from user, editable, email format |
-
-### Step 3: Professional Details (Conditional)
-
-**If Doctor:**
-| Field | Type | Options |
-|-------|------|---------|
-| Medical Specialty | Select | General Practice, Cardiology, Dermatology, Pediatrics, Orthopedics, Other |
-| Years of Experience | Select | 0-2, 3-5, 6-10, 10-20, 20+ |
-
-**If Dentist:**
-| Field | Type | Options |
-|-------|------|---------|
-| Dental Services | Checkboxes (multi-select) | General Dentistry, Cosmetic Dentistry, Orthodontics, Periodontics, Pediatric Dentistry, Oral Surgery, Endodontics |
-
-**If Pharmacist:**
-| Field | Type | Options |
-|-------|------|---------|
-| Pharmacy Type | Radio buttons | Local/Community, 24-Hour, Hospital/Clinical |
-
-### Step 4: Website Preferences
-| Field | Type | Options |
-|-------|------|---------|
-| Preferred Language | Select | English, Spanish, French, German, Arabic, Chinese, Other |
-| Tone of Voice | Radio cards | Professional, Friendly, Premium |
-| Color Preference | Radio cards with preview | Light, Dark, Neutral |
+**Image Generation Prompts:**
+- "Professional medical clinic reception area, modern, clean, warm lighting, healthcare"
+- "Friendly doctor consulting with patient, professional, trustworthy"
+- "Modern dental office interior, comfortable, bright, welcoming"
+- "Pharmacy counter with pharmacist, organized, professional, healthcare"
 
 ---
 
-## Wizard UX Features
+## Storage Setup
 
-1. **Progress Indicator**: Top bar showing "Step X of 4" with filled dots
-2. **Navigation Buttons**: "Back" and "Continue" buttons
-3. **Validation**: Real-time validation with error messages
-4. **Smooth Transitions**: Animated step transitions
-5. **Modal-based**: Opens as a dialog over the dashboard
-6. **Mobile Responsive**: Works on all screen sizes
-
----
-
-## Data Flow
-
-```text
-1. User clicks "Create New Website"
-        |
-        v
-2. Wizard opens (Step 1)
-        |
-        v
-3. User completes all 4 steps
-        |
-        v
-4. On submit:
-   - Create project in Supabase with:
-     * user_id: auth.uid()
-     * profession: selected profession
-     * name: businessName from form
-     * status: "draft"
-     * form_data: all answers as JSON
-        |
-        v
-5. Redirect to /project/:id
-        |
-        v
-6. Show "Your website is being prepared" message
+**New Supabase Storage Bucket:**
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('website-images', 'website-images', true);
 ```
 
----
-
-## Form Validation (using Zod)
-
-Each step will have its own validation schema:
-
-- **Step 1**: `profession` required (enum: doctor, dentist, pharmacist)
-- **Step 2**: All fields required, email format, phone format
-- **Step 3**: Conditional based on profession - at least one selection required
-- **Step 4**: All fields required
+**RLS Policy:**
+- Public read access for all images
+- Insert only via service role (edge function)
 
 ---
 
-## Project Page (/project/:id)
+## UI Enhancements
 
-A simple placeholder page showing:
-- Project name as heading
-- Large icon/illustration
-- Message: "Your website is being prepared"
-- Subtitle: "We're setting up your professional website. This usually takes a few moments."
-- "Back to Dashboard" link
+### Hero Sections with Images
+- Full-width hero images with overlay text
+- Gradient overlays for text readability
+- Responsive image sizing
+
+### Blog Page Layout
+- Grid of blog post cards
+- Featured image thumbnails
+- Category badges
+- Excerpt text
+- Read more links
+
+### Blog Post Page
+- Full featured image banner
+- Rich text content display
+- Related posts section
+- Back to blog navigation
 
 ---
 
-## Technical Implementation Details
+## Technical Details
 
-### State Management
-- Use React `useState` for wizard step tracking
-- Use `react-hook-form` with Zod resolver for form handling
-- Persist form data across steps using a parent state object
+### Image Generation Approach
+Since AI image generation can be slow, we'll use a two-phase approach:
+1. **Quick generation**: Text content generated first, placeholder images shown
+2. **Background processing**: Images generated asynchronously, updated when ready
 
-### Database Interaction
-- Use Supabase client for project creation
-- Leverage existing RLS policies (user can only insert their own projects)
+### Image Sizing
+- Hero images: 1920x600px (landscape)
+- Blog thumbnails: 800x450px (16:9)
+- Service images: 600x400px
 
-### Routing
-- Add new route `/project/:id` to App.tsx
-- Protected route (requires authentication)
+### Fallback Images
+- Use profession-specific Unsplash images as fallbacks
+- Graceful degradation if AI image generation fails
 
 ---
 
 ## Summary of Changes
 
-| Type | Files |
-|------|-------|
-| Database Migration | Add `form_data` JSONB column to projects |
-| New Components | 6 new files in `components/wizard/` |
-| New Page | `pages/Project.tsx` |
-| New Types | `types/wizard.ts` |
-| Modified | `Dashboard.tsx` (add wizard trigger) |
-| Modified | `App.tsx` (add /project/:id route) |
+| Category | Changes |
+|----------|---------|
+| **Edge Functions** | 1 updated, 1 new (image generation) |
+| **Types** | Extended `GeneratedContent` with blog + images |
+| **Components** | 2 new (BlogPage, BlogPostPage), 5 updated |
+| **Storage** | 1 new bucket (website-images) |
+| **Database** | No schema changes (uses existing JSONB) |
 
+This enhancement will transform basic text-only websites into visually rich, professional healthcare sites with engaging blog content.
