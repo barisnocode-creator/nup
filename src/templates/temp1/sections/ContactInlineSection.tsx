@@ -42,7 +42,7 @@ export function ContactInlineSection({
             Contact Us
           </span>
           <h2 className={cn(
-            'text-3xl md:text-4xl font-bold mb-4',
+            'text-3xl md:text-4xl font-bold mb-4 font-display',
             isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
           )}>
             Get In Touch

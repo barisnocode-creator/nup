@@ -55,7 +55,7 @@ export function StatisticsSection({
                 className="text-center p-4"
               >
                 <div className={cn(
-                  'text-4xl md:text-5xl font-bold mb-2',
+                  'text-4xl md:text-5xl font-bold mb-2 font-display',
                   isDark ? 'text-primary' : 'text-primary'
                 )}>
                   {stat.value}

@@ -6,6 +6,10 @@
 
 @layer base {
   :root {
+    /* Font Variables - Dynamic Fonts */
+    --font-heading: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    
     /* Clean & Minimal Theme - Black/White with Orange accents */
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;

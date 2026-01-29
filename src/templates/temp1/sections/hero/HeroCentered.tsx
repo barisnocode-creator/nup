@@ -80,7 +80,7 @@ export function HeroCentered({
               },
             ]}
             className={cn(
-              'text-4xl md:text-5xl lg:text-6xl font-bold leading-tight',
+              'text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-display',
               isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
             )}
           />

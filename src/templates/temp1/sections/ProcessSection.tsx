@@ -37,7 +37,7 @@ export function ProcessSection({
             How It Works
           </span>
           <h2 className={cn(
-            'text-3xl md:text-4xl font-bold',
+            'text-3xl md:text-4xl font-bold font-display',
             isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
           )}>
             Our Process
@@ -94,7 +94,7 @@ export function ProcessSection({
                           : 'bg-gray-50 border-gray-200'
                     )}>
                       <h3 className={cn(
-                        'text-xl font-semibold mb-3',
+                        'text-xl font-semibold mb-3 font-display',
                         isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
                       )}>
                         {step.title}

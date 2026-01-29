@@ -69,7 +69,7 @@ export function ImageGallerySection({
             Gallery
           </span>
           <h2 className={cn(
-            'text-3xl md:text-4xl font-bold',
+            'text-3xl md:text-4xl font-bold font-display',
             isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
           )}>
             Our Facility
