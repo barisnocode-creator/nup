@@ -156,7 +156,7 @@ export function HeroSplitSection({
           </div>
 
           {/* Right - Image */}
-          <div className="relative hidden lg:block">
+          <div className="relative">
             <div className={cn(
               'relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl',
               isDark ? 'bg-slate-800' : 'bg-gray-200'
@@ -176,20 +176,30 @@ export function HeroSplitSection({
                     'w-full h-full flex items-center justify-center',
                     isDark ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-primary/20 to-primary/30'
                   )}>
-                    <span className={cn(
-                      'text-6xl',
-                      isDark ? 'text-slate-600' : 'text-primary/40'
-                    )}>
-                      🏥
-                    </span>
+                    <div className="text-center space-y-3">
+                      <span className={cn(
+                        'text-6xl block',
+                        isDark ? 'text-slate-600' : 'text-primary/40'
+                      )}>
+                        🏥
+                      </span>
+                      {isEditable && (
+                        <p className={cn(
+                          'text-sm',
+                          isDark ? 'text-slate-500' : 'text-gray-500'
+                        )}>
+                          Click to add image
+                        </p>
+                      )}
+                    </div>
                   </div>
                 }
               />
             </div>
 
             {/* Decorative Elements */}
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
-            <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/30 rounded-full blur-3xl" />
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl hidden lg:block" />
+            <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/30 rounded-full blur-3xl hidden lg:block" />
           </div>
         </div>
       </div>
