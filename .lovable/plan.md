@@ -1,172 +1,222 @@
 
-# Editor Sorunlarını Düzeltme: Hero Görsel Tıklama ve Section Kontrolleri
+# Customize Sidebar Durable.co Stili Güncelleme
 
-## Tespit Edilen Sorunlar
+## Hedef
+Durable.co referans görselindeki tasarımı uygulamak:
+- Sidebar açıldığında website kararmamalı (overlay yok)
+- Sidebar sol taraftan açılmalı
+- Menü öğeleri sade olmalı: icon + text + ok işareti
+- Alt açıklamalar ve collapsible content inline gösterilmemeli
 
-### Sorun 1: Hero Görseline Tıklayınca Sidebar Açılmıyor
-`HeroOverlay.tsx`'de `EditableImage` bileşeni `onSelect` handler'ını düzgün çağırıyor ama:
-- `EditableSection` wrapper'ı hover overlay ekliyor ve bu overlay tıklamaları yakalıyor olabilir
-- `EditableSection` içindeki overlay `pointer-events-none` değil
-- Hero görseli absolute positioned ve overlay'in altında kalıyor
+## Durable.co Referans Analizi (Screenshot)
 
-### Sorun 2: Section Kontrol Butonları (Yukarı/Aşağı/Edit/Sil) Çalışmıyor
-- `EditableSection.tsx`'de butonlar tanımlı ama prop'lar `FullLandingPage.tsx`'den geçirilmiyor
-- Move butonları sadece `handleLockedAction` çağırıyor, gerçek hareket fonksiyonu yok
-- Edit butonu section için EditorSidebar açmalı ama şu an `onEdit` prop'u bağlanmamış
-
-## Çözüm Planı
-
-### 1. EditableSection.tsx Düzeltmeleri
-- Hover overlay'e `pointer-events-none` ekle (child elementlerin tıklanabilir kalması için)
-- Move butonlarını gerçek `onMoveUp`/`onMoveDown` handler'larına bağla
-- Edit butonunun `onEdit` çağırmasını sağla
-
-```typescript
-// Mevcut (hatalı):
-<Button onClick={() => !isFirst ? handleLockedAction('Move') : undefined}>
-
-// Düzeltilmiş:
-<Button onClick={() => onMoveUp?.()}>
+```
++------------------------+
+| Customize         □ X  |
++------------------------+
+| 🎨 Colors          >   |
+| Aa Fonts           >   |
+| ⏹  Buttons         >   |
+| └  Corners         >   |
+| ⚡ Animations      >   |
+| 🖼  Browser icon   >   |
+| ⊞  Manage widgets  >   |
+| ✨ Regenerate text     |
+| 🔄 Regenerate website  |
+| 📄 Keywords        >   |
++------------------------+
 ```
 
-### 2. FullLandingPage.tsx Güncellemesi
-Section'lar için `onEdit`, `onMoveUp`, `onMoveDown`, `onDelete` prop'larını ekle:
+**Önemli Özellikler:**
+- Beyaz arka plan, karartma yok
+- Sol tarafta konumlandırma
+- Tek satırda icon + text + ok
+- Alt açıklama yok
+- Sade, minimal görünüm
 
+## Yapılacak Değişiklikler
+
+### 1. Sheet Bileşenini Güncelle (overlay kaldır)
 ```typescript
-<EditableSection
-  sectionId="hero"
-  sectionName="Hero"
-  isEditable={isEditable}
-  onEdit={() => onEditorSelect?.({
-    type: 'section',
-    title: 'Hero',
-    sectionId: 'hero',
-    fields: [
-      { label: 'Headline', fieldPath: 'pages.home.hero.title', value: title, type: 'text' },
-      { label: 'Subtitle', fieldPath: 'pages.home.hero.subtitle', value: subtitle, type: 'text' },
-      { label: 'Description', fieldPath: 'pages.home.hero.description', value: description, type: 'textarea' },
-    ]
-  })}
-  onMoveUp={onMoveSection ? () => onMoveSection('hero', 'up') : undefined}
-  onMoveDown={onMoveSection ? () => onMoveSection('hero', 'down') : undefined}
-  onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
-  onLockedFeature={onLockedFeature}
-  isFirst
+// Yeni "noOverlay" prop ekle
+interface SheetContentProps {
+  noOverlay?: boolean; // Overlay'ı kaldırmak için
+}
+
+// SheetContent içinde:
+{!noOverlay && <SheetOverlay />}
+```
+
+### 2. CustomizeSidebar'ı Yeniden Tasarla
+
+**Mevcut (hatalı):**
+```
++----------------------------------+
+| Customize                     X  |
++----------------------------------+
+| 🎨 Colors                     >  |
+|    Primary, secondary, accent    | <-- Alt açıklama
+|                                  |
+|    [Collapsible content inline]  | <-- Açık içerik
+```
+
+**Durable.co Stili (hedef):**
+```
++------------------------+
+| Customize         □ X  |
++------------------------+
+| 🎨 Colors          >   |
+| Aa Fonts           >   |
+| ⏹  Buttons         >   |
+| └  Corners         >   |
+| ⚡ Animations      >   |
+| 🖼  Browser icon   >   |
+| ⊞  Manage widgets  >   |
+| ✨ Regenerate text     |
+| 🔄 Regenerate website  |
+| 📄 Keywords        >   |
++------------------------+
+```
+
+### 3. Menü Akışı
+
+Bir menü öğesine tıklandığında:
+1. Ana sidebar yerinde kalır (açık)
+2. Alt panel sağa doğru kayarak açılır (veya aynı sidebar'da navigasyon)
+3. Geri butonu ile ana menüye dönülür
+
+**Alternatif (basit implementasyon):**
+- Menü öğesine tıklandığında sidebar içeriği değişir
+- Başlıkta geri butonu görünür
+- Geri tıklandığında ana menü gösterilir
+
+## Teknik Detaylar
+
+### Sidebar Konumu
+```typescript
+// Mevcut (sağ):
+<SheetContent side="right" ...>
+
+// Hedef (sol):
+<SheetContent side="left" ...>
+```
+
+### Overlay Kaldırma
+```typescript
+// sheet.tsx'de yeni variant ekle
+<SheetContent 
+  side="left" 
+  noOverlay  // Yeni prop
+  className="shadow-xl border-r"
 >
 ```
 
-### 3. Project.tsx'e Section Yönetimi Ekleme
-Section sıralama ve silme için handler'lar:
-
+### Menü Öğesi Stili (Durable.co)
 ```typescript
-const [sectionOrder, setSectionOrder] = useState<string[]>([
-  'hero', 'statistics', 'about', 'services', 'process', 'gallery', 'testimonials', 'faq', 'contact', 'cta'
-]);
-
-const handleMoveSection = useCallback((sectionId: string, direction: 'up' | 'down') => {
-  setSectionOrder(prev => {
-    const index = prev.indexOf(sectionId);
-    if (index === -1) return prev;
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= prev.length) return prev;
-    const newOrder = [...prev];
-    [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
-    return newOrder;
-  });
-  toast({ title: 'Section moved', description: `${sectionId} moved ${direction}.` });
-}, [toast]);
-
-const handleDeleteSection = useCallback((sectionId: string) => {
-  // Bazı section'lar silinemez
-  const protectedSections = ['hero'];
-  if (protectedSections.includes(sectionId)) {
-    toast({ title: 'Cannot delete', description: 'Hero section cannot be deleted.', variant: 'destructive' });
-    return;
-  }
-  setSectionOrder(prev => prev.filter(s => s !== sectionId));
-  toast({ title: 'Section deleted', description: `${sectionId} has been removed.` });
-}, [toast]);
-```
-
-### 4. EditableImage Tıklama Sorunu Düzeltmesi
-`EditableSection` içindeki overlay'in tıklamaları engellemesini önle:
-
-```typescript
-// EditableSection.tsx - Overlay'e pointer-events-none ekle
-{isHovered && (
-  <div className="absolute inset-0 pointer-events-none border-2 border-primary/20 rounded-lg" />
-)}
-
-// Butonlar container'ı pointer-events-auto olmalı
-<div className="absolute -top-3 right-4 z-20 flex items-center gap-1 animate-fade-in pointer-events-auto">
+<button className="flex items-center w-full px-4 py-3 hover:bg-gray-50">
+  <Icon className="w-5 h-5 text-gray-500 mr-3" />
+  <span className="flex-1 text-left text-sm font-normal text-gray-700">
+    {label}
+  </span>
+  {hasSubmenu && <ChevronRight className="w-4 h-4 text-gray-400" />}
+</button>
 ```
 
 ## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/website-preview/EditableSection.tsx` | - Overlay'e `pointer-events-none` ekle, - Butonları gerçek handler'lara bağla, - z-index düzenle |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | - `onEdit`, `onMoveUp`, `onMoveDown`, `onDelete` prop'larını tüm section'lara ekle, - Yeni prop'ları interface'e ekle |
-| `src/pages/Project.tsx` | - `sectionOrder` state ekle, - `handleMoveSection` ve `handleDeleteSection` handler'ları ekle, - Handler'ları `WebsitePreview`'a geçir |
-| `src/components/website-preview/WebsitePreview.tsx` | - Yeni prop'ları al ve template'e geçir |
-| `src/templates/temp1/index.tsx` | - Yeni prop'ları al ve `FullLandingPage`'e geçir |
-| `src/templates/types.ts` | - Template props'a yeni handler'lar ekle |
+| `src/components/ui/sheet.tsx` | `noOverlay` prop ekle |
+| `src/components/website-preview/CustomizeSidebar.tsx` | - Sol taraftan aç, - Collapsible yapıyı kaldır, - Sade menü öğeleri, - Manage widgets ve Keywords ekle, - Alt panel navigasyonu |
+| `src/components/website-preview/HomeEditorSidebar.tsx` | Sol taraftan aç, overlay kaldır |
+| `src/components/website-preview/PageSettingsSidebar.tsx` | Sol taraftan aç, overlay kaldır |
+| `src/components/website-preview/AddContentSidebar.tsx` | Sol taraftan aç, overlay kaldır |
 
-## Teknik Detaylar
+## CustomizeSidebar Yeni Yapı
 
-### EditableSection Düzeltilmiş Yapı
 ```typescript
+type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 
+                'animations' | 'browser-icon' | 'widgets' | 'keywords' | null;
+
+const [activeSubPanel, setActiveSubPanel] = useState<SubPanel>(null);
+
+// Ana menü öğeleri
+const menuItems = [
+  { id: 'colors', icon: Palette, label: 'Colors', hasSubmenu: true },
+  { id: 'fonts', icon: Type, label: 'Fonts', hasSubmenu: true },
+  { id: 'buttons', icon: ToggleLeft, label: 'Buttons', hasSubmenu: true },
+  { id: 'corners', icon: Square, label: 'Corners', hasSubmenu: true },
+  { id: 'animations', icon: Zap, label: 'Animations', hasSubmenu: true },
+  { id: 'browser-icon', icon: Image, label: 'Browser icon', hasSubmenu: true },
+  { id: 'widgets', icon: LayoutGrid, label: 'Manage widgets', hasSubmenu: true },
+];
+
+const actionItems = [
+  { id: 'regenerate-text', icon: Sparkles, label: 'Regenerate text', action: onRegenerateText },
+  { id: 'regenerate-website', icon: RefreshCw, label: 'Regenerate entire website', action: onRegenerateWebsite },
+];
+
+const bottomMenuItems = [
+  { id: 'keywords', icon: FileText, label: 'Keywords', hasSubmenu: true },
+];
+
+// Render
 return (
-  <div
-    className={cn('relative group transition-all duration-200', ...)}
-    onMouseEnter={() => setIsHovered(true)}
-    onMouseLeave={() => setIsHovered(false)}
-    data-section-id={sectionId}
-  >
-    {/* Section Label - pointer-events-auto */}
-    {isHovered && (
-      <div className="absolute -top-3 left-4 z-30 animate-fade-in pointer-events-auto">
-        <Badge>...</Badge>
-      </div>
-    )}
-
-    {/* Action Buttons - pointer-events-auto */}
-    {isHovered && (
-      <div className="absolute -top-3 right-4 z-30 flex items-center gap-1 animate-fade-in pointer-events-auto">
-        <Button onClick={onMoveUp} disabled={isFirst}>...</Button>
-        <Button onClick={onMoveDown} disabled={isLast}>...</Button>
-        <Button onClick={onEdit}>...</Button>
-        <Button onClick={onDelete}>...</Button>
-      </div>
-    )}
-
-    {/* Section Content - children can handle their own clicks */}
-    <div className="transition-opacity duration-200">
-      {children}
-    </div>
-
-    {/* Hover Border - pointer-events-none */}
-    {isHovered && (
-      <div className="absolute inset-0 pointer-events-none border-2 border-primary/20 rounded-lg" />
-    )}
-  </div>
+  <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <SheetContent side="left" noOverlay className="w-[350px] p-0">
+      {activeSubPanel ? (
+        // Alt panel içeriği
+        <SubPanelContent 
+          panel={activeSubPanel} 
+          onBack={() => setActiveSubPanel(null)} 
+        />
+      ) : (
+        // Ana menü
+        <MainMenu items={menuItems} onSelect={setActiveSubPanel} />
+      )}
+    </SheetContent>
+  </Sheet>
 );
 ```
 
-### Prop Akışı
+## Alt Panel İçerikleri
+
+### Colors Alt Paneli
 ```
-Project.tsx
-  └── handleMoveSection, handleDeleteSection
-       └── WebsitePreview
-            └── HealthcareModernTemplate
-                 └── FullLandingPage
-                      └── EditableSection (onMoveUp, onMoveDown, onEdit, onDelete)
++------------------------+
+| < Colors          □ X  |
++------------------------+
+| [Ocean] [Forest] [Sun] |
+| [Royal] [Midnight]     |
+|                        |
+| --- Custom ---         |
+| Primary: [#3B82F6]     |
+| Secondary: [#6366F1]   |
+| Accent: [#F59E0B]      |
++------------------------+
 ```
 
-## Beklenen Sonuçlar
+### Fonts Alt Paneli
+```
++------------------------+
+| < Fonts           □ X  |
++------------------------+
+| Heading: [Playfair ▼]  |
+| Body: [Inter ▼]        |
+|                        |
+| --- Presets ---        |
+| ○ Modern (Poppins)     |
+| ○ Classic (Merriweather)|
+| ○ Minimal (Inter)      |
++------------------------+
+```
 
-1. Hero görseline tıklandığında EditorSidebar açılacak
-2. Section hover'da görünen yukarı/aşağı okları section'ları hareket ettirecek
-3. Edit (kalem) butonu section EditorSidebar'ını açacak
-4. Çöp kutusu butonu section'ı silecek (korumalı section'lar hariç)
-5. Tüm section kontrolları düzgün çalışacak
+## Beklenen Sonuç
+
+1. CustomizeSidebar sol taraftan açılır
+2. Website kararma olmaz - yan yana görünür
+3. Menü öğeleri Durable.co gibi sade görünür
+4. Tıklama ile alt panel açılır, geri butonu ile ana menüye dönülür
+5. Manage widgets ve Keywords menü öğeleri eklenir
+6. Regenerate text/website butonları düz liste öğesi olarak görünür
+
