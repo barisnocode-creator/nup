@@ -1,25 +1,29 @@
 import { Card } from '@/components/ui/card';
+import showcaseDental from '@/assets/showcase-dental.jpg';
+import showcaseFamilyDoctor from '@/assets/showcase-family-doctor.jpg';
+import showcasePharmacy from '@/assets/showcase-pharmacy.jpg';
+import showcaseEyeClinic from '@/assets/showcase-eye-clinic.jpg';
 
 const showcaseSites = [
   {
     title: 'Diş Kliniği',
     description: 'Modern diş hekimliği web sitesi',
-    gradient: 'from-blue-500 to-cyan-500',
+    image: showcaseDental,
   },
   {
     title: 'Aile Hekimliği',
     description: 'Güvenilir aile doktoru sitesi',
-    gradient: 'from-green-500 to-emerald-500',
+    image: showcaseFamilyDoctor,
   },
   {
     title: 'Eczane',
     description: 'Profesyonel eczane web sitesi',
-    gradient: 'from-purple-500 to-pink-500',
+    image: showcasePharmacy,
   },
   {
     title: 'Göz Kliniği',
     description: 'Uzman göz hastalıkları sitesi',
-    gradient: 'from-orange-500 to-red-500',
+    image: showcaseEyeClinic,
   },
 ];
 
@@ -45,17 +49,13 @@ export function WebsiteShowcase() {
               className="group overflow-hidden border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
-              {/* Mock Website Preview */}
-              <div className={`h-40 bg-gradient-to-br ${site.gradient} p-4`}>
-                <div className="bg-background/90 rounded-md h-full p-3">
-                  <div className="h-2 w-16 bg-muted rounded mb-2" />
-                  <div className="h-2 w-24 bg-muted rounded mb-4" />
-                  <div className="space-y-1">
-                    <div className="h-1.5 w-full bg-muted rounded" />
-                    <div className="h-1.5 w-3/4 bg-muted rounded" />
-                    <div className="h-1.5 w-1/2 bg-muted rounded" />
-                  </div>
-                </div>
+              {/* Website Preview Image */}
+              <div className="h-48 overflow-hidden">
+                <img 
+                  src={site.image} 
+                  alt={site.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
               </div>
               
               {/* Card Content */}
