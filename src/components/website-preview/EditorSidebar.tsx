@@ -270,14 +270,18 @@ export function EditorSidebar({
                       variant="outline"
                       size="sm"
                       onClick={onImageRegenerate}
-                      disabled={isRegenerating}
+                      disabled={isRegenerating || isLoadingImageOptions}
                       className={cn(
                         'gap-2',
                         isDark && 'border-slate-600 hover:bg-slate-800'
                       )}
                     >
-                      <Wand2 className="w-4 h-4" />
-                      Regenerate
+                      {isRegenerating ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-4 h-4" />
+                      )}
+                      Find Similar
                     </Button>
                     <Button
                       variant="outline"

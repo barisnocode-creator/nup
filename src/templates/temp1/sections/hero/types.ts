@@ -7,6 +7,7 @@ export interface HeroProps {
   subtitle: string;
   description: string;
   heroImage?: string;
+  heroImagePosition?: { x: number; y: number };
   isDark: boolean;
   isNeutral: boolean;
   isEditable: boolean;
