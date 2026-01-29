@@ -1,5 +1,7 @@
 import { EditableField } from '@/components/website-preview/EditableField';
+import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
+import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
 
 interface AboutInlineSectionProps {
   story: {
@@ -15,6 +17,8 @@ interface AboutInlineSectionProps {
   isNeutral: boolean;
   isEditable: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  selectedImage?: ImageData | null;
+  onImageSelect?: (data: ImageData) => void;
 }
 
 export function AboutInlineSection({
@@ -25,7 +29,11 @@ export function AboutInlineSection({
   isNeutral,
   isEditable,
   onFieldEdit,
+  selectedImage,
+  onImageSelect,
 }: AboutInlineSectionProps) {
+  const isImageSelected = selectedImage?.imagePath === 'images.aboutImage';
+
   return (
     <section className={cn(
       'py-20',
@@ -55,25 +63,30 @@ export function AboutInlineSection({
             'relative aspect-[4/3] rounded-2xl overflow-hidden shadow-xl',
             isDark ? 'bg-slate-800' : 'bg-gray-200'
           )}>
-            {aboutImage ? (
-              <img
-                src={aboutImage}
-                alt="About Us"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className={cn(
-                'w-full h-full flex items-center justify-center',
-                isDark ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-primary/20 to-primary/30'
-              )}>
-                <span className={cn(
-                  'text-6xl',
-                  isDark ? 'text-slate-600' : 'text-primary/40'
+            <EditableImage
+              src={aboutImage || ''}
+              alt="About Us"
+              type="about"
+              imagePath="images.aboutImage"
+              className="w-full h-full object-cover"
+              containerClassName="w-full h-full"
+              isEditable={isEditable}
+              isSelected={isImageSelected}
+              onSelect={onImageSelect}
+              fallback={
+                <div className={cn(
+                  'w-full h-full flex items-center justify-center',
+                  isDark ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-primary/20 to-primary/30'
                 )}>
-                  👨‍⚕️
-                </span>
-              </div>
-            )}
+                  <span className={cn(
+                    'text-6xl',
+                    isDark ? 'text-slate-600' : 'text-primary/40'
+                  )}>
+                    👨‍⚕️
+                  </span>
+                </div>
+              }
+            />
           </div>
 
           {/* Right - Content */}

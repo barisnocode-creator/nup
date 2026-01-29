@@ -1,15 +1,23 @@
 import { cn } from '@/lib/utils';
+import { EditableImage } from '@/components/website-preview/EditableImage';
+import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
 
 interface ImageGallerySectionProps {
   images: string[];
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  selectedImage?: ImageData | null;
+  onImageSelect?: (data: ImageData) => void;
 }
 
 export function ImageGallerySection({
   images,
   isDark,
   isNeutral,
+  isEditable = false,
+  selectedImage,
+  onImageSelect,
 }: ImageGallerySectionProps) {
   // Use placeholder images if no images provided
   const displayImages = images && images.length > 0 
@@ -40,43 +48,50 @@ export function ImageGallerySection({
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {displayImages.map((image, index) => (
-            <div
-              key={index}
-              className={cn(
-                'relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg group cursor-pointer',
-                // Make first image larger
-                index === 0 && 'md:col-span-2 md:row-span-2 md:aspect-square',
-                isDark ? 'bg-slate-700' : 'bg-gray-200'
-              )}
-            >
-              {image ? (
-                <img
-                  src={image}
-                  alt={`Gallery ${index + 1}`}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              ) : (
-                <div className={cn(
-                  'w-full h-full flex items-center justify-center',
-                  isDark ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 'bg-gradient-to-br from-primary/10 to-primary/20'
-                )}>
-                  <span className={cn(
-                    'text-4xl',
-                    isDark ? 'text-slate-500' : 'text-primary/30'
+          {displayImages.map((image, index) => {
+            const imagePath = `images.galleryImages[${index}]`;
+            const isThisSelected = selectedImage?.imagePath === imagePath;
+
+            return (
+              <div
+                key={index}
+                className={cn(
+                  'relative rounded-xl overflow-hidden shadow-lg',
+                  // Make first image larger
+                  index === 0 && 'md:col-span-2 md:row-span-2',
+                  index === 0 ? 'aspect-square' : 'aspect-[4/3]',
+                  isDark ? 'bg-slate-700' : 'bg-gray-200'
+                )}
+              >
+                {image ? (
+                  <EditableImage
+                    src={image}
+                    alt={`Gallery ${index + 1}`}
+                    type="gallery"
+                    index={index}
+                    imagePath={imagePath}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    containerClassName="w-full h-full group cursor-pointer"
+                    isEditable={isEditable}
+                    isSelected={isThisSelected}
+                    onSelect={onImageSelect}
+                  />
+                ) : (
+                  <div className={cn(
+                    'w-full h-full flex items-center justify-center',
+                    isDark ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 'bg-gradient-to-br from-primary/10 to-primary/20'
                   )}>
-                    {['🏥', '👨‍⚕️', '💊', '🩺', '🔬', '❤️'][index % 6]}
-                  </span>
-                </div>
-              )}
-              
-              {/* Hover Overlay */}
-              <div className={cn(
-                'absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300',
-                'bg-gradient-to-t from-black/60 to-transparent'
-              )} />
-            </div>
-          ))}
+                    <span className={cn(
+                      'text-4xl',
+                      isDark ? 'text-slate-500' : 'text-primary/30'
+                    )}>
+                      {['🏥', '👨‍⚕️', '💊', '🩺', '🔬', '❤️'][index % 6]}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
