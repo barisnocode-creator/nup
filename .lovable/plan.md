@@ -1,229 +1,211 @@
 
-# Editor Sidebar Geliştirmesi: AI İçerik Regenerasyonu ve Gelişmiş Stil Seçenekleri
 
-## Amaç
-Editör sidebar'ını genişleterek:
-1. AI tabanlı içerik regenerasyonu (Headline, Subtitle, Description için çalışan Generate butonları)
-2. Gelişmiş stil seçenekleri (her bölüm için font, boyut, renk)
-3. Daha fazla düzenlenebilir alan (Welcome, Buttons, Statistics, About Story)
-4. Görsel için Pixabay'dan alternatif seçenekler sunulması
-5. Gerçek zamanlı görsel pozisyonlama
+# Sidebar Değişikliklerinin Gerçek Zamanlı Yansıması ve Düzeltmeler
+
+## Tespit Edilen Sorunlar
+
+1. **"Edit Background" yazısı** hala ekranın ortasında görünüyor (HeroOverlay.tsx satır 95-101)
+2. **Regenerate butonu** görsel için AI yerine Pixabay kullanmalı
+3. **Sidebar'daki değişiklikler** web sitede gerçek zamanlı görünmüyor (özellikle image position)
+4. **PIXABAY_API_KEY** mevcut - kontrol edildi ✓
 
 ---
 
 ## Yapılacak Değişiklikler
 
-### 1. Yeni Edge Function: `regenerate-content`
-Tek bir alan veya bölüm için AI ile içerik yenileme fonksiyonu.
+### 1. HeroOverlay.tsx - "Edit Background" Yazısını Kaldır
 
-**Özellikler:**
-- Mevcut içerik ve bağlamı alarak yeni alternatifler üretir
-- `fieldPath` parametresi ile hangi alanın regenerate edileceğini belirler
-- LOVABLE_API_KEY kullanarak AI Gateway'e istek gönderir
-- Sektör ve ton bilgisini kullanarak uygun içerik üretir
+**Mevcut durum (Satır 89-103):**
+Hover overlay içinde "Edit Background" yazısı gösteriliyor.
 
-**Endpoint:** `POST /regenerate-content`
+**Çözüm:**
+Bu yazıyı tamamen kaldır. Sadece görsel hover efekti kalsın (karartma), metin olmasın. Kullanıcı sidebar'dan düzenleme yapacak.
+
 ```text
-Request:
-{
-  "projectId": "uuid",
-  "fieldPath": "pages.home.hero.title",
-  "context": {
-    "profession": "pharmacist",
-    "siteName": "Super Brands Pharmacy",
-    "tone": "professional"
-  }
-}
+Öncesi:
++------------------------------------------+
+|                                          |
+|     [Edit Background yazısı + ikon]      |   ← KALDIRILACAK
+|                                          |
++------------------------------------------+
 
-Response:
-{
-  "newValue": "Your Trusted Community Pharmacy",
-  "fieldPath": "pages.home.hero.title"
-}
+Sonrası:
++------------------------------------------+
+|                                          |
+|     (sadece hafif karartma efekti)       |   ← Hover'da cursor:pointer
+|                                          |
++------------------------------------------+
 ```
 
-### 2. Yeni Edge Function: `fetch-image-options`
-Pixabay'dan belirli bir görsel slotu için 2-3 alternatif görsel getirir.
+### 2. EditorSidebar.tsx - Regenerate Butonunu Pixabay'a Bağla
 
-**Özellikler:**
-- Sektöre ve görsel tipine göre arama yapar
-- 2-3 farklı seçenek döner
-- Thumbnail URL'leri ile birlikte gelir
+**Mevcut durum:**
+- `onImageRegenerate` prop'u AI görsel üretimi için tasarlanmış
+- TODO olarak bekliyor ve çalışmıyor
 
-**Endpoint:** `POST /fetch-image-options`
-```text
-Request:
-{
-  "projectId": "uuid",
-  "imageType": "about" | "hero" | "gallery" | "cta",
-  "count": 3
-}
+**Çözüm:**
+- Regenerate butonunu tıklayınca `onImageChange` fonksiyonunu çağır
+- Bu zaten Pixabay'dan alternatifleri getiriyor
+- Buton metnini "Regenerate" yerine "Find Similar" olarak değiştir veya aynı `fetch-image-options` fonksiyonunu çağır
 
-Response:
-{
-  "options": [
-    { "url": "...", "thumbnail": "...", "alt": "..." },
-    { "url": "...", "thumbnail": "...", "alt": "..." },
-    { "url": "...", "thumbnail": "...", "alt": "..." }
-  ]
-}
+### 3. Project.tsx - handleImageRegenerate'i Pixabay'a Bağla
+
+**Mevcut durum (Satır 295-317):**
+```typescript
+const handleImageRegenerate = useCallback(async () => {
+  // TODO: Implement single image regeneration via edge function
+  setTimeout(() => {
+    setIsRegeneratingImage(false);
+    toast({ title: 'Image regenerated', ... });
+  }, 2000);
+}, [...]);
 ```
 
-### 3. EditorSidebar.tsx Güncellemesi
+**Çözüm:**
+`handleImageRegenerate` fonksiyonunu `handleImageChange` ile aynı Pixabay API'sini çağıracak şekilde güncelle.
 
-**Content Tab Değişiklikleri:**
-- Generate butonları için `onRegenerateField` çağrısı zaten mevcut, backend entegrasyonu eklenecek
-- Loading state'i her alan için ayrı gösterilecek
+### 4. Gerçek Zamanlı Görsel Pozisyon Güncellemesi
 
-**Style Tab Değişiklikleri:**
-- Hero dışındaki bölümler için de stil seçenekleri
-- Font boyutu slider'ı (small, medium, large, xlarge)
-- Metin rengi seçici (primary, secondary, custom)
-- Text alignment seçenekleri
+**Mevcut durum:**
+- Slider değiştiğinde `handleUpdateImagePosition` sadece EditorSidebar state'ini güncelliyor
+- `generated_content` içindeki görsel pozisyonu güncellenmiyor
+- Web sitede değişiklik görünmüyor
 
-**Image Section Değişiklikleri:**
-- "Change" butonuna tıklandığında Pixabay'dan 2-3 alternatif gösterilir
-- Alternatifler küçük thumbnail olarak sidebar içinde listelenir
-- Seçilen görsel anında uygulanır
+**Çözüm:**
+1. `handleUpdateImagePosition` fonksiyonunu `generated_content.images` içine pozisyon kaydetecek şekilde güncelle
+2. Hero ve diğer görsel bileşenlerine `positionX`, `positionY` değerlerini prop olarak geçir
+3. Görsellerin `objectPosition` stilini dinamik yap
 
-### 4. Project.tsx Handler Güncellemeleri
+### 5. Gerçek Zamanlı Stil Değişiklikleri (Font Size, Alignment, Color)
 
-**handleRegenerateField fonksiyonu:**
-- Mevcut TODO kodunu gerçek edge function çağrısıyla değiştir
-- Regenerate edilecek alan için bağlam bilgisini topla
-- Response'u `handleFieldEdit` ile uygula
+**Mevcut durum:**
+- EditorSidebar'daki Font Size, Text Alignment, Text Color seçenekleri sadece local state'te tutuluyor
+- `generated_content` veya herhangi bir kalıcı state'e kaydedilmiyor
+- Değişiklikler sayfaya yansımıyor
 
-**handleImageChange fonksiyonu:**
-- Pixabay'dan alternatifler getir
-- State'e kaydet ve sidebar'da göster
-- Seçim yapıldığında güncelle
-
-**handleUpdateImagePosition fonksiyonu:**
-- Mevcut implementasyon görsel state'ini güncelliyor
-- Değişikliği `generated_content.images` içine kaydet
-
-### 5. Yeni Düzenlenebilir Alanlar
-
-**FullLandingPage.tsx'e eklenecekler:**
-
-| Bölüm | Alan | fieldPath |
-|-------|------|-----------|
-| Welcome | Title | `pages.home.welcome.title` |
-| Welcome | Content | `pages.home.welcome.content` |
-| Statistics | Her stat value | `pages.home.statistics[i].value` |
-| Statistics | Her stat label | `pages.home.statistics[i].label` |
-| About | Story Title | `pages.about.story.title` |
-| About | Story Content | `pages.about.story.content` |
-| CTA | Headline | Yeni alan eklenecek |
-| Header | Site Name | `metadata.siteName` |
-
-**HeroOverlay.tsx'e eklenecekler:**
-- "Get Started" butonu için text editing
-- "Learn More" butonu için text editing
-
-### 6. Görsel Pozisyonlama Gerçek Zamanlı Senkronizasyonu
-
-**Mevcut Durum:**
-- Slider değişikliği `handleUpdateImagePosition` çağırıyor
-- Sadece EditorSidebar içindeki preview güncelleniyor
-
-**Yenilik:**
-- `generated_content.images` içine position bilgisi eklenir
-- Her görsel için `positionX` ve `positionY` değerleri saklanır
-- Görsel bileşenleri bu değerleri `objectPosition` olarak kullanır
+**Çözüm:**
+1. EditorSidebar'a yeni callback'ler ekle: `onStyleChange`
+2. Bu callback'ler stil değişikliklerini üst bileşene (Project.tsx) ilet
+3. Project.tsx'te bu değişiklikleri `generated_content.sectionStyles` içine kaydet
+4. Template bileşenlerine bu stilleri prop olarak geçir
 
 ---
 
 ## Dosya Değişiklikleri Özeti
 
-### Yeni Dosyalar
-| Dosya | Açıklama |
-|-------|----------|
-| `supabase/functions/regenerate-content/index.ts` | AI içerik yenileme edge function |
-| `supabase/functions/fetch-image-options/index.ts` | Pixabay alternatif görsel edge function |
-
-### Düzenlenecek Dosyalar
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/pages/Project.tsx` | Handler'ları edge function'lara bağla |
-| `src/components/website-preview/EditorSidebar.tsx` | Style tab genişletme, image options UI |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | Welcome ve diğer bölümler için editör bağlantısı |
-| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | Buton text editing, position senkronizasyonu |
-| `src/templates/temp1/sections/AboutInlineSection.tsx` | Daha fazla field için editör |
-| `src/templates/temp1/sections/StatisticsSection.tsx` | Her stat için değiştirilebilir |
-| `src/types/generated-website.ts` | Image position fields ekleme |
-| `supabase/config.toml` | Yeni edge function tanımları |
+| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | "Edit Background" yazısını kaldır, sadece hover karartma efekti bırak |
+| `src/components/website-preview/EditorSidebar.tsx` | Regenerate butonunu Pixabay'a yönlendir, stil callback'lerini ekle |
+| `src/pages/Project.tsx` | `handleImageRegenerate`'i Pixabay'a bağla, `handleUpdateImagePosition`'ı gerçek zamanlı yap, stil handler'ları ekle |
+| `src/types/generated-website.ts` | `sectionStyles` tipi ekle (pozisyon ve stil bilgileri için) |
+| `src/templates/temp1/pages/FullLandingPage.tsx` | Görsellere pozisyon props'larını geçir |
 
 ---
 
 ## Teknik Detaylar
 
-### regenerate-content Edge Function
+### HeroOverlay.tsx Değişikliği
 
 ```typescript
-// Prompt yapısı
-const prompt = `You are a professional content writer. 
-Generate a new ${fieldType} for a ${profession} website.
+// KALDIRILAN KISIM (Satır 95-101):
+<div className={cn(
+  "opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 backdrop-blur-sm",
+  isImageSelected && "opacity-100 ring-2 ring-primary"
+)}>
+  <ImageIcon className="w-4 h-4 text-gray-800" />
+  <span className="text-sm font-medium text-gray-800">Edit Background</span>
+</div>
 
-Current content: "${currentValue}"
-Site name: ${siteName}
-Tone: ${tone}
-
-Requirements:
-- Keep the same approximate length
-- Maintain professional ${tone} tone
-- Make it different but equally engaging
-- Language: ${language}
-
-Return ONLY the new text, no explanation.`;
+// YENİ HALİ: Sadece karartma overlay, metin yok
+{isEditable && (
+  <div className={cn(
+    "absolute inset-0 transition-all duration-200",
+    isImageSelected 
+      ? "bg-black/20 ring-4 ring-primary ring-inset" 
+      : "bg-black/0 group-hover:bg-black/10"
+  )} />
+)}
 ```
 
-### Görsel Pozisyonlama Data Yapısı
+### handleImageRegenerate Güncelleme
 
 ```typescript
-// GeneratedContent.images genişletmesi
-images?: {
-  heroHome?: string;
-  heroHomePosition?: { x: number; y: number };
-  aboutImage?: string;
-  aboutImagePosition?: { x: number; y: number };
-  // ... diğer görseller
-};
+const handleImageRegenerate = useCallback(async () => {
+  if (!editorSelection?.imageData || !id) return;
+  
+  // Pixabay'dan alternatifler getir - aynı handleImageChange mantığı
+  setIsRegeneratingImage(true);
+  setImageOptions([]);
+  
+  try {
+    let imageType = 'hero';
+    const imagePath = editorSelection.imageData.imagePath;
+    if (imagePath.includes('about')) imageType = 'about';
+    else if (imagePath.includes('gallery')) imageType = 'gallery';
+    else if (imagePath.includes('cta')) imageType = 'cta';
+    else if (imagePath.includes('service')) imageType = 'service';
+    
+    const { data, error } = await supabase.functions.invoke('fetch-image-options', {
+      body: { projectId: id, imageType, count: 3 },
+    });
+
+    if (error) throw error;
+    
+    if (data?.options && data.options.length > 0) {
+      setImageOptions(data.options);
+      toast({ title: 'Alternatives found', description: 'Choose from the options below.' });
+    } else {
+      toast({ title: 'No alternatives found', description: 'Try a different search.' });
+    }
+  } catch (err) {
+    toast({ title: 'Error', description: 'Could not fetch alternatives.', variant: 'destructive' });
+  } finally {
+    setIsRegeneratingImage(false);
+  }
+}, [editorSelection, id, toast]);
 ```
 
-### EditorSidebar Style Tab Genişletmesi
+### Gerçek Zamanlı Görsel Pozisyon
 
 ```typescript
-// Section-specific style options
-interface SectionStyleOptions {
-  fontSize: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-  textColor: 'primary' | 'secondary' | 'muted' | 'custom';
-  customColor?: string;
-  textAlign: 'left' | 'center' | 'right';
-  fontWeight: 'normal' | 'medium' | 'semibold' | 'bold';
-}
+// Project.tsx - handleUpdateImagePosition güncelleme
+const handleUpdateImagePosition = useCallback((x: number, y: number) => {
+  if (!editorSelection?.imageData?.imagePath || !project?.generated_content) return;
+  
+  // EditorSidebar state'ini güncelle
+  setEditorSelection(prev => prev ? { 
+    ...prev, 
+    imageData: prev.imageData ? { ...prev.imageData, positionX: x, positionY: y } : undefined 
+  } : null);
+  
+  // generated_content içine pozisyonu kaydet
+  const positionPath = editorSelection.imageData.imagePath.replace('images.', 'imagePositions.');
+  const updatedContent = updateNestedValue(
+    project.generated_content, 
+    positionPath, 
+    { x, y }
+  );
+  
+  setProject(prev => prev ? { ...prev, generated_content: updatedContent } : null);
+  setHasUnsavedChanges(true);
+}, [editorSelection, project]);
 ```
 
 ---
 
 ## Kullanıcı Deneyimi Akışı
 
-### İçerik Regenerasyonu
-1. Kullanıcı bir text alanına tıklar → EditorSidebar açılır
-2. "Regenerate" butonuna tıklar
-3. Loading spinner görünür (o spesifik alanda)
-4. AI yeni içerik üretir
-5. İçerik anında sayfada güncellenir
+### Görsel Düzenleme (Yeni)
+1. Kullanıcı hero arka planına tıklar
+2. Sadece hafif karartma efekti gösterilir (metin yok)
+3. EditorSidebar açılır
+4. "Regenerate" butonuna tıklayınca Pixabay'dan alternatifler gelir
+5. Thumbnaillerden biri seçilir → Görsel anında değişir
+6. Pozisyon slider'ları hareket ettirilir → Görsel pozisyonu gerçek zamanlı güncellenir
 
-### Görsel Değiştirme
-1. Kullanıcı görsele tıklar → EditorSidebar açılır
-2. "Change" butonuna tıklar
-3. Sidebar'da 2-3 alternatif thumbnail görünür
-4. Birini seçer → Görsel anında değişir
-5. Horizontal/Vertical slider'lar ile pozisyon ayarlanır (gerçek zamanlı)
+### Stil Düzenleme (Gelecek)
+1. Kullanıcı Style tab'ına geçer
+2. Font boyutu, alignment, renk seçer
+3. Değişiklikler anında sayfaya yansır
 
-### Stil Düzenleme
-1. Kullanıcı bir bölüme tıklar
-2. Style tab'a geçer
-3. Font boyutu, renk, hizalama seçenekleri görünür
-4. Değişiklikler anında yansır
