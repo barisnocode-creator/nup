@@ -1,9 +1,9 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, Save, BarChart3 } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
@@ -11,7 +11,7 @@ import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 import { LockedFeatureButton } from '@/components/website-preview/LockedFeatureButton';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
-
+import { usePageView } from '@/hooks/usePageView';
 interface Project {
   id: string;
   name: string;
@@ -38,6 +38,9 @@ export default function Project() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Track page view for analytics
+  usePageView(id, '/preview');
 
   // Fetch project data
   useEffect(() => {
@@ -325,6 +328,12 @@ export default function Project() {
               <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Dashboard
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to={`/project/${id}/analytics`}>
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics
+                </Link>
               </Button>
               <LockedFeatureButton 
                 label="Publish" 
