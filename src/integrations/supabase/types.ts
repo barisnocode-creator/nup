@@ -53,6 +53,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "analytics_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
@@ -108,10 +115,46 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_projects: {
+        Row: {
+          custom_domain: string | null
+          generated_content: Json | null
+          id: string | null
+          is_published: boolean | null
+          name: string | null
+          profession: string | null
+          published_at: string | null
+          subdomain: string | null
+          template_id: string | null
+        }
+        Insert: {
+          custom_domain?: string | null
+          generated_content?: Json | null
+          id?: string | null
+          is_published?: boolean | null
+          name?: string | null
+          profession?: string | null
+          published_at?: string | null
+          subdomain?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          custom_domain?: string | null
+          generated_content?: Json | null
+          id?: string | null
+          is_published?: boolean | null
+          name?: string | null
+          profession?: string | null
+          published_at?: string | null
+          subdomain?: string | null
+          template_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       hash_visitor_id: { Args: { raw_visitor_id: string }; Returns: string }
+      user_owns_project: { Args: { project_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
