@@ -1,6 +1,8 @@
 import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
+import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
 
 interface CTASectionProps {
   siteName: string;
@@ -8,6 +10,9 @@ interface CTASectionProps {
   ctaImage?: string;
   isDark: boolean;
   isNeutral: boolean;
+  isEditable?: boolean;
+  selectedImage?: ImageData | null;
+  onImageSelect?: (data: ImageData) => void;
 }
 
 export function CTASection({
@@ -16,7 +21,12 @@ export function CTASection({
   ctaImage,
   isDark,
   isNeutral,
+  isEditable = false,
+  selectedImage,
+  onImageSelect,
 }: CTASectionProps) {
+  const isImageSelected = selectedImage?.imagePath === 'images.ctaImage';
+
   return (
     <section className={cn(
       'relative py-24 overflow-hidden',
@@ -25,10 +35,16 @@ export function CTASection({
       {/* Background Image */}
       {ctaImage && (
         <div className="absolute inset-0">
-          <img
+          <EditableImage
             src={ctaImage}
             alt="CTA Background"
+            type="cta"
+            imagePath="images.ctaImage"
             className="w-full h-full object-cover opacity-20"
+            containerClassName="w-full h-full"
+            isEditable={isEditable}
+            isSelected={isImageSelected}
+            onSelect={onImageSelect}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70" />
         </div>

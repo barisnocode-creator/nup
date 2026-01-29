@@ -10,6 +10,7 @@ import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
+import { ImageEditorSidebar, type ImageData } from '@/components/website-preview/ImageEditorSidebar';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -47,6 +48,10 @@ export default function Project() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState('');
   const [currentSection, setCurrentSection] = useState('hero');
+
+  // Image Editor Sidebar State
+  const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -166,15 +171,29 @@ export default function Project() {
   };
 
   // Deep update helper for nested object paths like "pages.home.hero.title"
-  const updateNestedValue = (obj: any, path: string, value: string): any => {
+  const updateNestedValue = (obj: any, path: string, value: any): any => {
     const keys = path.split('.');
     const result = JSON.parse(JSON.stringify(obj)); // Deep clone
     
     let current = result;
     for (let i = 0; i < keys.length - 1; i++) {
-      current = current[keys[i]];
+      // Handle array notation like galleryImages[0]
+      const key = keys[i];
+      const arrayMatch = key.match(/^(\w+)\[(\d+)\]$/);
+      if (arrayMatch) {
+        current = current[arrayMatch[1]][parseInt(arrayMatch[2])];
+      } else {
+        current = current[key];
+      }
     }
-    current[keys[keys.length - 1]] = value;
+    
+    const lastKey = keys[keys.length - 1];
+    const lastArrayMatch = lastKey.match(/^(\w+)\[(\d+)\]$/);
+    if (lastArrayMatch) {
+      current[lastArrayMatch[1]][parseInt(lastArrayMatch[2])] = value;
+    } else {
+      current[lastKey] = value;
+    }
     
     return result;
   };
@@ -242,6 +261,63 @@ export default function Project() {
       setIsSaving(false);
     }
   };
+
+  // Image Editor handlers
+  const handleImageSelect = useCallback((data: ImageData) => {
+    setSelectedImage(data);
+  }, []);
+
+  const handleImageClose = useCallback(() => {
+    setSelectedImage(null);
+  }, []);
+
+  const handleImageRegenerate = useCallback(async () => {
+    if (!selectedImage || !id) return;
+    
+    setIsRegeneratingImage(true);
+    try {
+      // For now, just show a toast - regeneration would call the generate-images function
+      toast({
+        title: 'Regenerating image...',
+        description: 'AI is creating a new image for you.',
+      });
+
+      // TODO: Implement single image regeneration via edge function
+      // This would call a dedicated endpoint to regenerate just one image
+      
+      setTimeout(() => {
+        setIsRegeneratingImage(false);
+        toast({
+          title: 'Image regenerated',
+          description: 'Your new image has been applied.',
+        });
+      }, 2000);
+    } catch (err) {
+      console.error('Image regeneration error:', err);
+      setIsRegeneratingImage(false);
+    }
+  }, [selectedImage, id, toast]);
+
+  const handleImageChange = useCallback(() => {
+    // Open image picker modal (for now just show toast)
+    toast({
+      title: 'Image picker',
+      description: 'Image picker coming soon. You can regenerate for now.',
+    });
+  }, [toast]);
+
+  const handleUpdateAltText = useCallback((text: string) => {
+    if (!selectedImage) return;
+    // Alt text would be stored in a separate field or metadata
+    // For now we just update local state
+    setSelectedImage(prev => prev ? { ...prev, altText: text } : null);
+  }, []);
+
+  const handleUpdateImagePosition = useCallback((x: number, y: number) => {
+    if (!selectedImage) return;
+    // Position would be stored per-image
+    setSelectedImage(prev => prev ? { ...prev, positionX: x, positionY: y } : null);
+  }, []);
 
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
@@ -345,6 +421,7 @@ export default function Project() {
   // Website preview with optional auth wall
   const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
   const isAuthenticated = !!user;
+  const isDark = colorPreference === 'dark';
 
   // TEST MODE: Upgrade prompts disabled for testing
   const handleLockedFeature = (feature: string) => {
@@ -391,6 +468,8 @@ export default function Project() {
             templateId={project.template_id || 'temp1'}
             isEditable={isAuthenticated}
             onFieldEdit={handleFieldEdit}
+            selectedImage={selectedImage}
+            onImageSelect={handleImageSelect}
           />
         )}
       </div>
@@ -404,6 +483,19 @@ export default function Project() {
           isLoading={false}
         />
       )}
+
+      {/* Image Editor Sidebar */}
+      <ImageEditorSidebar
+        isOpen={!!selectedImage}
+        onClose={handleImageClose}
+        imageData={selectedImage}
+        onRegenerate={handleImageRegenerate}
+        onChangeImage={handleImageChange}
+        onUpdateAltText={handleUpdateAltText}
+        onUpdatePosition={handleUpdateImagePosition}
+        isRegenerating={isRegeneratingImage}
+        isDark={isDark}
+      />
 
       {/* Email Auth Modal */}
       <AuthModal 

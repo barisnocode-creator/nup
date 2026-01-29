@@ -1,5 +1,7 @@
 import { EditableField } from '@/components/website-preview/EditableField';
+import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
+import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
 
 interface HeroSplitSectionProps {
   title: string;
@@ -10,6 +12,8 @@ interface HeroSplitSectionProps {
   isNeutral: boolean;
   isEditable: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  selectedImage?: ImageData | null;
+  onImageSelect?: (data: ImageData) => void;
 }
 
 export function HeroSplitSection({
@@ -21,7 +25,11 @@ export function HeroSplitSection({
   isNeutral,
   isEditable,
   onFieldEdit,
+  selectedImage,
+  onImageSelect,
 }: HeroSplitSectionProps) {
+  const isImageSelected = selectedImage?.imagePath === 'images.heroHome';
+
   return (
     <section className={cn(
       'min-h-[80vh] flex items-center',
@@ -98,25 +106,30 @@ export function HeroSplitSection({
               'relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl',
               isDark ? 'bg-slate-800' : 'bg-gray-200'
             )}>
-              {heroImage ? (
-                <img
-                  src={heroImage}
-                  alt="Hero"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className={cn(
-                  'w-full h-full flex items-center justify-center',
-                  isDark ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-primary/20 to-primary/30'
-                )}>
-                  <span className={cn(
-                    'text-6xl',
-                    isDark ? 'text-slate-600' : 'text-primary/40'
+              <EditableImage
+                src={heroImage || ''}
+                alt="Hero"
+                type="hero"
+                imagePath="images.heroHome"
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
+                isEditable={isEditable}
+                isSelected={isImageSelected}
+                onSelect={onImageSelect}
+                fallback={
+                  <div className={cn(
+                    'w-full h-full flex items-center justify-center',
+                    isDark ? 'bg-gradient-to-br from-slate-700 to-slate-800' : 'bg-gradient-to-br from-primary/20 to-primary/30'
                   )}>
-                    🏥
-                  </span>
-                </div>
-              )}
+                    <span className={cn(
+                      'text-6xl',
+                      isDark ? 'text-slate-600' : 'text-primary/40'
+                    )}>
+                      🏥
+                    </span>
+                  </div>
+                }
+              />
             </div>
 
             {/* Decorative Elements */}

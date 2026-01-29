@@ -10,6 +10,7 @@ import { TestimonialsSection } from '../sections/TestimonialsSection';
 import { FAQSection } from '../sections/FAQSection';
 import { ContactInlineSection } from '../sections/ContactInlineSection';
 import { CTASection } from '../sections/CTASection';
+import type { ImageData } from '@/components/website-preview/ImageEditorSidebar';
 
 interface FullLandingPageProps {
   content: GeneratedContent;
@@ -18,6 +19,8 @@ interface FullLandingPageProps {
   isEditable: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
   onLockedFeature?: (feature: string) => void;
+  selectedImage?: ImageData | null;
+  onImageSelect?: (data: ImageData) => void;
 }
 
 export function FullLandingPage({
@@ -27,6 +30,8 @@ export function FullLandingPage({
   isEditable,
   onFieldEdit,
   onLockedFeature,
+  selectedImage,
+  onImageSelect,
 }: FullLandingPageProps) {
   const { pages, images, metadata } = content;
 
@@ -49,6 +54,8 @@ export function FullLandingPage({
           isNeutral={isNeutral}
           isEditable={isEditable}
           onFieldEdit={onFieldEdit}
+          selectedImage={selectedImage}
+          onImageSelect={onImageSelect}
         />
       </EditableSection>
 
@@ -83,6 +90,8 @@ export function FullLandingPage({
           isNeutral={isNeutral}
           isEditable={isEditable}
           onFieldEdit={onFieldEdit}
+          selectedImage={selectedImage}
+          onImageSelect={onImageSelect}
         />
       </EditableSection>
 
@@ -129,6 +138,9 @@ export function FullLandingPage({
           images={images?.galleryImages || []}
           isDark={isDark}
           isNeutral={isNeutral}
+          isEditable={isEditable}
+          selectedImage={selectedImage}
+          onImageSelect={onImageSelect}
         />
       </EditableSection>
 
@@ -191,6 +203,9 @@ export function FullLandingPage({
           ctaImage={images?.ctaImage}
           isDark={isDark}
           isNeutral={isNeutral}
+          isEditable={isEditable}
+          selectedImage={selectedImage}
+          onImageSelect={onImageSelect}
         />
       </EditableSection>
     </div>

@@ -11,6 +11,8 @@ export function HealthcareModernTemplate({
   isEditable = false,
   onFieldEdit,
   onLockedFeature,
+  selectedImage,
+  onImageSelect,
 }: TemplateProps) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<string>('');
@@ -106,6 +108,8 @@ export function HealthcareModernTemplate({
           isEditable={isEditable}
           onFieldEdit={handleFieldEdit}
           onLockedFeature={handleLockedFeature}
+          selectedImage={selectedImage}
+          onImageSelect={onImageSelect}
         />
       </main>
 
