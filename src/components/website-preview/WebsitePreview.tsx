@@ -1,13 +1,14 @@
 import { useState } from 'react';
-import { GeneratedContent, WebsitePage } from '@/types/generated-website';
+import { GeneratedContent, WebsitePage, BlogPost } from '@/types/generated-website';
 import { WebsiteHeader } from './WebsiteHeader';
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { ContactPage } from './pages/ContactPage';
+import { BlogPage } from './pages/BlogPage';
+import { BlogPostPage } from './pages/BlogPostPage';
 import { UpgradeModal } from './UpgradeModal';
 import { LockedFeatureButton } from './LockedFeatureButton';
-import { Palette, Layout } from 'lucide-react';
 
 interface WebsitePreviewProps {
   content: GeneratedContent;
@@ -25,6 +26,7 @@ export function WebsitePreview({
   const [currentPage, setCurrentPage] = useState<WebsitePage>('home');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<string>('');
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const isDark = colorPreference === 'dark';
   const isNeutral = colorPreference === 'neutral';
@@ -44,6 +46,30 @@ export function WebsitePreview({
     if (onFieldEdit) {
       onFieldEdit(fieldPath, newValue);
     }
+  };
+
+  const handleNavigate = (page: WebsitePage) => {
+    setCurrentPage(page);
+    setSelectedPostId(null);
+  };
+
+  const handleViewPost = (postId: string) => {
+    setSelectedPostId(postId);
+    setCurrentPage('blog-post');
+  };
+
+  const handleBackToBlog = () => {
+    setSelectedPostId(null);
+    setCurrentPage('blog');
+  };
+
+  const hasBlog = content.pages.blog && content.pages.blog.posts.length > 0;
+  const selectedPost = selectedPostId 
+    ? content.pages.blog?.posts.find(p => p.id === selectedPostId)
+    : null;
+
+  const getRelatedPosts = (currentPostId: string): BlogPost[] => {
+    return content.pages.blog?.posts.filter(p => p.id !== currentPostId) || [];
   };
 
   return (
@@ -76,10 +102,11 @@ export function WebsitePreview({
       <WebsiteHeader 
         siteName={content.metadata.siteName}
         currentPage={currentPage}
-        onNavigate={setCurrentPage}
+        onNavigate={handleNavigate}
         isDark={isDark}
         isEditable={isEditable}
         onFieldEdit={handleFieldEdit}
+        hasBlog={hasBlog}
       />
       
       <main>
@@ -90,6 +117,7 @@ export function WebsitePreview({
             isNeutral={isNeutral}
             isEditable={isEditable}
             onFieldEdit={handleFieldEdit}
+            heroImage={content.images?.heroHome}
           />
         )}
         {currentPage === 'about' && (
@@ -99,6 +127,7 @@ export function WebsitePreview({
             isNeutral={isNeutral}
             isEditable={isEditable}
             onLockedFeature={handleLockedFeature}
+            heroImage={content.images?.heroAbout}
           />
         )}
         {currentPage === 'services' && (
@@ -108,6 +137,7 @@ export function WebsitePreview({
             isNeutral={isNeutral}
             isEditable={isEditable}
             onLockedFeature={handleLockedFeature}
+            heroImage={content.images?.heroServices}
           />
         )}
         {currentPage === 'contact' && (
@@ -117,6 +147,30 @@ export function WebsitePreview({
             isNeutral={isNeutral}
             isEditable={isEditable}
             onFieldEdit={handleFieldEdit}
+          />
+        )}
+        {currentPage === 'blog' && content.pages.blog && (
+          <BlogPage 
+            hero={content.pages.blog.hero}
+            posts={content.pages.blog.posts}
+            isDark={isDark} 
+            isNeutral={isNeutral}
+            isEditable={isEditable}
+            onLockedFeature={handleLockedFeature}
+            onViewPost={handleViewPost}
+            heroImage={content.images?.heroBlog}
+          />
+        )}
+        {currentPage === 'blog-post' && selectedPost && (
+          <BlogPostPage 
+            post={selectedPost}
+            isDark={isDark} 
+            isNeutral={isNeutral}
+            isEditable={isEditable}
+            onLockedFeature={handleLockedFeature}
+            onBack={handleBackToBlog}
+            relatedPosts={getRelatedPosts(selectedPost.id)}
+            onViewPost={handleViewPost}
           />
         )}
       </main>

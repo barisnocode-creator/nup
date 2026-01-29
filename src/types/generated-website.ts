@@ -1,3 +1,13 @@
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  featuredImage?: string;
+  publishedAt: string;
+}
+
 export interface GeneratedContent {
   pages: {
     home: {
@@ -48,6 +58,10 @@ export interface GeneratedContent {
         description: string;
         icon: string;
       }>;
+      faq?: Array<{
+        question: string;
+        answer: string;
+      }>;
     };
     contact: {
       hero: {
@@ -65,11 +79,26 @@ export interface GeneratedContent {
         subtitle: string;
       };
     };
+    blog?: {
+      hero: {
+        title: string;
+        subtitle: string;
+      };
+      posts: BlogPost[];
+    };
+  };
+  images?: {
+    heroHome?: string;
+    heroAbout?: string;
+    heroServices?: string;
+    heroContact?: string;
+    heroBlog?: string;
   };
   metadata: {
     siteName: string;
     tagline: string;
+    seoDescription?: string;
   };
 }
 
-export type WebsitePage = 'home' | 'about' | 'services' | 'contact';
+export type WebsitePage = 'home' | 'about' | 'services' | 'contact' | 'blog' | 'blog-post';

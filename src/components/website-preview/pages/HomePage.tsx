@@ -8,6 +8,7 @@ interface HomePageProps {
   isNeutral: boolean;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  heroImage?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -24,7 +25,7 @@ function getIcon(iconName: string) {
   return iconMap[normalizedName] || Heart;
 }
 
-export function HomePage({ content, isDark, isNeutral, isEditable = false, onFieldEdit }: HomePageProps) {
+export function HomePage({ content, isDark, isNeutral, isEditable = false, onFieldEdit, heroImage }: HomePageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -43,8 +44,14 @@ export function HomePage({ content, isDark, isNeutral, isEditable = false, onFie
   return (
     <div>
       {/* Hero Section */}
-      <section className={`py-20 md:py-32 bg-gradient-to-br ${heroGradient}`}>
-        <div className="container mx-auto px-4 text-center">
+      <section 
+        className={`py-20 md:py-32 bg-gradient-to-br ${heroGradient} relative overflow-hidden`}
+        style={heroImage ? { backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
+        {heroImage && (
+          <div className={`absolute inset-0 ${isDark ? 'bg-slate-900/70' : 'bg-white/70'} backdrop-blur-sm`} />
+        )}
+        <div className="container mx-auto px-4 text-center relative z-10">
           {isEditable ? (
             <div className="mb-6">
               <EditableField

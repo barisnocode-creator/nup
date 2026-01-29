@@ -8,14 +8,8 @@ interface WebsiteHeaderProps {
   isDark: boolean;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  hasBlog?: boolean;
 }
-
-const pages: { id: WebsitePage; label: string }[] = [
-  { id: 'home', label: 'Home' },
-  { id: 'about', label: 'About' },
-  { id: 'services', label: 'Services' },
-  { id: 'contact', label: 'Contact' },
-];
 
 export function WebsiteHeader({ 
   siteName, 
@@ -23,12 +17,26 @@ export function WebsiteHeader({
   onNavigate, 
   isDark,
   isEditable = false,
-  onFieldEdit
+  onFieldEdit,
+  hasBlog = false
 }: WebsiteHeaderProps) {
   const handleSiteNameEdit = (fieldPath: string, newValue: string) => {
     if (onFieldEdit) {
       onFieldEdit('metadata.siteName', newValue);
     }
+  };
+
+  const pages: { id: WebsitePage; label: string }[] = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About' },
+    { id: 'services', label: 'Services' },
+    ...(hasBlog ? [{ id: 'blog' as WebsitePage, label: 'Blog' }] : []),
+    { id: 'contact', label: 'Contact' },
+  ];
+
+  const isActivePage = (pageId: WebsitePage) => {
+    if (pageId === 'blog' && currentPage === 'blog-post') return true;
+    return currentPage === pageId;
   };
 
   return (
@@ -60,7 +68,7 @@ export function WebsiteHeader({
                 key={page.id}
                 onClick={() => onNavigate(page.id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === page.id
+                  isActivePage(page.id)
                     ? isDark 
                       ? 'bg-white/10 text-white' 
                       : 'bg-primary/10 text-primary'

@@ -7,9 +7,10 @@ interface AboutPageProps {
   isNeutral: boolean;
   isEditable?: boolean;
   onLockedFeature?: (feature: string) => void;
+  heroImage?: string;
 }
 
-export function AboutPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature }: AboutPageProps) {
+export function AboutPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature, heroImage }: AboutPageProps) {
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -28,8 +29,14 @@ export function AboutPage({ content, isDark, isNeutral, isEditable = false, onLo
   return (
     <div>
       {/* Hero Section */}
-      <section className={`py-16 md:py-24 bg-gradient-to-br ${heroGradient}`}>
-        <div className="container mx-auto px-4 text-center">
+      <section 
+        className={`py-16 md:py-24 bg-gradient-to-br ${heroGradient} relative overflow-hidden`}
+        style={heroImage ? { backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
+        {heroImage && (
+          <div className={`absolute inset-0 ${isDark ? 'bg-slate-900/70' : 'bg-white/70'} backdrop-blur-sm`} />
+        )}
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             {content.hero.title}
           </h1>
