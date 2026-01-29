@@ -68,6 +68,7 @@ export type Database = {
           published_at: string | null
           status: string
           subdomain: string | null
+          template_id: string | null
           updated_at: string
           user_id: string
         }
@@ -83,6 +84,7 @@ export type Database = {
           published_at?: string | null
           status?: string
           subdomain?: string | null
+          template_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -98,6 +100,7 @@ export type Database = {
           published_at?: string | null
           status?: string
           subdomain?: string | null
+          template_id?: string | null
           updated_at?: string
           user_id?: string
         }

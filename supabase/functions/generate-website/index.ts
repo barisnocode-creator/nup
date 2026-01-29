@@ -28,6 +28,18 @@ interface FormData {
   };
 }
 
+// Template selection logic - automatically picks the best template
+function selectTemplate(profession: string, _tone?: string): string {
+  // For now we only have temp1, but this can be expanded
+  // to match profession/tone combinations to specific templates
+  const templateMap: Record<string, string> = {
+    doctor: 'temp1',
+    dentist: 'temp1',
+    pharmacist: 'temp1',
+  };
+  return templateMap[profession] || 'temp1';
+}
+
 function getProfessionSpecificInstructions(profession: string, details: FormData['professionalDetails']): string {
   if (profession === 'doctor') {
     return `
@@ -360,12 +372,20 @@ serve(async (req) => {
       );
     }
 
-    // Update project with generated content and status
+    // Select template automatically based on profession and tone
+    const templateId = selectTemplate(
+      profession,
+      formData.websitePreferences?.tone
+    );
+    console.log("Selected template:", templateId);
+
+    // Update project with generated content, template_id, and status
     console.log("Saving generated content");
     const { error: updateError } = await supabase
       .from("projects")
       .update({
         generated_content: generatedContent,
+        template_id: templateId,
         status: "generated",
         updated_at: new Date().toISOString(),
       })
