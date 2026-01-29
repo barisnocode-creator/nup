@@ -128,7 +128,7 @@ export function HeroOverlay({
                 canRegenerate: true,
               },
             ]}
-            className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight text-white drop-shadow-lg"
+            className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight text-white drop-shadow-lg font-display"
           />
 
           <EditableText

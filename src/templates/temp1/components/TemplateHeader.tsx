@@ -66,11 +66,11 @@ export function TemplateHeader({
                 value={siteName}
                 fieldPath="metadata.siteName"
                 onSave={handleFieldEdit}
-                className="text-xl font-bold"
+                className="text-xl font-bold font-display"
                 isEditable={isEditable}
               />
             ) : (
-              <span className="text-xl font-bold">{siteName}</span>
+              <span className="text-xl font-bold font-display">{siteName}</span>
             )}
           </div>
 

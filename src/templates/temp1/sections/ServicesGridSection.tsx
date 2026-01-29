@@ -67,7 +67,7 @@ export function ServicesGridSection({
             Our Services
           </span>
           <h2 className={cn(
-            'text-3xl md:text-4xl font-bold mb-6',
+            'text-3xl md:text-4xl font-bold mb-6 font-display',
             isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
           )}>
             {intro.title}
@@ -120,7 +120,7 @@ export function ServicesGridSection({
                 </div>
                 
                 <h3 className={cn(
-                  'text-lg font-semibold mb-3',
+                  'text-lg font-semibold mb-3 font-display',
                   isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
                 )}>
                   {service.title}

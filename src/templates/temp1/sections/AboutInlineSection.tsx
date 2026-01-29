@@ -71,7 +71,7 @@ export function AboutInlineSection({
             About Us
           </span>
           <h2 className={cn(
-            'text-3xl md:text-4xl font-bold',
+            'text-3xl md:text-4xl font-bold font-display',
             isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
           )}>
             {story.title}
@@ -169,7 +169,7 @@ export function AboutInlineSection({
                     </span>
                   </div>
                   <h3 className={cn(
-                    'text-lg font-semibold mb-2',
+                    'text-lg font-semibold mb-2 font-display',
                     isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
                   )}>
                     {value.title}
