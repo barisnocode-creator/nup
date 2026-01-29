@@ -13,6 +13,9 @@ export function HealthcareModernTemplate({
   onLockedFeature,
   editorSelection,
   onEditorSelect,
+  sectionOrder,
+  onMoveSection,
+  onDeleteSection,
   selectedImage,
   onImageSelect,
 }: TemplateProps) {
@@ -112,6 +115,9 @@ export function HealthcareModernTemplate({
           onLockedFeature={handleLockedFeature}
           editorSelection={editorSelection}
           onEditorSelect={onEditorSelect}
+          sectionOrder={sectionOrder}
+          onMoveSection={onMoveSection}
+          onDeleteSection={onDeleteSection}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />

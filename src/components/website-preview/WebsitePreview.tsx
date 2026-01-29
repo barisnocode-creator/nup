@@ -10,6 +10,10 @@ interface WebsitePreviewProps {
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
   editorSelection?: EditorSelection | null;
   onEditorSelect?: (selection: EditorSelection) => void;
+  // Section management props
+  sectionOrder?: string[];
+  onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void;
+  onDeleteSection?: (sectionId: string) => void;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -23,6 +27,9 @@ export function WebsitePreview({
   onFieldEdit,
   editorSelection,
   onEditorSelect,
+  sectionOrder,
+  onMoveSection,
+  onDeleteSection,
   selectedImage,
   onImageSelect,
 }: WebsitePreviewProps) {
@@ -42,6 +49,9 @@ export function WebsitePreview({
       onFieldEdit={handleFieldEdit}
       editorSelection={editorSelection}
       onEditorSelect={onEditorSelect}
+      sectionOrder={sectionOrder}
+      onMoveSection={onMoveSection}
+      onDeleteSection={onDeleteSection}
       selectedImage={selectedImage}
       onImageSelect={onImageSelect}
     />

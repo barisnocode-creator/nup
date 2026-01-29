@@ -56,9 +56,9 @@ export function EditableSection({
       onMouseLeave={() => setIsHovered(false)}
       data-section-id={sectionId}
     >
-      {/* Section Label Badge */}
+      {/* Section Label Badge - pointer-events-auto to ensure clicks work */}
       {isHovered && (
-        <div className="absolute -top-3 left-4 z-20 animate-fade-in">
+        <div className="absolute -top-3 left-4 z-30 animate-fade-in pointer-events-auto">
           <Badge 
             variant="default" 
             className="bg-primary text-primary-foreground shadow-md text-xs font-medium"
@@ -68,16 +68,16 @@ export function EditableSection({
         </div>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - pointer-events-auto to ensure clicks work */}
       {isHovered && (
-        <div className="absolute -top-3 right-4 z-20 flex items-center gap-1 animate-fade-in">
+        <div className="absolute -top-3 right-4 z-30 flex items-center gap-1 animate-fade-in pointer-events-auto">
           {/* Move Up */}
           <Button
             variant="secondary"
             size="icon"
             className="h-7 w-7 shadow-md"
-            onClick={() => !isFirst ? handleLockedAction('Move') : undefined}
-            disabled={isFirst}
+            onClick={() => onMoveUp?.()}
+            disabled={isFirst || !onMoveUp}
           >
             <ChevronUp className="h-3.5 w-3.5" />
           </Button>
@@ -87,8 +87,8 @@ export function EditableSection({
             variant="secondary"
             size="icon"
             className="h-7 w-7 shadow-md"
-            onClick={() => !isLast ? handleLockedAction('Move') : undefined}
-            disabled={isLast}
+            onClick={() => onMoveDown?.()}
+            disabled={isLast || !onMoveDown}
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </Button>
@@ -98,17 +98,18 @@ export function EditableSection({
             variant="secondary"
             size="icon"
             className="h-7 w-7 shadow-md"
-            onClick={onEdit}
+            onClick={() => onEdit?.()}
           >
             <Edit3 className="h-3.5 w-3.5" />
           </Button>
 
-          {/* Delete Button (Locked) */}
+          {/* Delete Button */}
           <Button
             variant="secondary"
             size="icon"
             className="h-7 w-7 shadow-md"
-            onClick={() => handleLockedAction('Delete')}
+            onClick={() => onDelete?.()}
+            disabled={!onDelete}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
