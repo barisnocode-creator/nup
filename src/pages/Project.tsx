@@ -475,6 +475,26 @@ export default function Project() {
     await generateWebsite(id);
   }, [id, toast]);
 
+  // Handle edit hero background from Customize sidebar
+  const handleEditHeroBackground = useCallback(() => {
+    const heroImage = project?.generated_content?.images?.heroHome || '';
+    handleEditorSelect({
+      type: 'image',
+      title: 'Hero Background',
+      sectionId: 'hero',
+      imageData: {
+        type: 'hero',
+        imagePath: 'images.heroHome',
+        currentUrl: heroImage,
+        altText: 'Hero Background',
+        positionX: 50,
+        positionY: 50,
+      },
+      fields: [],
+    });
+    setCustomizeSidebarOpen(false);
+  }, [project, handleEditorSelect]);
+
   // Handle regenerate page title
   const handleRegeneratePageTitle = useCallback(() => {
     toast({
@@ -784,6 +804,7 @@ export default function Project() {
         }}
         onRegenerateText={handleRegenerateAllText}
         onRegenerateWebsite={handleRegenerateWebsite}
+        onEditBackground={handleEditHeroBackground}
       />
 
       {/* Page Settings Sidebar */}
