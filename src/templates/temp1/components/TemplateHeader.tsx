@@ -1,15 +1,22 @@
-import { WebsitePage } from '@/types/generated-website';
 import { EditableField } from '@/components/website-preview/EditableField';
 
 interface TemplateHeaderProps {
   siteName: string;
-  currentPage: WebsitePage;
-  onNavigate: (page: WebsitePage) => void;
+  currentPage: string;
+  onNavigate: (sectionId: string) => void;
   isDark: boolean;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
   hasBlog?: boolean;
 }
+
+const navItems = [
+  { id: 'hero', label: 'Home' },
+  { id: 'about', label: 'About' },
+  { id: 'services', label: 'Services' },
+  { id: 'gallery', label: 'Gallery' },
+  { id: 'contact', label: 'Contact' },
+];
 
 export function TemplateHeader({
   siteName,
@@ -20,25 +27,31 @@ export function TemplateHeader({
   onFieldEdit,
   hasBlog = false,
 }: TemplateHeaderProps) {
-  const navItems: { page: WebsitePage; label: string }[] = [
-    { page: 'home', label: 'Home' },
-    { page: 'about', label: 'About' },
-    { page: 'services', label: 'Services' },
-    { page: 'contact', label: 'Contact' },
-  ];
-
-  if (hasBlog) {
-    navItems.push({ page: 'blog', label: 'Blog' });
-  }
-
   const handleFieldEdit = (fieldPath: string, newValue: string) => {
     if (onFieldEdit) {
       onFieldEdit(fieldPath, newValue);
     }
   };
 
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'hero') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const offset = 80; // Account for fixed header
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - offset;
+        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      }
+    }
+    onNavigate(sectionId);
+  };
+
   return (
-    <header className={`py-4 border-b ${isDark ? 'border-slate-800 bg-slate-900' : 'border-gray-100 bg-white'}`}>
+    <header className={`sticky top-14 z-40 py-4 border-b backdrop-blur-sm ${
+      isDark ? 'border-slate-800 bg-slate-900/95' : 'border-gray-100 bg-white/95'
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
           {/* Logo / Site Name */}
@@ -63,12 +76,12 @@ export function TemplateHeader({
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map(({ page, label }) => (
+            {navItems.map(({ id, label }) => (
               <button
-                key={page}
-                onClick={() => onNavigate(page)}
+                key={id}
+                onClick={() => scrollToSection(id)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  currentPage === page || (currentPage === 'blog-post' && page === 'blog')
+                  currentPage === id
                     ? isDark
                       ? 'bg-slate-800 text-white'
                       : 'bg-gray-100 text-gray-900'
@@ -83,7 +96,9 @@ export function TemplateHeader({
           </nav>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 rounded-lg hover:bg-gray-100">
+          <button className={`md:hidden p-2 rounded-lg ${
+            isDark ? 'hover:bg-slate-800' : 'hover:bg-gray-100'
+          }`}>
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>

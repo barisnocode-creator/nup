@@ -1,14 +1,8 @@
 import { useState } from 'react';
 import { TemplateProps } from '../types';
-import { WebsitePage, BlogPost } from '@/types/generated-website';
 import { TemplateHeader } from './components/TemplateHeader';
 import { TemplateFooter } from './components/TemplateFooter';
-import { HomePage } from './pages/HomePage';
-import { AboutPage } from './pages/AboutPage';
-import { ServicesPage } from './pages/ServicesPage';
-import { ContactPage } from './pages/ContactPage';
-import { BlogPage } from './pages/BlogPage';
-import { BlogPostPage } from './pages/BlogPostPage';
+import { FullLandingPage } from './pages/FullLandingPage';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 
 export function HealthcareModernTemplate({
@@ -18,10 +12,8 @@ export function HealthcareModernTemplate({
   onFieldEdit,
   onLockedFeature,
 }: TemplateProps) {
-  const [currentPage, setCurrentPage] = useState<WebsitePage>('home');
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<string>('');
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const isDark = colorPreference === 'dark';
   const isNeutral = colorPreference === 'neutral';
@@ -47,33 +39,19 @@ export function HealthcareModernTemplate({
     }
   };
 
-  const handleNavigate = (page: WebsitePage) => {
-    setCurrentPage(page);
-    setSelectedPostId(null);
-  };
-
-  const handleViewPost = (postId: string) => {
-    setSelectedPostId(postId);
-    setCurrentPage('blog-post');
-  };
-
-  const handleBackToBlog = () => {
-    setSelectedPostId(null);
-    setCurrentPage('blog');
-  };
-
   const hasBlog = content.pages.blog && content.pages.blog.posts.length > 0;
-  const selectedPost = selectedPostId
-    ? content.pages.blog?.posts.find(p => p.id === selectedPostId)
-    : null;
 
-  const getRelatedPosts = (currentPostId: string): BlogPost[] => {
-    return content.pages.blog?.posts.filter(p => p.id !== currentPostId) || [];
+  // Scroll to section
+  const handleNavigate = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
     <div className={`min-h-screen ${themeClasses}`}>
-      {/* Editing Toolbar */}
+      {/* Editing Indicator */}
       {isEditable && (
         <div className={`sticky top-14 z-20 py-2 px-4 border-b ${
           isDark ? 'bg-slate-800/95 border-slate-700' : 'bg-gray-50/95 border-gray-200'
@@ -81,7 +59,7 @@ export function HealthcareModernTemplate({
           <div className="container mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                ✏️ Click on highlighted text to edit
+                ✏️ Hover over sections to edit • Click on text to modify
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -112,7 +90,7 @@ export function HealthcareModernTemplate({
 
       <TemplateHeader
         siteName={content.metadata.siteName}
-        currentPage={currentPage}
+        currentPage="home"
         onNavigate={handleNavigate}
         isDark={isDark}
         isEditable={isEditable}
@@ -121,69 +99,14 @@ export function HealthcareModernTemplate({
       />
 
       <main>
-        {currentPage === 'home' && (
-          <HomePage
-            content={content.pages.home}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onFieldEdit={handleFieldEdit}
-            heroImage={content.images?.heroHome}
-          />
-        )}
-        {currentPage === 'about' && (
-          <AboutPage
-            content={content.pages.about}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onLockedFeature={handleLockedFeature}
-            heroImage={content.images?.heroAbout}
-          />
-        )}
-        {currentPage === 'services' && (
-          <ServicesPage
-            content={content.pages.services}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onLockedFeature={handleLockedFeature}
-            heroImage={content.images?.heroServices}
-          />
-        )}
-        {currentPage === 'contact' && (
-          <ContactPage
-            content={content.pages.contact}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onFieldEdit={handleFieldEdit}
-          />
-        )}
-        {currentPage === 'blog' && content.pages.blog && (
-          <BlogPage
-            hero={content.pages.blog.hero}
-            posts={content.pages.blog.posts}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onLockedFeature={handleLockedFeature}
-            onViewPost={handleViewPost}
-            heroImage={content.images?.heroBlog}
-          />
-        )}
-        {currentPage === 'blog-post' && selectedPost && (
-          <BlogPostPage
-            post={selectedPost}
-            isDark={isDark}
-            isNeutral={isNeutral}
-            isEditable={isEditable}
-            onLockedFeature={handleLockedFeature}
-            onBack={handleBackToBlog}
-            relatedPosts={getRelatedPosts(selectedPost.id)}
-            onViewPost={handleViewPost}
-          />
-        )}
+        <FullLandingPage
+          content={content}
+          isDark={isDark}
+          isNeutral={isNeutral}
+          isEditable={isEditable}
+          onFieldEdit={handleFieldEdit}
+          onLockedFeature={handleLockedFeature}
+        />
       </main>
 
       <TemplateFooter

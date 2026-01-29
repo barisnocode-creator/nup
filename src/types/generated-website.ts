@@ -120,6 +120,13 @@ export interface GeneratedContent {
     heroServices?: string;
     heroContact?: string;
     heroBlog?: string;
+    // New expanded image fields
+    heroSplit?: string;
+    aboutImage?: string;
+    servicesImages?: string[];
+    galleryImages?: string[];
+    teamImage?: string;
+    ctaImage?: string;
   };
   metadata: {
     siteName: string;

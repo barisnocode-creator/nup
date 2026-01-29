@@ -3,12 +3,13 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, Save, BarChart3, ImageIcon, Globe } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, BarChart3, ImageIcon } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
+import { EditorToolbar } from '@/components/website-preview/EditorToolbar';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PublishModal } from '@/components/website-preview/PublishModal';
-import { LockedFeatureButton } from '@/components/website-preview/LockedFeatureButton';
+import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -43,6 +44,9 @@ export default function Project() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [lockedFeature, setLockedFeature] = useState('');
+  const [currentSection, setCurrentSection] = useState('hero');
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -342,70 +346,30 @@ export default function Project() {
   const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
   const isAuthenticated = !!user;
 
+  const handleLockedFeature = (feature: string) => {
+    setLockedFeature(feature);
+    setUpgradeModalOpen(true);
+  };
+
+  const handleNavigate = (sectionId: string) => {
+    setCurrentSection(sectionId);
+  };
+
   return (
     <div className="relative min-h-screen">
-      {/* Fixed Header for authenticated users */}
+      {/* Durable.co Style Editor Toolbar for authenticated users */}
       {isAuthenticated && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b">
-          <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 gradient-hero rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <span className="font-bold">Open Lucius</span>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-sm text-muted-foreground">Editor</span>
-              {isSaving && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Saving...
-                  </span>
-                </>
-              )}
-              {!isSaving && hasUnsavedChanges && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-xs text-amber-500">Unsaved changes</span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to={`/project/${id}/analytics`}>
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Analytics
-                </Link>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => id && generateImages(id)}
-                disabled={generatingImages}
-              >
-                {generatingImages ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <ImageIcon className="w-4 h-4 mr-2" />
-                )}
-                {generatingImages ? 'Generating...' : 'Add Images'}
-              </Button>
-              <Button 
-                size="sm"
-                onClick={() => setPublishModalOpen(true)}
-                className="gap-2"
-              >
-                <Globe className="w-4 h-4" />
-                {project.is_published ? 'Published' : 'Publish'}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <EditorToolbar
+          projectName={project.name}
+          currentSection={currentSection}
+          onNavigate={handleNavigate}
+          onCustomize={() => handleLockedFeature('Customize colors and fonts')}
+          onAddSection={() => handleLockedFeature('Add new sections')}
+          onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
+          onPublish={() => setPublishModalOpen(true)}
+          onDashboard={() => navigate('/dashboard')}
+          isPublished={project.is_published}
+        />
       )}
 
       {/* Website Preview */}
@@ -452,6 +416,13 @@ export default function Project() {
             is_published: true,
           } : null);
         }}
+      />
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        feature={lockedFeature}
       />
     </div>
   );
