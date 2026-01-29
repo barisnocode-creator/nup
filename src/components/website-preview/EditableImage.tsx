@@ -37,8 +37,12 @@ export function EditableImage({
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (!isEditable || !onSelect) return;
     e.stopPropagation();
+    e.preventDefault();
+    
+    console.log('EditableImage clicked:', { isEditable, hasOnSelect: !!onSelect, type, imagePath, src });
+    
+    if (!isEditable || !onSelect) return;
     
     onSelect({
       type,
