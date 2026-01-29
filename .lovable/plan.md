@@ -1,146 +1,172 @@
 
+# Editor Sorunlarını Düzeltme: Hero Görsel Tıklama ve Section Kontrolleri
 
-# Sidebar Sistemini Düzenleme ve Gallery Görsellerini İyileştirme
+## Tespit Edilen Sorunlar
 
-## Mevcut Durum Analizi
+### Sorun 1: Hero Görseline Tıklayınca Sidebar Açılmıyor
+`HeroOverlay.tsx`'de `EditableImage` bileşeni `onSelect` handler'ını düzgün çağırıyor ama:
+- `EditableSection` wrapper'ı hover overlay ekliyor ve bu overlay tıklamaları yakalıyor olabilir
+- `EditableSection` içindeki overlay `pointer-events-none` değil
+- Hero görseli absolute positioned ve overlay'in altında kalıyor
 
-### Çalışan Özellikler
-- CustomizeSidebar, PageSettingsSidebar, AddContentSidebar bileşenleri oluşturulmuş
-- EditorToolbar'da butonlar mevcut
-- fetch-images edge function Pixabay'den galleryImages çekiyor
+### Sorun 2: Section Kontrol Butonları (Yukarı/Aşağı/Edit/Sil) Çalışmıyor
+- `EditableSection.tsx`'de butonlar tanımlı ama prop'lar `FullLandingPage.tsx`'den geçirilmiyor
+- Move butonları sadece `handleLockedAction` çağırıyor, gerçek hareket fonksiyonu yok
+- Edit butonu section için EditorSidebar açmalı ama şu an `onEdit` prop'u bağlanmamış
 
-### Düzeltilmesi Gerekenler
+## Çözüm Planı
 
-| Sorun | Açıklama |
-|-------|----------|
-| Pages menüsünden sayfa seçilince detaylı sidebar açılmıyor | Şu an sadece PageSettingsSidebar açılıyor, Durable.co'daki gibi tüm sayfa bölümlerini gösteren bir sidebar lazım |
-| Gallery görselleri boş görünüyor | Images array'i gelse de UI'da placeholder gösteriliyor |
-| Add sidebar'daki Page ekleme fonksiyonu eksik | Sadece toast gösteriyor, gerçek sayfa ekleme yok |
+### 1. EditableSection.tsx Düzeltmeleri
+- Hover overlay'e `pointer-events-none` ekle (child elementlerin tıklanabilir kalması için)
+- Move butonlarını gerçek `onMoveUp`/`onMoveDown` handler'larına bağla
+- Edit butonunun `onEdit` çağırmasını sağla
 
-## Yapılacak Değişiklikler
+```typescript
+// Mevcut (hatalı):
+<Button onClick={() => !isFirst ? handleLockedAction('Move') : undefined}>
 
-### 1. Pages Menüsü İyileştirmesi
-Pages dropdown'ından bir sayfa seçildiğinde o sayfanın tüm section'larını gösteren detaylı bir sidebar açılacak.
-
-**Yeni HomeEditorSidebar Bileşeni:**
-```
-+----------------------------------+
-| Home                          X  |
-+----------------------------------+
-| > Hero                       >   |
-|   Edit title, subtitle, image    |
-|                                  |
-| > Statistics                 >   |
-|   Edit numbers and labels        |
-|                                  |
-| > About                      >   |
-|   Story and values               |
-|                                  |
-| > Services                   >   |
-|   Service cards                  |
-|                                  |
-| > Gallery                    >   |
-|   Facility images                |
-|                                  |
-| > FAQ                        >   |
-|   Questions and answers          |
-|                                  |
-| > Contact                    >   |
-|   Contact information            |
-|                                  |
-| > CTA                        >   |
-|   Call to action                 |
-+----------------------------------+
-| [Settings icon] Page Settings    |
-+----------------------------------+
+// Düzeltilmiş:
+<Button onClick={() => onMoveUp?.()}>
 ```
 
-### 2. Gallery Görsellerinin Düzeltilmesi
-- fetch-images çağrıldığında galleryImages düzgün kaydediliyor mu kontrol et
-- ImageGallerySection'da görsellerin render edilmesini iyileştir
-- Görsel yoksa "Generate Images" butonu göster
+### 2. FullLandingPage.tsx Güncellemesi
+Section'lar için `onEdit`, `onMoveUp`, `onMoveDown`, `onDelete` prop'larını ekle:
 
-### 3. Add Sidebar Fonksiyonelliği
-- Page ekleme fonksiyonunu aktif et
-- Blog post oluşturma sayfasına yönlendirme ekle
+```typescript
+<EditableSection
+  sectionId="hero"
+  sectionName="Hero"
+  isEditable={isEditable}
+  onEdit={() => onEditorSelect?.({
+    type: 'section',
+    title: 'Hero',
+    sectionId: 'hero',
+    fields: [
+      { label: 'Headline', fieldPath: 'pages.home.hero.title', value: title, type: 'text' },
+      { label: 'Subtitle', fieldPath: 'pages.home.hero.subtitle', value: subtitle, type: 'text' },
+      { label: 'Description', fieldPath: 'pages.home.hero.description', value: description, type: 'textarea' },
+    ]
+  })}
+  onMoveUp={onMoveSection ? () => onMoveSection('hero', 'up') : undefined}
+  onMoveDown={onMoveSection ? () => onMoveSection('hero', 'down') : undefined}
+  onDelete={onDeleteSection ? () => onDeleteSection('hero') : undefined}
+  onLockedFeature={onLockedFeature}
+  isFirst
+>
+```
+
+### 3. Project.tsx'e Section Yönetimi Ekleme
+Section sıralama ve silme için handler'lar:
+
+```typescript
+const [sectionOrder, setSectionOrder] = useState<string[]>([
+  'hero', 'statistics', 'about', 'services', 'process', 'gallery', 'testimonials', 'faq', 'contact', 'cta'
+]);
+
+const handleMoveSection = useCallback((sectionId: string, direction: 'up' | 'down') => {
+  setSectionOrder(prev => {
+    const index = prev.indexOf(sectionId);
+    if (index === -1) return prev;
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= prev.length) return prev;
+    const newOrder = [...prev];
+    [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+    return newOrder;
+  });
+  toast({ title: 'Section moved', description: `${sectionId} moved ${direction}.` });
+}, [toast]);
+
+const handleDeleteSection = useCallback((sectionId: string) => {
+  // Bazı section'lar silinemez
+  const protectedSections = ['hero'];
+  if (protectedSections.includes(sectionId)) {
+    toast({ title: 'Cannot delete', description: 'Hero section cannot be deleted.', variant: 'destructive' });
+    return;
+  }
+  setSectionOrder(prev => prev.filter(s => s !== sectionId));
+  toast({ title: 'Section deleted', description: `${sectionId} has been removed.` });
+}, [toast]);
+```
+
+### 4. EditableImage Tıklama Sorunu Düzeltmesi
+`EditableSection` içindeki overlay'in tıklamaları engellemesini önle:
+
+```typescript
+// EditableSection.tsx - Overlay'e pointer-events-none ekle
+{isHovered && (
+  <div className="absolute inset-0 pointer-events-none border-2 border-primary/20 rounded-lg" />
+)}
+
+// Butonlar container'ı pointer-events-auto olmalı
+<div className="absolute -top-3 right-4 z-20 flex items-center gap-1 animate-fade-in pointer-events-auto">
+```
 
 ## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/website-preview/HomeEditorSidebar.tsx` | YENİ - Sayfa section'larını gösteren sidebar |
-| `src/components/website-preview/EditorToolbar.tsx` | Pages menüsü davranışını güncelle |
-| `src/pages/Project.tsx` | Yeni sidebar state'i ve handler'ları ekle |
-| `src/components/website-preview/ImageGallerySection.tsx` | Görsel yükleme butonu ve hata yönetimi ekle |
-| `src/components/website-preview/AddContentSidebar.tsx` | Sayfa ekleme fonksiyonunu aktif et |
+| `src/components/website-preview/EditableSection.tsx` | - Overlay'e `pointer-events-none` ekle, - Butonları gerçek handler'lara bağla, - z-index düzenle |
+| `src/templates/temp1/pages/FullLandingPage.tsx` | - `onEdit`, `onMoveUp`, `onMoveDown`, `onDelete` prop'larını tüm section'lara ekle, - Yeni prop'ları interface'e ekle |
+| `src/pages/Project.tsx` | - `sectionOrder` state ekle, - `handleMoveSection` ve `handleDeleteSection` handler'ları ekle, - Handler'ları `WebsitePreview`'a geçir |
+| `src/components/website-preview/WebsitePreview.tsx` | - Yeni prop'ları al ve template'e geçir |
+| `src/templates/temp1/index.tsx` | - Yeni prop'ları al ve `FullLandingPage`'e geçir |
+| `src/templates/types.ts` | - Template props'a yeni handler'lar ekle |
 
 ## Teknik Detaylar
 
-### HomeEditorSidebar Yapısı
+### EditableSection Düzeltilmiş Yapı
 ```typescript
-interface HomeEditorSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  content: GeneratedContent;
-  onSectionSelect: (sectionId: string) => void;
-  onPageSettings: () => void;
-}
+return (
+  <div
+    className={cn('relative group transition-all duration-200', ...)}
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+    data-section-id={sectionId}
+  >
+    {/* Section Label - pointer-events-auto */}
+    {isHovered && (
+      <div className="absolute -top-3 left-4 z-30 animate-fade-in pointer-events-auto">
+        <Badge>...</Badge>
+      </div>
+    )}
+
+    {/* Action Buttons - pointer-events-auto */}
+    {isHovered && (
+      <div className="absolute -top-3 right-4 z-30 flex items-center gap-1 animate-fade-in pointer-events-auto">
+        <Button onClick={onMoveUp} disabled={isFirst}>...</Button>
+        <Button onClick={onMoveDown} disabled={isLast}>...</Button>
+        <Button onClick={onEdit}>...</Button>
+        <Button onClick={onDelete}>...</Button>
+      </div>
+    )}
+
+    {/* Section Content - children can handle their own clicks */}
+    <div className="transition-opacity duration-200">
+      {children}
+    </div>
+
+    {/* Hover Border - pointer-events-none */}
+    {isHovered && (
+      <div className="absolute inset-0 pointer-events-none border-2 border-primary/20 rounded-lg" />
+    )}
+  </div>
+);
 ```
 
-Her section'a tıklandığında:
-1. Sidebar kapanır
-2. İlgili section'a scroll edilir
-3. O section'daki ilk editable element seçilir ve EditorSidebar açılır
-
-### Gallery Görselleri Akışı
+### Prop Akışı
 ```
-1. fetch-images edge function çağrılır
-2. Pixabay'den galleryImages array'i çekilir
-3. generated_content.images.galleryImages'a kaydedilir
-4. ImageGallerySection bu array'i render eder
+Project.tsx
+  └── handleMoveSection, handleDeleteSection
+       └── WebsitePreview
+            └── HealthcareModernTemplate
+                 └── FullLandingPage
+                      └── EditableSection (onMoveUp, onMoveDown, onEdit, onDelete)
 ```
 
-### Generate Images Butonu
-Gallery boşsa veya placeholder gösteriliyorsa:
-```
-+----------------------------------+
-|         Our Facility             |
-|   [📷 Generate Gallery Images]   |
-|                                  |
-|   [placeholder] [placeholder]    |
-|   [placeholder] [placeholder]    |
-+----------------------------------+
-```
+## Beklenen Sonuçlar
 
-## Implementasyon Adımları
-
-1. **HomeEditorSidebar bileşenini oluştur**
-   - Section listesi (collapsible)
-   - Her section için özet bilgi
-   - Section'a tıkla → scroll + select
-
-2. **EditorToolbar'ı güncelle**
-   - Pages dropdown'ından sayfa seçilince HomeEditorSidebar açılsın
-   - Mevcut PageSettingsSidebar da Settings butonu ile erişilebilir kalsın
-
-3. **Project.tsx state yönetimi**
-   - `homeEditorSidebarOpen` state
-   - Section select handler
-
-4. **Gallery görsel yönetimi**
-   - Görsel yoksa "Generate Images" butonu
-   - Buton tıklandığında fetch-images çağrılsın
-   - Loading state göster
-
-5. **Add sidebar fonksiyonelliği**
-   - Sayfa ekleme: generated_content.pages'e yeni sayfa ekle
-   - Blog post: Blog editör sayfasına yönlendir (veya modal aç)
-
-## Beklenen Sonuç
-
-1. Pages menüsünden Home seçildiğinde tüm section'ları gösteren sidebar açılır
-2. Section'a tıklanınca o bölüme scroll edilir ve düzenleme başlar
-3. Gallery boşsa "Generate Images" butonu görünür
-4. Add sidebar'dan gerçek sayfa/blog post eklenebilir
-5. Tüm butonlar ve fonksiyonlar düzgün çalışır
-
+1. Hero görseline tıklandığında EditorSidebar açılacak
+2. Section hover'da görünen yukarı/aşağı okları section'ları hareket ettirecek
+3. Edit (kalem) butonu section EditorSidebar'ını açacak
+4. Çöp kutusu butonu section'ı silecek (korumalı section'lar hariç)
+5. Tüm section kontrolları düzgün çalışacak
