@@ -1,5 +1,6 @@
-import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye, Lock } from 'lucide-react';
+import { Stethoscope, Pill, Smile, Activity, Microscope, Syringe, Heart, Brain, Eye, Lock, ChevronDown, ChevronUp } from 'lucide-react';
 import { GeneratedContent } from '@/types/generated-website';
+import { useState } from 'react';
 
 interface ServicesPageProps {
   content: GeneratedContent['pages']['services'];
@@ -7,6 +8,7 @@ interface ServicesPageProps {
   isNeutral: boolean;
   isEditable?: boolean;
   onLockedFeature?: (feature: string) => void;
+  heroImage?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -26,7 +28,9 @@ function getIcon(iconName: string) {
   return iconMap[normalizedName] || Activity;
 }
 
-export function ServicesPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature }: ServicesPageProps) {
+export function ServicesPage({ content, isDark, isNeutral, isEditable = false, onLockedFeature, heroImage }: ServicesPageProps) {
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
   const heroGradient = isDark 
     ? 'from-slate-800 to-slate-900' 
     : isNeutral 
@@ -42,11 +46,21 @@ export function ServicesPage({ content, isDark, isNeutral, isEditable = false, o
     }
   };
 
+  const toggleFaq = (index: number) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
   return (
     <div>
       {/* Hero Section */}
-      <section className={`py-16 md:py-24 bg-gradient-to-br ${heroGradient}`}>
-        <div className="container mx-auto px-4 text-center">
+      <section 
+        className={`py-16 md:py-24 bg-gradient-to-br ${heroGradient} relative overflow-hidden`}
+        style={heroImage ? { backgroundImage: `url(${heroImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
+        {heroImage && (
+          <div className={`absolute inset-0 ${isDark ? 'bg-slate-900/70' : 'bg-white/70'} backdrop-blur-sm`} />
+        )}
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             {content.hero.title}
           </h1>
@@ -119,6 +133,42 @@ export function ServicesPage({ content, isDark, isNeutral, isEditable = false, o
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      {content.faq && content.faq.length > 0 && (
+        <section className="py-16 md:py-24">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+              <div className="space-y-4">
+                {content.faq.map((item, index) => (
+                  <div 
+                    key={index}
+                    className={`rounded-xl ${cardBg} border ${cardBorder} overflow-hidden`}
+                  >
+                    <button
+                      onClick={() => toggleFaq(index)}
+                      className="w-full px-6 py-4 text-left flex items-center justify-between font-medium hover:bg-gray-50/50 transition-colors"
+                    >
+                      <span>{item.question}</span>
+                      {openFaq === index ? (
+                        <ChevronUp className="w-5 h-5 text-primary flex-shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                      )}
+                    </button>
+                    {openFaq === index && (
+                      <div className={`px-6 pb-4 ${isDark ? 'text-slate-400' : 'text-gray-600'}`}>
+                        {item.answer}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

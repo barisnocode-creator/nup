@@ -41,9 +41,15 @@ Years of Experience: ${details?.yearsExperience || "5+"}`
         ? `Dental Services: ${details?.services?.join(", ") || "General Dentistry"}`
         : `Pharmacy Type: ${details?.pharmacyType || "Local/Community"}`;
 
+  const blogTopics = profession === "doctor"
+    ? "health tips, preventive care advice, common medical conditions explained, wellness guidance"
+    : profession === "dentist"
+      ? "oral hygiene tips, dental procedures explained, smile care advice, dental health for families"
+      : "medication guides, health supplements information, wellness tips, pharmacy services explained";
+
   return `You are a professional website content writer specializing in healthcare websites.
 
-Generate website content for a ${profession}'s informational website with the following details:
+Generate comprehensive website content for a ${profession}'s informational website with the following details:
 
 Business Name: ${businessInfo?.businessName || "Healthcare Practice"}
 Location: ${businessInfo?.city || "City"}, ${businessInfo?.country || "Country"}
@@ -56,7 +62,7 @@ Website Preferences:
 - Tone: ${prefs?.tone || "professional"} (use this tone throughout)
 - This is an INFORMATIONAL website only - NO prices, NO e-commerce, NO booking systems
 
-Generate content for exactly 4 pages in JSON format. Each page should have compelling, professional content appropriate for a healthcare ${profession}.
+Generate content for 5 pages (Home, About, Services, Contact, and Blog) in JSON format. Each page should have compelling, professional content appropriate for a healthcare ${profession}.
 
 IMPORTANT RULES:
 1. All content must be in ${prefs?.language || "English"}
@@ -66,22 +72,25 @@ IMPORTANT RULES:
 5. Focus on building trust and providing information
 6. Include relevant sections for each page
 7. Make content specific to the ${profession} profession
+8. Generate 3 blog posts about ${blogTopics}
+9. Each blog post should have 3-4 paragraphs of detailed, helpful content
+10. Include an FAQ section in services with 3-4 common questions
 
 Return ONLY valid JSON in this exact format:
 {
   "pages": {
     "home": {
       "hero": {
-        "title": "string",
-        "subtitle": "string",
-        "description": "string"
+        "title": "string (compelling headline)",
+        "subtitle": "string (value proposition)",
+        "description": "string (2-3 sentences about the practice)"
       },
       "welcome": {
         "title": "string",
-        "content": "string"
+        "content": "string (detailed paragraph about welcoming patients)"
       },
       "highlights": [
-        { "title": "string", "description": "string", "icon": "string" }
+        { "title": "string", "description": "string (2-3 sentences)", "icon": "heart|shield|clock|star|users|award" }
       ]
     },
     "about": {
@@ -91,14 +100,14 @@ Return ONLY valid JSON in this exact format:
       },
       "story": {
         "title": "string",
-        "content": "string"
+        "content": "string (2-3 paragraphs about the practice history and mission)"
       },
       "values": [
-        { "title": "string", "description": "string" }
+        { "title": "string", "description": "string (1-2 sentences)" }
       ],
       "team": {
         "title": "string",
-        "description": "string"
+        "description": "string (paragraph about the team)"
       }
     },
     "services": {
@@ -108,10 +117,13 @@ Return ONLY valid JSON in this exact format:
       },
       "intro": {
         "title": "string",
-        "content": "string"
+        "content": "string (overview of services)"
       },
       "servicesList": [
-        { "title": "string", "description": "string", "icon": "string" }
+        { "title": "string", "description": "string (2-3 sentences)", "icon": "stethoscope|pill|smile|activity|microscope|syringe|heart|brain|eye" }
+      ],
+      "faq": [
+        { "question": "string", "answer": "string (helpful answer)" }
       ]
     },
     "contact": {
@@ -120,20 +132,37 @@ Return ONLY valid JSON in this exact format:
         "subtitle": "string"
       },
       "info": {
-        "address": "string",
-        "phone": "string",
-        "email": "string",
-        "hours": "string"
+        "address": "string (use provided city/country)",
+        "phone": "string (use provided phone)",
+        "email": "string (use provided email)",
+        "hours": "string (typical business hours)"
       },
       "form": {
         "title": "string",
         "subtitle": "string"
       }
+    },
+    "blog": {
+      "hero": {
+        "title": "string (e.g., 'Health Insights & Tips')",
+        "subtitle": "string (e.g., 'Stay informed with our latest articles')"
+      },
+      "posts": [
+        {
+          "id": "post-1",
+          "title": "string (engaging article title)",
+          "excerpt": "string (2-3 sentence summary)",
+          "content": "string (3-4 detailed paragraphs with useful health information)",
+          "category": "string (e.g., 'Health Tips', 'Wellness', 'Prevention')",
+          "publishedAt": "2024-01-15"
+        }
+      ]
     }
   },
   "metadata": {
-    "siteName": "string",
-    "tagline": "string"
+    "siteName": "string (business name)",
+    "tagline": "string (short tagline)",
+    "seoDescription": "string (meta description for SEO, 150-160 characters)"
   }
 }`;
 }
@@ -191,7 +220,7 @@ serve(async (req) => {
     const formData = project.form_data as FormData;
     const profession = project.profession;
 
-    console.log("Generating content for:", profession);
+    console.log("Generating enhanced content for:", profession);
 
     // Call Lovable AI Gateway
     const aiResponse = await fetch(
