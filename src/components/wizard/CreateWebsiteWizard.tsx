@@ -14,8 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
-import type { WizardFormData, ExtractedBusinessData } from '@/types/wizard';
-import { initialWizardData } from '@/types/wizard';
+import type { WizardFormData, ExtractedBusinessData, Profession } from '@/types/wizard';
+import { initialWizardData, mapSectorToProfession } from '@/types/wizard';
 
 interface CreateWebsiteWizardProps {
   open: boolean;
@@ -41,10 +41,13 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   }));
 
   const handleAIChatComplete = useCallback((extractedData: ExtractedBusinessData) => {
+    // Map sector to valid profession using the utility function
+    const profession: Profession = mapSectorToProfession(extractedData.sector);
+    
     setFormData((prev) => ({
       ...prev,
       extractedData,
-      profession: (extractedData.sector as any) || 'other',
+      profession,
       // Also populate legacy fields for compatibility
       businessInfo: {
         businessName: extractedData.businessName,
@@ -55,6 +58,14 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
       },
       professionalDetails: {
         services: extractedData.services,
+      },
+      // Pre-populate preferences from AI chat
+      websitePreferences: {
+        ...prev.websitePreferences,
+        languages: extractedData.languages || prev.websitePreferences?.languages || ['Turkish'],
+        colorTone: extractedData.colorTone || prev.websitePreferences?.colorTone || 'neutral',
+        colorMode: extractedData.colorMode || prev.websitePreferences?.colorMode || 'light',
+        tone: prev.websitePreferences?.tone || 'professional',
       },
     }));
   }, []);
@@ -95,6 +106,9 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
       return;
     }
 
+    // Ensure we have a valid profession
+    const profession = formData.profession || mapSectorToProfession(formData.extractedData?.sector || '');
+
     setIsSubmitting(true);
 
     try {
@@ -110,7 +124,7 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
         .insert([{
           user_id: user.id,
           name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
-          profession: formData.profession! as string,
+          profession: profession as string,
           status: 'draft' as const,
           form_data: projectFormData as any,
         }])
@@ -170,9 +184,10 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
           {currentStep === 2 && (
             <PreferencesStep
               value={{
-                language: formData.websitePreferences?.language || '',
+                languages: formData.websitePreferences?.languages || ['Turkish'],
                 tone: formData.websitePreferences?.tone || 'professional',
-                colorPreference: formData.websitePreferences?.colorPreference || 'light',
+                colorTone: formData.websitePreferences?.colorTone || 'neutral',
+                colorMode: formData.websitePreferences?.colorMode || 'light',
               }}
               onChange={handlePreferencesChange}
               onValidityChange={handlePreferencesValidityChange}

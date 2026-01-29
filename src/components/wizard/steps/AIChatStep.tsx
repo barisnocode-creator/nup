@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Loader2, Send, Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ExtractedBusinessData } from '@/types/wizard';
+import { mapSectorToProfession } from '@/types/wizard';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -17,14 +18,12 @@ interface AIChatStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-// Hardcoded first message for instant display
-const INITIAL_MESSAGE = `Merhaba! 👋 Ben profesyonel web sitesi danışmanınızım. İşletmeniz için harika bir web sitesi oluşturmak üzere size 5 soru soracağım.
+// Hardcoded first message for instant display - updated for 10 questions
+const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 10 kısa soru sorarak işletmeniz için harika bir web sitesi oluşturacağım.
 
-**Soru 1/5: İşletme Kimliği**
-- İşletmenizin adı nedir?
-- Tam olarak hangi sektörde/alanda faaliyet gösteriyorsunuz?
-- Hangi şehir/ülkede bulunuyorsunuz?
-- Kaç yıldır bu alanda faaliyet gösteriyorsunuz?`;
+**Soru 1/10:** İşletmenizin adı nedir?`;
+
+const TOTAL_QUESTIONS = 10;
 
 export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -118,7 +117,12 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       const jsonMatch = content.match(/CHAT_COMPLETE\s*(\{[\s\S]*\})/);
       if (jsonMatch) {
         try {
-          extractedData = JSON.parse(jsonMatch[1]);
+          const parsed = JSON.parse(jsonMatch[1]);
+          // Map sector to valid profession
+          extractedData = {
+            ...parsed,
+            sector: mapSectorToProfession(parsed.sector),
+          };
         } catch (e) {
           console.error('Failed to parse extracted data:', e);
         }
@@ -191,14 +195,14 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             ]);
             
             if (isCompleteResponse) {
-              setQuestionNumber(5);
+              setQuestionNumber(TOTAL_QUESTIONS);
               setIsComplete(true);
               onValidityChange(true);
               if (extractedData) {
                 onComplete(extractedData);
               }
             } else {
-              setQuestionNumber(prev => Math.min(prev + 1, 5));
+              setQuestionNumber(prev => Math.min(prev + 1, TOTAL_QUESTIONS));
             }
             
             setIsLoading(false);
@@ -208,16 +212,25 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         // Handle non-streaming response (fallback)
         const data = await response.json();
         
+        // Process extracted data with sector mapping
+        let processedData = data.extractedData;
+        if (processedData?.sector) {
+          processedData = {
+            ...processedData,
+            sector: mapSectorToProfession(processedData.sector),
+          };
+        }
+        
         setMessages([
           ...updatedMessages,
           { role: 'assistant', content: data.response },
         ]);
         setQuestionNumber(data.questionNumber);
 
-        if (data.isComplete && data.extractedData) {
+        if (data.isComplete && processedData) {
           setIsComplete(true);
           onValidityChange(true);
-          onComplete(data.extractedData);
+          onComplete(processedData);
         }
         
         setIsLoading(false);
@@ -237,7 +250,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     }
   };
 
-  const progressPercentage = Math.min((questionNumber / 5) * 100, 100);
+  const progressPercentage = Math.min((questionNumber / TOTAL_QUESTIONS) * 100, 100);
 
   // Display content: either streaming or final messages
   const displayMessages = streamingContent 
@@ -251,7 +264,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">AI Asistan</h2>
           <span className="text-sm text-muted-foreground">
-            Soru {Math.min(questionNumber, 5)}/5
+            Soru {Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
           </span>
         </div>
         <Progress value={progressPercentage} className="h-2" />
@@ -341,7 +354,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         </div>
         {isComplete && (
           <p className="text-sm text-muted-foreground mt-2 text-center">
-            ✨ Bilgiler toplandı! Devam etmek için "Continue" butonuna tıklayın.
+            ✨ Bilgiler toplandı! Devam etmek için "Devam Et" butonuna tıklayın.
           </p>
         )}
       </div>
