@@ -41,9 +41,10 @@ interface CustomizeSidebarProps {
   onRegenerateText?: () => void;
   onRegenerateWebsite?: () => void;
   isRegenerating?: boolean;
+  onEditBackground?: () => void;
 }
 
-type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 'animations' | 'browser-icon' | 'widgets' | 'keywords' | null;
+type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 'animations' | 'browser-icon' | 'widgets' | 'keywords' | 'background' | null;
 
 const colorPresets = [
   { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#06b6d4', accent: '#14b8a6' },
@@ -78,12 +79,14 @@ export function CustomizeSidebar({
   onRegenerateText,
   onRegenerateWebsite,
   isRegenerating = false,
+  onEditBackground,
 }: CustomizeSidebarProps) {
   const [activePanel, setActivePanel] = useState<SubPanel>(null);
 
   const menuItems = [
     { id: 'colors' as const, icon: Palette, label: 'Colors' },
     { id: 'fonts' as const, icon: Type, label: 'Fonts' },
+    { id: 'background' as const, icon: Image, label: 'Background Image', isAction: true },
     { id: 'buttons' as const, icon: ToggleLeft, label: 'Buttons' },
     { id: 'corners' as const, icon: Square, label: 'Corners' },
     { id: 'animations' as const, icon: Zap, label: 'Animations' },
@@ -413,7 +416,14 @@ export function CustomizeSidebar({
           return (
             <button
               key={item.id}
-              onClick={() => setActivePanel(item.id)}
+              onClick={() => {
+                if (item.isAction && item.id === 'background') {
+                  onEditBackground?.();
+                  handleClose();
+                } else {
+                  setActivePanel(item.id);
+                }
+              }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50 transition-colors text-left"
             >
               <Icon className="w-4 h-4 text-muted-foreground" />

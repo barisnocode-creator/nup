@@ -3,6 +3,7 @@ import { EditableImage } from '@/components/website-preview/EditableImage';
 import { cn } from '@/lib/utils';
 import type { HeroProps } from './types';
 import type { ImageData } from '@/components/website-preview/EditorSidebar';
+import { ImageIcon } from 'lucide-react';
 
 export function HeroOverlay({
   title,
@@ -38,10 +39,29 @@ export function HeroOverlay({
     }
   };
 
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+    if (!isEditable) return;
+    e.stopPropagation();
+    handleImageSelect({
+      type: 'hero',
+      imagePath: 'images.heroHome',
+      currentUrl: heroImage || '',
+      altText: 'Hero Background',
+      positionX: 50,
+      positionY: 50,
+    });
+  };
+
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image Container */}
-      <div className="absolute inset-0">
+      {/* Background Image Container - Clickable when editable */}
+      <div 
+        className={cn(
+          "absolute inset-0",
+          isEditable && "cursor-pointer group"
+        )}
+        onClick={handleBackgroundClick}
+      >
         {/* Image */}
         {heroImage ? (
           <img
@@ -65,35 +85,23 @@ export function HeroOverlay({
             ? 'bg-gradient-to-t from-black/90 via-black/60 to-black/40'
             : 'bg-gradient-to-t from-black/80 via-black/50 to-black/30'
         )} />
-      </div>
 
-      {/* Clickable Image Edit Button - positioned in bottom-left corner */}
-      {isEditable && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleImageSelect({
-              type: 'hero',
-              imagePath: 'images.heroHome',
-              currentUrl: heroImage || '',
-              altText: 'Hero Background',
-              positionX: 50,
-              positionY: 50,
-            });
-          }}
-          className={cn(
-            'absolute bottom-24 left-6 z-20 flex items-center gap-2 px-4 py-2 rounded-lg',
-            'bg-white/90 hover:bg-white text-gray-800 shadow-lg transition-all duration-200',
-            'backdrop-blur-sm border border-white/50 hover:scale-105',
-            isImageSelected && 'ring-2 ring-primary'
-          )}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span className="text-sm font-medium">Edit Background</span>
-        </button>
-      )}
+        {/* Hover overlay - edit indicator */}
+        {isEditable && (
+          <div className={cn(
+            "absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center",
+            isImageSelected && "bg-black/20"
+          )}>
+            <div className={cn(
+              "opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 backdrop-blur-sm",
+              isImageSelected && "opacity-100 ring-2 ring-primary"
+            )}>
+              <ImageIcon className="w-4 h-4 text-gray-800" />
+              <span className="text-sm font-medium text-gray-800">Edit Background</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 text-center py-20">
