@@ -5,22 +5,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Send, Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Profession } from '@/types/wizard';
+import type { ExtractedBusinessData } from '@/types/wizard';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-import type { ExtractedBusinessData } from '@/types/wizard';
-
 interface AIChatStepProps {
-  profession: Profession;
   onComplete: (data: ExtractedBusinessData) => void;
   onValidityChange: (isValid: boolean) => void;
 }
 
-export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatStepProps) {
+export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +30,7 @@ export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatS
   // Start conversation on mount
   useEffect(() => {
     startConversation();
-  }, [profession]);
+  }, []);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -66,7 +63,6 @@ export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatS
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            profession,
             messages: [],
             questionNumber: 0,
           }),
@@ -114,7 +110,6 @@ export function AIChatStep({ profession, onComplete, onValidityChange }: AIChatS
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
-            profession,
             messages: updatedMessages,
             questionNumber,
           }),
