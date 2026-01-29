@@ -120,7 +120,7 @@ export function ImageEditorSidebar({
             )}
           >
             <ArrowLeft className="w-4 h-4" />
-            {getImageTypeLabel(imageData.type)}
+            {imageData ? getImageTypeLabel(imageData.type) : 'Image'}
           </button>
           <Button
             variant="default"
