@@ -20,6 +20,7 @@ interface Project {
   status: string;
   subdomain?: string | null;
   is_published?: boolean;
+  template_id?: string;
   form_data: {
     websitePreferences?: {
       colorPreference?: string;
@@ -53,7 +54,7 @@ export default function Project() {
 
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, profession, status, subdomain, is_published, form_data, generated_content')
+        .select('id, name, profession, status, subdomain, is_published, template_id, form_data, generated_content')
         .eq('id', id)
         .single();
 
@@ -413,6 +414,7 @@ export default function Project() {
           <WebsitePreview 
             content={project.generated_content} 
             colorPreference={colorPreference}
+            templateId={project.template_id || 'temp1'}
             isEditable={isAuthenticated}
             onFieldEdit={handleFieldEdit}
           />
