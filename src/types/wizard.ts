@@ -35,16 +35,15 @@ export const pharmacistDetailsSchema = z.object({
 
 // Step 4: Website Preferences
 export const preferencesSchema = z.object({
-  language: z.string().min(1, 'Please select a language'),
+  languages: z.array(z.string()).min(1, 'Please select at least one language'),
   tone: z.enum(['professional', 'friendly', 'premium'], {
     required_error: 'Please select a tone',
   }),
-  colorPreference: z.enum(['light', 'dark', 'neutral'], {
-    required_error: 'Please select a color preference',
-  }),
+  colorTone: z.enum(['warm', 'cool', 'neutral']).optional(),
+  colorMode: z.enum(['light', 'dark', 'neutral']).optional(),
 });
 
-// AI Chat extracted data
+// AI Chat extracted data - includes website preferences
 export interface ExtractedBusinessData {
   businessName: string;
   sector: string;
@@ -64,6 +63,10 @@ export interface ExtractedBusinessData {
   siteGoals: string;
   mainCTA: string;
   additionalInfo: string;
+  // Website preferences from AI chat
+  colorTone?: 'warm' | 'cool' | 'neutral';
+  colorMode?: 'light' | 'dark' | 'neutral';
+  languages?: string[];
 }
 
 // Combined form data type
@@ -76,7 +79,12 @@ export interface WizardFormData {
     services?: string[];
     pharmacyType?: string;
   };
-  websitePreferences: z.infer<typeof preferencesSchema>;
+  websitePreferences: {
+    languages: string[];
+    tone: 'professional' | 'friendly' | 'premium';
+    colorTone?: 'warm' | 'cool' | 'neutral';
+    colorMode?: 'light' | 'dark' | 'neutral';
+  };
   // New: AI extracted data
   extractedData?: ExtractedBusinessData;
 }
@@ -93,9 +101,10 @@ export const initialWizardData: Partial<WizardFormData> = {
   },
   professionalDetails: {},
   websitePreferences: {
-    language: '',
+    languages: ['Turkish'],
     tone: 'professional',
-    colorPreference: 'light',
+    colorTone: 'neutral',
+    colorMode: 'light',
   },
   extractedData: undefined,
 };
@@ -148,16 +157,58 @@ export const PHARMACY_TYPES = [
   { value: 'hospital', label: 'Hospital / Clinical Pharmacy' },
 ];
 
+// Simplified language options - only Turkish and English
 export const LANGUAGES = [
-  'English',
-  'Spanish',
-  'French',
-  'German',
-  'Arabic',
-  'Chinese',
-  'Portuguese',
-  'Italian',
-  'Dutch',
-  'Turkish',
-  'Other',
+  { value: 'Turkish', label: 'Türkçe' },
+  { value: 'English', label: 'İngilizce' },
 ];
+
+// Sector mapping for AI responses
+export const SECTOR_MAPPING: Record<string, Profession> = {
+  // Turkish terms
+  'hizmet': 'service',
+  'danışmanlık': 'service',
+  'consulting': 'service',
+  'perakende': 'retail',
+  'mağaza': 'retail',
+  'store': 'retail',
+  'yiyecek': 'food',
+  'restoran': 'food',
+  'restaurant': 'food',
+  'kafe': 'food',
+  'cafe': 'food',
+  'yaratıcı': 'creative',
+  'tasarım': 'creative',
+  'design': 'creative',
+  'creative': 'creative',
+  'teknoloji': 'technology',
+  'yazılım': 'technology',
+  'software': 'technology',
+  'tech': 'technology',
+  // Direct English values
+  'service': 'service',
+  'retail': 'retail',
+  'food': 'food',
+  'technology': 'technology',
+  'other': 'other',
+  'diğer': 'other',
+};
+
+export function mapSectorToProfession(sector: string): Profession {
+  if (!sector) return 'other';
+  const normalized = sector.toLowerCase().trim();
+  
+  // First try direct match
+  if (SECTOR_MAPPING[normalized]) {
+    return SECTOR_MAPPING[normalized];
+  }
+  
+  // Then try partial match
+  for (const [key, value] of Object.entries(SECTOR_MAPPING)) {
+    if (normalized.includes(key)) {
+      return value;
+    }
+  }
+  
+  return 'other';
+}
