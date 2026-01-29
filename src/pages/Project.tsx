@@ -346,13 +346,23 @@ export default function Project() {
   const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
   const isAuthenticated = !!user;
 
+  // TEST MODE: Upgrade prompts disabled for testing
   const handleLockedFeature = (feature: string) => {
-    setLockedFeature(feature);
-    setUpgradeModalOpen(true);
+    // Temporarily disabled for testing - all features are free
+    console.log('Feature unlocked for testing:', feature);
+    toast({
+      title: 'Feature Available',
+      description: `${feature} is now available for testing.`,
+    });
   };
 
   const handleNavigate = (sectionId: string) => {
     setCurrentSection(sectionId);
+    // Scroll to section
+    const element = document.querySelector(`[data-section-id="${sectionId}"]`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
@@ -363,8 +373,8 @@ export default function Project() {
           projectName={project.name}
           currentSection={currentSection}
           onNavigate={handleNavigate}
-          onCustomize={() => handleLockedFeature('Customize colors and fonts')}
-          onAddSection={() => handleLockedFeature('Add new sections')}
+          onCustomize={() => handleLockedFeature('Customize')}
+          onAddSection={() => handleLockedFeature('Add section')}
           onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
           onPublish={() => setPublishModalOpen(true)}
           onDashboard={() => navigate('/dashboard')}
