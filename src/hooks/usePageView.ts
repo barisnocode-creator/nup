@@ -19,22 +19,23 @@ function getVisitorId(): string {
   return visitorId;
 }
 
-export function usePageView(projectId: string | undefined, pagePath?: string) {
+export function usePageView(projectId: string | undefined | null, pagePath?: string) {
   useEffect(() => {
     if (!projectId) return;
 
     const trackPageView = async () => {
       try {
-        const { error } = await supabase
-          .from('analytics_events')
-          .insert({
+        // Use the secure edge function endpoint instead of direct database access
+        const { error } = await supabase.functions.invoke('track-analytics', {
+          body: {
             project_id: projectId,
             event_type: 'page_view',
             page_path: pagePath || window.location.pathname,
             user_agent: navigator.userAgent,
             device_type: getDeviceType(),
             visitor_id: getVisitorId(),
-          });
+          },
+        });
 
         if (error) {
           console.error('Failed to track page view:', error);
