@@ -11,6 +11,8 @@ export function HealthcareModernTemplate({
   isEditable = false,
   onFieldEdit,
   onLockedFeature,
+  editorSelection,
+  onEditorSelect,
   selectedImage,
   onImageSelect,
 }: TemplateProps) {
@@ -61,7 +63,7 @@ export function HealthcareModernTemplate({
           <div className="container mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                ✏️ Hover over sections to edit • Click on text to modify
+                ✏️ Click on any text or image to edit • Sidebar opens for editing
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -108,6 +110,8 @@ export function HealthcareModernTemplate({
           isEditable={isEditable}
           onFieldEdit={handleFieldEdit}
           onLockedFeature={handleLockedFeature}
+          editorSelection={editorSelection}
+          onEditorSelect={onEditorSelect}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />
