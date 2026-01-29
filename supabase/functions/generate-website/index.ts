@@ -237,6 +237,100 @@ Return ONLY valid JSON in this exact format:
 }`;
 }
 
+// Pixabay image fetching functions
+const professionSearchTerms: Record<string, Record<string, string>> = {
+  doctor: {
+    heroHome: "medical clinic reception modern healthcare",
+    heroAbout: "doctor team professional hospital",
+    heroServices: "medical equipment modern clinic",
+    heroBlog: "healthcare medical research",
+    heroContact: "medical consultation doctor patient",
+  },
+  dentist: {
+    heroHome: "dental clinic modern reception",
+    heroAbout: "dentist team professional clinic",
+    heroServices: "dental equipment modern technology",
+    heroBlog: "dental care oral hygiene",
+    heroContact: "dental consultation patient",
+  },
+  pharmacist: {
+    heroHome: "pharmacy modern drugstore interior",
+    heroAbout: "pharmacist professional team",
+    heroServices: "pharmacy medications medicine",
+    heroBlog: "medicine health supplements",
+    heroContact: "pharmacy consultation customer",
+  },
+};
+
+const blogCategorySearchTerms: Record<string, string> = {
+  health: "health wellness lifestyle",
+  dental: "dental care teeth smile",
+  medicine: "medicine pharmacy health",
+  nutrition: "nutrition healthy food",
+  wellness: "wellness fitness health",
+  prevention: "preventive healthcare medical",
+  default: "healthcare medical professional",
+};
+
+async function fetchPixabayImage(
+  query: string,
+  apiKey: string,
+  minWidth: number = 1200
+): Promise<string | null> {
+  try {
+    const encodedQuery = encodeURIComponent(query);
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodedQuery}&image_type=photo&orientation=horizontal&min_width=${minWidth}&per_page=5&safesearch=true`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(`Pixabay API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.hits && data.hits.length > 0) {
+      const randomIndex = Math.floor(Math.random() * Math.min(5, data.hits.length));
+      return data.hits[randomIndex].largeImageURL;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error fetching Pixabay image:`, error);
+    return null;
+  }
+}
+
+async function fetchAllImages(
+  profession: string,
+  blogPosts: Array<{ title: string; category?: string }>,
+  apiKey: string
+): Promise<{ images: Record<string, string>; updatedPosts: Array<{ featuredImage?: string }> }> {
+  const searchTerms = professionSearchTerms[profession] || professionSearchTerms.doctor;
+  const images: Record<string, string> = {};
+
+  // Fetch hero images in parallel
+  const heroPromises = Object.entries(searchTerms).map(async ([key, query]) => {
+    const imageUrl = await fetchPixabayImage(query, apiKey, 1920);
+    if (imageUrl) {
+      images[key] = imageUrl;
+    }
+  });
+
+  await Promise.all(heroPromises);
+
+  // Fetch blog post images
+  const updatedPosts = [];
+  for (const post of blogPosts) {
+    const categoryTerms = blogCategorySearchTerms[(post.category || "default").toLowerCase()] || blogCategorySearchTerms.default;
+    const featuredImage = await fetchPixabayImage(categoryTerms, apiKey, 1200);
+    updatedPosts.push({ ...post, featuredImage: featuredImage || undefined });
+  }
+
+  return { images, updatedPosts };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -254,6 +348,7 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const PIXABAY_API_KEY = Deno.env.get("PIXABAY_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -292,7 +387,7 @@ serve(async (req) => {
 
     console.log("Generating enhanced content for:", profession);
 
-    // Call Lovable AI Gateway
+    // Call Lovable AI Gateway for text content
     const aiResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
@@ -354,7 +449,6 @@ serve(async (req) => {
     // Parse the JSON from the AI response
     let generatedContent;
     try {
-      // Extract JSON from the response (in case it has markdown code blocks)
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         generatedContent = JSON.parse(jsonMatch[0]);
@@ -370,6 +464,26 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
+    }
+
+    // Fetch images from Pixabay (if API key is configured)
+    if (PIXABAY_API_KEY) {
+      console.log("Fetching images from Pixabay...");
+      const blogPosts = generatedContent.pages?.blog?.posts || [];
+      const { images, updatedPosts } = await fetchAllImages(
+        profession,
+        blogPosts,
+        PIXABAY_API_KEY
+      );
+
+      // Add images to generated content
+      generatedContent.images = images;
+      if (generatedContent.pages?.blog) {
+        generatedContent.pages.blog.posts = updatedPosts;
+      }
+      console.log(`Fetched ${Object.keys(images).length} hero images and ${updatedPosts.length} blog images`);
+    } else {
+      console.log("Pixabay API key not configured, skipping image fetching");
     }
 
     // Select template automatically based on profession and tone
@@ -402,7 +516,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Content generated successfully");
+    console.log("Content generated successfully with Pixabay images");
     return new Response(
       JSON.stringify({
         success: true,
