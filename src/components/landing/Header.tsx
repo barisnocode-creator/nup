@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles } from 'lucide-react';
 
 export function Header() {
   const [showAuth, setShowAuth] = useState(false);
@@ -23,29 +22,26 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 glass-card">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 gradient-hero rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Open Lucius</span>
+            <span className="text-xl font-serif font-semibold text-foreground">Open Lucius</span>
           </div>
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-3">
             {user ? (
               <Button onClick={() => navigate('/dashboard')}>
-                Go to Dashboard
+                Dashboard
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={openLogin}>
-                  Log In
+                <Button variant="ghost" onClick={openLogin} className="text-muted-foreground hover:text-foreground">
+                  Giriş Yap
                 </Button>
-                <Button onClick={openSignup}>
-                  Get Started
+                <Button onClick={openSignup} className="bg-primary hover:bg-primary/90">
+                  Ücretsiz Başla
                 </Button>
               </>
             )}
