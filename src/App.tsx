@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
 import Analytics from "./pages/Analytics";
+import PublicWebsite from "./pages/PublicWebsite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            {/* Public website route - no auth required */}
+            <Route path="/site/:subdomain" element={<PublicWebsite />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

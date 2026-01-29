@@ -13,6 +13,8 @@ interface Project {
   profession: string;
   status: string;
   created_at: string;
+  subdomain?: string | null;
+  is_published?: boolean;
 }
 
 export default function Dashboard() {
@@ -29,7 +31,7 @@ export default function Dashboard() {
       
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, profession, status, created_at')
+        .select('id, name, profession, status, created_at, subdomain, is_published')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -52,8 +54,17 @@ export default function Dashboard() {
   // Get user's display name from email
   const displayName = user?.email?.split('@')[0] || 'there';
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (project: Project) => {
+    if (project.is_published) {
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600 border border-blue-500/20">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          Published
+        </span>
+      );
+    }
+    
+    switch (project.status) {
       case 'draft':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20">
@@ -71,7 +82,7 @@ export default function Dashboard() {
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-500/10 text-gray-600 border border-gray-500/20">
-            {status}
+            {project.status}
           </span>
         );
     }
@@ -157,7 +168,7 @@ export default function Dashboard() {
                         {getProfessionLabel(project.profession)}
                       </CardDescription>
                     </div>
-                    {getStatusBadge(project.status)}
+                    {getStatusBadge(project)}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4">

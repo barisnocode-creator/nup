@@ -3,20 +3,23 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, Save, BarChart3, ImageIcon } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, Save, BarChart3, ImageIcon, Globe } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
-import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
+import { PublishModal } from '@/components/website-preview/PublishModal';
 import { LockedFeatureButton } from '@/components/website-preview/LockedFeatureButton';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
+
 interface Project {
   id: string;
   name: string;
   profession: string;
   status: string;
+  subdomain?: string | null;
+  is_published?: boolean;
   form_data: {
     websitePreferences?: {
       colorPreference?: string;
@@ -35,7 +38,7 @@ export default function Project() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(false);
@@ -50,7 +53,7 @@ export default function Project() {
 
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, profession, status, form_data, generated_content')
+        .select('id, name, profession, status, subdomain, is_published, form_data, generated_content')
         .eq('id', id)
         .single();
 
@@ -391,10 +394,14 @@ export default function Project() {
                 )}
                 {generatingImages ? 'Generating...' : 'Add Images'}
               </Button>
-              <LockedFeatureButton 
-                label="Publish" 
-                onClick={() => setUpgradeModalOpen(true)}
-              />
+              <Button 
+                size="sm"
+                onClick={() => setPublishModalOpen(true)}
+                className="gap-2"
+              >
+                <Globe className="w-4 h-4" />
+                {project.is_published ? 'Published' : 'Publish'}
+              </Button>
             </div>
           </div>
         </div>
@@ -428,11 +435,21 @@ export default function Project() {
         onClose={() => setAuthModalOpen(false)} 
       />
 
-      {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModalOpen}
-        onClose={() => setUpgradeModalOpen(false)}
-        feature="Publish website"
+      {/* Publish Modal */}
+      <PublishModal
+        isOpen={publishModalOpen}
+        onClose={() => setPublishModalOpen(false)}
+        projectId={id || ''}
+        projectName={project.name}
+        currentSubdomain={project.subdomain}
+        isPublished={project.is_published}
+        onPublished={(subdomain) => {
+          setProject(prev => prev ? {
+            ...prev,
+            subdomain,
+            is_published: true,
+          } : null);
+        }}
       />
     </div>
   );
