@@ -128,6 +128,13 @@ export interface GeneratedContent {
     teamImage?: string;
     ctaImage?: string;
   };
+  sectionVariants?: {
+    hero?: 'split' | 'overlay' | 'centered' | 'gradient';
+    services?: 'grid' | 'list' | 'cards';
+    about?: 'inline' | 'fullwidth' | 'timeline';
+    testimonials?: 'carousel' | 'grid' | 'single';
+    contact?: 'inline' | 'fullwidth' | 'map';
+  };
   metadata: {
     siteName: string;
     tagline: string;

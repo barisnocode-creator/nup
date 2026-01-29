@@ -10,7 +10,7 @@ import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
-import { EditorSidebar, type EditorSelection, type ImageData } from '@/components/website-preview/EditorSidebar';
+import { EditorSidebar, type EditorSelection, type ImageData, type HeroVariant } from '@/components/website-preview/EditorSidebar';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -343,6 +343,32 @@ export default function Project() {
     }
   }, [id, project, toast]);
 
+  // Handle hero variant change
+  const handleHeroVariantChange = useCallback((variant: HeroVariant) => {
+    if (!project?.generated_content) return;
+
+    const updatedContent = {
+      ...project.generated_content,
+      sectionVariants: {
+        ...project.generated_content.sectionVariants,
+        hero: variant,
+      },
+    };
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+    
+    toast({
+      title: 'Layout updated',
+      description: `Hero layout changed to ${variant}.`,
+    });
+  }, [project, debouncedSave, toast]);
+
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
     if (error) {
@@ -522,6 +548,8 @@ export default function Project() {
         isRegenerating={isRegeneratingImage}
         isRegeneratingField={isRegeneratingField}
         isDark={isDark}
+        currentHeroVariant={project.generated_content?.sectionVariants?.hero || 'overlay'}
+        onHeroVariantChange={handleHeroVariantChange}
       />
 
       {/* Email Auth Modal */}

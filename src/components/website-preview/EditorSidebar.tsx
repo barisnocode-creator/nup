@@ -35,6 +35,14 @@ export interface EditorSelection {
   fields: EditableFieldData[];
 }
 
+export type HeroVariant = 'split' | 'overlay' | 'centered' | 'gradient';
+
+export interface LayoutOption {
+  id: string;
+  label: string;
+  icon: string;
+}
+
 interface EditorSidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -48,7 +56,17 @@ interface EditorSidebarProps {
   isRegenerating?: boolean;
   isRegeneratingField?: string | null;
   isDark?: boolean;
+  // Layout variant props
+  currentHeroVariant?: HeroVariant;
+  onHeroVariantChange?: (variant: HeroVariant) => void;
 }
+
+const heroLayoutOptions: { id: HeroVariant; label: string; description: string }[] = [
+  { id: 'split', label: 'Split', description: 'Text left, image right' },
+  { id: 'overlay', label: 'Overlay', description: 'Text over image' },
+  { id: 'centered', label: 'Centered', description: 'Centered text, image below' },
+  { id: 'gradient', label: 'Gradient', description: 'No image, gradient background' },
+];
 
 export function EditorSidebar({
   isOpen,
@@ -63,6 +81,8 @@ export function EditorSidebar({
   isRegenerating = false,
   isRegeneratingField = null,
   isDark = false,
+  currentHeroVariant = 'overlay',
+  onHeroVariantChange,
 }: EditorSidebarProps) {
   const [localFields, setLocalFields] = useState<Record<string, string>>({});
   const [altText, setAltText] = useState('');
@@ -112,6 +132,7 @@ export function EditorSidebar({
 
   const hasImage = selection?.type === 'image' || (selection?.type === 'item' && selection?.imageData);
   const hasFields = selection?.fields && selection.fields.length > 0;
+  const isHeroSection = selection?.sectionId === 'hero';
 
   return (
     <>
@@ -377,21 +398,57 @@ export function EditorSidebar({
             </TabsContent>
 
             <TabsContent value="style" className="flex-1 overflow-y-auto p-4 mt-0">
-              <div className={cn(
-                'flex flex-col items-center justify-center h-full text-center space-y-3',
-                isDark ? 'text-slate-400' : 'text-gray-500'
-              )}>
+              {isHeroSection && onHeroVariantChange ? (
+                <div className="space-y-4">
+                  <Label className={cn(
+                    'text-sm font-medium',
+                    isDark ? 'text-slate-300' : 'text-gray-700'
+                  )}>
+                    Layout Style
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {heroLayoutOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => onHeroVariantChange(option.id)}
+                        className={cn(
+                          'p-3 rounded-lg border-2 text-left transition-all',
+                          currentHeroVariant === option.id
+                            ? 'border-primary bg-primary/10'
+                            : isDark 
+                              ? 'border-slate-700 hover:border-slate-600 bg-slate-800/50' 
+                              : 'border-gray-200 hover:border-gray-300 bg-gray-50',
+                          isDark ? 'text-white' : 'text-gray-900'
+                        )}
+                      >
+                        <p className="font-medium text-sm">{option.label}</p>
+                        <p className={cn(
+                          'text-xs mt-1',
+                          isDark ? 'text-slate-400' : 'text-gray-500'
+                        )}>
+                          {option.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
                 <div className={cn(
-                  'w-12 h-12 rounded-full flex items-center justify-center',
-                  isDark ? 'bg-slate-800' : 'bg-gray-100'
+                  'flex flex-col items-center justify-center h-full text-center space-y-3',
+                  isDark ? 'text-slate-400' : 'text-gray-500'
                 )}>
-                  <Sparkles className="w-6 h-6" />
+                  <div className={cn(
+                    'w-12 h-12 rounded-full flex items-center justify-center',
+                    isDark ? 'bg-slate-800' : 'bg-gray-100'
+                  )}>
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Style options coming soon</p>
+                    <p className="text-sm">Customize fonts, colors, and spacing</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">Style options coming soon</p>
-                  <p className="text-sm">Customize fonts, colors, and spacing</p>
-                </div>
-              </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
