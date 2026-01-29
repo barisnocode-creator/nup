@@ -1,312 +1,245 @@
 
-# Birleşik Editor Sidebar Sistemi - Genişletilmiş Plan
+# Hero Varyasyonları ve Section Variants Sistemi
 
 ## Hedef
 
-Durable.co'daki gibi, görsellerin yanı sıra metin alanları, bölümler ve öğeler (service cards, statistics vb.) için de sağdan açılan context-aware bir editor sidebar oluşturmak.
+Yazının resmin üstünde durduğu (overlay), centered, full-width gibi farklı hero tarzları ve diğer section'lar için varyasyonlar eklemek. Ayrıca kullanıcıların hazır template örnekleri yükleyerek yeni tasarımlar ekleyebilmesi.
 
-## Durable.co Referans Analizi
+## Yeni Hero Varyasyonları
 
-Ekran görüntülerinden görülen 3 farklı sidebar tipi:
+| Varyasyon | Görünüm | Kullanım |
+|-----------|---------|----------|
+| `split` (mevcut) | Yazı solda, resim sağda | Klasik profesyonel |
+| `overlay` | Tam genişlik resim, üzerinde yazı | Modern, etkileyici |
+| `centered` | Ortada yazı, arkada büyük resim | Minimal, şık |
+| `video` | Arka planda video, üzerinde yazı | Dinamik |
+| `gradient` | Gradient arka plan, resim yok | Hızlı yükleme |
 
-| Tip | Başlık | İçerik |
-|-----|--------|--------|
-| Banner/Hero | "Banner carousel" | Tagline, Headline, Subtext + Regenerate butonları, Carousel images |
-| Text+Image | "Text + Image" | Content/Style tabs, Rich text editor, Image thumbnail |
-| Item (Card) | "< Item" | Regenerate/Change, Alt text, Position, Title, Content |
-
-## Mevcut Durum
-
-```
-ImageEditorSidebar (sadece görseller için)
-├── Image preview
-├── Regenerate/Change butonları
-├── Alt text input
-└── Position sliders
-
-EditableField (inline editing)
-├── Tıkla → Input aç
-├── Enter → Kaydet
-└── Escape → İptal
-```
-
-## Yeni Unified Yapı
+## Dosya Yapısı
 
 ```
-EditorSidebar (birleşik)
-├── type: 'image' | 'text' | 'section' | 'item'
-├── Content/Style tabs (Durable tarzı)
-└── Dinamik içerik based on type
+src/templates/temp1/sections/hero/
+├── index.ts              # Hero registry
+├── HeroSplit.tsx         # Mevcut (rename)
+├── HeroOverlay.tsx       # YENİ - Resim üzerinde yazı
+├── HeroCentered.tsx      # YENİ - Ortalanmış
+├── HeroGradient.tsx      # YENİ - Gradient arka plan
+└── types.ts              # Hero props types
 ```
 
-## Yeni Bileşenler
+## Yeni Hero Bileşenleri
 
-### 1. EditorSidebar.tsx (Yeni - Birleşik)
+### 1. HeroOverlay.tsx (Yazı resmin üzerinde)
 
-Tüm düzenleme tiplerini tek bir sidebar'da birleştirir:
+```
++------------------------------------------+
+|                                          |
+|     [Full-width background image]        |
+|                                          |
+|         ✨ Welcome to our practice       |
+|                                          |
+|       Advanced Treatments for            |
+|          Global Patients                 |
+|                                          |
+|      Delivering cutting-edge care...     |
+|                                          |
+|      [Get Started]  [Learn More]         |
+|                                          |
++------------------------------------------+
+```
+
+- Tam genişlik arka plan görseli
+- Koyu gradient overlay (okunabilirlik için)
+- Yazılar ortalanmış, resmin üzerinde
+- min-height: 100vh
+
+### 2. HeroCentered.tsx (Ortalanmış)
+
+```
++------------------------------------------+
+|                                          |
+|     ✨ Welcome to our practice           |
+|                                          |
+|     Advanced Treatments for              |
+|        Global Patients                   |
+|                                          |
+|   [Get Started]  [Learn More]            |
+|                                          |
+|   +------------------------------+       |
+|   |                              |       |
+|   |     [Large centered image]   |       |
+|   |                              |       |
+|   +------------------------------+       |
+|                                          |
++------------------------------------------+
+```
+
+- Yazılar üstte, ortalanmış
+- Görsel altta, büyük ve rounded
+- Temiz, minimal görünüm
+
+### 3. HeroGradient.tsx (Gradient)
+
+```
++------------------------------------------+
+|  ████████████████████████████████████   |
+|  ██   Gradient Background Only     ██   |
+|  ██                                 ██   |
+|  ██   Advanced Treatments for       ██   |
+|  ██      Global Patients            ██   |
+|  ██                                 ██   |
+|  ██   [Get Started] [Learn More]    ██   |
+|  ██                                 ██   |
+|  ████████████████████████████████████   |
++------------------------------------------+
+```
+
+- Görsel yok, sadece gradient
+- Çok hızlı yükleme
+- Modern ve temiz
+
+## Hero Registry Sistemi
 
 ```typescript
-interface EditorSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  editingData: {
-    type: 'image' | 'text' | 'section' | 'item';
-    title: string;           // Sidebar başlığı ("Hero", "Service Card" vb.)
-    
-    // Image data (type='image' veya 'item' için)
-    imageData?: ImageData;
-    
-    // Text fields (tüm tipler için)
-    fields?: EditableFieldData[];
-    
-    // Section specific
-    sectionId?: string;
-  } | null;
+// src/templates/temp1/sections/hero/index.ts
+import { HeroSplit } from './HeroSplit';
+import { HeroOverlay } from './HeroOverlay';
+import { HeroCentered } from './HeroCentered';
+import { HeroGradient } from './HeroGradient';
+
+export const heroVariants = {
+  split: HeroSplit,
+  overlay: HeroOverlay,
+  centered: HeroCentered,
+  gradient: HeroGradient,
+} as const;
+
+export type HeroVariant = keyof typeof heroVariants;
+
+export function getHeroComponent(variant: HeroVariant) {
+  return heroVariants[variant] || heroVariants.split;
+}
+```
+
+## GeneratedContent Güncelleme
+
+```typescript
+// src/types/generated-website.ts
+export interface GeneratedContent {
+  // ... mevcut alanlar
   
-  // Callbacks
-  onFieldUpdate: (fieldPath: string, value: string) => void;
-  onRegenerateField: (fieldPath: string) => void;
-  onImageRegenerate: () => void;
-  onImageChange: () => void;
-  onUpdateAltText: (text: string) => void;
-  onUpdatePosition: (x: number, y: number) => void;
-}
-
-interface EditableFieldData {
-  label: string;        // "Headline", "Subtext" vb.
-  fieldPath: string;    // "pages.home.hero.title"
-  value: string;
-  type: 'text' | 'textarea' | 'richtext';
-  canRegenerate?: boolean;
-}
-```
-
-### 2. EditableText.tsx (Yeni - Tıklanabilir Text Wrapper)
-
-EditableImage gibi ama text için:
-
-```typescript
-interface EditableTextProps {
-  value: string;
-  fieldPath: string;
-  fieldLabel: string;    // "Headline", "Description"
-  as: 'h1' | 'h2' | 'h3' | 'p' | 'span';
-  isEditable: boolean;
-  isSelected: boolean;
-  onSelect: (data: EditableTextData) => void;
-  className?: string;
-}
-```
-
-### 3. EditableItem.tsx (Yeni - Card/Item Wrapper)
-
-Service cards, statistics vb. için:
-
-```typescript
-interface EditableItemProps {
-  children: React.ReactNode;
-  itemType: 'service' | 'statistic' | 'testimonial' | 'faq';
-  itemIndex: number;
-  itemData: {
-    title?: string;
-    description?: string;
-    image?: string;
+  // YENİ: Section varyasyonları
+  sectionVariants?: {
+    hero?: 'split' | 'overlay' | 'centered' | 'gradient';
+    services?: 'grid' | 'list' | 'cards';
+    about?: 'inline' | 'fullwidth' | 'timeline';
+    // ... diğer section'lar
   };
-  isEditable: boolean;
-  isSelected: boolean;
-  onSelect: () => void;
 }
 ```
 
-## Sidebar İçerik Yapısı
+## FullLandingPage Güncelleme
 
-### Image Type
+```typescript
+// src/templates/temp1/pages/FullLandingPage.tsx
+import { getHeroComponent } from '../sections/hero';
+
+export function FullLandingPage({ content, ... }) {
+  // Varyasyonu al veya default kullan
+  const heroVariant = content.sectionVariants?.hero || 'split';
+  const HeroComponent = getHeroComponent(heroVariant);
+  
+  return (
+    <div>
+      <EditableSection sectionId="hero" ...>
+        <HeroComponent
+          title={pages.home.hero.title}
+          subtitle={pages.home.hero.subtitle}
+          description={pages.home.hero.description}
+          heroImage={images?.heroHome}
+          // ... diğer props
+        />
+      </EditableSection>
+      {/* ... diğer section'lar */}
+    </div>
+  );
+}
+```
+
+## Editor'da Varyasyon Değiştirme
+
+EditorSidebar'da section seçildiğinde "Layout" seçeneği:
+
 ```
 +------------------------+
-| < Hero Image    Done   |
+| < Hero           Done  |
 +------------------------+
 | Content | Style        |
 +------------------------+
-| [Image Preview]        |
-| [Regenerate] [Change]  |
-| Alt text: [________]   |
-| Image position:        |
-|   Horizontal ---o---   |
-|   Vertical   --o----   |
+| Layout:                |
+| [Split] [Overlay]      |
+| [Centered] [Gradient]  |
 +------------------------+
-```
-
-### Section Type (Hero, About vb.)
-```
-+------------------------+
-| < Hero         Done   |
-+------------------------+
-| Content | Style        |
-+------------------------+
-| Tagline    [Generate]  |
-| [________________]     |
-|                        |
 | Headline  [Regenerate] |
 | [Advanced Treatments.] |
-|                        |
-| Subtext   [Regenerate] |
-| [Delivering cutting..] |
-|                        |
-| -------------------    |
-| Carousel images        |
-| [img1] [img2] [img3]   |
+| ...                    |
 +------------------------+
-```
-
-### Item Type (Service Card vb.)
-```
-+------------------------+
-| < Item          Done   |
-+------------------------+
-| [Image Preview]        |
-| [Regenerate] [Change]  |
-| Alt text: [________]   |
-| Image position:        |
-|   Horizontal ---o---   |
-|   Vertical   --o----   |
-| -------------------    |
-| Title    [Regenerate]  |
-| [Advanced Cosmetic..]  |
-|                        |
-| Content  [Regenerate]  |
-| [Enhance your smile..] |
-+------------------------+
-```
-
-## State Yönetimi
-
-Project.tsx'e eklenecek unified state:
-
-```typescript
-interface EditorSelection {
-  type: 'image' | 'text' | 'section' | 'item';
-  sectionId?: string;
-  itemIndex?: number;
-  
-  // Current data
-  title: string;
-  imageData?: ImageData;
-  fields: Array<{
-    label: string;
-    fieldPath: string;
-    value: string;
-    type: 'text' | 'textarea';
-  }>;
-}
-
-const [editorSelection, setEditorSelection] = useState<EditorSelection | null>(null);
-```
-
-## Props Flow
-
-```
-Project.tsx
-    │
-    ├── editorSelection state
-    ├── setEditorSelection callback
-    │
-    ▼
-WebsitePreview → Template → Sections
-    │
-    ├── HeroSplitSection
-    │   ├── EditableText (title) → sidebar
-    │   ├── EditableText (subtitle) → sidebar
-    │   └── EditableImage → sidebar
-    │
-    ├── ServicesGridSection
-    │   └── EditableItem (each card) → sidebar
-    │       ├── title field
-    │       ├── description field
-    │       └── image (if any)
-    │
-    └── StatisticsSection
-        └── EditableItem (each stat) → sidebar
 ```
 
 ## Dosya Değişiklikleri
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/website-preview/EditorSidebar.tsx` | YENİ - Birleşik sidebar |
-| `src/components/website-preview/EditableText.tsx` | YENİ - Text wrapper |
-| `src/components/website-preview/EditableItem.tsx` | YENİ - Item/Card wrapper |
-| `src/components/website-preview/ImageEditorSidebar.tsx` | KALDIRILACAK (EditorSidebar ile birleşecek) |
-| `src/pages/Project.tsx` | editorSelection state + EditorSidebar render |
-| `src/templates/types.ts` | onEditorSelect type ekle |
-| `src/templates/temp1/sections/HeroSplitSection.tsx` | EditableText kullan |
-| `src/templates/temp1/sections/ServicesGridSection.tsx` | EditableItem kullan |
-| `src/templates/temp1/sections/StatisticsSection.tsx` | EditableItem kullan |
-| `src/templates/temp1/sections/AboutInlineSection.tsx` | EditableText kullan |
+| `src/templates/temp1/sections/hero/index.ts` | YENİ - Hero registry |
+| `src/templates/temp1/sections/hero/types.ts` | YENİ - Shared props |
+| `src/templates/temp1/sections/hero/HeroSplit.tsx` | Mevcut kodu taşı |
+| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | YENİ |
+| `src/templates/temp1/sections/hero/HeroCentered.tsx` | YENİ |
+| `src/templates/temp1/sections/hero/HeroGradient.tsx` | YENİ |
+| `src/types/generated-website.ts` | sectionVariants ekle |
+| `src/templates/temp1/pages/FullLandingPage.tsx` | Dinamik hero seçimi |
+| `src/components/website-preview/EditorSidebar.tsx` | Layout seçici ekle |
 
-## Kullanım Senaryoları
-
-### 1. Başlığa Tıklama
-- Kullanıcı "Advanced Treatments for Global Patients" başlığına tıklar
-- Sidebar açılır: "Hero" başlığı, Content tab'ı aktif
-- Tagline, Headline, Subtext alanları gösterilir
-- Her alanın yanında "Regenerate" butonu
-
-### 2. Service Card'a Tıklama  
-- Kullanıcı bir servis kartına tıklar
-- Sidebar açılır: "< Item" başlığı
-- Varsa görsel + Regenerate/Change
-- Title ve Content alanları
-
-### 3. Görsele Tıklama
-- Kullanıcı hero görselene tıklar
-- Sidebar açılır: "< Hero Image" başlığı
-- Görsel preview + Regenerate/Change
-- Alt text + Position sliders
-
-## Regenerate Özelliği
-
-Her text alanı için AI ile yeniden oluşturma:
+## HeroOverlay Detaylı Tasarım
 
 ```typescript
-const handleRegenerateField = async (fieldPath: string) => {
-  // Edge function çağrısı yapılacak
-  // Örn: pages.home.hero.title için yeni başlık oluştur
+// Görsel üzerinde yazı için temel yapı
+<section className="relative min-h-[100vh] flex items-center">
+  {/* Arka plan görseli */}
+  <div className="absolute inset-0">
+    <EditableImage
+      src={heroImage}
+      className="w-full h-full object-cover"
+    />
+    {/* Koyu overlay - yazıların okunabilirliği için */}
+    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
+  </div>
   
-  const response = await supabase.functions.invoke('regenerate-content', {
-    body: { 
-      projectId: id,
-      fieldPath: fieldPath,
-      context: project.profession
-    }
-  });
-  
-  if (response.data?.newValue) {
-    handleFieldEdit(fieldPath, response.data.newValue);
-  }
-};
+  {/* İçerik - resmin üzerinde */}
+  <div className="relative z-10 container mx-auto text-center text-white">
+    <EditableText value={title} ... />
+    <EditableText value={subtitle} ... />
+    <EditableText value={description} ... />
+    {/* Butonlar */}
+  </div>
+</section>
 ```
 
-## UI/UX Detayları
+## Template Örneği Yükleme (Gelecek Özellik)
 
-### Seçili Eleman Gösterimi
-- Seçili text/item etrafında mavi border (2px solid primary)
-- Hafif gölge efekti
-- Diğer elemanlar %95 opacity
+Kullanıcıların hazır template yükleyebilmesi için:
 
-### Sidebar Animasyonu
-- Sağdan slide-in (300ms ease-out)
-- Backdrop: %20 siyah overlay (tıklanabilir, kapatır)
-- Width: 320px sabit
+1. Template dosyası formatı tanımla (JSON/YAML)
+2. Upload modal ekle
+3. Template parser oluştur
+4. Kod üreteci ekle
 
-### Content/Style Tabs
-- Content: Text alanları, görseller
-- Style: Font, renk, spacing (Phase 2 - locked)
+Bu özellik Phase 2 olarak eklenebilir.
 
 ## Beklenen Sonuç
 
-1. Herhangi bir düzenlenebilir elemana (text, image, card) tıklandığında sağdan sidebar açılır
-2. Sidebar içeriği tıklanan elemana göre değişir
-3. Text alanları inline değil sidebar'da düzenlenir
-4. Her alan için "Regenerate" ile AI yeniden oluşturma
-5. Görseller için Regenerate/Change + Position ayarları
-6. Durable.co'daki gibi profesyonel ve tutarlı UX
+1. 4 farklı hero varyasyonu kullanılabilir
+2. Overlay hero ile yazı resmin üzerinde görünür
+3. Editor'dan layout değiştirilebilir
+4. Gelecekte daha fazla varyasyon eklenebilir
+5. Diğer section'lar için de benzer sistem uygulanabilir
