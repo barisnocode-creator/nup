@@ -105,22 +105,22 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     setIsSubmitting(true);
 
     try {
-      const projectData = {
-        user_id: user.id,
-        name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
-        profession: formData.profession!,
-        status: 'draft',
-        form_data: {
-          businessInfo: formData.businessInfo,
-          professionalDetails: formData.professionalDetails,
-          websitePreferences: formData.websitePreferences,
-          extractedData: formData.extractedData,
-        },
+      const projectFormData = {
+        businessInfo: formData.businessInfo,
+        professionalDetails: formData.professionalDetails,
+        websitePreferences: formData.websitePreferences,
+        extractedData: formData.extractedData,
       };
 
       const { data, error } = await supabase
         .from('projects')
-        .insert(projectData)
+        .insert({
+          user_id: user.id,
+          name: formData.extractedData?.businessName || formData.businessInfo?.businessName || 'Untitled Project',
+          profession: formData.profession!,
+          status: 'draft',
+          form_data: projectFormData as unknown as Record<string, unknown>,
+        })
         .select('id')
         .single();
 
