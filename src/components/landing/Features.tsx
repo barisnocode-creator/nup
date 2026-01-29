@@ -1,65 +1,83 @@
-import { Sparkles, Layout, Rocket, Server } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-const features = [
-  {
-    icon: Sparkles,
-    title: 'AI-Powered Design',
-    description: 'Our AI creates stunning, professional websites tailored specifically for healthcare professionals in seconds.',
-  },
-  {
-    icon: Layout,
-    title: 'Professional Templates',
-    description: 'Choose from beautiful templates designed for doctors, dentists, pharmacists, and other medical professionals.',
-  },
-  {
-    icon: Rocket,
-    title: 'Easy Management',
-    description: 'Update your content, add services, and manage your online presence with our intuitive dashboard.',
-  },
-  {
-    icon: Server,
-    title: 'Instant Hosting',
-    description: 'Your website is automatically hosted and optimized. No technical setup required—just publish and go live.',
-  },
-];
+import { Sparkles, FileText, Layout, Zap } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 
 export function Features() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="section-padding bg-secondary/30">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Everything You Need to
-            <span className="gradient-text"> Stand Out Online</span>
+          <h2 className="font-serif text-3xl md:text-4xl font-medium mb-4 text-foreground">
+            Sağlık Sektörü İçin
+            <span className="text-primary"> #1 AI Web Sitesi Oluşturucu</span>
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Powerful features designed specifically for healthcare professionals who want to grow their practice.
-          </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature, index) => (
-            <Card 
-              key={feature.title} 
-              className="group border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <CardHeader>
-                <div className="w-12 h-12 rounded-xl gradient-hero flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-6 h-6 text-primary-foreground" />
+        {/* Two Column Feature Cards */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {/* AI Websites Card */}
+          <Card className="overflow-hidden border-border">
+            <div className="p-8">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <Layout className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-serif text-2xl font-medium text-foreground mb-3">
+                AI Web Siteleri
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Sizin için özel olarak tasarlandı. Profesyonel, modern ve mobil uyumlu web siteleri.
+                Kodlama bilgisi gerektirmez.
+              </p>
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <Sparkles className="w-4 h-4" />
+                <span>AI destekli tasarım</span>
+              </div>
+            </div>
+            
+            {/* Mock Preview */}
+            <div className="bg-secondary p-6">
+              <div className="bg-background rounded-lg p-4 shadow-sm">
+                <div className="h-3 w-20 bg-muted rounded mb-3" />
+                <div className="h-2 w-32 bg-muted rounded mb-6" />
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="h-12 bg-muted rounded" />
+                  <div className="h-12 bg-muted rounded" />
+                  <div className="h-12 bg-muted rounded" />
                 </div>
-                <CardTitle className="text-xl">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* AI Content Card */}
+          <Card className="overflow-hidden border-border">
+            <div className="p-8">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <FileText className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="font-serif text-2xl font-medium text-foreground mb-3">
+                AI İçerik Yazımı
+              </h3>
+              <p className="text-muted-foreground mb-6">
+                Sizin için yazıldı. Hizmetleriniz, uzmanlık alanlarınız ve iletişim bilgileriniz
+                otomatik olarak içerik haline getirilir.
+              </p>
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <Zap className="w-4 h-4" />
+                <span>Saniyeler içinde hazır</span>
+              </div>
+            </div>
+            
+            {/* Mock Content Preview */}
+            <div className="bg-secondary p-6">
+              <div className="bg-background rounded-lg p-4 shadow-sm space-y-3">
+                <div className="h-2 w-full bg-muted rounded" />
+                <div className="h-2 w-5/6 bg-muted rounded" />
+                <div className="h-2 w-4/6 bg-muted rounded" />
+                <div className="h-2 w-full bg-muted rounded" />
+                <div className="h-2 w-3/4 bg-muted rounded" />
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </section>

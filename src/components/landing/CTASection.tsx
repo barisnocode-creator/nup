@@ -4,9 +4,9 @@ import { Input } from '@/components/ui/input';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Star, ArrowRight } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
 
-export function Hero() {
+export function CTASection() {
   const [showAuth, setShowAuth] = useState(false);
   const [clinicType, setClinicType] = useState('');
   const { user } = useAuth();
@@ -22,34 +22,30 @@ export function Hero() {
 
   return (
     <>
-      <section className="min-h-screen flex items-center justify-center pt-16 bg-background">
-        <div className="container mx-auto px-4 py-20">
-          <div className="max-w-4xl mx-auto text-center">
+      <section className="section-padding bg-foreground text-background">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
             {/* Headline */}
-            <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium leading-tight mb-6 text-foreground animate-fade-in">
-              Sağlık web sitenizi
-              <span className="block text-primary">AI ile oluşturun</span>
-            </h1>
-
-            {/* Subheadline */}
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Doktorlar, diş hekimleri ve eczacılar için profesyonel web siteleri.
-              Kodlama gerektirmez. 30 saniyede başlayın.
+            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium mb-6">
+              Bugün profesyonel web sitenizi oluşturun
+            </h2>
+            <p className="text-lg text-background/70 mb-10">
+              Binlerce sağlık profesyoneli gibi siz de AI ile web sitenizi oluşturun.
             </p>
 
             {/* Input CTA */}
-            <div className="max-w-xl mx-auto mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="flex flex-col sm:flex-row gap-3 p-2 bg-secondary rounded-lg border border-border">
+            <div className="max-w-xl mx-auto mb-8">
+              <div className="flex flex-col sm:flex-row gap-3 p-2 bg-background/10 rounded-lg border border-background/20">
                 <Input
                   type="text"
                   placeholder="Ne tür bir klinik/muayenehane?"
                   value={clinicType}
                   onChange={(e) => setClinicType(e.target.value)}
-                  className="flex-1 h-12 border-0 bg-background text-base"
+                  className="flex-1 h-12 border-0 bg-background text-foreground text-base"
                 />
                 <Button 
                   size="lg" 
-                  className="h-12 px-6 bg-primary hover:bg-primary/90"
+                  className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
                   onClick={handleCTA}
                 >
                   Ücretsiz Başla
@@ -59,16 +55,16 @@ export function Hero() {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex flex-wrap items-center justify-center gap-6">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-primary text-primary" />
                 ))}
-                <span className="ml-2 text-sm text-muted-foreground">4.8 Puan</span>
+                <span className="ml-2 text-sm text-background/70">4.8 Puan</span>
               </div>
-              <div className="h-4 w-px bg-border" />
-              <span className="text-sm text-muted-foreground">
-                1000+ Sağlık Profesyoneli Güveniyor
+              <div className="h-4 w-px bg-background/30" />
+              <span className="text-sm text-background/70">
+                Kredi kartı gerektirmez
               </span>
             </div>
           </div>
