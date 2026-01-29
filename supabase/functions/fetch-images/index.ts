@@ -7,29 +7,66 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Profession-specific search terms for Pixabay
+// Extended profession-specific search terms for more images
 const professionSearchTerms: Record<string, Record<string, string>> = {
   doctor: {
     heroHome: "medical clinic reception modern healthcare",
+    heroSplit: "doctor consultation patient medical office",
     heroAbout: "doctor team professional hospital",
     heroServices: "medical equipment modern clinic",
     heroBlog: "healthcare medical research",
     heroContact: "medical consultation doctor patient",
+    aboutImage: "medical team doctor nurse professional",
+    ctaImage: "healthcare medical professional clinic",
   },
   dentist: {
     heroHome: "dental clinic modern reception",
+    heroSplit: "dentist patient dental care",
     heroAbout: "dentist team professional clinic",
     heroServices: "dental equipment modern technology",
     heroBlog: "dental care oral hygiene",
     heroContact: "dental consultation patient",
+    aboutImage: "dental team professional dentist",
+    ctaImage: "dental smile healthy teeth",
   },
   pharmacist: {
     heroHome: "pharmacy modern drugstore interior",
+    heroSplit: "pharmacist customer consultation",
     heroAbout: "pharmacist professional team",
     heroServices: "pharmacy medications medicine",
     heroBlog: "medicine health supplements",
     heroContact: "pharmacy consultation customer",
+    aboutImage: "pharmacy team professional",
+    ctaImage: "pharmacy medicine healthcare",
   },
+};
+
+// Gallery search terms by profession
+const gallerySearchTerms: Record<string, string[]> = {
+  doctor: [
+    "modern medical clinic interior",
+    "hospital waiting room modern",
+    "medical examination room",
+    "doctor patient consultation",
+    "medical technology equipment",
+    "healthcare facility modern",
+  ],
+  dentist: [
+    "dental clinic interior modern",
+    "dental chair equipment",
+    "dental office waiting room",
+    "dental treatment room",
+    "dental technology equipment",
+    "dental clinic reception",
+  ],
+  pharmacist: [
+    "pharmacy interior modern",
+    "pharmacy shelves medicine",
+    "pharmacy consultation area",
+    "pharmacy counter service",
+    "pharmacy products display",
+    "pharmacy healthcare products",
+  ],
 };
 
 // Blog post category to search terms mapping
@@ -52,7 +89,7 @@ async function fetchPixabayImage(
 ): Promise<string | null> {
   try {
     const encodedQuery = encodeURIComponent(query);
-    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodedQuery}&image_type=photo&orientation=horizontal&min_width=${minWidth}&per_page=5&safesearch=true`;
+    const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodedQuery}&image_type=photo&orientation=horizontal&min_width=${minWidth}&per_page=10&safesearch=true`;
 
     console.log(`Fetching Pixabay image for: ${query}`);
 
@@ -66,8 +103,8 @@ async function fetchPixabayImage(
     const data = await response.json();
 
     if (data.hits && data.hits.length > 0) {
-      // Pick a random image from top 5 results for variety
-      const randomIndex = Math.floor(Math.random() * Math.min(5, data.hits.length));
+      // Pick a random image from results for variety
+      const randomIndex = Math.floor(Math.random() * Math.min(10, data.hits.length));
       const imageUrl = data.hits[randomIndex].largeImageURL;
       console.log(`Found image: ${imageUrl.substring(0, 50)}...`);
       return imageUrl;
@@ -81,17 +118,31 @@ async function fetchPixabayImage(
   }
 }
 
+async function fetchMultipleImages(
+  queries: string[],
+  apiKey: string,
+  minWidth: number = 1200
+): Promise<string[]> {
+  const results: string[] = [];
+  
+  for (const query of queries) {
+    const image = await fetchPixabayImage(query, apiKey, minWidth);
+    if (image) {
+      results.push(image);
+    }
+  }
+  
+  return results;
+}
+
 async function fetchBlogImage(
-  postTitle: string,
   category: string,
   apiKey: string
 ): Promise<string | null> {
-  // Try category-specific search first
   const categoryTerms = blogCategorySearchTerms[category.toLowerCase()] || blogCategorySearchTerms.default;
   
   let imageUrl = await fetchPixabayImage(categoryTerms, apiKey, 1200);
   
-  // If no result, try with a more generic health query
   if (!imageUrl) {
     imageUrl = await fetchPixabayImage("healthcare medical professional", apiKey, 1200);
   }
@@ -150,11 +201,12 @@ serve(async (req) => {
     const profession = project.profession || "doctor";
     const generatedContent = project.generated_content || {};
     const searchTerms = professionSearchTerms[profession] || professionSearchTerms.doctor;
+    const galleryTerms = gallerySearchTerms[profession] || gallerySearchTerms.doctor;
 
-    console.log(`Fetching Pixabay images for profession: ${profession}`);
+    console.log(`Fetching extended Pixabay images for profession: ${profession}`);
 
     // Fetch hero images for all pages
-    const images: Record<string, string> = {};
+    const images: Record<string, string | string[]> = {};
     
     const imagePromises = Object.entries(searchTerms).map(async ([key, query]) => {
       const imageUrl = await fetchPixabayImage(query, PIXABAY_API_KEY, 1920);
@@ -165,7 +217,14 @@ serve(async (req) => {
 
     await Promise.all(imagePromises);
 
-    console.log(`Fetched ${Object.keys(images).length} hero images`);
+    // Fetch gallery images (6 images)
+    console.log("Fetching gallery images...");
+    const galleryImages = await fetchMultipleImages(galleryTerms, PIXABAY_API_KEY, 1200);
+    if (galleryImages.length > 0) {
+      images.galleryImages = galleryImages;
+    }
+
+    console.log(`Fetched ${Object.keys(images).length} hero images and ${galleryImages.length} gallery images`);
 
     // Fetch blog post images
     const blogPosts = generatedContent.pages?.blog?.posts || [];
@@ -173,7 +232,6 @@ serve(async (req) => {
 
     for (const post of blogPosts) {
       const featuredImage = await fetchBlogImage(
-        post.title,
         post.category || "default",
         PIXABAY_API_KEY
       );
@@ -220,12 +278,13 @@ serve(async (req) => {
       );
     }
 
-    console.log("Pixabay images fetched and saved successfully");
+    console.log("Extended Pixabay images fetched and saved successfully");
     return new Response(
       JSON.stringify({
         success: true,
         images,
         blogPostsUpdated: updatedBlogPosts.length,
+        galleryImagesCount: galleryImages.length,
       }),
       {
         status: 200,
