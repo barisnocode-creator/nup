@@ -52,6 +52,11 @@ export default function Project() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState('');
   const [currentSection, setCurrentSection] = useState('hero');
+  
+  // Section management state
+  const [sectionOrder, setSectionOrder] = useState<string[]>([
+    'hero', 'statistics', 'about', 'services', 'process', 'gallery', 'testimonials', 'faq', 'contact', 'cta'
+  ]);
 
   // Unified Editor Sidebar State
   const [editorSelection, setEditorSelection] = useState<EditorSelection | null>(null);
@@ -475,6 +480,40 @@ export default function Project() {
     // TODO: Implement via edge function
   }, [toast]);
 
+  // Section management handlers
+  const handleMoveSection = useCallback((sectionId: string, direction: 'up' | 'down') => {
+    setSectionOrder(prev => {
+      const index = prev.indexOf(sectionId);
+      if (index === -1) return prev;
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const newOrder = [...prev];
+      [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+      return newOrder;
+    });
+    toast({
+      title: 'Section moved',
+      description: `${sectionId} section moved ${direction}.`,
+    });
+  }, [toast]);
+
+  const handleDeleteSection = useCallback((sectionId: string) => {
+    const protectedSections = ['hero'];
+    if (protectedSections.includes(sectionId)) {
+      toast({
+        title: 'Cannot delete',
+        description: 'Hero section cannot be deleted.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSectionOrder(prev => prev.filter(s => s !== sectionId));
+    toast({
+      title: 'Section deleted',
+      description: `${sectionId} section has been removed.`,
+    });
+  }, [toast]);
+
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
     if (error) {
@@ -629,6 +668,9 @@ export default function Project() {
             onFieldEdit={handleFieldEdit}
             editorSelection={editorSelection}
             onEditorSelect={handleEditorSelect}
+            sectionOrder={sectionOrder}
+            onMoveSection={handleMoveSection}
+            onDeleteSection={handleDeleteSection}
           />
         )}
       </div>

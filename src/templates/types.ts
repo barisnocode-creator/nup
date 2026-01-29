@@ -19,6 +19,10 @@ export interface TemplateProps {
   onLockedFeature?: (feature: string) => void;
   editorSelection?: EditorSelection | null;
   onEditorSelect?: (selection: EditorSelection) => void;
+  // Section management props
+  sectionOrder?: string[];
+  onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void;
+  onDeleteSection?: (sectionId: string) => void;
   // Legacy image-only props (for backward compatibility)
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
