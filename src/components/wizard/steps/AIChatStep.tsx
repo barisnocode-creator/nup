@@ -18,12 +18,13 @@ interface AIChatStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-// Hardcoded first message for instant display - updated for 10 questions
-const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 10 kısa soru sorarak işletmeniz için harika bir web sitesi oluşturacağım.
+// Total number of questions in the wizard
+const TOTAL_QUESTIONS = 10 as const;
 
-**Soru 1/10:** İşletmenizin adı nedir?`;
+// Hardcoded first message for instant display
+const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size ${TOTAL_QUESTIONS} kısa soru sorarak işletmeniz için harika bir web sitesi oluşturacağım.
 
-const TOTAL_QUESTIONS = 10;
+**Soru 1/${TOTAL_QUESTIONS}:** İşletmenizin adı nedir?`;
 
 export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
