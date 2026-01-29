@@ -35,6 +35,9 @@ export function FullLandingPage({
 }: FullLandingPageProps) {
   const { pages, images, metadata } = content;
 
+  // Debug log for props
+  console.log('FullLandingPage props:', { isEditable, hasOnImageSelect: !!onImageSelect, selectedImage });
+
   return (
     <div>
       {/* Hero Section */}
