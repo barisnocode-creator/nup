@@ -1,111 +1,123 @@
 
 
-# Lovable AI ile AI Chatbot Wizard Implementasyonu
+# Sektör Seçimi ve AI Soru Güncellemesi
 
 ## Mevcut Durum
 
-| Bileşen | Durum |
-|---------|-------|
-| LOVABLE_API_KEY | Zaten tanımlı |
-| AI Gateway | https://ai.gateway.lovable.dev/v1/chat/completions |
-| Model | google/gemini-3-flash-preview (varsayılan) |
+| Bileşen | Mevcut |
+|---------|--------|
+| Sektör Seçenekleri | Doctor, Dentist, Pharmacist (sadece sağlık) |
+| Soru Sayısı | 10 |
+| Soru Tipi | Mesleğe özel (sağlık odaklı) |
 
-Ekstra API key eklemeye **GEREK YOK**!
+## Yapılacak Değişiklikler
 
-## Yeni Wizard Akışı
+### 1. Yeni Sektör Seçenekleri
 
-```text
-Adım 1: Meslek Seçimi (mevcut)
-         ↓
-Adım 2: AI Sohbet (10 soru) ← YENİ
-         ↓
-Adım 3: Tercihler (dil, ton, renk)
-         ↓
-     Website Oluştur
+Sağlık sektörü yerine tüm sektörleri kapsayan genel kategoriler:
+
+| Sektör ID | Etiket | Açıklama | İkon |
+|-----------|--------|----------|------|
+| `service` | Hizmet Sektörü | Danışmanlık, eğitim, tamir vb. | Briefcase |
+| `retail` | Perakende & Satış | Mağaza, e-ticaret, showroom | ShoppingBag |
+| `food` | Yiyecek & İçecek | Restoran, kafe, catering | UtensilsCrossed |
+| `creative` | Kreatif & Medya | Tasarım, fotoğraf, video | Palette |
+| `technology` | Teknoloji | Yazılım, IT, dijital hizmetler | Monitor |
+| `other` | Diğer | Diğer tüm sektörler | Building2 |
+
+### 2. Soru Sayısı: 10 → 5
+
+Yarıya indirilmiş, daha detaylı ve genel sorular:
+
+| # | Konu | Soru İçeriği |
+|---|------|--------------|
+| 1 | İşletme Kimliği | İşletme adı, sektör detayı, konum, deneyim süresi |
+| 2 | Sunulan Değer | Ana hizmetler/ürünler, hedef kitle, rakiplerden fark |
+| 3 | İletişim & Erişim | Telefon, e-posta, çalışma saatleri, adres |
+| 4 | Marka Hikayesi | Kuruluş hikayesi, vizyon, değerler, başarılar |
+| 5 | Site Hedefleri | Web sitesinden beklentiler, öne çıkarılacak öğeler, CTA'lar |
+
+### 3. Dosya Değişiklikleri
+
+| Dosya | Değişiklik |
+|-------|------------|
+| `src/types/wizard.ts` | Profession tipi güncelleme (6 yeni sektör) |
+| `src/components/wizard/steps/ProfessionStep.tsx` | Yeni sektör seçenekleri ve ikonlar |
+| `supabase/functions/wizard-chat/index.ts` | 5 soruluk yeni sistem prompt |
+
+## Teknik Detaylar
+
+### Yeni Profession Tipi
+
+```typescript
+export type Profession = 'service' | 'retail' | 'food' | 'creative' | 'technology' | 'other';
 ```
 
-## Uygulama Adımları
+### Yeni AI Sistem Promptu
 
-### 1. Edge Function: wizard-chat
+AI artık mesleğe özel değil, kurulacak siteye yönelik sorular soracak:
 
-`supabase/functions/wizard-chat/index.ts`
+```text
+SORU 1/5: İşletme Kimliği
+- İşletmenizin adı nedir?
+- Tam olarak hangi sektörde/alanda faaliyet gösteriyorsunuz?
+- Hangi şehir/ülkede bulunuyorsunuz?
+- Kaç yıldır bu alanda faaliyet gösteriyorsunuz?
 
-- Lovable AI Gateway kullanacak
-- Mesleğe göre 10 soru soracak
-- Sohbet geçmişini takip edecek
-- 10 soru sonunda extractedData JSON döndürecek
+SORU 2/5: Sunulan Değer
+- Ana ürün veya hizmetleriniz nelerdir? (en az 3 tane)
+- Hedef kitleniz kimler? (yaş, gelir düzeyi, ilgi alanları)
+- Sizi rakiplerinizden ayıran en önemli 2-3 özellik nedir?
 
-### 2. Chat UI Bileşeni
+SORU 3/5: İletişim & Erişim
+- Telefon numaranız?
+- E-posta adresiniz?
+- Çalışma günleri ve saatleriniz?
+- Fiziksel adresiniz var mı? (varsa detay)
 
-`src/components/wizard/steps/AIChatStep.tsx`
+SORU 4/5: Marka Hikayesi
+- İşletmeniz nasıl kuruldu? (kısa hikaye)
+- Vizyonunuz ve değerleriniz neler?
+- Elde ettiğiniz önemli başarılar veya sertifikalar var mı?
 
-- Mesaj baloncukları (AI sol, kullanıcı sağ)
-- İlerleme göstergesi (Soru 3/10)
-- Metin girişi + Gönder butonu
-- Loading durumu
+SORU 5/5: Site Hedefleri
+- Web sitenizden ne bekliyorsunuz? (bilgilendirme, satış, randevu vb.)
+- Ziyaretçilerin sitede yapmasını istediğiniz en önemli aksiyon nedir?
+- Öne çıkarmak istediğiniz ek bilgiler var mı?
+```
 
-### 3. Wizard Güncelleme
-
-`src/components/wizard/CreateWebsiteWizard.tsx`
-
-- Adım 2: BusinessInfoStep + ProfessionalDetailsStep → AIChatStep
-- Toplam adım: 4 → 3
-
-### 4. Config Güncelleme
-
-`supabase/config.toml`
-
-- wizard-chat function ekleme
-
-## Dosya Değişiklikleri
-
-| Dosya | İşlem |
-|-------|-------|
-| `supabase/functions/wizard-chat/index.ts` | Yeni |
-| `src/components/wizard/steps/AIChatStep.tsx` | Yeni |
-| `src/components/wizard/CreateWebsiteWizard.tsx` | Güncelle |
-| `src/types/wizard.ts` | Güncelle |
-| `supabase/config.toml` | Güncelle |
-
-## AI Soru Stratejisi
-
-AI şu 10 konuda soru soracak:
-
-1. İşletme/Klinik Adı
-2. Konum (Şehir, Ülke)
-3. Uzmanlık Alanı
-4. Deneyim Süresi
-5. Sunulan Hizmetler
-6. Hedef Müşteri Profili
-7. Rekabet Avantajı
-8. İletişim Bilgileri (Telefon, Email)
-9. Çalışma Saatleri
-10. Öne Çıkarılacak Özel Bilgiler
-
-## Extracted Data Formatı
+### Güncel ExtractedData Formatı
 
 ```json
 {
-  "businessName": "City Dental",
-  "city": "İstanbul",
-  "country": "Türkiye",
-  "specialty": "Ortodonti",
-  "yearsExperience": "15",
-  "services": ["Diş Beyazlatma", "İmplant"],
-  "targetAudience": "Yetişkinler ve aileler",
-  "uniqueValue": "Ağrısız tedavi garantisi",
-  "phone": "+90 555 123 4567",
-  "email": "info@citydental.com",
-  "workingHours": "Pazartesi-Cuma 09:00-18:00",
-  "additionalInfo": "20 yıllık deneyimli ekip"
+  "businessName": "...",
+  "sector": "...",
+  "city": "...",
+  "country": "...",
+  "yearsExperience": "...",
+  "services": ["...", "...", "..."],
+  "targetAudience": "...",
+  "uniqueValue": "...",
+  "phone": "...",
+  "email": "...",
+  "workingHours": "...",
+  "address": "...",
+  "story": "...",
+  "vision": "...",
+  "achievements": "...",
+  "siteGoals": "...",
+  "mainCTA": "...",
+  "additionalInfo": "..."
 }
 ```
 
-## Avantajlar
+## UI Değişiklikleri
 
-- Ek API key gerekmez (Lovable AI zaten mevcut)
-- Doğal sohbet deneyimi
-- Mesleğe özel dinamik sorular
-- Daha detaylı bilgi toplama
-- Kişiselleştirilmiş website içeriği
+### ProfessionStep Başlık Değişikliği
+
+Mevcut:
+> "What's your profession?"
+
+Yeni:
+> "Hangi sektörde faaliyet gösteriyorsunuz?"
 
