@@ -108,6 +108,7 @@ export function FullLandingPage({
               subtitle={pages.home.hero.subtitle}
               description={pages.home.hero.description}
               heroImage={images?.heroHome || images?.heroSplit}
+              heroImagePosition={content.imagePositions?.heroHome}
               isDark={isDark}
               isNeutral={isNeutral}
               isEditable={isEditable}

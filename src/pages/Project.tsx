@@ -296,22 +296,43 @@ export default function Project() {
     if (!editorSelection?.imageData || !id) return;
     
     setIsRegeneratingImage(true);
+    setImageOptions([]);
+    
     try {
-      toast({
-        title: 'Regenerating image...',
-        description: 'AI is creating a new image for you.',
+      // Determine image type from path
+      let imageType = 'hero';
+      const imagePath = editorSelection.imageData.imagePath;
+      if (imagePath.includes('about')) imageType = 'about';
+      else if (imagePath.includes('gallery')) imageType = 'gallery';
+      else if (imagePath.includes('cta')) imageType = 'cta';
+      else if (imagePath.includes('service')) imageType = 'service';
+      
+      const { data, error } = await supabase.functions.invoke('fetch-image-options', {
+        body: { projectId: id, imageType, count: 3 },
       });
 
-      // TODO: Implement single image regeneration via edge function
-      setTimeout(() => {
-        setIsRegeneratingImage(false);
+      if (error) throw error;
+      
+      if (data?.options && data.options.length > 0) {
+        setImageOptions(data.options);
         toast({
-          title: 'Image regenerated',
-          description: 'Your new image has been applied.',
+          title: 'Alternatives found',
+          description: 'Choose from the options below.',
         });
-      }, 2000);
+      } else {
+        toast({
+          title: 'No alternatives found',
+          description: 'Try a different search.',
+        });
+      }
     } catch (err) {
-      console.error('Image regeneration error:', err);
+      console.error('Image fetch error:', err);
+      toast({
+        title: 'Error',
+        description: 'Could not fetch image alternatives.',
+        variant: 'destructive',
+      });
+    } finally {
       setIsRegeneratingImage(false);
     }
   }, [editorSelection, id, toast]);
@@ -395,12 +416,27 @@ export default function Project() {
   }, []);
 
   const handleUpdateImagePosition = useCallback((x: number, y: number) => {
-    if (!editorSelection?.imageData) return;
+    if (!editorSelection?.imageData?.imagePath || !project?.generated_content) return;
+    
+    // Update EditorSidebar state
     setEditorSelection(prev => prev ? { 
       ...prev, 
       imageData: prev.imageData ? { ...prev.imageData, positionX: x, positionY: y } : undefined 
     } : null);
-  }, []);
+    
+    // Also save position to generated_content for real-time preview updates
+    const imagePath = editorSelection.imageData.imagePath;
+    const positionPath = imagePath.replace('images.', 'imagePositions.');
+    
+    const updatedContent = updateNestedValue(
+      project.generated_content,
+      positionPath,
+      { x, y }
+    );
+    
+    setProject(prev => prev ? { ...prev, generated_content: updatedContent } : null);
+    setHasUnsavedChanges(true);
+  }, [editorSelection, project]);
 
   const handleRegenerateField = useCallback(async (fieldPath: string) => {
     if (!id || !project?.generated_content) return;

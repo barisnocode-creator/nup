@@ -10,6 +10,7 @@ export function HeroOverlay({
   subtitle,
   description,
   heroImage,
+  heroImagePosition,
   isDark,
   isNeutral,
   isEditable,
@@ -68,6 +69,11 @@ export function HeroOverlay({
             src={heroImage}
             alt="Hero Background"
             className="w-full h-full object-cover"
+            style={{
+              objectPosition: heroImagePosition 
+                ? `${heroImagePosition.x}% ${heroImagePosition.y}%` 
+                : '50% 50%'
+            }}
           />
         ) : (
           <div className={cn(
@@ -86,20 +92,14 @@ export function HeroOverlay({
             : 'bg-gradient-to-t from-black/80 via-black/50 to-black/30'
         )} />
 
-        {/* Hover overlay - edit indicator */}
+        {/* Hover overlay - subtle visual indicator (no text) */}
         {isEditable && (
           <div className={cn(
-            "absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center",
-            isImageSelected && "bg-black/20"
-          )}>
-            <div className={cn(
-              "opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 backdrop-blur-sm",
-              isImageSelected && "opacity-100 ring-2 ring-primary"
-            )}>
-              <ImageIcon className="w-4 h-4 text-gray-800" />
-              <span className="text-sm font-medium text-gray-800">Edit Background</span>
-            </div>
-          </div>
+            "absolute inset-0 transition-all duration-200",
+            isImageSelected 
+              ? "bg-black/20 ring-4 ring-primary ring-inset" 
+              : "bg-black/0 group-hover:bg-black/10"
+          )} />
         )}
       </div>
 

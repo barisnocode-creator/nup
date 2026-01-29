@@ -128,6 +128,14 @@ export interface GeneratedContent {
     teamImage?: string;
     ctaImage?: string;
   };
+  // Image positions for real-time updates
+  imagePositions?: {
+    heroHome?: { x: number; y: number };
+    heroAbout?: { x: number; y: number };
+    aboutImage?: { x: number; y: number };
+    ctaImage?: { x: number; y: number };
+    [key: string]: { x: number; y: number } | undefined;
+  };
   sectionVariants?: {
     hero?: 'split' | 'overlay' | 'centered' | 'gradient';
     services?: 'grid' | 'list' | 'cards';
