@@ -1,6 +1,8 @@
 import { cn } from '@/lib/utils';
 import { EditableImage } from '@/components/website-preview/EditableImage';
 import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
+import { Button } from '@/components/ui/button';
+import { Camera, Loader2 } from 'lucide-react';
 
 interface ImageGallerySectionProps {
   images: string[];
@@ -9,6 +11,8 @@ interface ImageGallerySectionProps {
   isEditable?: boolean;
   editorSelection?: EditorSelection | null;
   onEditorSelect?: (selection: EditorSelection) => void;
+  onGenerateImages?: () => void;
+  isGenerating?: boolean;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -21,12 +25,18 @@ export function ImageGallerySection({
   isEditable = false,
   editorSelection,
   onEditorSelect,
+  onGenerateImages,
+  isGenerating = false,
   selectedImage,
   onImageSelect,
 }: ImageGallerySectionProps) {
-  // Use placeholder images if no images provided
-  const displayImages = images && images.length > 0 
-    ? images.slice(0, 6) 
+  // Check if we have valid images (not empty strings)
+  const validImages = images?.filter(img => img && img.trim() !== '') || [];
+  const hasImages = validImages.length > 0;
+  
+  // Use valid images or create placeholder array
+  const displayImages = hasImages 
+    ? validImages.slice(0, 6) 
     : Array(6).fill(null);
 
   const handleImageSelect = (data: ImageData) => {
@@ -64,6 +74,35 @@ export function ImageGallerySection({
           )}>
             Our Facility
           </h2>
+          
+          {/* Generate Images Button - Show when no images and editable */}
+          {!hasImages && isEditable && onGenerateImages && (
+            <div className="mt-6">
+              <Button
+                onClick={onGenerateImages}
+                disabled={isGenerating}
+                className="gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating Images...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    Generate Gallery Images
+                  </>
+                )}
+              </Button>
+              <p className={cn(
+                'text-sm mt-2',
+                isDark ? 'text-slate-400' : 'text-muted-foreground'
+              )}>
+                AI will fetch professional images for your gallery
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Gallery Grid */}
@@ -99,15 +138,23 @@ export function ImageGallerySection({
                   />
                 ) : (
                   <div className={cn(
-                    'w-full h-full flex items-center justify-center',
-                    isDark ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 'bg-gradient-to-br from-primary/10 to-primary/20'
+                    'w-full h-full flex flex-col items-center justify-center gap-2',
+                    isDark ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 'bg-gradient-to-br from-primary/5 to-primary/10'
                   )}>
                     <span className={cn(
                       'text-4xl',
-                      isDark ? 'text-slate-500' : 'text-primary/30'
+                      isDark ? 'text-slate-500' : 'text-primary/20'
                     )}>
                       {['🏥', '👨‍⚕️', '💊', '🩺', '🔬', '❤️'][index % 6]}
                     </span>
+                    {isEditable && (
+                      <span className={cn(
+                        'text-xs',
+                        isDark ? 'text-slate-500' : 'text-muted-foreground'
+                      )}>
+                        No image
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

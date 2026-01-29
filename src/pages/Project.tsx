@@ -14,6 +14,7 @@ import { EditorSidebar, type EditorSelection, type ImageData, type HeroVariant }
 import { CustomizeSidebar } from '@/components/website-preview/CustomizeSidebar';
 import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
 import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
+import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSidebar';
 import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
@@ -61,6 +62,7 @@ export default function Project() {
   const [customizeSidebarOpen, setCustomizeSidebarOpen] = useState(false);
   const [pageSettingsSidebarOpen, setPageSettingsSidebarOpen] = useState(false);
   const [addContentSidebarOpen, setAddContentSidebarOpen] = useState(false);
+  const [homeEditorSidebarOpen, setHomeEditorSidebarOpen] = useState(false);
   const [selectedPageForSettings, setSelectedPageForSettings] = useState<string>('home');
 
   // Track page view for analytics
@@ -423,6 +425,12 @@ export default function Project() {
     setPageSettingsSidebarOpen(true);
   }, []);
 
+  // Handle page editor sidebar open (shows all sections)
+  const handleOpenPageEditor = useCallback((pageName: string) => {
+    setSelectedPageForSettings(pageName);
+    setHomeEditorSidebarOpen(true);
+  }, []);
+
   // Handle add page
   const handleAddPage = useCallback((pageType: string) => {
     toast({
@@ -601,6 +609,7 @@ export default function Project() {
           onCustomize={() => setCustomizeSidebarOpen(true)}
           onAddSection={() => setAddContentSidebarOpen(true)}
           onPageSettings={handleOpenPageSettings}
+          onPageEditor={handleOpenPageEditor}
           onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
           onPublish={() => setPublishModalOpen(true)}
           onDashboard={() => navigate('/dashboard')}
@@ -710,6 +719,22 @@ export default function Project() {
         onAddBlogPost={handleAddBlogPost}
         existingPages={['home', 'about', 'services', 'contact', 'blog']}
       />
+
+      {/* Home Editor Sidebar */}
+      {project.generated_content && (
+        <HomeEditorSidebar
+          isOpen={homeEditorSidebarOpen}
+          onClose={() => setHomeEditorSidebarOpen(false)}
+          content={project.generated_content}
+          onSectionSelect={handleNavigate}
+          onPageSettings={() => {
+            setHomeEditorSidebarOpen(false);
+            setPageSettingsSidebarOpen(true);
+          }}
+          onGenerateGalleryImages={() => id && generateImages(id)}
+          isGeneratingGallery={generatingImages}
+        />
+      )}
     </div>
   );
 }
