@@ -1,154 +1,118 @@
 
 
-# Pixabay API Entegrasyonu Planı
+# Durable Benzeri Dashboard Arayüzü Planı
 
-## Maliyet Karşılaştırması
+## Genel Bakış
 
-### Mevcut Sistem (AI Görsel Üretimi)
+Mevcut basit Dashboard'u, Durable'ın profesyonel arayüzüne benzer şekilde yeniden tasarlayacağız. Sizin ürününüz sağlık profesyonelleri için web sitesi oluşturucu olduğundan, bazı özellikleri uyarlayacağız.
 
-| Özellik | Değer |
-|---------|-------|
-| Servis | Lovable AI (Gemini 2.5 Flash Image) |
-| Proje başına görsel | 3-6 adet (hero + blog) |
-| Maliyet | Lovable AI token kredisi tüketimi |
-| Üretim süresi | ~3-5 saniye/görsel + rate limit beklemesi |
-| Toplam | ~15-30 saniye/proje |
+## Durable Dashboard Analizi (Ekran Görüntüsünden)
 
-### Pixabay Alternatifi
+| Bileşen | Durable'da | Open Lucius'ta Karşılığı |
+|---------|-----------|-------------------------|
+| Sol Sidebar | Home, Website, Contacts, Invoices, Studio, Chats | Home, Website, Settings, Help |
+| Üst Karşılama | "Good afternoon, welcome to Durable" | "Günaydın, Open Lucius'a hoş geldiniz" |
+| Website Önizleme | Preview kartı + durum badge + Edit butonu | Aynı yapı |
+| Get Started Checklist | 5 adımlı checklist | "Başlangıç Rehberi" |
+| Latest Contacts | Kişi listesi | (Şimdilik dahil etmeyeceğiz) |
+| Alt Kartlar | Invoices, Chats, Assets | (Open Lucius'a uygun değil) |
+| Upgrade Kartı | Sol sidebar altı | Aynı yapı |
 
-| Özellik | Değer |
-|---------|-------|
-| Servis | Pixabay API |
-| Maliyet | **Tamamen Ücretsiz** (ticari kullanım dahil) |
-| Rate limit | 100 istek/dakika |
-| Lisans | Pixabay License (atıf gerekmez) |
-| Görsel kalitesi | Profesyonel stok fotoğraflar |
-| Üretim süresi | ~200-500ms/istek |
-
-### Maliyet Tasarrufu
+## Uyarlanmış Open Lucius Dashboard Yapısı
 
 ```text
-+-------------------+     +-------------------+
-|   AI Generation   |     |   Pixabay API     |
-|   (Şu anki)       |     |   (Önerilen)      |
-+-------------------+     +-------------------+
-| Token maliyeti    |     | $0 (Ücretsiz)     |
-| ~15-30 sn/proje   |     | ~1-2 sn/proje     |
-| Benzersiz görsel  |     | Stok fotoğraflar  |
-+-------------------+     +-------------------+
++------------------+--------------------------------+------------------+
+|                  |                                |                  |
+|   SOL SIDEBAR    |        ANA IÇERIK              |   SAĞ SIDEBAR    |
+|                  |                                |                  |
+|  - Logo          |  "Günaydın, [isim]"            |  Başlangıç       |
+|  - Home          |  "Open Lucius'a hoş geldiniz"  |  Rehberi         |
+|  - Website       |                                |                  |
+|  - Analytics     |  +-------------------------+   |  [x] Website     |
+|  - Settings      |  | Website Preview Card    |   |  [ ] Yayınla     |
+|  - Help          |  | [Durumu] [Edit butonu]  |   |  [ ] Analitik    |
+|                  |  +-------------------------+   |  [ ] Özelleştir  |
+|  --------------- |                                |                  |
+|  Upgrade Card    |                                |                  |
++------------------+--------------------------------+------------------+
 ```
 
-## Pixabay API Özellikleri
+## Uygulama Adımları
 
-- **Ücretsiz**: API key gerektirir ama tamamen bedava
-- **Yüksek kalite**: HD/Full HD görseller
-- **Arama özellikleri**: Kategori, renk, yönelim filtreleri
-- **Sağlık kategorisi**: "doctor", "dentist", "pharmacy", "clinic" aramaları zengin sonuçlar verir
-- **Türkçe desteği**: `lang=tr` parametresiyle yerelleştirme
+### Adım 1: Yeni Dashboard Layout Bileşeni
+Sidebar + Main + Right Panel içeren ana layout oluşturma.
 
-## Uygulama Planı
+**Yeni dosyalar:**
+- `src/components/dashboard/DashboardLayout.tsx` - Ana layout wrapper
+- `src/components/dashboard/DashboardSidebar.tsx` - Sol sidebar
+- `src/components/dashboard/DashboardRightPanel.tsx` - Sağ panel (Get Started)
+- `src/components/dashboard/WebsitePreviewCard.tsx` - Website önizleme kartı
+- `src/components/dashboard/GettingStartedChecklist.tsx` - Başlangıç rehberi
 
-### Adım 1: Pixabay API Key Kurulumu
+### Adım 2: Dashboard Sayfası Güncelleme
+`src/pages/Dashboard.tsx` dosyasını yeni layout kullanacak şekilde güncelleme.
 
-Pixabay'dan ücretsiz API key alınması ve Supabase secrets'a eklenmesi.
+### Adım 3: Sidebar Navigasyon Öğeleri
 
-### Adım 2: Edge Function Oluşturma
+| Icon | Etiket | Route |
+|------|--------|-------|
+| Home | Home | /dashboard |
+| Globe | Website | /project/:id (aktif proje) |
+| BarChart | Analytics | /project/:id/analytics |
+| Settings | Settings | /settings (yeni sayfa) |
+| HelpCircle | Help | Modal veya sayfa |
 
-`supabase/functions/fetch-images/index.ts` - Pixabay'dan görsel çekme:
+### Adım 4: Get Started Checklist
 
-```typescript
-// Meslek bazlı arama terimleri
-const searchTerms = {
-  doctor: ["medical clinic", "doctor office", "healthcare"],
-  dentist: ["dental clinic", "dentist", "dental care"],
-  pharmacist: ["pharmacy", "drugstore", "medicine"]
-};
+Kullanıcının tamamlaması gereken adımlar:
+1. Website oluştur (mevcut wizard)
+2. Bilgileri düzenle (proje sayfası)
+3. Görselleri ekle (AI images)
+4. Yayınla (publish)
+5. Analitik kontrol (analytics)
 
-// Pixabay API çağrısı
-const response = await fetch(
-  `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${query}&image_type=photo&orientation=horizontal&min_width=1200&per_page=5&category=science`
-);
-```
-
-### Adım 3: Görsel Seçim Stratejisi
-
-| Sayfa | Arama Terimi | Filtreler |
-|-------|--------------|-----------|
-| heroHome | "{profession} clinic reception" | horizontal, 1920px+ |
-| heroAbout | "{profession} team professional" | horizontal, 1920px+ |
-| heroServices | "{profession} equipment modern" | horizontal, 1920px+ |
-| Blog | Blog başlığına göre dinamik | horizontal, 1200px+ |
-
-### Adım 4: Hibrit Yaklaşım (Opsiyonel)
-
-İleride hem Pixabay hem AI görseli sunulabilir:
-- **Varsayılan**: Pixabay (hızlı, ücretsiz)
-- **Premium**: AI üretimi (benzersiz, özelleştirilmiş)
+Bu adımların tamamlanıp tamamlanmadığını projeden kontrol edeceğiz.
 
 ## Dosya Değişiklikleri
 
 | Dosya | İşlem |
 |-------|-------|
-| `supabase/functions/fetch-images/index.ts` | Yeni - Pixabay API entegrasyonu |
-| `supabase/functions/generate-website/index.ts` | Güncelle - Görsel çekme mantığı |
-| `src/types/generated-website.ts` | Güncelle - Görsel kaynak tipi ekleme |
+| `src/components/dashboard/DashboardLayout.tsx` | Yeni |
+| `src/components/dashboard/DashboardSidebar.tsx` | Yeni |
+| `src/components/dashboard/DashboardRightPanel.tsx` | Yeni |
+| `src/components/dashboard/WebsitePreviewCard.tsx` | Yeni |
+| `src/components/dashboard/GettingStartedChecklist.tsx` | Yeni |
+| `src/pages/Dashboard.tsx` | Güncelle |
+| `src/pages/Settings.tsx` | Yeni (opsiyonel) |
+| `src/App.tsx` | Güncelle (yeni route) |
 
-## Teknik Detaylar
+## Teknik Notlar
 
-### Pixabay API Response Yapısı
+- Shadcn/ui `Sidebar` bileşeni zaten projede mevcut, kullanılacak
+- Responsive tasarım: Mobilde sidebar drawer olarak açılacak
+- Dark/Light mode desteği korunacak
+- Mevcut authentication sistemi aynen kullanılacak
+- `NavLink` bileşeni active route styling için kullanılacak
 
-```json
-{
-  "hits": [
-    {
-      "id": 195893,
-      "webformatURL": "https://pixabay.com/get/..._640.jpg",
-      "largeImageURL": "https://pixabay.com/get/..._1280.jpg",
-      "imageWidth": 1920,
-      "imageHeight": 1080,
-      "tags": "doctor, medical, healthcare"
-    }
-  ]
-}
-```
+## Eksik Özellikler (Durable'da olup Open Lucius'ta olmayan)
 
-### Edge Function Yapısı
+Şu özellikler Durable'da var ama sizin ürün için gerekli olmayabilir:
+- **Contacts**: İletişim yönetimi (CRM)
+- **Invoices**: Fatura kesimi
+- **Studio**: Asset oluşturma
+- **Chats**: AI sohbet kategorileri (General, Marketing, Finance)
 
-```typescript
-interface FetchImagesRequest {
-  projectId: string;
-  profession: string;
-  businessName: string;
-}
+Bu özellikler daha sonra eklenebilir ama temel dashboard için gerekli değil.
 
-// Sayfa bazlı görsel arama
-async function fetchPixabayImage(query: string, apiKey: string) {
-  const response = await fetch(
-    `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&min_width=1200&per_page=3&safesearch=true`
-  );
-  const data = await response.json();
-  return data.hits[0]?.largeImageURL || null;
-}
-```
+## Sonraki Adımlar
 
-## Avantajlar ve Dezavantajlar
+Detaylı ekran görüntülerini paylaştığınızda:
+1. Her bileşenin pixel-perfect tasarımını yapabiliriz
+2. Animasyonları ve geçişleri ekleyebiliriz
+3. Eksik özellikleri belirleyebiliriz
 
-### Avantajlar
-- Sıfır maliyet (API ücretsiz)
-- Çok daha hızlı (~10x)
-- Profesyonel kalite fotoğraflar
-- Rate limit yüksek (100/dk)
-- Güvenilir servis uptime
-
-### Dezavantajlar
-- Görseller benzersiz değil (stok)
-- İşletme ismi görselde olmayacak
-- Bazen alakasız sonuçlar gelebilir
-- Pixabay sunucularına bağımlılık
-
-## Sonuç
-
-Pixabay entegrasyonu maliyet açısından kesinlikle avantajlı. Özellikle template sistemiyle birleştiğinde, profesyonel stok fotoğraflar + AI üretimi metin içeriği = yüksek kaliteli web siteleri sağlar.
-
-**Öneri**: Pixabay'ı varsayılan olarak kullan, AI görsel üretimini ileride "premium" özellik olarak sun.
+**Not**: Durable'ın tüm özelliklerini birebir kopyalayamayız çünkü:
+- Bazıları sizin ürün kapsamı dışında (invoices, CRM)
+- Bazıları backend altyapı gerektirir (AI chats)
+- Ancak görsel tasarım ve UX akışını çok benzer yapabiliriz
 
