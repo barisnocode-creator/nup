@@ -316,12 +316,75 @@ export default function Project() {
     }
   }, [editorSelection, id, toast]);
 
-  const handleImageChange = useCallback(() => {
+  // Image options state for EditorSidebar
+  const [imageOptions, setImageOptions] = useState<Array<{ url: string; thumbnail: string; alt: string }>>([]);
+  const [isLoadingImageOptions, setIsLoadingImageOptions] = useState(false);
+
+  const handleImageChange = useCallback(async (imagePath: string) => {
+    if (!id) return;
+    
+    setIsLoadingImageOptions(true);
+    setImageOptions([]);
+    
+    try {
+      // Determine image type from path
+      let imageType = 'hero';
+      if (imagePath.includes('about')) imageType = 'about';
+      else if (imagePath.includes('gallery')) imageType = 'gallery';
+      else if (imagePath.includes('cta')) imageType = 'cta';
+      else if (imagePath.includes('service')) imageType = 'service';
+      
+      const { data, error } = await supabase.functions.invoke('fetch-image-options', {
+        body: { projectId: id, imageType, count: 3 },
+      });
+
+      if (error) throw error;
+      
+      if (data?.options && data.options.length > 0) {
+        setImageOptions(data.options);
+      } else {
+        toast({
+          title: 'No alternatives found',
+          description: 'Try regenerating instead.',
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching image options:', err);
+      toast({
+        title: 'Error',
+        description: 'Could not load image alternatives.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingImageOptions(false);
+    }
+  }, [id, toast]);
+
+  const handleSelectImageOption = useCallback((url: string) => {
+    if (!editorSelection?.imageData?.imagePath || !project?.generated_content) return;
+    
+    const updatedContent = updateNestedValue(project.generated_content, editorSelection.imageData.imagePath, url);
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    // Update selection to show new image
+    setEditorSelection(prev => prev ? {
+      ...prev,
+      imageData: prev.imageData ? { ...prev.imageData, currentUrl: url } : undefined,
+    } : null);
+    
+    setImageOptions([]);
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+    
     toast({
-      title: 'Image picker',
-      description: 'Image picker coming soon. You can regenerate for now.',
+      title: 'Image updated',
+      description: 'Your new image has been applied.',
     });
-  }, [toast]);
+  }, [editorSelection, project, debouncedSave, toast]);
 
   const handleUpdateAltText = useCallback((text: string) => {
     if (!editorSelection?.imageData) return;
@@ -340,7 +403,7 @@ export default function Project() {
   }, []);
 
   const handleRegenerateField = useCallback(async (fieldPath: string) => {
-    if (!id || !project) return;
+    if (!id || !project?.generated_content) return;
     
     setIsRegeneratingField(fieldPath);
     try {
@@ -349,19 +412,32 @@ export default function Project() {
         description: 'AI is creating new content for you.',
       });
 
-      // TODO: Implement content regeneration via edge function
-      setTimeout(() => {
-        setIsRegeneratingField(null);
+      const { data, error } = await supabase.functions.invoke('regenerate-content', {
+        body: { projectId: id, fieldPath },
+      });
+
+      if (error) throw error;
+      
+      if (data?.success && data?.newValue) {
+        handleFieldEdit(fieldPath, data.newValue);
         toast({
           title: 'Content regenerated',
           description: 'Your new content has been applied.',
         });
-      }, 2000);
+      } else {
+        throw new Error(data?.error || 'Failed to regenerate content');
+      }
     } catch (err) {
       console.error('Content regeneration error:', err);
+      toast({
+        title: 'Regeneration failed',
+        description: err instanceof Error ? err.message : 'Could not regenerate content.',
+        variant: 'destructive',
+      });
+    } finally {
       setIsRegeneratingField(null);
     }
-  }, [id, project, toast]);
+  }, [id, project, toast, handleFieldEdit]);
 
   // Handle hero variant change
   const handleHeroVariantChange = useCallback((variant: HeroVariant) => {
@@ -725,6 +801,9 @@ export default function Project() {
         isDark={isDark}
         currentHeroVariant={project.generated_content?.sectionVariants?.hero || 'overlay'}
         onHeroVariantChange={handleHeroVariantChange}
+        imageOptions={imageOptions}
+        isLoadingImageOptions={isLoadingImageOptions}
+        onSelectImageOption={handleSelectImageOption}
       />
 
       {/* Email Auth Modal */}

@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.track-analytics]
 verify_jwt = false
+
+[functions.regenerate-content]
+verify_jwt = false
+
+[functions.fetch-image-options]
+verify_jwt = false

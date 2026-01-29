@@ -1,4 +1,5 @@
-import { EditableField } from '@/components/website-preview/EditableField';
+import { EditableText } from '@/components/website-preview/EditableText';
+import type { EditorSelection } from '@/components/website-preview/EditorSidebar';
 
 interface TemplateHeaderProps {
   siteName: string;
@@ -7,6 +8,8 @@ interface TemplateHeaderProps {
   isDark: boolean;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  editorSelection?: EditorSelection | null;
+  onEditorSelect?: (selection: EditorSelection) => void;
   hasBlog?: boolean;
 }
 
@@ -25,14 +28,10 @@ export function TemplateHeader({
   isDark,
   isEditable = false,
   onFieldEdit,
+  editorSelection,
+  onEditorSelect,
   hasBlog = false,
 }: TemplateHeaderProps) {
-  const handleFieldEdit = (fieldPath: string, newValue: string) => {
-    if (onFieldEdit) {
-      onFieldEdit(fieldPath, newValue);
-    }
-  };
-
   const scrollToSection = (sectionId: string) => {
     if (sectionId === 'hero') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -48,6 +47,8 @@ export function TemplateHeader({
     onNavigate(sectionId);
   };
 
+  const isSiteNameSelected = editorSelection?.fields.some(f => f.fieldPath === 'metadata.siteName');
+
   return (
     <header className={`sticky top-14 z-40 py-4 border-b backdrop-blur-sm ${
       isDark ? 'border-slate-800 bg-slate-900/95' : 'border-gray-100 bg-white/95'
@@ -61,17 +62,27 @@ export function TemplateHeader({
             }`}>
               {siteName.charAt(0)}
             </div>
-            {isEditable ? (
-              <EditableField
-                value={siteName}
-                fieldPath="metadata.siteName"
-                onSave={handleFieldEdit}
-                className="text-xl font-bold font-display"
-                isEditable={isEditable}
-              />
-            ) : (
-              <span className="text-xl font-bold font-display">{siteName}</span>
-            )}
+            <EditableText
+              value={siteName}
+              fieldPath="metadata.siteName"
+              fieldLabel="Site Name"
+              sectionTitle="Header"
+              sectionId="header"
+              as="span"
+              isEditable={isEditable}
+              isSelected={isSiteNameSelected}
+              onSelect={onEditorSelect}
+              additionalFields={[
+                {
+                  label: 'Tagline',
+                  fieldPath: 'metadata.tagline',
+                  value: '',
+                  type: 'text',
+                  canRegenerate: true,
+                },
+              ]}
+              className="text-xl font-bold font-display"
+            />
           </div>
 
           {/* Navigation */}
