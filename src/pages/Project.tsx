@@ -74,6 +74,9 @@ export default function Project() {
   // Track page view for analytics
   usePageView(id, '/preview');
 
+  // Apply theme colors from site settings in real-time (must be at top level, not conditional)
+  useThemeColors(project?.generated_content?.siteSettings);
+
   // Fetch project data
   useEffect(() => {
     async function fetchProject() {
@@ -618,9 +621,6 @@ export default function Project() {
   const colorPreference = project.form_data?.websitePreferences?.colorPreference || 'light';
   const isAuthenticated = !!user;
   const isDark = colorPreference === 'dark';
-
-  // Apply theme colors from site settings in real-time
-  useThemeColors(project.generated_content?.siteSettings);
 
   // TEST MODE: Upgrade prompts disabled for testing
   const handleLockedFeature = (feature: string) => {
