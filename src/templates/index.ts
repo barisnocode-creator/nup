@@ -1,5 +1,6 @@
 import { TemplateConfig, TemplateComponent } from './types';
 import { HealthcareModernTemplate } from './temp1';
+import { BoldAgencyTemplate } from './temp2';
 
 // Import preview images
 import showcaseDental from '@/assets/showcase-dental.jpg';
@@ -31,6 +32,18 @@ const templateRegistry: Record<string, {
   temp2: {
     config: {
       id: 'temp2',
+      name: 'Bold Agency',
+      description: 'High-impact dark template for agencies and creatives',
+      category: 'Creative',
+      preview: showcaseDigitalAgency,
+      supportedProfessions: ['agency', 'startup', 'tech', 'creative'],
+      supportedTones: ['bold', 'modern', 'dramatic'],
+    },
+    component: BoldAgencyTemplate, // Different component!
+  },
+  temp3: {
+    config: {
+      id: 'temp3',
       name: 'Restaurant & Cafe',
       description: 'Elegant template for restaurants and food businesses',
       category: 'Restaurant',
@@ -38,29 +51,17 @@ const templateRegistry: Record<string, {
       supportedProfessions: ['restaurant', 'cafe', 'bakery'],
       supportedTones: ['warm', 'elegant', 'modern'],
     },
-    component: HealthcareModernTemplate, // Same component for now
+    component: HealthcareModernTemplate,
   },
-  temp3: {
+  temp4: {
     config: {
-      id: 'temp3',
+      id: 'temp4',
       name: 'Law & Legal',
       description: 'Professional template for law firms and legal services',
       category: 'Legal',
       preview: showcaseLawOffice,
       supportedProfessions: ['lawyer', 'attorney', 'legal'],
       supportedTones: ['professional', 'authoritative', 'trustworthy'],
-    },
-    component: HealthcareModernTemplate,
-  },
-  temp4: {
-    config: {
-      id: 'temp4',
-      name: 'Digital Agency',
-      description: 'Creative template for digital agencies and tech startups',
-      category: 'Agency',
-      preview: showcaseDigitalAgency,
-      supportedProfessions: ['agency', 'startup', 'tech'],
-      supportedTones: ['creative', 'modern', 'bold'],
     },
     component: HealthcareModernTemplate,
   },
