@@ -1,200 +1,235 @@
 
 
-# Sosyal Medya Görseli Boyut Seçenekleri
+# Website Dashboard Sayfası - Tam Implementasyon
 
 ## Genel Bakış
 
-Studio sayfasına sosyal medya görsel boyutu seçenekleri eklenecek. Kullanıcı "Sosyal" kategorisi seçtiğinde popüler sosyal medya platformları için optimize edilmiş boyut seçenekleri görüntülenecek.
+Sol menüden "Website" tıklandığında Durable.co benzeri kapsamlı bir Website yönetim ve analitik dashboard'u açılacak. Bu sayfa 4 sekmeden oluşacak: Dashboard, Blog, Domain ve Settings.
 
 ---
 
-## Desteklenecek Boyutlar
-
-| Platform | En-Boy Oranı | Piksel Boyutu | Kullanım Alanı |
-|----------|--------------|---------------|----------------|
-| Instagram Kare | 1:1 | 1080x1080 | Feed postu |
-| Facebook Yatay | 1.91:1 | 1200x628 | Link paylaşımı |
-| Instagram/TikTok Story | 9:16 | 1080x1920 | Hikaye, Reels |
-| Twitter/X Yatay | 16:9 | 1200x675 | Tweet görseli |
-| Pinterest Dikey | 2:3 | 1000x1500 | Pin görseli |
-
----
-
-## Kullanıcı Deneyimi Akışı
+## Sayfa Yapısı
 
 ```text
-+--------------------------------------------------+
-|  [Logo] [Sosyal*] [Poster] [Yaratıcı]            |
-+--------------------------------------------------+
-                      |
-                      v
-+--------------------------------------------------+
-|  Boyut Seçin:                                     |
-|  +----------+ +----------+ +----------+           |
-|  |   1:1    | |  1.91:1  | |   9:16   |          |
-|  | Instagram| | Facebook | |  Story   |          |
-|  |  [Icon]  | |  [Icon]  | |  [Icon]  |          |
-|  +----------+ +----------+ +----------+           |
-+--------------------------------------------------+
++------------------------------------------------------------------+
+|  [Globe Icon] Website                    [Edit website] Button    |
++------------------------------------------------------------------+
+|  [Dashboard]  [Blog]  [Domain]  [Settings]                       |
++------------------------------------------------------------------+
+|  reskodis.openlucius.com   [• Unpublished/Published Badge]       |
++------------------------------------------------------------------+
+|                                                                   |
+|  [Analytics Warning Banner - if unpublished]                      |
+|                                                                   |
+|  +---------------------------------------------------+  +-------+|
+|  |  Visits per day Chart (Area Chart)                |  | Most  ||
+|  |  [30 days dropdown]                               |  | viewed||
+|  |                                                   |  | pages ||
+|  +---------------------------------------------------+  +-------+|
+|                                                                   |
+|  +-------------+ +-------------+ +-------------+                  |
+|  | Online Users| | Unique      | | Page Views  |                  |
+|  | 32          | | Visitors    | | 3,243       |                  |
+|  |             | | 253         | |             |                  |
+|  +-------------+ +-------------+ +-------------+                  |
+|                                                                   |
+|  +-------------+ +-------------+ +-------------+                  |
+|  | Device Views| | Weekly      | | Most        |                  |
+|  | Pie Chart   | | Keyword     | | Scrolled    |                  |
+|  |             | | Ranking     | | Pages       |                  |
+|  +-------------+ +-------------+ +-------------+                  |
+|                                                                   |
+|  +---------------------------------------------------+            |
+|  | Peak Hours (Bar Chart - 24 hours)                 |            |
+|  +---------------------------------------------------+            |
++------------------------------------------------------------------+
 ```
 
-- Boyut seçici SADECE "social" tipi seçildiğinde görünür
-- Varsayılan seçim: Instagram 1:1
-- ImagePreview bileşeni seçilen boyuta göre aspect ratio'yu ayarlar
-
 ---
 
-## Teknik Değişiklikler
+## Yeni Dosyalar
 
-### 1. Yeni Bileşen: `AspectRatioSelector.tsx`
+### 1. `src/pages/WebsiteDashboard.tsx`
 
-**Dosya:** `src/components/studio/AspectRatioSelector.tsx`
-
-Sosyal medya boyut seçeneklerini gösteren toggle group bileşeni:
+Ana sayfa komponenti - tab yapısı ile 4 sekme yönetimi:
 
 ```typescript
-export type AspectRatioOption = 'instagram-square' | 'facebook-landscape' | 'story' | 'twitter' | 'pinterest';
+interface WebsiteDashboardProps {}
 
-interface AspectRatioSelectorProps {
-  selectedRatio: AspectRatioOption;
-  onSelectRatio: (ratio: AspectRatioOption) => void;
-}
-
-const aspectRatios = [
-  { id: 'instagram-square', label: '1:1', name: 'Instagram', width: 1080, height: 1080 },
-  { id: 'facebook-landscape', label: '1.91:1', name: 'Facebook', width: 1200, height: 628 },
-  { id: 'story', label: '9:16', name: 'Story', width: 1080, height: 1920 },
-  { id: 'twitter', label: '16:9', name: 'Twitter/X', width: 1200, height: 675 },
-  { id: 'pinterest', label: '2:3', name: 'Pinterest', width: 1000, height: 1500 },
-];
+// Tabs: dashboard, blog, domain, settings
+// State: activeTab, project data
+// Components: WebsiteDashboardTab, BlogTab, DomainTab, SettingsTab
 ```
 
-Bileşen özellikleri:
-- ToggleGroup kullanarak tek seçimli butonlar
-- Her seçenek için platform ikonu ve boyut etiketi
-- Seçili durumu görsel olarak belirtme
+### 2. `src/components/website-dashboard/WebsiteDashboardTab.tsx`
+
+Dashboard sekmesi - tüm analitik kartları:
+
+- **Header**: Subdomain + publish status badge
+- **Warning Banner**: "Your website analytics will appear here once you publish"
+- **Visits Chart**: 30 günlük area chart (recharts)
+- **Most Viewed Pages**: Sayfa listesi + görüntülenme sayısı
+- **Stat Cards**: Online users, Unique visitors, Page views
+- **Device Views**: Pie chart (desktop/mobile)
+- **Peak Hours**: 24 saatlik bar chart
+
+### 3. `src/components/website-dashboard/BlogTab.tsx`
+
+Blog yönetimi sekmesi:
+
+- Blog yazısı listesi
+- "Add Blog Post" butonu
+- Düzenleme/silme aksiyonları
+
+### 4. `src/components/website-dashboard/DomainTab.tsx`
+
+Domain yönetimi sekmesi:
+
+- Subdomain görüntüleme
+- Custom domain ekleme
+- DNS ayarları
+
+### 5. `src/components/website-dashboard/SettingsTab.tsx`
+
+Ayarlar sekmesi:
+
+- Site meta bilgileri
+- Favicon
+- SEO ayarları
 
 ---
 
-### 2. Studio.tsx Güncellemesi
+## Bileşen Detayları
 
-**Değişiklikler:**
+### WebsiteDashboardTab - Analitik Kartları
 
-1. Yeni state ekle:
-   ```typescript
-   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>('instagram-square');
-   ```
+| Kart | Veri Kaynağı | Görsel |
+|------|-------------|--------|
+| Visits per day | analytics_events (grouped by date) | AreaChart |
+| Most viewed pages | analytics_events (grouped by page_path) | List with progress bars |
+| Online users | Simulated / realtime | Number |
+| Unique visitors | analytics_events (distinct visitor_id) | Number |
+| Page views | analytics_events (count) | Number |
+| Device views | analytics_events (device_type) | PieChart |
+| Peak hours | analytics_events (grouped by hour) | BarChart |
+| Most scrolled pages | analytics_events (page_path) | List with progress bars |
 
-2. AspectRatioSelector'ı import et ve ImageTypeCards altına ekle (sadece social seçiliyken görünür):
-   ```tsx
-   {selectedType === 'social' && (
-     <AspectRatioSelector
-       selectedRatio={selectedAspectRatio}
-       onSelectRatio={setSelectedAspectRatio}
-     />
-   )}
-   ```
+### Sample Data Badge
 
-3. `handleGenerate` fonksiyonuna aspect ratio bilgisini ekle:
-   ```typescript
-   const { data, error } = await supabase.functions.invoke('studio-generate-image', {
-     body: {
-       type: selectedType,
-       prompt,
-       imageId: imageRecord.id,
-       aspectRatio: selectedType === 'social' ? selectedAspectRatio : undefined,
-     }
-   });
-   ```
-
-4. Metadata'ya aspect ratio kaydet:
-   ```typescript
-   metadata: { 
-     style: 'modern',
-     aspectRatio: selectedType === 'social' ? selectedAspectRatio : undefined 
-   }
-   ```
+Yayınlanmamış siteler için tüm kartlarda "Sample Data" badge'i gösterilecek. Gerçek veri yoksa demo veriler gösterilecek.
 
 ---
 
-### 3. Edge Function Güncellemesi
+## Routing Değişikliği
 
-**Dosya:** `supabase/functions/studio-generate-image/index.ts`
+### App.tsx
 
-1. Request interface'ine aspect ratio ekle:
-   ```typescript
-   interface GenerateRequest {
-     // ... mevcut alanlar
-     aspectRatio?: 'instagram-square' | 'facebook-landscape' | 'story' | 'twitter' | 'pinterest';
-   }
-   ```
-
-2. `getImageDimensions` fonksiyonunu güncelle:
-   ```typescript
-   function getImageDimensions(type: string, aspectRatio?: string): { width: number; height: number } {
-     if (type === 'social' && aspectRatio) {
-       switch (aspectRatio) {
-         case 'instagram-square': return { width: 1080, height: 1080 };
-         case 'facebook-landscape': return { width: 1200, height: 628 };
-         case 'story': return { width: 1080, height: 1920 };
-         case 'twitter': return { width: 1200, height: 675 };
-         case 'pinterest': return { width: 1000, height: 1500 };
-       }
-     }
-     // Mevcut default logic...
-   }
-   ```
-
-3. `buildImagePrompt` fonksiyonunu güncelle (aspect ratio bilgisini prompt'a ekle):
-   ```typescript
-   case 'social':
-     const ratioLabel = aspectRatio ? aspectRatioLabels[aspectRatio] : '1:1';
-     return `Social media post graphic, ${ratioLabel} aspect ratio, modern design...`;
-   ```
-
----
-
-### 4. ImagePreview Güncellemesi
-
-**Dosya:** `src/components/studio/ImagePreview.tsx`
-
-Aspect ratio'ya göre preview alanının boyutunu dinamik olarak ayarla:
+Yeni route eklenecek:
 
 ```typescript
-// Metadata'dan aspect ratio'yu oku
-const aspectRatioClass = useMemo(() => {
-  const ratio = image?.metadata?.aspectRatio;
-  switch (ratio) {
-    case 'story': return 'aspect-[9/16] max-w-xs';
-    case 'facebook-landscape': return 'aspect-[1.91/1] max-w-2xl';
-    case 'twitter': return 'aspect-[16/9] max-w-2xl';
-    case 'pinterest': return 'aspect-[2/3] max-w-sm';
-    default: return 'aspect-square max-w-lg';
+<Route
+  path="/project/:id/website"
+  element={
+    <ProtectedRoute>
+      <WebsiteDashboard />
+    </ProtectedRoute>
   }
-}, [image?.metadata?.aspectRatio]);
+/>
+```
+
+### DashboardSidebar.tsx
+
+"Website" linki güncellenecek:
+
+```typescript
+{ 
+  title: 'Website', 
+  url: activeProjectId ? `/project/${activeProjectId}/website` : '/dashboard', 
+  icon: Globe,
+  disabled: !activeProjectId 
+}
 ```
 
 ---
 
-## Değiştirilecek Dosyalar
+## Teknik Detaylar
+
+### useAnalytics Hook Genişletilecek
+
+Yeni veri noktaları eklenecek:
+
+```typescript
+interface AnalyticsData {
+  // Mevcut
+  totalViews: number;
+  viewsLast7Days: number;
+  uniqueVisitors: number;
+  deviceBreakdown: { mobile: number; desktop: number };
+  viewsOverTime: { date: string; views: number }[];
+  
+  // Yeni
+  pageViews: { path: string; views: number }[];
+  hourlyViews: { hour: number; views: number }[];
+}
+```
+
+### Sample Data Generator
+
+Yayınlanmamış veya veri olmayan projeler için demo veriler:
+
+```typescript
+function generateSampleData(): AnalyticsData {
+  return {
+    totalViews: 3243,
+    viewsLast7Days: 253,
+    uniqueVisitors: 253,
+    onlineUsers: 32,
+    deviceBreakdown: { mobile: 2325, desktop: 3325 },
+    // ... diğer örnek veriler
+  };
+}
+```
+
+---
+
+## UI Bileşenleri
+
+### Kullanılacak Mevcut Bileşenler
+
+- `Card`, `CardContent`, `CardHeader`, `CardTitle`
+- `Badge`
+- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
+- `Button`
+- Recharts: `AreaChart`, `PieChart`, `BarChart`
+
+### Yeni Küçük Bileşenler
+
+- `StatCard`: Büyük sayı + alt açıklama
+- `PageViewsList`: Progress bar'lı sayfa listesi
+- `SampleDataBadge`: "Sample Data" badge overlay
+
+---
+
+## Değiştirilecek Dosyalar Özeti
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/studio/AspectRatioSelector.tsx` | Yeni dosya oluştur |
-| `src/pages/Studio.tsx` | State ve AspectRatioSelector entegrasyonu |
-| `supabase/functions/studio-generate-image/index.ts` | Aspect ratio desteği |
-| `src/components/studio/ImagePreview.tsx` | Dinamik preview boyutu |
+| `src/pages/WebsiteDashboard.tsx` | Yeni dosya - ana sayfa |
+| `src/components/website-dashboard/WebsiteDashboardTab.tsx` | Yeni dosya - analitik sekmesi |
+| `src/components/website-dashboard/BlogTab.tsx` | Yeni dosya - blog sekmesi |
+| `src/components/website-dashboard/DomainTab.tsx` | Yeni dosya - domain sekmesi |
+| `src/components/website-dashboard/SettingsTab.tsx` | Yeni dosya - ayarlar sekmesi |
+| `src/hooks/useAnalytics.ts` | Genişletme - yeni veri noktaları |
+| `src/App.tsx` | Route ekleme |
+| `src/components/dashboard/DashboardSidebar.tsx` | Link güncelleme |
 
 ---
 
-## Görsel Tasarım
+## Görsel Tasarım Notları
 
-AspectRatioSelector bileşeni için tasarım:
-
-- Yatay scroll ile mobilde kullanılabilir
-- Her seçenek için:
-  - Oran önizleme ikonu (kare, yatay, dikey şekiller)
-  - Platform adı (Instagram, Facebook, vb.)
-  - Boyut etiketi (1:1, 1.91:1, vb.)
-- Seçili durumda primary renk ve border vurgusu
+- Durable.co'nun minimalist beyaz arka planlı tasarımı
+- Mor/lavanta tonlarında grafikler (primary renk)
+- "Sample Data" badge'leri sarı arka plan üzerinde siyah metin
+- Kartlar arasında yeterli boşluk (gap-6)
+- Responsive: mobilde tek sütun, desktop'ta grid
 
