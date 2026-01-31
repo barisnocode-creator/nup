@@ -62,6 +62,54 @@ export type Database = {
           },
         ]
       }
+      custom_domains: {
+        Row: {
+          created_at: string
+          domain: string
+          id: string
+          is_primary: boolean
+          project_id: string
+          status: string
+          verification_token: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain: string
+          id?: string
+          is_primary?: boolean
+          project_id: string
+          status?: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain?: string
+          id?: string
+          is_primary?: boolean
+          project_id?: string
+          status?: string
+          verification_token?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_domains_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_domains_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           created_at: string
@@ -126,28 +174,6 @@ export type Database = {
           published_at: string | null
           subdomain: string | null
           template_id: string | null
-        }
-        Insert: {
-          custom_domain?: string | null
-          generated_content?: Json | null
-          id?: string | null
-          is_published?: boolean | null
-          name?: string | null
-          profession?: string | null
-          published_at?: string | null
-          subdomain?: string | null
-          template_id?: string | null
-        }
-        Update: {
-          custom_domain?: string | null
-          generated_content?: Json | null
-          id?: string | null
-          is_published?: boolean | null
-          name?: string | null
-          profession?: string | null
-          published_at?: string | null
-          subdomain?: string | null
-          template_id?: string | null
         }
         Relationships: []
       }
