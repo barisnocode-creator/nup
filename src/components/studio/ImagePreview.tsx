@@ -39,8 +39,25 @@ export function ImagePreview({
   onEdit,
   onApplyToWebsite 
 }: ImagePreviewProps) {
+  // ALL HOOKS MUST BE AT THE TOP - before any conditional returns
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editInstruction, setEditInstruction] = useState('');
+
+  // useMemo hook MUST be called before conditional returns
+  const aspectRatioClass = useMemo(() => {
+    const ratio = (image?.metadata as Record<string, unknown>)?.aspectRatio;
+    switch (ratio) {
+      case 'story': return 'aspect-[9/16] max-w-xs';
+      case 'facebook-landscape': return 'aspect-[1.91/1] max-w-2xl';
+      case 'twitter': return 'aspect-video max-w-2xl';
+      case 'pinterest': return 'aspect-[2/3] max-w-sm';
+      case 'instagram-square': return 'aspect-square max-w-lg';
+      default: return 'aspect-square max-w-lg';
+    }
+  }, [image?.metadata]);
+
+  // Derived values (not hooks, safe anywhere but keeping with hooks for clarity)
+  const isFavicon = image?.type === 'favicon';
 
   const handleEditSubmit = () => {
     if (editInstruction.trim()) {
@@ -102,22 +119,6 @@ export function ImagePreview({
       </Card>
     );
   }
-
-  // Determine aspect ratio class based on metadata
-  const aspectRatioClass = useMemo(() => {
-    const ratio = (image?.metadata as Record<string, unknown>)?.aspectRatio;
-    switch (ratio) {
-      case 'story': return 'aspect-[9/16] max-w-xs';
-      case 'facebook-landscape': return 'aspect-[1.91/1] max-w-2xl';
-      case 'twitter': return 'aspect-video max-w-2xl';
-      case 'pinterest': return 'aspect-[2/3] max-w-sm';
-      case 'instagram-square': return 'aspect-square max-w-lg';
-      default: return 'aspect-square max-w-lg';
-    }
-  }, [image?.metadata]);
-
-  // Check if it's a favicon type
-  const isFavicon = image?.type === 'favicon';
 
   // Success state with image
   return (
