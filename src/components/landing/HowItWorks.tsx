@@ -4,8 +4,8 @@ const steps = [
   {
     icon: UserCircle,
     step: '1',
-    title: 'Mesleğinizi Seçin',
-    description: 'Doktor, diş hekimi, eczacı veya diğer sağlık profesyoneli olarak başlayın.',
+    title: 'İşletmenizi Tanıtın',
+    description: 'AI ile kısa bir sohbet yapın, işletmenizi tanıyalım.',
   },
   {
     icon: FileEdit,

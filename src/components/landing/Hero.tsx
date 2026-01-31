@@ -27,13 +27,13 @@ export function Hero() {
           <div className="max-w-4xl mx-auto text-center">
             {/* Headline */}
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl font-medium leading-tight mb-6 text-foreground animate-fade-in">
-              Sağlık web sitenizi
+              Web sitenizi
               <span className="block text-primary">AI ile oluşturun</span>
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              Doktorlar, diş hekimleri ve eczacılar için profesyonel web siteleri.
+              Her sektör için profesyonel web siteleri.
               Kodlama gerektirmez. 30 saniyede başlayın.
             </p>
 
@@ -42,7 +42,7 @@ export function Hero() {
               <div className="flex flex-col sm:flex-row gap-3 p-2 bg-secondary rounded-lg border border-border">
                 <Input
                   type="text"
-                  placeholder="Ne tür bir klinik/muayenehane?"
+                  placeholder="Ne tür bir işletme/proje?"
                   value={clinicType}
                   onChange={(e) => setClinicType(e.target.value)}
                   className="flex-1 h-12 border-0 bg-background text-base"
@@ -68,7 +68,7 @@ export function Hero() {
               </div>
               <div className="h-4 w-px bg-border" />
               <span className="text-sm text-muted-foreground">
-                1000+ Sağlık Profesyoneli Güveniyor
+                1000+ İşletme Güveniyor
               </span>
             </div>
           </div>

@@ -8,8 +8,7 @@ export function Features() {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="font-serif text-3xl md:text-4xl font-medium mb-4 text-foreground">
-            Sağlık Sektörü İçin
-            <span className="text-primary"> #1 AI Web Sitesi Oluşturucu</span>
+            <span className="text-primary">#1 AI Web Sitesi Oluşturucu</span>
           </h2>
         </div>
 

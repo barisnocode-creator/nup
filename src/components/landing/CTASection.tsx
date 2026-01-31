@@ -30,7 +30,7 @@ export function CTASection() {
               Bugün profesyonel web sitenizi oluşturun
             </h2>
             <p className="text-lg text-background/70 mb-10">
-              Binlerce sağlık profesyoneli gibi siz de AI ile web sitenizi oluşturun.
+              Binlerce işletme gibi siz de AI ile web sitenizi oluşturun.
             </p>
 
             {/* Input CTA */}
@@ -38,7 +38,7 @@ export function CTASection() {
               <div className="flex flex-col sm:flex-row gap-3 p-2 bg-background/10 rounded-lg border border-background/20">
                 <Input
                   type="text"
-                  placeholder="Ne tür bir klinik/muayenehane?"
+                  placeholder="Ne tür bir işletme/proje?"
                   value={clinicType}
                   onChange={(e) => setClinicType(e.target.value)}
                   className="flex-1 h-12 border-0 bg-background text-foreground text-base"
