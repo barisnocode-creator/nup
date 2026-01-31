@@ -1,0 +1,1 @@
+export { HeroBold } from './HeroBold';

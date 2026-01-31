@@ -13,6 +13,7 @@ import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 import { EditorSidebar, type EditorSelection, type ImageData, type HeroVariant } from '@/components/website-preview/EditorSidebar';
 import { CustomizeSidebar } from '@/components/website-preview/CustomizeSidebar';
 import { ChangeTemplateModal } from '@/components/website-preview/ChangeTemplateModal';
+import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePreviewBanner';
 import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
 import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
 import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSidebar';
@@ -20,6 +21,7 @@ import { GeneratedContent } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getTemplateConfig } from '@/templates';
 
 interface Project {
   id: string;
@@ -72,6 +74,11 @@ export default function Project() {
   const [addContentSidebarOpen, setAddContentSidebarOpen] = useState(false);
   const [homeEditorSidebarOpen, setHomeEditorSidebarOpen] = useState(false);
   const [selectedPageForSettings, setSelectedPageForSettings] = useState<string>('home');
+
+  // Template Preview State
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [originalTemplateId, setOriginalTemplateId] = useState<string | null>(null);
+  const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -589,10 +596,11 @@ export default function Project() {
     await generateWebsite(id);
   }, [id, toast]);
 
-  // Handle template change
+  // Handle template change (direct save - used when "Use this template" is clicked)
   const handleTemplateChange = useCallback(async (templateId: string) => {
     if (!id) return;
     
+    setIsApplyingTemplate(true);
     try {
       const { error } = await supabase
         .from('projects')
@@ -603,6 +611,8 @@ export default function Project() {
 
       setProject(prev => prev ? { ...prev, template_id: templateId } : null);
       setChangeTemplateModalOpen(false);
+      setPreviewTemplateId(null);
+      setOriginalTemplateId(null);
       
       toast({
         title: 'Template changed',
@@ -615,17 +625,45 @@ export default function Project() {
         description: 'Could not change template. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsApplyingTemplate(false);
     }
   }, [id, toast]);
 
   // Handle template preview (temporary change without saving)
   const handleTemplatePreview = useCallback((templateId: string) => {
-    setProject(prev => prev ? { ...prev, template_id: templateId } : null);
+    // Save the original template ID if not already saved
+    if (!originalTemplateId) {
+      setOriginalTemplateId(project?.template_id || 'temp1');
+    }
+    setPreviewTemplateId(templateId);
+    setChangeTemplateModalOpen(false);
     toast({
       title: 'Preview mode',
-      description: 'Previewing template. Changes not saved yet.',
+      description: 'Previewing template. Use the banner to apply or cancel.',
+    });
+  }, [originalTemplateId, project?.template_id, toast]);
+
+  // Handle apply template from preview banner
+  const handleApplyPreviewTemplate = useCallback(async () => {
+    if (!previewTemplateId) return;
+    await handleTemplateChange(previewTemplateId);
+  }, [previewTemplateId, handleTemplateChange]);
+
+  // Handle cancel preview
+  const handleCancelPreview = useCallback(() => {
+    setPreviewTemplateId(null);
+    setOriginalTemplateId(null);
+    toast({
+      title: 'Preview cancelled',
+      description: 'Returned to your original template.',
     });
   }, [toast]);
+
+  // Get the active template ID (preview or actual)
+  const activeTemplateId = previewTemplateId || project?.template_id || 'temp1';
+  const isPreviewMode = previewTemplateId !== null;
+  const previewTemplateName = previewTemplateId ? getTemplateConfig(previewTemplateId)?.name || 'Unknown' : '';
 
   // Handle edit hero background from Customize sidebar
   const handleEditHeroBackground = useCallback(() => {
@@ -815,8 +853,18 @@ export default function Project() {
 
   return (
     <div className="relative min-h-screen">
+      {/* Template Preview Banner */}
+      {isPreviewMode && (
+        <TemplatePreviewBanner
+          templateName={previewTemplateName}
+          onApply={handleApplyPreviewTemplate}
+          onCancel={handleCancelPreview}
+          isApplying={isApplyingTemplate}
+        />
+      )}
+
       {/* Durable.co Style Editor Toolbar for authenticated users */}
-      {isAuthenticated && (
+      {isAuthenticated && !isPreviewMode && (
         <EditorToolbar
           projectName={project.name}
           currentSection={currentSection}
@@ -834,13 +882,13 @@ export default function Project() {
       )}
 
       {/* Website Preview */}
-      <div className={`${isAuthenticated ? 'pt-14' : ''} ${!isAuthenticated ? 'overflow-hidden h-screen pointer-events-none' : ''}`}>
+      <div className={`${isAuthenticated && !isPreviewMode ? 'pt-14' : ''} ${!isAuthenticated ? 'overflow-hidden h-screen pointer-events-none' : ''}`}>
         {project.generated_content && (
           <WebsitePreview 
             content={project.generated_content} 
             colorPreference={colorPreference}
-            templateId={project.template_id || 'temp1'}
-            isEditable={isAuthenticated}
+            templateId={activeTemplateId}
+            isEditable={isAuthenticated && !isPreviewMode}
             onFieldEdit={handleFieldEdit}
             editorSelection={editorSelection}
             onEditorSelect={handleEditorSelect}
