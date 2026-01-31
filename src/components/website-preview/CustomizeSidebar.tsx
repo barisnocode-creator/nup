@@ -42,9 +42,10 @@ interface CustomizeSidebarProps {
   onRegenerateWebsite?: () => void;
   isRegenerating?: boolean;
   onEditBackground?: () => void;
+  onChangeTemplate?: () => void;
 }
 
-type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 'animations' | 'browser-icon' | 'widgets' | 'keywords' | 'background' | null;
+type SubPanel = 'colors' | 'fonts' | 'buttons' | 'corners' | 'animations' | 'browser-icon' | 'widgets' | 'keywords' | 'background' | 'template' | null;
 
 const colorPresets = [
   { id: 'ocean', name: 'Ocean', primary: '#0ea5e9', secondary: '#06b6d4', accent: '#14b8a6' },
@@ -80,10 +81,12 @@ export function CustomizeSidebar({
   onRegenerateWebsite,
   isRegenerating = false,
   onEditBackground,
+  onChangeTemplate,
 }: CustomizeSidebarProps) {
   const [activePanel, setActivePanel] = useState<SubPanel>(null);
 
   const menuItems = [
+    { id: 'template' as const, icon: LayoutGrid, label: 'Change Template', isAction: true },
     { id: 'colors' as const, icon: Palette, label: 'Colors' },
     { id: 'fonts' as const, icon: Type, label: 'Fonts' },
     { id: 'background' as const, icon: Image, label: 'Background Image', isAction: true },
@@ -91,7 +94,7 @@ export function CustomizeSidebar({
     { id: 'corners' as const, icon: Square, label: 'Corners' },
     { id: 'animations' as const, icon: Zap, label: 'Animations' },
     { id: 'browser-icon' as const, icon: Image, label: 'Browser icon' },
-    { id: 'widgets' as const, icon: LayoutGrid, label: 'Manage widgets' },
+    { id: 'widgets' as const, icon: Sparkles, label: 'Manage widgets' },
   ];
 
   const handleClose = () => {
@@ -419,6 +422,9 @@ export function CustomizeSidebar({
               onClick={() => {
                 if (item.isAction && item.id === 'background') {
                   onEditBackground?.();
+                  handleClose();
+                } else if (item.isAction && item.id === 'template') {
+                  onChangeTemplate?.();
                   handleClose();
                 } else {
                   setActivePanel(item.id);

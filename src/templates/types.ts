@@ -6,9 +6,10 @@ export interface TemplateConfig {
   id: string;
   name: string;
   description: string;
+  category: string;
+  preview: string;
   supportedProfessions: string[];
   supportedTones: string[];
-  preview?: string;
 }
 
 export interface TemplateProps {

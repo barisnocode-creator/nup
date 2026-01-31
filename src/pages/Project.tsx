@@ -12,6 +12,7 @@ import { PublishModal } from '@/components/website-preview/PublishModal';
 import { UpgradeModal } from '@/components/website-preview/UpgradeModal';
 import { EditorSidebar, type EditorSelection, type ImageData, type HeroVariant } from '@/components/website-preview/EditorSidebar';
 import { CustomizeSidebar } from '@/components/website-preview/CustomizeSidebar';
+import { ChangeTemplateModal } from '@/components/website-preview/ChangeTemplateModal';
 import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
 import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
 import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSidebar';
@@ -66,6 +67,7 @@ export default function Project() {
 
   // New Sidebar States
   const [customizeSidebarOpen, setCustomizeSidebarOpen] = useState(false);
+  const [changeTemplateModalOpen, setChangeTemplateModalOpen] = useState(false);
   const [pageSettingsSidebarOpen, setPageSettingsSidebarOpen] = useState(false);
   const [addContentSidebarOpen, setAddContentSidebarOpen] = useState(false);
   const [homeEditorSidebarOpen, setHomeEditorSidebarOpen] = useState(false);
@@ -587,6 +589,44 @@ export default function Project() {
     await generateWebsite(id);
   }, [id, toast]);
 
+  // Handle template change
+  const handleTemplateChange = useCallback(async (templateId: string) => {
+    if (!id) return;
+    
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ template_id: templateId })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setProject(prev => prev ? { ...prev, template_id: templateId } : null);
+      setChangeTemplateModalOpen(false);
+      
+      toast({
+        title: 'Template changed',
+        description: 'Your website is now using the new template.',
+      });
+    } catch (err) {
+      console.error('Template change error:', err);
+      toast({
+        title: 'Error',
+        description: 'Could not change template. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [id, toast]);
+
+  // Handle template preview (temporary change without saving)
+  const handleTemplatePreview = useCallback((templateId: string) => {
+    setProject(prev => prev ? { ...prev, template_id: templateId } : null);
+    toast({
+      title: 'Preview mode',
+      description: 'Previewing template. Changes not saved yet.',
+    });
+  }, [toast]);
+
   // Handle edit hero background from Customize sidebar
   const handleEditHeroBackground = useCallback(() => {
     const heroImage = project?.generated_content?.images?.heroHome || '';
@@ -920,6 +960,16 @@ export default function Project() {
         onRegenerateText={handleRegenerateAllText}
         onRegenerateWebsite={handleRegenerateWebsite}
         onEditBackground={handleEditHeroBackground}
+        onChangeTemplate={() => setChangeTemplateModalOpen(true)}
+      />
+
+      {/* Change Template Modal */}
+      <ChangeTemplateModal
+        isOpen={changeTemplateModalOpen}
+        onClose={() => setChangeTemplateModalOpen(false)}
+        currentTemplateId={project.template_id || 'temp1'}
+        onSelectTemplate={handleTemplateChange}
+        onPreview={handleTemplatePreview}
       />
 
       {/* Page Settings Sidebar */}
