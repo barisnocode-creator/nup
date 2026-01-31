@@ -1,12 +1,15 @@
 import { Hono } from 'https://deno.land/x/hono@v3.12.0/mod.ts';
+import { cors } from 'https://deno.land/x/hono@v3.12.0/middleware.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const app = new Hono();
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS middleware - tüm isteklere otomatik uygulanır
+app.use('*', cors({
+  origin: '*',
+  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
+  allowMethods: ['POST', 'OPTIONS'],
+}));
 
 interface GenerateRequest {
   type: 'logo' | 'social' | 'poster' | 'creative';
@@ -59,9 +62,7 @@ function getImageDimensions(type: string): { width: number; height: number } {
   }
 }
 
-app.options('*', (c) => {
-  return new Response('ok', { headers: corsHeaders });
-});
+// OPTIONS requests handled by CORS middleware
 
 app.post('/', async (c) => {
   try {
@@ -204,24 +205,18 @@ app.post('/', async (c) => {
       throw new Error('Failed to update image record');
     }
 
-    return new Response(JSON.stringify({
+    return c.json({
       success: true,
       imageUrl,
       imageId,
-    }), { 
-      status: 200, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
 
   } catch (error) {
     console.error('Error in studio-generate-image:', error);
-    return new Response(JSON.stringify({
+    return c.json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-    }), { 
-      status: 500, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-    });
+    }, 500);
   }
 });
 
