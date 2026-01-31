@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { RefreshCw, X, Check, Eye, LayoutGrid } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { RefreshCw, Check, Eye, LayoutGrid } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { getAllTemplates, type TemplateConfig } from '@/templates';
+import { getAllTemplates } from '@/templates';
 import { cn } from '@/lib/utils';
 
 interface ChangeTemplateModalProps {
@@ -31,6 +31,13 @@ export function ChangeTemplateModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [shuffleKey, setShuffleKey] = useState(0);
 
+  // Reset selection when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedTemplateId(null);
+    }
+  }, [isOpen]);
+
   // Get all templates and shuffle them on regenerate
   const templates = useMemo(() => {
     const allTemplates = getAllTemplates();
@@ -43,20 +50,24 @@ export function ChangeTemplateModal({
 
   const handleRegenerate = () => {
     setShuffleKey(prev => prev + 1);
+    setSelectedTemplateId(null);
   };
 
   const handleTemplateClick = (templateId: string) => {
+    // Don't allow selecting current template
+    if (templateId === currentTemplateId) return;
     setSelectedTemplateId(templateId === selectedTemplateId ? null : templateId);
   };
 
   const handlePreview = (templateId: string) => {
+    console.log('Preview template:', templateId);
     onPreview(templateId);
     onClose();
   };
 
   const handleSelect = (templateId: string) => {
+    console.log('Select template:', templateId);
     onSelectTemplate(templateId);
-    onClose();
   };
 
   return (
@@ -77,7 +88,7 @@ export function ChangeTemplateModal({
               className="gap-2"
             >
               <RefreshCw className="w-4 h-4" />
-              Regenerate
+              Shuffle
             </Button>
           </div>
         </DialogHeader>
@@ -93,8 +104,9 @@ export function ChangeTemplateModal({
                 <div
                   key={template.id}
                   className={cn(
-                    'group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer',
-                    isCurrentTemplate && 'ring-2 ring-primary ring-offset-2',
+                    'group relative rounded-lg border-2 overflow-hidden transition-all',
+                    isCurrentTemplate && 'ring-2 ring-primary ring-offset-2 cursor-default',
+                    !isCurrentTemplate && 'cursor-pointer',
                     isSelected && !isCurrentTemplate && 'border-primary',
                     !isSelected && !isCurrentTemplate && 'border-border hover:border-muted-foreground/50'
                   )}
@@ -103,9 +115,9 @@ export function ChangeTemplateModal({
                   {/* Current Template Badge */}
                   {isCurrentTemplate && (
                     <div className="absolute top-2 left-2 z-10">
-                      <Badge variant="secondary" className="gap-1 bg-primary text-primary-foreground">
+                      <Badge className="gap-1 bg-primary text-primary-foreground">
                         <Check className="w-3 h-3" />
-                        Your template
+                        Current
                       </Badge>
                     </div>
                   )}
@@ -116,36 +128,44 @@ export function ChangeTemplateModal({
                       src={template.preview}
                       alt={template.name}
                       className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      onError={(e) => {
+                        // Fallback for missing images
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=500&fit=crop';
+                      }}
                     />
                     
-                    {/* Hover Overlay with Actions */}
-                    {isSelected && !isCurrentTemplate && (
-                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePreview(template.id);
-                          }}
-                          className="gap-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Preview
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelect(template.id);
-                          }}
-                          className="gap-2"
-                        >
-                          <LayoutGrid className="w-4 h-4" />
-                          Use this template
-                        </Button>
-                      </div>
-                    )}
+                    {/* Hover Overlay with Actions - show on hover or when selected */}
+                    <div 
+                      className={cn(
+                        'absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 transition-opacity',
+                        isSelected && !isCurrentTemplate ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                        isCurrentTemplate && 'hidden'
+                      )}
+                    >
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreview(template.id);
+                        }}
+                        className="gap-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Preview
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelect(template.id);
+                        }}
+                        className="gap-2"
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                        Use this template
+                      </Button>
+                    </div>
                   </AspectRatio>
 
                   {/* Template Info */}
