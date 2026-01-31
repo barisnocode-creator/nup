@@ -153,7 +153,15 @@ export function DomainSettingsModal({ isOpen, onClose, projectId }: DomainSettin
             Özel Domain Bağlantısı
           </DialogTitle>
           <DialogDescription className="text-base">
-            Kendi alan adınızı bağlayarak profesyonel bir görünüm elde edin
+            Kendi alan adınızı bağlayarak profesyonel bir görünüm elde edin.{' '}
+            <a 
+              href="https://github.com/user/repo/blob/main/docs/custom-domain-guide.md" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              Yardım rehberini inceleyin →
+            </a>
           </DialogDescription>
         </DialogHeader>
 
