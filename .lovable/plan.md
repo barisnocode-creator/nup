@@ -1,95 +1,82 @@
 
-# CORS Hatası Düzeltme - Studio Edge Function
+
+# Studio Edge Function - 404 Hatası Düzeltmesi
 
 ## Sorun Analizi
 
-Edge function'da `c.json()` metodu kullanıldığında CORS başlıkları eklenmiyor. Bu nedenle tarayıcı istekleri CORS politikası nedeniyle bloklanıyor.
+Edge function `404 Not Found` hatası döndürüyor çünkü Hono framework `app.post('/')` sadece tam olarak `/` path'ine cevap veriyor. Supabase Edge Function'ları farklı path yapısı kullanıyor.
 
-**Hata mesajı:**
-```
-Access to fetch at 'https://...supabase.co/functions/v1/studio-generate-image' 
-has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header 
-is present on the requested resource.
-```
+**Kanıt:**
+- Loglarda tüm POST istekleri 404 dönüyor
+- Function boot ediyor ama hiç POST handler çalışmıyor
+- Diğer çalışan edge function'lar `serve` pattern kullanıyor, Hono değil
 
 ---
 
 ## Çözüm
 
-`supabase/functions/studio-generate-image/index.ts` dosyasında Hono middleware kullanarak tüm yanıtlara CORS başlıkları eklenecek.
+Edge function'ı Hono yerine standart `serve` pattern'ına çevirmek. Bu, projede kullanılan diğer edge function'larla tutarlı olacak.
 
-### Değişiklikler:
+---
 
-**1. Hono CORS Middleware Ekleme**
+## Değişiklik Detayları
 
+### Dosya: `supabase/functions/studio-generate-image/index.ts`
+
+**Değişiklikler:**
+1. Hono importlarını kaldır
+2. Standart `serve` fonksiyonu kullan
+3. CORS headers'ı manuel handle et
+4. Request handling'i standart pattern'a çevir
+
+**Önceki yapı (Hono):**
 ```typescript
-import { cors } from 'https://deno.land/x/hono@v3.12.0/middleware.ts';
-
+import { Hono } from '...';
 const app = new Hono();
-
-// CORS middleware - tüm isteklere uygulanır
-app.use('*', cors({
-  origin: '*',
-  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
-  allowMethods: ['POST', 'OPTIONS'],
-}));
+app.post('/', async (c) => { ... });
+Deno.serve(app.fetch);
 ```
 
-**2. Manuel OPTIONS handler kaldırma**
-
-Hono CORS middleware OPTIONS isteklerini otomatik olarak handle eder, bu yüzden manuel OPTIONS handler'a gerek yok.
-
-**3. Yanıtlarda `c.json()` ile CORS**
-
-Hono middleware tüm yanıtlara CORS başlıklarını otomatik ekleyeceğinden, mevcut `c.json()` çağrıları çalışmaya devam edecek.
-
----
-
-## Değiştirilecek Dosya
-
-| Dosya | İşlem |
-|-------|-------|
-| `supabase/functions/studio-generate-image/index.ts` | CORS middleware ekleme |
-
----
-
-## Uygulama Detayı
-
+**Yeni yapı (Standart serve):**
 ```typescript
-// ÖNCE (Satır 1-9):
-import { Hono } from 'https://deno.land/x/hono@v3.12.0/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
-const app = new Hono();
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, ...',
 };
 
-// SONRA:
-import { Hono } from 'https://deno.land/x/hono@v3.12.0/mod.ts';
-import { cors } from 'https://deno.land/x/hono@v3.12.0/middleware.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-
-const app = new Hono();
-
-// CORS middleware - tüm isteklere otomatik uygulanır
-app.use('*', cors({
-  origin: '*',
-  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
-  allowMethods: ['POST', 'OPTIONS'],
-}));
+serve(async (req) => {
+  // OPTIONS handling
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+  
+  // POST handling
+  if (req.method === 'POST') {
+    // ... business logic
+    return new Response(JSON.stringify({ success: true, ... }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
 ```
-
-**Ek olarak:**
-- Satır 62-64'teki manuel `app.options('*', ...)` handler'ı kaldırılacak
-- `c.json()` kullanılan yerlerde CORS başlıkları middleware tarafından otomatik eklenecek
 
 ---
 
-## Test Adımları
+## Yardımcı Fonksiyonlar (Korunacak)
 
-1. Edge function güncellenir ve deploy edilir
-2. Studio sayfasında logo oluşturma tekrar denenir
-3. Görsel başarıyla oluşturulup görüntülenir
+- `buildImagePrompt()` - Tip bazlı prompt oluşturma
+- `getImageDimensions()` - Görsel boyutu hesaplama
+
+Bu fonksiyonlar aynen kalacak, sadece request handling kısmı değişecek.
+
+---
+
+## Test Planı
+
+1. Edge function güncelle ve deploy et
+2. `curl_edge_functions` ile manuel test yap
+3. Browser'da Studio sayfasından logo oluşturmayı test et
+4. Görsel başarıyla oluşturulduğunu doğrula
+
