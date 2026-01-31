@@ -23,6 +23,12 @@ const promptSuggestions: Record<ImageType, string[]> = {
     'Yaratıcı ve renkli logo, dinamik görünüm',
     'Vintage tarzı, klasik logo tasarımı',
   ],
+  favicon: [
+    'Minimalist tek harfli ikon',
+    'Geometrik şekil, basit tasarım',
+    'Sembolik ikon, tek renk',
+    'Modern app ikonu tarzı',
+  ],
   social: [
     'Dikkat çekici kampanya görseli',
     'Profesyonel ürün tanıtım postu',
@@ -45,6 +51,7 @@ const promptSuggestions: Record<ImageType, string[]> = {
 
 const placeholders: Record<ImageType, string> = {
   logo: 'Örn: Teknoloji şirketi için modern mavi tonlarında minimalist logo...',
+  favicon: 'Örn: Mavi tonlarında "A" harfi ikonu, basit ve tanınabilir...',
   social: 'Örn: Instagram için %50 indirim kampanya görseli, dikkat çekici...',
   poster: 'Örn: Yaz festivali afişi, canlı renkler ve müzik teması...',
   creative: 'Örn: Gün batımında okyanus manzarası, romantik atmosfer...',

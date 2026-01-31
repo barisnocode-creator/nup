@@ -11,7 +11,7 @@ import { AspectRatioSelector, type AspectRatioOption } from '@/components/studio
 import { Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-export type ImageType = 'logo' | 'social' | 'poster' | 'creative';
+export type ImageType = 'logo' | 'favicon' | 'social' | 'poster' | 'creative';
 
 interface StudioImage {
   id: string;

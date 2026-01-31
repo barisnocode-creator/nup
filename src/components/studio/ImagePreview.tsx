@@ -116,18 +116,58 @@ export function ImagePreview({
     }
   }, [image?.metadata]);
 
+  // Check if it's a favicon type
+  const isFavicon = image?.type === 'favicon';
+
   // Success state with image
   return (
     <>
       <Card>
         <CardContent className="p-6">
-          <div className={cn("mx-auto rounded-lg overflow-hidden bg-muted mb-6", aspectRatioClass)}>
-            <img
-              src={image?.image_url || ''}
-              alt={image?.prompt || 'Generated image'}
-              className="w-full h-full object-contain"
-            />
-          </div>
+          {isFavicon ? (
+            // Favicon multi-size preview
+            <div className="flex flex-wrap items-end justify-center gap-6 mb-6 p-6 bg-muted/50 rounded-lg">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-4 h-4 rounded-sm overflow-hidden border bg-background">
+                  <img src={image?.image_url || ''} alt="16px" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs text-muted-foreground">16px</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 rounded overflow-hidden border bg-background">
+                  <img src={image?.image_url || ''} alt="32px" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs text-muted-foreground">32px</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 rounded overflow-hidden border bg-background">
+                  <img src={image?.image_url || ''} alt="48px" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs text-muted-foreground">48px</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-lg overflow-hidden border bg-background">
+                  <img src={image?.image_url || ''} alt="64px" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs text-muted-foreground">64px</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-32 h-32 rounded-lg overflow-hidden border bg-background">
+                  <img src={image?.image_url || ''} alt="128px" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-xs text-muted-foreground">128px</span>
+              </div>
+            </div>
+          ) : (
+            // Normal image preview
+            <div className={cn("mx-auto rounded-lg overflow-hidden bg-muted mb-6", aspectRatioClass)}>
+              <img
+                src={image?.image_url || ''}
+                alt={image?.prompt || 'Generated image'}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="flex flex-wrap justify-center gap-3">

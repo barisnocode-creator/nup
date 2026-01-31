@@ -9,7 +9,7 @@ const corsHeaders = {
 type AspectRatioOption = 'instagram-square' | 'facebook-landscape' | 'story' | 'twitter' | 'pinterest';
 
 interface GenerateRequest {
-  type: 'logo' | 'social' | 'poster' | 'creative';
+  type: 'logo' | 'favicon' | 'social' | 'poster' | 'creative';
   prompt: string;
   imageId: string;
   style?: string;
@@ -41,6 +41,9 @@ function buildImagePrompt(request: GenerateRequest): string {
     case 'logo':
       return `Professional logo design for ${businessName || 'a business'}. ${style} style, clean vector aesthetic, suitable for website and print, minimalist design. ${prompt}. High quality, professional design.`;
     
+    case 'favicon':
+      return `Minimal favicon icon design, 32x32 pixel optimized, simple recognizable symbol, single color or very limited palette, clean edges, works at small sizes. ${prompt}. Suitable for browser tab, app icon. High quality, crisp edges.`;
+    
     case 'social':
       const ratioLabel = aspectRatio ? aspectRatioLabels[aspectRatio] : '1:1 square';
       return `Social media post graphic, ${ratioLabel} format, modern design, eye-catching, vibrant colors. ${prompt}. Professional marketing material.`;
@@ -71,6 +74,8 @@ function getImageDimensions(type: string, aspectRatio?: AspectRatioOption): { wi
   switch (type) {
     case 'logo':
       return { width: 512, height: 512 };
+    case 'favicon':
+      return { width: 512, height: 512 }; // Generate at 512, display at smaller sizes
     case 'social':
       return { width: 1024, height: 1024 };
     case 'poster':

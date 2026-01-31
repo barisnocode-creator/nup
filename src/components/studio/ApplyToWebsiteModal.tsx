@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Globe, Image, FileImage, Layout, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,11 +57,22 @@ export function ApplyToWebsiteModal({
   const [isApplying, setIsApplying] = useState(false);
 
   // Auto-select first project if only one exists
-  useState(() => {
+  useEffect(() => {
     if (projects.length === 1 && !selectedProject) {
       setSelectedProject(projects[0].id);
     }
-  });
+  }, [projects, selectedProject]);
+
+  // Smart default target based on image type
+  useEffect(() => {
+    if (imageType === 'favicon') {
+      setSelectedTarget('favicon');
+    } else if (imageType === 'logo') {
+      setSelectedTarget('logo');
+    } else if (imageType === 'social') {
+      setSelectedTarget('ogImage');
+    }
+  }, [imageType]);
 
   const handleApply = async () => {
     if (!selectedProject) {
