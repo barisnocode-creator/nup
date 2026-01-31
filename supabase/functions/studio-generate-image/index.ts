@@ -164,18 +164,22 @@ serve(async (req) => {
     console.log('Full prompt:', fullPrompt);
     console.log('Dimensions:', dimensions);
 
-    // Call Lovable AI API for image generation
-    const imageResponse = await fetch('https://api.lovable.dev/v1/images/generations', {
+    // Call Lovable AI Gateway for image generation
+    const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'flux.schnell',
-        prompt: fullPrompt,
-        n: 1,
-        size: `${dimensions.width}x${dimensions.height}`,
+        model: 'google/gemini-2.5-flash-image',
+        messages: [
+          {
+            role: 'user',
+            content: fullPrompt
+          }
+        ],
+        modalities: ['image', 'text']
       }),
     });
 
@@ -198,38 +202,10 @@ serve(async (req) => {
     const imageData = await imageResponse.json();
     console.log('Image generation response:', JSON.stringify(imageData).substring(0, 200));
 
-    // Get the image URL from the response
+    // Get the image URL from the response - Gemini API format
     let imageUrl = '';
-    if (imageData.data && imageData.data[0]) {
-      if (imageData.data[0].url) {
-        imageUrl = imageData.data[0].url;
-      } else if (imageData.data[0].b64_json) {
-        // If base64, we need to upload to storage
-        const base64Data = imageData.data[0].b64_json;
-        const fileName = `${user.id}/studio/${type}/${Date.now()}.png`;
-        
-        // Decode base64 and upload
-        const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('user-images')
-          .upload(fileName, binaryData, {
-            contentType: 'image/png',
-            upsert: true,
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw new Error('Failed to upload image');
-        }
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('user-images')
-          .getPublicUrl(fileName);
-
-        imageUrl = publicUrlData.publicUrl;
-      }
+    if (imageData.choices && imageData.choices[0]?.message?.images?.[0]?.image_url?.url) {
+      imageUrl = imageData.choices[0].message.images[0].image_url.url;
     }
 
     if (!imageUrl) {
