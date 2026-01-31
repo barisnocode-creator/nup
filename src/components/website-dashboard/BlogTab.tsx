@@ -1,33 +1,17 @@
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, FileText } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Pencil, Trash2, FileText, Calendar, Tag } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { BlogPost } from '@/types/generated-website';
 
 interface BlogTabProps {
   projectId: string;
+  generatedContent: any;
 }
 
-// Sample blog posts for demonstration
-const samplePosts = [
-  {
-    id: '1',
-    title: 'Welcome to Our Blog',
-    excerpt: 'This is your first blog post. Start sharing your thoughts and updates with your audience.',
-    status: 'draft',
-    createdAt: '2024-01-15',
-  },
-  {
-    id: '2',
-    title: 'Getting Started with Our Services',
-    excerpt: 'Learn more about what we offer and how we can help you achieve your goals.',
-    status: 'published',
-    createdAt: '2024-01-10',
-  },
-];
-
-export function BlogTab({ projectId }: BlogTabProps) {
-  const [posts] = useState(samplePosts);
+export function BlogTab({ projectId, generatedContent }: BlogTabProps) {
+  // Get blog posts from generated_content.pages.blog.posts
+  const blogPosts: BlogPost[] = generatedContent?.pages?.blog?.posts || [];
 
   return (
     <div className="space-y-6">
@@ -46,7 +30,7 @@ export function BlogTab({ projectId }: BlogTabProps) {
       </div>
 
       {/* Blog Posts List */}
-      {posts.length === 0 ? (
+      {blogPosts.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="w-12 h-12 text-muted-foreground mb-4" />
@@ -62,20 +46,30 @@ export function BlogTab({ projectId }: BlogTabProps) {
         </Card>
       ) : (
         <div className="space-y-4">
-          {posts.map((post) => (
+          {blogPosts.map((post) => (
             <Card key={post.id}>
               <CardContent className="flex items-center justify-between py-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-medium">{post.title}</h3>
-                    <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
-                      {post.status === 'published' ? 'Published' : 'Draft'}
-                    </Badge>
+                    {post.category && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        {post.category}
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-1">{post.excerpt}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Created: {new Date(post.createdAt).toLocaleDateString('tr-TR')}
-                  </p>
+                  {post.publishedAt && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(post.publishedAt).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="icon">

@@ -20,23 +20,29 @@ export function SettingsTab({ projectId, projectName, generatedContent }: Settin
   
   const [settings, setSettings] = useState({
     siteName: projectName || '',
-    siteDescription: generatedContent?.hero?.subtitle || '',
-    metaTitle: generatedContent?.seo?.title || projectName || '',
-    metaDescription: generatedContent?.seo?.description || '',
-    favicon: '',
-    ogImage: '',
+    siteDescription: generatedContent?.metadata?.tagline || generatedContent?.metadata?.seoDescription || '',
+    metaTitle: generatedContent?.metadata?.siteName || projectName || '',
+    metaDescription: generatedContent?.metadata?.seoDescription || '',
+    favicon: generatedContent?.siteSettings?.favicon || '',
+    ogImage: generatedContent?.siteSettings?.ogImage || '',
   });
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Update project with new SEO settings
+      // Update project with new settings using correct paths
       const updatedContent = {
         ...generatedContent,
-        seo: {
-          ...generatedContent?.seo,
-          title: settings.metaTitle,
-          description: settings.metaDescription,
+        metadata: {
+          ...generatedContent?.metadata,
+          siteName: settings.siteName,
+          tagline: settings.siteDescription,
+          seoDescription: settings.metaDescription,
+        },
+        siteSettings: {
+          ...generatedContent?.siteSettings,
+          favicon: settings.favicon,
+          ogImage: settings.ogImage,
         },
       };
 
