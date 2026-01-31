@@ -161,6 +161,57 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          metadata: Json | null
+          project_id: string | null
+          prompt: string
+          status: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          project_id?: string | null
+          prompt: string
+          status?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          project_id?: string | null
+          prompt?: string
+          status?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       public_projects: {
