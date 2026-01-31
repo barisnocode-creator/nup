@@ -1,4 +1,4 @@
-import { Star, Share2, FileText, Sparkles } from 'lucide-react';
+import { Star, Share2, FileText, Sparkles, AppWindow } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ImageType } from '@/pages/Studio';
 
@@ -14,6 +14,13 @@ const imageTypes = [
     title: 'Logo',
     subtitle: 'Oluştur',
     description: 'Profesyonel işletme logosu',
+  },
+  {
+    type: 'favicon' as ImageType,
+    icon: AppWindow,
+    title: 'Favicon',
+    subtitle: 'Oluştur',
+    description: 'Browser sekmesi ikonu',
   },
   {
     type: 'social' as ImageType,

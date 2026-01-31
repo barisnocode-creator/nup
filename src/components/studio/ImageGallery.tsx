@@ -22,6 +22,7 @@ interface ImageGalleryProps {
 
 const typeLabels: Record<ImageType, string> = {
   logo: 'Logo',
+  favicon: 'Favicon',
   social: 'Sosyal',
   poster: 'Poster',
   creative: 'Yaratıcı',
