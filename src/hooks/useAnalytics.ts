@@ -13,6 +13,14 @@ interface AnalyticsData {
     date: string;
     views: number;
   }[];
+  pageViews: {
+    path: string;
+    views: number;
+  }[];
+  hourlyViews: {
+    hour: number;
+    views: number;
+  }[];
 }
 
 export function useAnalytics(projectId: string | undefined) {
@@ -80,6 +88,29 @@ export function useAnalytics(projectId: string | undefined) {
           .map(([date, views]) => ({ date, views }))
           .sort((a, b) => a.date.localeCompare(b.date));
 
+        // Page views grouped by path
+        const pageViewsMap = new Map<string, number>();
+        events?.forEach(e => {
+          const path = e.page_path || '/';
+          pageViewsMap.set(path, (pageViewsMap.get(path) || 0) + 1);
+        });
+        const pageViews = Array.from(pageViewsMap.entries())
+          .map(([path, views]) => ({ path, views }))
+          .sort((a, b) => b.views - a.views);
+
+        // Hourly views
+        const hourlyViewsMap = new Map<number, number>();
+        for (let i = 0; i < 24; i++) {
+          hourlyViewsMap.set(i, 0);
+        }
+        events?.forEach(e => {
+          const hour = new Date(e.created_at).getHours();
+          hourlyViewsMap.set(hour, (hourlyViewsMap.get(hour) || 0) + 1);
+        });
+        const hourlyViews = Array.from(hourlyViewsMap.entries())
+          .map(([hour, views]) => ({ hour, views }))
+          .sort((a, b) => a.hour - b.hour);
+
         setData({
           totalViews,
           viewsLast7Days,
@@ -89,6 +120,8 @@ export function useAnalytics(projectId: string | undefined) {
             desktop: desktopCount,
           },
           viewsOverTime,
+          pageViews,
+          hourlyViews,
         });
       } catch (err) {
         console.error('Error fetching analytics:', err);
