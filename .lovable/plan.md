@@ -1,172 +1,223 @@
 
+# Edge Functions Oluşturma Planı
 
-# Özel Domain (Custom Domain) Desteği Planı
-
-Bu plan, kullanıcılarınızın kendi alan adlarını (örn: `www.drklinik.com`) yayınladıkları web sitelerine bağlamalarını sağlayacak altyapıyı oluşturacak.
-
----
-
-## Mevcut Durum
-
-```text
-+------------------------+
-|    Şu anki sistem      |
-+------------------------+
-| subdomain: klinik-adi  |
-| URL: /site/klinik-adi  |
-| custom_domain: null    |
-+------------------------+
-```
-
-Veritabanında `custom_domain` alanı zaten mevcut ancak kullanılmıyor.
+Bu plan, özel domain yönetimi için gerekli 3 Edge Function'ı oluşturacak.
 
 ---
 
-## Çözüm Mimarisi
+## Oluşturulacak Edge Functions
 
+### 1. add-custom-domain
+
+**Görevi:** Yeni bir domain ekler ve verification token oluşturur.
+
+**Akış:**
 ```text
-                    ┌─────────────────────────────────────────┐
-                    │           Kullanıcı Akışı               │
-                    └─────────────────────────────────────────┘
-                                      │
-                    ┌─────────────────▼─────────────────┐
-                    │   1. PublishModal'da Domain Ekle  │
-                    │   (www.drklinik.com gir)          │
-                    └─────────────────┬─────────────────┘
-                                      │
-                    ┌─────────────────▼─────────────────┐
-                    │   2. DNS Kayıtlarını Göster       │
-                    │   A Record: 185.158.133.1         │
-                    │   TXT: _lovable.drklinik.com      │
-                    └─────────────────┬─────────────────┘
-                                      │
-                    ┌─────────────────▼─────────────────┐
-                    │   3. Doğrulama (verify-domain)    │
-                    │   DNS TXT kaydını kontrol et      │
-                    └─────────────────┬─────────────────┘
-                                      │
-                         ┌────────────┴────────────┐
-                         │                         │
-                  ┌──────▼──────┐           ┌──────▼──────┐
-                  │  Başarılı   │           │  Beklemede  │
-                  │  Domain     │           │  Status:    │
-                  │  Aktif!     │           │  verifying  │
-                  └─────────────┘           └─────────────┘
+Kullanıcı -> Domain gir (www.drklinik.com)
+                    |
+                    v
+         ┌──────────────────────┐
+         │  1. JWT doğrula      │
+         │  2. Domain formatı   │
+         │     kontrol et       │
+         │  3. Proje sahipliği  │
+         │     kontrol et       │
+         │  4. custom_domains   │
+         │     tablosuna ekle   │
+         └──────────────────────┘
+                    |
+                    v
+         DNS talimatları + token döndür
 ```
+
+**Özellikler:**
+- JWT ile kullanıcı kimlik doğrulama
+- Domain format validasyonu (www/non-www, TLD kontrolü)
+- Proje sahipliği kontrolü
+- Aynı domain'in tekrar eklenmesini engelleme
+- Verification token otomatik oluşturma (veritabanı tarafından)
+
+---
+
+### 2. verify-domain
+
+**Görevi:** DNS TXT kaydını kontrol ederek domain'i doğrular.
+
+**Akış:**
+```text
+Kullanıcı -> "Doğrula" butonuna tıkla
+                    |
+                    v
+         ┌──────────────────────────────┐
+         │  1. Domain ID al             │
+         │  2. Mevcut token'ı getir     │
+         │  3. DNS TXT sorgula          │
+         │     (_lovable.domain.com)    │
+         │  4. Token eşleşme kontrol    │
+         │  5. Status güncelle          │
+         └──────────────────────────────┘
+                    |
+           ┌───────┴───────┐
+           v               v
+       verified         failed
+```
+
+**DNS Sorgu Yöntemi:**
+- Deno'nun native DNS API'sini kullanacağız: `Deno.resolveDns()`
+- TXT kaydı formatı: `lovable_verify=TOKEN`
+- Kayıt yeri: `_lovable.domain.com`
+
+---
+
+### 3. remove-domain
+
+**Görevi:** Kullanıcının kendi domain'ini silmesine izin verir.
+
+**Özellikler:**
+- JWT ile kimlik doğrulama
+- Proje sahipliği kontrolü (RLS zaten bunu sağlıyor)
+- Soft delete yerine hard delete
 
 ---
 
 ## Teknik Detaylar
 
-### 1. Veritabanı Değişiklikleri
-
-Yeni bir `custom_domains` tablosu oluşturulacak:
-
-```text
-+------------------------+
-|    custom_domains      |
-+------------------------+
-| id (uuid)              |
-| project_id (fk)        |
-| domain (text, unique)  |
-| verification_token     |
-| status (enum)          |
-|   - pending            |
-|   - verifying          |
-|   - verified           |
-|   - failed             |
-| is_primary (boolean)   |
-| verified_at            |
-| created_at             |
-+------------------------+
+### CORS Yapılandırması
+Tüm fonksiyonlar standart CORS headers kullanacak:
+```javascript
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, ...',
+};
 ```
 
-### 2. Yeni Edge Functions
+### JWT Doğrulama
+JWT doğrulama kod içinde yapılacak (`verify_jwt = false` config'de):
+```javascript
+const authHeader = req.headers.get('authorization');
+const token = authHeader?.replace('Bearer ', '');
+const { data: claimsData } = await supabase.auth.getClaims(token);
+```
 
-| Function | Görevi |
-|----------|--------|
-| `add-custom-domain` | Domain ekleme, token oluşturma |
-| `verify-domain` | DNS TXT kaydını kontrol etme |
-| `check-domain-status` | Domain durumunu sorgulama |
+### Domain Validasyon Kuralları
+- Minimum 4 karakter (a.co gibi)
+- Maksimum 253 karakter
+- Sadece küçük harf, rakam, tire ve nokta
+- TLD zorunlu (.com, .net, .tr, vb.)
+- Reserved domainler engelli (localhost, example.com, vb.)
 
-### 3. UI Değişiklikleri
+---
 
-**A. Publish Modal Güncellemesi:**
-- "Custom Domain Ekle" butonu
-- Domain giriş alanı
-- DNS talimatları gösterimi
-- Doğrulama durumu takibi
+## Config.toml Güncellemesi
 
-**B. Yeni Domain Yönetim Paneli:**
-- Bağlı domainlerin listesi
-- Primary domain seçimi
-- Domain silme/yeniden doğrulama
+```toml
+project_id = "lpgyafvuihdymgsrmswh"
 
-### 4. Public Website Routing Güncellemesi
+[functions.add-custom-domain]
+verify_jwt = false
 
-`PublicWebsite.tsx` dosyası hem subdomain hem custom domain ile çalışacak şekilde güncellenecek:
+[functions.verify-domain]
+verify_jwt = false
+
+[functions.remove-domain]
+verify_jwt = false
+
+# ... mevcut fonksiyonlar
+```
+
+---
+
+## Dosya Yapısı
 
 ```text
-/site/klinik-adi     -> Subdomain routing (mevcut)
-www.drklinik.com     -> Custom domain routing (yeni)
+supabase/functions/
+├── add-custom-domain/
+│   └── index.ts
+├── verify-domain/
+│   └── index.ts
+├── remove-domain/
+│   └── index.ts
+└── ... (mevcut fonksiyonlar)
 ```
+
+---
+
+## API Dökümanı
+
+### POST /add-custom-domain
+**Request:**
+```json
+{
+  "projectId": "uuid",
+  "domain": "www.drklinik.com"
+}
+```
+
+**Response (Success):**
+```json
+{
+  "success": true,
+  "domainId": "uuid",
+  "verificationToken": "abc123...",
+  "dnsInstructions": {
+    "aRecord": { "host": "@", "value": "185.158.133.1" },
+    "wwwRecord": { "host": "www", "value": "185.158.133.1" },
+    "txtRecord": { "host": "_lovable", "value": "lovable_verify=abc123..." }
+  }
+}
+```
+
+### POST /verify-domain
+**Request:**
+```json
+{
+  "domainId": "uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "status": "verified" | "failed",
+  "message": "Domain verified successfully"
+}
+```
+
+### POST /remove-domain
+**Request:**
+```json
+{
+  "domainId": "uuid"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+## Güvenlik Kontrolleri
+
+1. **Kimlik Doğrulama**: Her fonksiyon JWT token kontrolü yapar
+2. **Yetkilendirme**: Kullanıcı sadece kendi projelerine domain ekleyebilir
+3. **Rate Limiting**: IP başına dakikada max 10 istek
+4. **Input Validation**: Tüm girdiler sanitize edilir
 
 ---
 
 ## Uygulama Adımları
 
-### Adım 1: Veritabanı Şeması
-- `custom_domains` tablosu oluştur
-- RLS politikaları ekle (kullanıcı sadece kendi projelerinin domainlerini görsün)
-- `public_projects` view'ına domain bilgisi ekle
-
-### Adım 2: Edge Functions
-1. **add-custom-domain**: Domain ekleme ve verification token oluşturma
-2. **verify-domain**: DNS TXT kaydını kontrol etme (Node.js `dns` modülü veya harici API)
-3. **remove-domain**: Domain silme
-
-### Adım 3: UI Bileşenleri
-1. `PublishModal` içine "Connect Domain" bölümü ekle
-2. DNS talimatları için `DomainInstructions` bileşeni
-3. Domain yönetimi için `DomainSettings` sayfası
-
-### Adım 4: Routing Güncellemesi
-- Custom domain sorgusu için `public_projects` view güncelle
-- Routing mantığını domain bazlı çalışacak şekilde genişlet
+1. `add-custom-domain/index.ts` oluştur
+2. `verify-domain/index.ts` oluştur
+3. `remove-domain/index.ts` oluştur
+4. `supabase/config.toml` güncelle
+5. Fonksiyonları test et
 
 ---
 
-## DNS Talimatları (Kullanıcıya Gösterilecek)
-
-Kullanıcıya şu kayıtları eklemesini söyleyeceğiz:
-
-| Tip | Host | Değer |
-|-----|------|-------|
-| A | @ | 185.158.133.1 |
-| A | www | 185.158.133.1 |
-| TXT | _lovable | lovable_verify=ABC123 |
-
----
-
-## Önemli Notlar
-
-1. **SSL Sertifikası**: Lovable Cloud otomatik olarak Let's Encrypt ile SSL sağlar
-2. **DNS Propagation**: 24-72 saat sürebilir
-3. **Wildcard**: Subdomain desteği için wildcard DNS gerekli değil, her domain tek tek eklenir
-
----
-
-## Tahmini Süre
-
-| Görev | Süre |
-|-------|------|
-| Veritabanı şeması | 1 mesaj |
-| Edge functions | 2 mesaj |
-| UI bileşenleri | 2 mesaj |
-| Routing güncellemesi | 1 mesaj |
-| **Toplam** | **~6 mesaj** |
-
----
-
-Bu planı onaylarsanız, veritabanı şeması ile başlayabilirim.
-
+Bu planı onaylarsanız, 3 edge function'ı ve config güncellemesini tek seferde oluşturacağım.
