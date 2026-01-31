@@ -28,7 +28,7 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
     { title: 'Home', url: '/dashboard', icon: Home },
     { 
       title: 'Website', 
-      url: activeProjectId ? `/project/${activeProjectId}` : '/dashboard', 
+      url: activeProjectId ? `/project/${activeProjectId}/website` : '/dashboard', 
       icon: Globe,
       disabled: !activeProjectId 
     },
