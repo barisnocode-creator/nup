@@ -1,29 +1,29 @@
 import { Card } from '@/components/ui/card';
-import showcaseDental from '@/assets/showcase-dental.jpg';
-import showcaseFamilyDoctor from '@/assets/showcase-family-doctor.jpg';
-import showcasePharmacy from '@/assets/showcase-pharmacy.jpg';
-import showcaseEyeClinic from '@/assets/showcase-eye-clinic.jpg';
+import showcaseRestaurant from '@/assets/showcase-restaurant.jpg';
+import showcaseLawOffice from '@/assets/showcase-law-office.jpg';
+import showcaseDigitalAgency from '@/assets/showcase-digital-agency.jpg';
+import showcaseBoutique from '@/assets/showcase-boutique.jpg';
 
 const showcaseSites = [
   {
-    title: 'Diş Kliniği',
-    description: 'Modern diş hekimliği web sitesi',
-    image: showcaseDental,
+    title: 'Restoran & Kafe',
+    description: 'Modern yeme-içme işletmesi sitesi',
+    image: showcaseRestaurant,
   },
   {
-    title: 'Aile Hekimliği',
-    description: 'Güvenilir aile doktoru sitesi',
-    image: showcaseFamilyDoctor,
+    title: 'Hukuk Bürosu',
+    description: 'Profesyonel avukatlık web sitesi',
+    image: showcaseLawOffice,
   },
   {
-    title: 'Eczane',
-    description: 'Profesyonel eczane web sitesi',
-    image: showcasePharmacy,
+    title: 'Dijital Ajans',
+    description: 'Yaratıcı tasarım ajansı sitesi',
+    image: showcaseDigitalAgency,
   },
   {
-    title: 'Göz Kliniği',
-    description: 'Uzman göz hastalıkları sitesi',
-    image: showcaseEyeClinic,
+    title: 'Butik Mağaza',
+    description: 'Şık perakende mağaza sitesi',
+    image: showcaseBoutique,
   },
 ];
 
@@ -37,7 +37,7 @@ export function WebsiteShowcase() {
             Örnek Web Siteleri
           </h2>
           <p className="text-muted-foreground">
-            AI tarafından oluşturulmuş profesyonel sağlık sektörü web siteleri
+            AI tarafından oluşturulmuş profesyonel web siteleri
           </p>
         </div>
 

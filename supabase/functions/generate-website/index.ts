@@ -34,7 +34,9 @@ function selectTemplate(_profession: string, _tone?: string): string {
   return 'temp1';
 }
 
-function getProfessionSpecificInstructions(profession: string, details: FormData['professionalDetails']): string {
+// Sector-specific content instructions
+function getSectorSpecificInstructions(sector: string, profession: string, details: FormData['professionalDetails']): string {
+  // Legacy healthcare professions
   if (profession === 'doctor') {
     return `
 PROFESSION-SPECIFIC REQUIREMENTS FOR DOCTOR:
@@ -42,11 +44,9 @@ PROFESSION-SPECIFIC REQUIREMENTS FOR DOCTOR:
 - Experience: ${details?.yearsExperience || '5+'} years
 - Include detailed medical credentials and qualifications
 - Add patient care philosophy section
-- Describe consultation process step by step (Initial Assessment → Diagnosis → Treatment Plan → Follow-up)
+- Describe consultation process step by step
 - Include health statistics relevant to the specialty
 - Use medical terminology appropriately but explain in patient-friendly language
-- Add testimonial placeholders mentioning specific treatments
-- Include "What to Expect" section for first-time patients
 - Generate statistics: Years of Experience, Patients Treated, Specializations, Success Rate`;
   }
   
@@ -56,54 +56,116 @@ PROFESSION-SPECIFIC REQUIREMENTS FOR DENTIST:
 - Services: ${details?.services?.join(', ') || 'General Dentistry'}
 - Describe dental procedures in patient-friendly, non-scary language
 - Include smile transformation concepts and cosmetic dentistry benefits
-- Add pediatric dentistry section if applicable
 - Emphasize pain-free and comfortable treatment approaches
-- Include before/after concept descriptions for treatments
-- Add "First Visit Guide" for new patients
-- Generate statistics: Years of Experience, Smiles Transformed, Dental Procedures, Patient Satisfaction
-- Include sections about modern dental technology and equipment
-- Mention emergency dental services availability`;
+- Generate statistics: Years of Experience, Smiles Transformed, Dental Procedures, Patient Satisfaction`;
   }
   
-  // Pharmacist
-  return `
+  if (profession === 'pharmacist') {
+    return `
 PROFESSION-SPECIFIC REQUIREMENTS FOR PHARMACIST:
 - Pharmacy Type: ${details?.pharmacyType || 'Community Pharmacy'}
-- List detailed pharmacy service categories (Prescription Services, OTC Medications, Health Consultations)
+- List detailed pharmacy service categories
 - Include health consultation and medication counseling services
-- Add medication management and drug interaction information
-- Describe prescription services process clearly
-- Include sections about health screenings and vaccinations if applicable
-- Generate statistics: Years Serving Community, Medications Dispensed, Health Consultations, Customer Satisfaction
-- Add wellness product categories (Vitamins, Supplements, Personal Care)
-- Include information about medication delivery services
-- Mention pharmacist availability for health questions`;
+- Generate statistics: Years Serving Community, Medications Dispensed, Health Consultations, Customer Satisfaction`;
+  }
+
+  // New sector-based instructions
+  const sectorInstructions: Record<string, string> = {
+    service: `
+SECTOR REQUIREMENTS - SERVICE/PROFESSIONAL:
+- Focus on expertise, credentials, and professional experience
+- Highlight client success stories and case studies
+- Describe your process/methodology clearly
+- Use professional, trust-building language
+- Generate statistics: Years of Experience, Clients Served, Projects Completed, Client Satisfaction Rate`,
+    
+    retail: `
+SECTOR REQUIREMENTS - RETAIL/E-COMMERCE:
+- Showcase product categories and offerings
+- Highlight quality, sourcing, and unique selling points
+- Describe shopping experience and customer service
+- Use engaging, customer-friendly language
+- Generate statistics: Years in Business, Products Available, Happy Customers, Orders Fulfilled`,
+    
+    food: `
+SECTOR REQUIREMENTS - FOOD/RESTAURANT:
+- Describe cuisine style, specialties, and signature dishes
+- Highlight atmosphere, ambiance, and dining experience
+- Include menu categories and dietary options
+- Use appetizing, sensory-rich language
+- Generate statistics: Years Serving, Dishes Served, Menu Items, Customer Reviews`,
+    
+    creative: `
+SECTOR REQUIREMENTS - CREATIVE/DESIGN:
+- Showcase portfolio and creative process
+- Highlight unique style and artistic vision
+- Describe collaboration approach with clients
+- Use creative, inspiring language
+- Generate statistics: Years of Experience, Projects Completed, Awards Won, Clients Served`,
+    
+    technology: `
+SECTOR REQUIREMENTS - TECHNOLOGY/SOFTWARE:
+- Highlight technical expertise and innovation
+- Describe solutions and their benefits
+- Include technology stack and capabilities
+- Use modern, technical but accessible language
+- Generate statistics: Years in Tech, Projects Delivered, Technologies Used, Client Success Rate`,
+    
+    other: `
+SECTOR REQUIREMENTS - GENERAL BUSINESS:
+- Focus on unique value proposition
+- Highlight experience and expertise
+- Describe your approach and what sets you apart
+- Use professional, approachable language
+- Generate statistics: Years in Business, Clients Served, Projects Completed, Satisfaction Rate`
+  };
+
+  return sectorInstructions[sector] || sectorInstructions.other;
 }
 
-function buildPrompt(profession: string, formData: FormData): string {
+function buildPrompt(profession: string, formData: FormData, sector?: string): string {
   const businessInfo = formData.businessInfo;
   const details = formData.professionalDetails;
   const prefs = formData.websitePreferences;
 
-  const professionInstructions = getProfessionSpecificInstructions(profession, details);
+  // Determine effective sector - legacy professions map to service sector
+  const effectiveSector = sector || (
+    ['doctor', 'dentist', 'pharmacist'].includes(profession) ? 'service' : 'other'
+  );
 
-  const blogTopics = profession === "doctor"
-    ? "health tips, preventive care advice, common medical conditions explained, wellness guidance, seasonal health advice"
-    : profession === "dentist"
-      ? "oral hygiene tips, dental procedures explained, smile care advice, dental health for families, cosmetic dentistry trends"
-      : "medication guides, health supplements information, wellness tips, pharmacy services explained, seasonal health products";
+  const sectorInstructions = getSectorSpecificInstructions(effectiveSector, profession, details);
 
-  return `You are a professional website content writer specializing in healthcare websites.
+  // Dynamic blog topics based on sector
+  const blogTopicsMap: Record<string, string> = {
+    service: "industry insights, professional tips, client success stories, best practices, expert advice",
+    retail: "product guides, shopping tips, new arrivals, style guides, seasonal recommendations",
+    food: "recipes, food tips, ingredient guides, culinary trends, restaurant updates",
+    creative: "design trends, creative process insights, portfolio highlights, inspiration, industry news",
+    technology: "tech trends, development tips, product updates, innovation insights, tutorials",
+    other: "business insights, industry tips, company updates, expert advice, helpful guides"
+  };
 
-Generate comprehensive, detailed, and authentic website content for a ${profession}'s informational website.
+  // Legacy healthcare blog topics
+  const legacyBlogTopics: Record<string, string> = {
+    doctor: "health tips, preventive care advice, common medical conditions explained, wellness guidance",
+    dentist: "oral hygiene tips, dental procedures explained, smile care advice, dental health for families",
+    pharmacist: "medication guides, health supplements information, wellness tips, pharmacy services explained"
+  };
+
+  const blogTopics = legacyBlogTopics[profession] || blogTopicsMap[effectiveSector] || blogTopicsMap.other;
+
+  return `You are a professional website content writer.
+
+Generate comprehensive, detailed, and authentic website content for a business website.
 
 BUSINESS INFORMATION:
-- Business Name: ${businessInfo?.businessName || "Healthcare Practice"}
+- Business Name: ${businessInfo?.businessName || "Business Name"}
+- Business Type/Sector: ${effectiveSector}
 - Location: ${businessInfo?.city || "City"}, ${businessInfo?.country || "Country"}
 - Contact Phone: ${businessInfo?.phone || ""}
 - Contact Email: ${businessInfo?.email || ""}
 
-${professionInstructions}
+${sectorInstructions}
 
 WEBSITE PREFERENCES:
 - Language: ${prefs?.language || "English"} - ALL content MUST be in this language
@@ -114,16 +176,15 @@ CONTENT REQUIREMENTS:
 1. ALL content must be in ${prefs?.language || "English"}
 2. Use ${prefs?.tone || "professional"} tone throughout
 3. NO pricing information anywhere
-4. NO "book now" or appointment booking CTAs
-5. Focus on building trust and providing valuable information
-6. Make content specific, detailed, and authentic for ${profession}
-7. Include compelling statistics section with 4 key metrics
-8. Generate 3-5 detailed blog posts about ${blogTopics}
-9. Each blog post should have 4-5 paragraphs of genuinely helpful content
-10. Include FAQ section with 4-5 common questions and detailed answers
-11. Make highlights section have 4-6 items with detailed descriptions
-12. Services should have 5-8 detailed service descriptions
-13. Add a process/workflow section describing how patients/customers interact
+4. Focus on building trust and providing valuable information
+5. Make content specific, detailed, and authentic for this ${effectiveSector} business
+6. Include compelling statistics section with 4 key metrics
+7. Generate 3-5 detailed blog posts about ${blogTopics}
+8. Each blog post should have 4-5 paragraphs of genuinely helpful content
+9. Include FAQ section with 4-5 common questions and detailed answers
+10. Make highlights section have 4-6 items with detailed descriptions
+11. Services should have 5-8 detailed service descriptions
+12. Add a process/workflow section describing how clients/customers interact
 
 Return ONLY valid JSON in this exact format:
 {
@@ -601,8 +662,11 @@ serve(async (req) => {
 
     const formData = project.form_data as FormData;
     const profession = project.profession;
+    
+    // Extract sector from form_data if available (from wizard-chat)
+    const extractedSector = (formData as any)?.sector;
 
-    console.log("Generating enhanced content for:", profession);
+    console.log("Generating enhanced content for:", profession, "sector:", extractedSector);
 
     // Call Lovable AI Gateway for text content
     const aiResponse = await fetch(
@@ -618,7 +682,7 @@ serve(async (req) => {
           messages: [
             {
               role: "user",
-              content: buildPrompt(profession, formData),
+              content: buildPrompt(profession, formData, extractedSector),
             },
           ],
           temperature: 0.7,
@@ -687,8 +751,10 @@ serve(async (req) => {
     if (PIXABAY_API_KEY) {
       console.log("Fetching images from Pixabay...");
       const blogPosts = generatedContent.pages?.blog?.posts || [];
+      // Use sector for image search if available, otherwise fallback to profession
+      const imageSearchKey = extractedSector || profession;
       const { images, updatedPosts } = await fetchAllImages(
-        profession,
+        imageSearchKey,
         blogPosts,
         PIXABAY_API_KEY
       );
