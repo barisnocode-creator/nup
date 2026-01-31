@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { RefreshCw, Edit3, Globe, Loader2, ImageIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -20,6 +21,7 @@ interface StudioImage {
   image_url: string | null;
   status: 'generating' | 'completed' | 'failed';
   created_at: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface ImagePreviewProps {
@@ -101,12 +103,25 @@ export function ImagePreview({
     );
   }
 
+  // Determine aspect ratio class based on metadata
+  const aspectRatioClass = useMemo(() => {
+    const ratio = (image?.metadata as Record<string, unknown>)?.aspectRatio;
+    switch (ratio) {
+      case 'story': return 'aspect-[9/16] max-w-xs';
+      case 'facebook-landscape': return 'aspect-[1.91/1] max-w-2xl';
+      case 'twitter': return 'aspect-video max-w-2xl';
+      case 'pinterest': return 'aspect-[2/3] max-w-sm';
+      case 'instagram-square': return 'aspect-square max-w-lg';
+      default: return 'aspect-square max-w-lg';
+    }
+  }, [image?.metadata]);
+
   // Success state with image
   return (
     <>
       <Card>
         <CardContent className="p-6">
-          <div className="aspect-square max-w-lg mx-auto rounded-lg overflow-hidden bg-muted mb-6">
+          <div className={cn("mx-auto rounded-lg overflow-hidden bg-muted mb-6", aspectRatioClass)}>
             <img
               src={image?.image_url || ''}
               alt={image?.prompt || 'Generated image'}

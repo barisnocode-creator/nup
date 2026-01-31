@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+type AspectRatioOption = 'instagram-square' | 'facebook-landscape' | 'story' | 'twitter' | 'pinterest';
+
 interface GenerateRequest {
   type: 'logo' | 'social' | 'poster' | 'creative';
   prompt: string;
@@ -14,11 +16,20 @@ interface GenerateRequest {
   editInstruction?: string;
   previousImageUrl?: string;
   businessName?: string;
+  aspectRatio?: AspectRatioOption;
 }
+
+const aspectRatioLabels: Record<AspectRatioOption, string> = {
+  'instagram-square': '1:1 square',
+  'facebook-landscape': '1.91:1 landscape',
+  'story': '9:16 vertical story',
+  'twitter': '16:9 widescreen',
+  'pinterest': '2:3 tall portrait',
+};
 
 // Build the appropriate prompt based on type
 function buildImagePrompt(request: GenerateRequest): string {
-  const { type, prompt, style = 'modern', editInstruction, businessName } = request;
+  const { type, prompt, style = 'modern', editInstruction, businessName, aspectRatio } = request;
 
   // If editing an existing image
   if (editInstruction) {
@@ -31,7 +42,8 @@ function buildImagePrompt(request: GenerateRequest): string {
       return `Professional logo design for ${businessName || 'a business'}. ${style} style, clean vector aesthetic, suitable for website and print, minimalist design. ${prompt}. High quality, professional design.`;
     
     case 'social':
-      return `Social media post graphic, square format (1:1 aspect ratio), modern design, eye-catching, vibrant colors. ${prompt}. Professional marketing material.`;
+      const ratioLabel = aspectRatio ? aspectRatioLabels[aspectRatio] : '1:1 square';
+      return `Social media post graphic, ${ratioLabel} format, modern design, eye-catching, vibrant colors. ${prompt}. Professional marketing material.`;
     
     case 'poster':
       return `Professional poster design, vertical A4 format, bold typography, eye-catching layout. ${prompt}. High quality print-ready design.`;
@@ -42,8 +54,20 @@ function buildImagePrompt(request: GenerateRequest): string {
   }
 }
 
-// Get image dimensions based on type
-function getImageDimensions(type: string): { width: number; height: number } {
+// Get image dimensions based on type and aspect ratio
+function getImageDimensions(type: string, aspectRatio?: AspectRatioOption): { width: number; height: number } {
+  // For social media, use the specific aspect ratio dimensions
+  if (type === 'social' && aspectRatio) {
+    switch (aspectRatio) {
+      case 'instagram-square': return { width: 1024, height: 1024 };
+      case 'facebook-landscape': return { width: 1200, height: 640 }; // Closest to 1.91:1 in multiples of 32
+      case 'story': return { width: 576, height: 1024 }; // 9:16 ratio
+      case 'twitter': return { width: 1280, height: 736 }; // Closest to 16:9 in multiples of 32
+      case 'pinterest': return { width: 672, height: 1024 }; // Closest to 2:3 in multiples of 32
+    }
+  }
+
+  // Default dimensions by type
   switch (type) {
     case 'logo':
       return { width: 512, height: 512 };
@@ -99,7 +123,7 @@ serve(async (req) => {
     }
 
     const body: GenerateRequest = await req.json();
-    const { type, prompt, imageId, editInstruction, previousImageUrl, businessName, style } = body;
+    const { type, prompt, imageId, editInstruction, previousImageUrl, businessName, style, aspectRatio } = body;
 
     if (!type || !prompt || !imageId) {
       return new Response(
@@ -109,6 +133,9 @@ serve(async (req) => {
     }
 
     console.log(`Generating ${type} image for user ${user.id}:`, prompt);
+    if (aspectRatio) {
+      console.log(`Aspect ratio: ${aspectRatio}`);
+    }
 
     // Verify the image record belongs to the user
     const { data: imageRecord, error: imageError } = await supabase
@@ -126,8 +153,8 @@ serve(async (req) => {
     }
 
     // Build the prompt
-    const fullPrompt = buildImagePrompt({ type, prompt, style, editInstruction, previousImageUrl, businessName, imageId });
-    const dimensions = getImageDimensions(type);
+    const fullPrompt = buildImagePrompt({ type, prompt, style, editInstruction, previousImageUrl, businessName, imageId, aspectRatio });
+    const dimensions = getImageDimensions(type, aspectRatio);
 
     console.log('Full prompt:', fullPrompt);
     console.log('Dimensions:', dimensions);
@@ -206,7 +233,7 @@ serve(async (req) => {
 
     console.log('Generated image URL:', imageUrl);
 
-    // Update the studio_images record
+    // Update the studio_images record with aspect ratio in metadata
     const { error: updateError } = await supabase
       .from('studio_images')
       .update({
@@ -215,6 +242,7 @@ serve(async (req) => {
         metadata: {
           style,
           dimensions,
+          aspectRatio: aspectRatio || null,
           editInstruction: editInstruction || null,
         },
       })

@@ -7,6 +7,7 @@ import { PromptInput } from '@/components/studio/PromptInput';
 import { ImagePreview } from '@/components/studio/ImagePreview';
 import { ImageGallery } from '@/components/studio/ImageGallery';
 import { ApplyToWebsiteModal } from '@/components/studio/ApplyToWebsiteModal';
+import { AspectRatioSelector, type AspectRatioOption } from '@/components/studio/AspectRatioSelector';
 import { Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,6 +32,7 @@ export default function Studio() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedType, setSelectedType] = useState<ImageType>('logo');
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>('instagram-square');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentImage, setCurrentImage] = useState<StudioImage | null>(null);
   const [images, setImages] = useState<StudioImage[]>([]);
@@ -95,7 +97,10 @@ export default function Studio() {
           type: selectedType,
           prompt,
           status: 'generating',
-          metadata: { style: 'modern' }
+          metadata: { 
+            style: 'modern',
+            aspectRatio: selectedType === 'social' ? selectedAspectRatio : undefined
+          }
         })
         .select()
         .single();
@@ -110,6 +115,7 @@ export default function Studio() {
           type: selectedType,
           prompt,
           imageId: imageRecord.id,
+          aspectRatio: selectedType === 'social' ? selectedAspectRatio : undefined,
         }
       });
 
@@ -288,6 +294,14 @@ export default function Studio() {
         selectedType={selectedType} 
         onSelectType={setSelectedType} 
       />
+
+      {/* Aspect Ratio Selector - only for social type */}
+      {selectedType === 'social' && (
+        <AspectRatioSelector
+          selectedRatio={selectedAspectRatio}
+          onSelectRatio={setSelectedAspectRatio}
+        />
+      )}
 
       {/* Current Image Preview or Empty State */}
       <div className="my-8">
