@@ -1,15 +1,10 @@
-import { Hono } from 'https://deno.land/x/hono@v3.12.0/mod.ts';
-import { cors } from 'https://deno.land/x/hono@v3.12.0/middleware.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
-const app = new Hono();
-
-// CORS middleware - tüm isteklere otomatik uygulanır
-app.use('*', cors({
-  origin: '*',
-  allowHeaders: ['authorization', 'x-client-info', 'apikey', 'content-type'],
-  allowMethods: ['POST', 'OPTIONS'],
-}));
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+};
 
 interface GenerateRequest {
   type: 'logo' | 'social' | 'poster' | 'creative';
@@ -62,21 +57,34 @@ function getImageDimensions(type: string): { width: number; height: number } {
   }
 }
 
-// OPTIONS requests handled by CORS middleware
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
 
-app.post('/', async (c) => {
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ success: false, error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
 
     // Get the authorization header
-    const authHeader = c.req.header('Authorization');
+    const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      return c.json({ success: false, error: 'Authorization required' }, 401);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authorization required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Create Supabase client with user's token
+    // Create Supabase client with service role
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     
     // Verify the user
@@ -84,14 +92,20 @@ app.post('/', async (c) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      return c.json({ success: false, error: 'Invalid token' }, 401);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const body: GenerateRequest = await c.req.json();
+    const body: GenerateRequest = await req.json();
     const { type, prompt, imageId, editInstruction, previousImageUrl, businessName, style } = body;
 
     if (!type || !prompt || !imageId) {
-      return c.json({ success: false, error: 'Missing required fields' }, 400);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Generating ${type} image for user ${user.id}:`, prompt);
@@ -105,7 +119,10 @@ app.post('/', async (c) => {
       .single();
 
     if (imageError || !imageRecord) {
-      return c.json({ success: false, error: 'Image record not found' }, 404);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Image record not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Build the prompt
@@ -140,7 +157,10 @@ app.post('/', async (c) => {
         .update({ status: 'failed' })
         .eq('id', imageId);
 
-      return c.json({ success: false, error: 'Image generation failed' }, 500);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Image generation failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const imageData = await imageResponse.json();
@@ -205,19 +225,16 @@ app.post('/', async (c) => {
       throw new Error('Failed to update image record');
     }
 
-    return c.json({
-      success: true,
-      imageUrl,
-      imageId,
-    });
+    return new Response(
+      JSON.stringify({ success: true, imageUrl, imageId }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in studio-generate-image:', error);
-    return c.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return new Response(
+      JSON.stringify({ success: false, error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
 });
-
-Deno.serve(app.fetch);
