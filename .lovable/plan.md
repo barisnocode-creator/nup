@@ -1,223 +1,289 @@
 
-# Edge Functions Oluşturma Planı
+# Custom Domain UI Komponenti Plani
 
-Bu plan, özel domain yönetimi için gerekli 3 Edge Function'ı oluşturacak.
+Bu plan, kullanicilarin kendi alan adlarini yonetmelerini saglayan UI bilesenlerini olusturacak.
 
 ---
 
-## Oluşturulacak Edge Functions
+## Mevcut Durum Analizi
 
-### 1. add-custom-domain
+Proje mevcut durumda:
+- `PublishModal` ile subdomain bazli yayinlama yapiyor
+- `custom_domains` tablosu ve Edge Functions (`add-custom-domain`, `verify-domain`, `remove-domain`) hazir
+- Sheet bazli sidebar desenleri mevcut (`CustomizeSidebar`, `EditorSidebar`)
+- TypeScript tipleri `custom_domains` tablosunu destekliyor
 
-**Görevi:** Yeni bir domain ekler ve verification token oluşturur.
+---
 
-**Akış:**
+## Cozum Yaklasimi
+
+Iki ana UI bileseni olusturulacak:
+
+### 1. DomainSettingsModal (Ana Modal)
+
 ```text
-Kullanıcı -> Domain gir (www.drklinik.com)
-                    |
-                    v
-         ┌──────────────────────┐
-         │  1. JWT doğrula      │
-         │  2. Domain formatı   │
-         │     kontrol et       │
-         │  3. Proje sahipliği  │
-         │     kontrol et       │
-         │  4. custom_domains   │
-         │     tablosuna ekle   │
-         └──────────────────────┘
-                    |
-                    v
-         DNS talimatları + token döndür
++---------------------------------------+
+|      Ozel Alan Adi Baglantisi         |
++---------------------------------------+
+|                                       |
+|  Bagli Domainler:                     |
+|  +-------------------------------+    |
+|  | www.drklinik.com   [Dogrulan] |    |
+|  | Status: Dogrulaniyor...       |    |
+|  | [Sil]                         |    |
+|  +-------------------------------+    |
+|                                       |
+|  [+ Yeni Domain Ekle]                 |
+|                                       |
+|  ------------------------------------ |
+|                                       |
+|  DNS Talimatlari (acilir bolum)       |
+|                                       |
++---------------------------------------+
 ```
 
-**Özellikler:**
-- JWT ile kullanıcı kimlik doğrulama
-- Domain format validasyonu (www/non-www, TLD kontrolü)
-- Proje sahipliği kontrolü
-- Aynı domain'in tekrar eklenmesini engelleme
-- Verification token otomatik oluşturma (veritabanı tarafından)
+### 2. AddDomainForm (Domain Ekleme Formu)
 
----
-
-### 2. verify-domain
-
-**Görevi:** DNS TXT kaydını kontrol ederek domain'i doğrular.
-
-**Akış:**
 ```text
-Kullanıcı -> "Doğrula" butonuna tıkla
-                    |
-                    v
-         ┌──────────────────────────────┐
-         │  1. Domain ID al             │
-         │  2. Mevcut token'ı getir     │
-         │  3. DNS TXT sorgula          │
-         │     (_lovable.domain.com)    │
-         │  4. Token eşleşme kontrol    │
-         │  5. Status güncelle          │
-         └──────────────────────────────┘
-                    |
-           ┌───────┴───────┐
-           v               v
-       verified         failed
++---------------------------------------+
+|  Domain adresinizi girin:             |
+|  [www.drklinik.com           ]        |
+|                                       |
+|  [Ekle]                               |
++---------------------------------------+
 ```
 
-**DNS Sorgu Yöntemi:**
-- Deno'nun native DNS API'sini kullanacağız: `Deno.resolveDns()`
-- TXT kaydı formatı: `lovable_verify=TOKEN`
-- Kayıt yeri: `_lovable.domain.com`
+### 3. DNSInstructions (DNS Talimatlari)
 
----
-
-### 3. remove-domain
-
-**Görevi:** Kullanıcının kendi domain'ini silmesine izin verir.
-
-**Özellikler:**
-- JWT ile kimlik doğrulama
-- Proje sahipliği kontrolü (RLS zaten bunu sağlıyor)
-- Soft delete yerine hard delete
+```text
++---------------------------------------+
+|  DNS Kayitlarinizi Ayarlayin          |
++---------------------------------------+
+|                                       |
+|  1. A Kaydi (Root Domain)             |
+|     Host: @                           |
+|     Value: 185.158.133.1    [Kopyala] |
+|                                       |
+|  2. A Kaydi (WWW)                     |
+|     Host: www                         |
+|     Value: 185.158.133.1    [Kopyala] |
+|                                       |
+|  3. TXT Kaydi (Dogrulama)             |
+|     Host: _lovable                    |
+|     Value: lovable_verify=xxx [Kopyala]|
+|                                       |
++---------------------------------------+
+```
 
 ---
 
 ## Teknik Detaylar
 
-### CORS Yapılandırması
-Tüm fonksiyonlar standart CORS headers kullanacak:
-```javascript
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, ...',
+### Dosya Yapisi
+
+```text
+src/components/website-preview/
+  DomainSettingsModal.tsx    <- Ana modal
+  DomainListItem.tsx         <- Tek domain karti
+  AddDomainForm.tsx          <- Domain ekleme formu
+  DNSInstructions.tsx        <- DNS talimatlari
+```
+
+### State Yonetimi
+
+```typescript
+interface CustomDomain {
+  id: string;
+  domain: string;
+  status: 'pending' | 'verifying' | 'verified' | 'failed';
+  verification_token: string;
+  is_primary: boolean;
+  created_at: string;
+  verified_at: string | null;
+}
+
+// Modal State
+const [domains, setDomains] = useState<CustomDomain[]>([]);
+const [isLoading, setIsLoading] = useState(true);
+const [showAddForm, setShowAddForm] = useState(false);
+const [verifyingDomainId, setVerifyingDomainId] = useState<string | null>(null);
+```
+
+### API Entegrasyonu
+
+```typescript
+// Domain listesini getir
+const fetchDomains = async () => {
+  const { data, error } = await supabase
+    .from('custom_domains')
+    .select('*')
+    .eq('project_id', projectId);
+};
+
+// Domain ekle
+const addDomain = async (domain: string) => {
+  const { data, error } = await supabase.functions.invoke('add-custom-domain', {
+    body: { projectId, domain }
+  });
+};
+
+// Domain dogrula
+const verifyDomain = async (domainId: string) => {
+  const { data, error } = await supabase.functions.invoke('verify-domain', {
+    body: { domainId }
+  });
+};
+
+// Domain sil
+const removeDomain = async (domainId: string) => {
+  const { data, error } = await supabase.functions.invoke('remove-domain', {
+    body: { domainId }
+  });
 };
 ```
 
-### JWT Doğrulama
-JWT doğrulama kod içinde yapılacak (`verify_jwt = false` config'de):
-```javascript
-const authHeader = req.headers.get('authorization');
-const token = authHeader?.replace('Bearer ', '');
-const { data: claimsData } = await supabase.auth.getClaims(token);
-```
-
-### Domain Validasyon Kuralları
-- Minimum 4 karakter (a.co gibi)
-- Maksimum 253 karakter
-- Sadece küçük harf, rakam, tire ve nokta
-- TLD zorunlu (.com, .net, .tr, vb.)
-- Reserved domainler engelli (localhost, example.com, vb.)
-
 ---
 
-## Config.toml Güncellemesi
-
-```toml
-project_id = "lpgyafvuihdymgsrmswh"
-
-[functions.add-custom-domain]
-verify_jwt = false
-
-[functions.verify-domain]
-verify_jwt = false
-
-[functions.remove-domain]
-verify_jwt = false
-
-# ... mevcut fonksiyonlar
-```
-
----
-
-## Dosya Yapısı
+## Kullanici Akisi
 
 ```text
-supabase/functions/
-├── add-custom-domain/
-│   └── index.ts
-├── verify-domain/
-│   └── index.ts
-├── remove-domain/
-│   └── index.ts
-└── ... (mevcut fonksiyonlar)
+1. Kullanici PublishModal'da "Ozel Domain Ekle" tiklar
+   |
+   v
+2. DomainSettingsModal acilir
+   |
+   +-- Mevcut domainler listelenir
+   |
+   +-- "Yeni Domain Ekle" tiklanir
+       |
+       v
+3. AddDomainForm gosterilir
+   |
+   v
+4. Domain girilir ve eklenir
+   |
+   v
+5. DNS Talimatlari gosterilir
+   |
+   v
+6. Kullanici DNS'i yapilandirir
+   |
+   v
+7. "Dogrula" butonu tiklanir
+   |
+   +-- Basarili: Status = verified
+   |
+   +-- Basarisiz: Hata mesaji + yeniden dene
 ```
 
 ---
 
-## API Dökümanı
+## UI Bilesenleri Detayi
 
-### POST /add-custom-domain
-**Request:**
-```json
-{
-  "projectId": "uuid",
-  "domain": "www.drklinik.com"
-}
-```
+### DomainSettingsModal
 
-**Response (Success):**
-```json
-{
-  "success": true,
-  "domainId": "uuid",
-  "verificationToken": "abc123...",
-  "dnsInstructions": {
-    "aRecord": { "host": "@", "value": "185.158.133.1" },
-    "wwwRecord": { "host": "www", "value": "185.158.133.1" },
-    "txtRecord": { "host": "_lovable", "value": "lovable_verify=abc123..." }
-  }
-}
-```
+| Prop | Tip | Aciklama |
+|------|-----|----------|
+| isOpen | boolean | Modal gorunurlugu |
+| onClose | () => void | Kapatma callback |
+| projectId | string | Proje ID |
 
-### POST /verify-domain
-**Request:**
-```json
-{
-  "domainId": "uuid"
-}
-```
+**Ozellikler:**
+- Mevcut domainleri listele
+- Domain ekleme formunu goster/gizle
+- Her domain icin durum goster (pending/verifying/verified/failed)
+- Dogrulama butonu
+- Silme butonu (onay ile)
+- DNS talimatlari (Collapsible)
 
-**Response:**
-```json
-{
-  "success": true,
-  "status": "verified" | "failed",
-  "message": "Domain verified successfully"
-}
-```
+### DomainListItem
 
-### POST /remove-domain
-**Request:**
-```json
-{
-  "domainId": "uuid"
-}
-```
+| Prop | Tip | Aciklama |
+|------|-----|----------|
+| domain | CustomDomain | Domain verisi |
+| onVerify | (id) => void | Dogrulama callback |
+| onRemove | (id) => void | Silme callback |
+| isVerifying | boolean | Dogrulama durumu |
 
-**Response:**
-```json
-{
-  "success": true
-}
+**Ozellikler:**
+- Domain adini goster
+- Durum badge'i (renk kodlu)
+- Dogrulama butonu (pending/failed icin)
+- Silme butonu
+- Primary badge (is_primary ise)
+
+### DNSInstructions
+
+| Prop | Tip | Aciklama |
+|------|-----|----------|
+| domain | string | Domain adi |
+| verificationToken | string | TXT kaydi icin token |
+
+**Ozellikler:**
+- A kaydi talimatlari
+- WWW A kaydi talimatlari
+- TXT kaydi talimatlari
+- Her satir icin kopyalama butonu
+- Collapsible/Accordion yapisi
+
+---
+
+## Status Badge Renkleri
+
+| Status | Renk | Ikon |
+|--------|------|------|
+| pending | Sari (amber) | Clock |
+| verifying | Mavi | Loader (animasyonlu) |
+| verified | Yesil | Check |
+| failed | Kirmizi | X |
+
+---
+
+## PublishModal Entegrasyonu
+
+PublishModal'in "Premium Upsell" bolumu guncellenerek dogrudan `DomainSettingsModal` acilabilir hale getirilecek:
+
+```typescript
+// Mevcut:
+<Button variant="link">
+  Upgrade to Premium
+</Button>
+
+// Yeni:
+<Button variant="link" onClick={() => setDomainModalOpen(true)}>
+  Ozel Domain Bagla
+</Button>
 ```
 
 ---
 
-## Güvenlik Kontrolleri
+## Uygulama Adimlari
 
-1. **Kimlik Doğrulama**: Her fonksiyon JWT token kontrolü yapar
-2. **Yetkilendirme**: Kullanıcı sadece kendi projelerine domain ekleyebilir
-3. **Rate Limiting**: IP başına dakikada max 10 istek
-4. **Input Validation**: Tüm girdiler sanitize edilir
-
----
-
-## Uygulama Adımları
-
-1. `add-custom-domain/index.ts` oluştur
-2. `verify-domain/index.ts` oluştur
-3. `remove-domain/index.ts` oluştur
-4. `supabase/config.toml` güncelle
-5. Fonksiyonları test et
+1. **DomainSettingsModal.tsx** - Ana modal bileseni
+2. **DomainListItem.tsx** - Tekil domain karti
+3. **AddDomainForm.tsx** - Domain ekleme formu  
+4. **DNSInstructions.tsx** - DNS talimatlari bileseni
+5. **PublishModal guncellemesi** - Domain modal tetikleyici
+6. **Project.tsx guncellemesi** - Modal state ve props
 
 ---
 
-Bu planı onaylarsanız, 3 edge function'ı ve config güncellemesini tek seferde oluşturacağım.
+## Guvenlik Kontrolleri
+
+1. **JWT Dogrulama**: Tum API cagrilari kullanici oturumunu dogrular
+2. **Proje Sahipligi**: RLS politikalari ile sadece proje sahibi domain yonetebilir
+3. **Domain Format Validasyonu**: Frontend'de de temel validasyon
+4. **Silme Onayi**: Yanlislikla silmeyi onlemek icin confirm dialog
+
+---
+
+## Tahmini Sure
+
+| Gorev | Sure |
+|-------|------|
+| DomainSettingsModal | 1 mesaj |
+| Alt bilesenler | 1 mesaj |
+| PublishModal entegrasyonu | 1 mesaj |
+| Test ve ince ayar | 1 mesaj |
+| **Toplam** | **~4 mesaj** |
+
