@@ -30,8 +30,8 @@ export function TrustSection() {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className="font-serif text-3xl md:text-4xl font-medium mb-4 text-foreground">
-            Sağlık Sektörü İçin
-            <span className="text-primary"> AI Partneri</span>
+            İşletmeniz İçin
+            <span className="text-primary"> AI Partner</span>
           </h2>
           <p className="text-muted-foreground text-lg">
             Profesyonel web sitenizi dakikalar içinde oluşturun
