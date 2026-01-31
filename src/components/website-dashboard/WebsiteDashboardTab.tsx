@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { AlertTriangle, Users, Eye, Monitor, Smartphone } from 'lucide-react';
+import { AlertTriangle, Users, Eye, Monitor, Smartphone, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -57,7 +57,6 @@ function generateSampleData() {
     totalViews: 3243,
     viewsLast7Days: 847,
     uniqueVisitors: 253,
-    onlineUsers: 32,
     deviceBreakdown: { mobile: 2325, desktop: 3325 },
     viewsOverTime,
     pageViews,
@@ -75,7 +74,6 @@ export function WebsiteDashboardTab({ projectId, isPublished }: WebsiteDashboard
   
   const data = useSampleData ? sampleData : {
     ...realData,
-    onlineUsers: Math.floor(Math.random() * 50) + 5, // Simulated
     pageViews: realData.pageViews || sampleData.pageViews,
     hourlyViews: realData.hourlyViews || sampleData.hourlyViews,
   };
@@ -174,11 +172,11 @@ export function WebsiteDashboardTab({ projectId, isPublished }: WebsiteDashboard
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-                <Users className="w-6 h-6 text-green-600" />
+                <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-3xl font-bold">{data.onlineUsers}</p>
-                <p className="text-sm text-muted-foreground">Online users</p>
+                <p className="text-3xl font-bold">{data.viewsLast7Days?.toLocaleString()}</p>
+                <p className="text-sm text-muted-foreground">Views (last 7 days)</p>
               </div>
             </div>
           </CardContent>
@@ -191,7 +189,7 @@ export function WebsiteDashboardTab({ projectId, isPublished }: WebsiteDashboard
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-3xl font-bold">{data.uniqueVisitors}</p>
+                <p className="text-3xl font-bold">{data.uniqueVisitors?.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Unique visitors</p>
               </div>
             </div>

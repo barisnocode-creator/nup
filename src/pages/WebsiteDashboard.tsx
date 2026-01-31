@@ -116,7 +116,7 @@ export default function WebsiteDashboard() {
           </TabsContent>
 
           <TabsContent value="blog">
-            <BlogTab projectId={id!} />
+            <BlogTab projectId={id!} generatedContent={project.generated_content} />
           </TabsContent>
 
           <TabsContent value="domain">
