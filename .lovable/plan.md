@@ -1,211 +1,172 @@
 
 
-# Sidebar Değişikliklerinin Gerçek Zamanlı Yansıması ve Düzeltmeler
+# Özel Domain (Custom Domain) Desteği Planı
 
-## Tespit Edilen Sorunlar
-
-1. **"Edit Background" yazısı** hala ekranın ortasında görünüyor (HeroOverlay.tsx satır 95-101)
-2. **Regenerate butonu** görsel için AI yerine Pixabay kullanmalı
-3. **Sidebar'daki değişiklikler** web sitede gerçek zamanlı görünmüyor (özellikle image position)
-4. **PIXABAY_API_KEY** mevcut - kontrol edildi ✓
+Bu plan, kullanıcılarınızın kendi alan adlarını (örn: `www.drklinik.com`) yayınladıkları web sitelerine bağlamalarını sağlayacak altyapıyı oluşturacak.
 
 ---
 
-## Yapılacak Değişiklikler
-
-### 1. HeroOverlay.tsx - "Edit Background" Yazısını Kaldır
-
-**Mevcut durum (Satır 89-103):**
-Hover overlay içinde "Edit Background" yazısı gösteriliyor.
-
-**Çözüm:**
-Bu yazıyı tamamen kaldır. Sadece görsel hover efekti kalsın (karartma), metin olmasın. Kullanıcı sidebar'dan düzenleme yapacak.
+## Mevcut Durum
 
 ```text
-Öncesi:
-+------------------------------------------+
-|                                          |
-|     [Edit Background yazısı + ikon]      |   ← KALDIRILACAK
-|                                          |
-+------------------------------------------+
-
-Sonrası:
-+------------------------------------------+
-|                                          |
-|     (sadece hafif karartma efekti)       |   ← Hover'da cursor:pointer
-|                                          |
-+------------------------------------------+
++------------------------+
+|    Şu anki sistem      |
++------------------------+
+| subdomain: klinik-adi  |
+| URL: /site/klinik-adi  |
+| custom_domain: null    |
++------------------------+
 ```
 
-### 2. EditorSidebar.tsx - Regenerate Butonunu Pixabay'a Bağla
-
-**Mevcut durum:**
-- `onImageRegenerate` prop'u AI görsel üretimi için tasarlanmış
-- TODO olarak bekliyor ve çalışmıyor
-
-**Çözüm:**
-- Regenerate butonunu tıklayınca `onImageChange` fonksiyonunu çağır
-- Bu zaten Pixabay'dan alternatifleri getiriyor
-- Buton metnini "Regenerate" yerine "Find Similar" olarak değiştir veya aynı `fetch-image-options` fonksiyonunu çağır
-
-### 3. Project.tsx - handleImageRegenerate'i Pixabay'a Bağla
-
-**Mevcut durum (Satır 295-317):**
-```typescript
-const handleImageRegenerate = useCallback(async () => {
-  // TODO: Implement single image regeneration via edge function
-  setTimeout(() => {
-    setIsRegeneratingImage(false);
-    toast({ title: 'Image regenerated', ... });
-  }, 2000);
-}, [...]);
-```
-
-**Çözüm:**
-`handleImageRegenerate` fonksiyonunu `handleImageChange` ile aynı Pixabay API'sini çağıracak şekilde güncelle.
-
-### 4. Gerçek Zamanlı Görsel Pozisyon Güncellemesi
-
-**Mevcut durum:**
-- Slider değiştiğinde `handleUpdateImagePosition` sadece EditorSidebar state'ini güncelliyor
-- `generated_content` içindeki görsel pozisyonu güncellenmiyor
-- Web sitede değişiklik görünmüyor
-
-**Çözüm:**
-1. `handleUpdateImagePosition` fonksiyonunu `generated_content.images` içine pozisyon kaydetecek şekilde güncelle
-2. Hero ve diğer görsel bileşenlerine `positionX`, `positionY` değerlerini prop olarak geçir
-3. Görsellerin `objectPosition` stilini dinamik yap
-
-### 5. Gerçek Zamanlı Stil Değişiklikleri (Font Size, Alignment, Color)
-
-**Mevcut durum:**
-- EditorSidebar'daki Font Size, Text Alignment, Text Color seçenekleri sadece local state'te tutuluyor
-- `generated_content` veya herhangi bir kalıcı state'e kaydedilmiyor
-- Değişiklikler sayfaya yansımıyor
-
-**Çözüm:**
-1. EditorSidebar'a yeni callback'ler ekle: `onStyleChange`
-2. Bu callback'ler stil değişikliklerini üst bileşene (Project.tsx) ilet
-3. Project.tsx'te bu değişiklikleri `generated_content.sectionStyles` içine kaydet
-4. Template bileşenlerine bu stilleri prop olarak geçir
+Veritabanında `custom_domain` alanı zaten mevcut ancak kullanılmıyor.
 
 ---
 
-## Dosya Değişiklikleri Özeti
+## Çözüm Mimarisi
 
-| Dosya | Değişiklik |
-|-------|------------|
-| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | "Edit Background" yazısını kaldır, sadece hover karartma efekti bırak |
-| `src/components/website-preview/EditorSidebar.tsx` | Regenerate butonunu Pixabay'a yönlendir, stil callback'lerini ekle |
-| `src/pages/Project.tsx` | `handleImageRegenerate`'i Pixabay'a bağla, `handleUpdateImagePosition`'ı gerçek zamanlı yap, stil handler'ları ekle |
-| `src/types/generated-website.ts` | `sectionStyles` tipi ekle (pozisyon ve stil bilgileri için) |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | Görsellere pozisyon props'larını geçir |
+```text
+                    ┌─────────────────────────────────────────┐
+                    │           Kullanıcı Akışı               │
+                    └─────────────────────────────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │   1. PublishModal'da Domain Ekle  │
+                    │   (www.drklinik.com gir)          │
+                    └─────────────────┬─────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │   2. DNS Kayıtlarını Göster       │
+                    │   A Record: 185.158.133.1         │
+                    │   TXT: _lovable.drklinik.com      │
+                    └─────────────────┬─────────────────┘
+                                      │
+                    ┌─────────────────▼─────────────────┐
+                    │   3. Doğrulama (verify-domain)    │
+                    │   DNS TXT kaydını kontrol et      │
+                    └─────────────────┬─────────────────┘
+                                      │
+                         ┌────────────┴────────────┐
+                         │                         │
+                  ┌──────▼──────┐           ┌──────▼──────┐
+                  │  Başarılı   │           │  Beklemede  │
+                  │  Domain     │           │  Status:    │
+                  │  Aktif!     │           │  verifying  │
+                  └─────────────┘           └─────────────┘
+```
 
 ---
 
 ## Teknik Detaylar
 
-### HeroOverlay.tsx Değişikliği
+### 1. Veritabanı Değişiklikleri
 
-```typescript
-// KALDIRILAN KISIM (Satır 95-101):
-<div className={cn(
-  "opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 backdrop-blur-sm",
-  isImageSelected && "opacity-100 ring-2 ring-primary"
-)}>
-  <ImageIcon className="w-4 h-4 text-gray-800" />
-  <span className="text-sm font-medium text-gray-800">Edit Background</span>
-</div>
+Yeni bir `custom_domains` tablosu oluşturulacak:
 
-// YENİ HALİ: Sadece karartma overlay, metin yok
-{isEditable && (
-  <div className={cn(
-    "absolute inset-0 transition-all duration-200",
-    isImageSelected 
-      ? "bg-black/20 ring-4 ring-primary ring-inset" 
-      : "bg-black/0 group-hover:bg-black/10"
-  )} />
-)}
+```text
++------------------------+
+|    custom_domains      |
++------------------------+
+| id (uuid)              |
+| project_id (fk)        |
+| domain (text, unique)  |
+| verification_token     |
+| status (enum)          |
+|   - pending            |
+|   - verifying          |
+|   - verified           |
+|   - failed             |
+| is_primary (boolean)   |
+| verified_at            |
+| created_at             |
++------------------------+
 ```
 
-### handleImageRegenerate Güncelleme
+### 2. Yeni Edge Functions
 
-```typescript
-const handleImageRegenerate = useCallback(async () => {
-  if (!editorSelection?.imageData || !id) return;
-  
-  // Pixabay'dan alternatifler getir - aynı handleImageChange mantığı
-  setIsRegeneratingImage(true);
-  setImageOptions([]);
-  
-  try {
-    let imageType = 'hero';
-    const imagePath = editorSelection.imageData.imagePath;
-    if (imagePath.includes('about')) imageType = 'about';
-    else if (imagePath.includes('gallery')) imageType = 'gallery';
-    else if (imagePath.includes('cta')) imageType = 'cta';
-    else if (imagePath.includes('service')) imageType = 'service';
-    
-    const { data, error } = await supabase.functions.invoke('fetch-image-options', {
-      body: { projectId: id, imageType, count: 3 },
-    });
+| Function | Görevi |
+|----------|--------|
+| `add-custom-domain` | Domain ekleme, token oluşturma |
+| `verify-domain` | DNS TXT kaydını kontrol etme |
+| `check-domain-status` | Domain durumunu sorgulama |
 
-    if (error) throw error;
-    
-    if (data?.options && data.options.length > 0) {
-      setImageOptions(data.options);
-      toast({ title: 'Alternatives found', description: 'Choose from the options below.' });
-    } else {
-      toast({ title: 'No alternatives found', description: 'Try a different search.' });
-    }
-  } catch (err) {
-    toast({ title: 'Error', description: 'Could not fetch alternatives.', variant: 'destructive' });
-  } finally {
-    setIsRegeneratingImage(false);
-  }
-}, [editorSelection, id, toast]);
-```
+### 3. UI Değişiklikleri
 
-### Gerçek Zamanlı Görsel Pozisyon
+**A. Publish Modal Güncellemesi:**
+- "Custom Domain Ekle" butonu
+- Domain giriş alanı
+- DNS talimatları gösterimi
+- Doğrulama durumu takibi
 
-```typescript
-// Project.tsx - handleUpdateImagePosition güncelleme
-const handleUpdateImagePosition = useCallback((x: number, y: number) => {
-  if (!editorSelection?.imageData?.imagePath || !project?.generated_content) return;
-  
-  // EditorSidebar state'ini güncelle
-  setEditorSelection(prev => prev ? { 
-    ...prev, 
-    imageData: prev.imageData ? { ...prev.imageData, positionX: x, positionY: y } : undefined 
-  } : null);
-  
-  // generated_content içine pozisyonu kaydet
-  const positionPath = editorSelection.imageData.imagePath.replace('images.', 'imagePositions.');
-  const updatedContent = updateNestedValue(
-    project.generated_content, 
-    positionPath, 
-    { x, y }
-  );
-  
-  setProject(prev => prev ? { ...prev, generated_content: updatedContent } : null);
-  setHasUnsavedChanges(true);
-}, [editorSelection, project]);
+**B. Yeni Domain Yönetim Paneli:**
+- Bağlı domainlerin listesi
+- Primary domain seçimi
+- Domain silme/yeniden doğrulama
+
+### 4. Public Website Routing Güncellemesi
+
+`PublicWebsite.tsx` dosyası hem subdomain hem custom domain ile çalışacak şekilde güncellenecek:
+
+```text
+/site/klinik-adi     -> Subdomain routing (mevcut)
+www.drklinik.com     -> Custom domain routing (yeni)
 ```
 
 ---
 
-## Kullanıcı Deneyimi Akışı
+## Uygulama Adımları
 
-### Görsel Düzenleme (Yeni)
-1. Kullanıcı hero arka planına tıklar
-2. Sadece hafif karartma efekti gösterilir (metin yok)
-3. EditorSidebar açılır
-4. "Regenerate" butonuna tıklayınca Pixabay'dan alternatifler gelir
-5. Thumbnaillerden biri seçilir → Görsel anında değişir
-6. Pozisyon slider'ları hareket ettirilir → Görsel pozisyonu gerçek zamanlı güncellenir
+### Adım 1: Veritabanı Şeması
+- `custom_domains` tablosu oluştur
+- RLS politikaları ekle (kullanıcı sadece kendi projelerinin domainlerini görsün)
+- `public_projects` view'ına domain bilgisi ekle
 
-### Stil Düzenleme (Gelecek)
-1. Kullanıcı Style tab'ına geçer
-2. Font boyutu, alignment, renk seçer
-3. Değişiklikler anında sayfaya yansır
+### Adım 2: Edge Functions
+1. **add-custom-domain**: Domain ekleme ve verification token oluşturma
+2. **verify-domain**: DNS TXT kaydını kontrol etme (Node.js `dns` modülü veya harici API)
+3. **remove-domain**: Domain silme
+
+### Adım 3: UI Bileşenleri
+1. `PublishModal` içine "Connect Domain" bölümü ekle
+2. DNS talimatları için `DomainInstructions` bileşeni
+3. Domain yönetimi için `DomainSettings` sayfası
+
+### Adım 4: Routing Güncellemesi
+- Custom domain sorgusu için `public_projects` view güncelle
+- Routing mantığını domain bazlı çalışacak şekilde genişlet
+
+---
+
+## DNS Talimatları (Kullanıcıya Gösterilecek)
+
+Kullanıcıya şu kayıtları eklemesini söyleyeceğiz:
+
+| Tip | Host | Değer |
+|-----|------|-------|
+| A | @ | 185.158.133.1 |
+| A | www | 185.158.133.1 |
+| TXT | _lovable | lovable_verify=ABC123 |
+
+---
+
+## Önemli Notlar
+
+1. **SSL Sertifikası**: Lovable Cloud otomatik olarak Let's Encrypt ile SSL sağlar
+2. **DNS Propagation**: 24-72 saat sürebilir
+3. **Wildcard**: Subdomain desteği için wildcard DNS gerekli değil, her domain tek tek eklenir
+
+---
+
+## Tahmini Süre
+
+| Görev | Süre |
+|-------|------|
+| Veritabanı şeması | 1 mesaj |
+| Edge functions | 2 mesaj |
+| UI bileşenleri | 2 mesaj |
+| Routing güncellemesi | 1 mesaj |
+| **Toplam** | **~6 mesaj** |
+
+---
+
+Bu planı onaylarsanız, veritabanı şeması ile başlayabilirim.
 
