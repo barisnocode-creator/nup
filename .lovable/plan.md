@@ -1,181 +1,259 @@
 
-# Analytics ve Website Bileşenleri Kapsamlı Düzeltme Planı
+# Change Template Özelliği - Kapsamlı Uygulama Planı
 
-## Tespit Edilen Sorunlar
+## Özellik Açıklaması
 
-### 1. BlogTab - Statik Veri Kullanımı
-**Mevcut Durum:** Bileşen sabit `samplePosts` dizisini kullanıyor
-**Olması Gereken:** `generated_content.pages.blog.posts` verisini göstermeli
+Customize sidebar'a "Change Template" seçeneği eklenerek, kullanıcıların farklı web sitesi şablonları arasından seçim yapmasını sağlayan yeni bir özellik. Durable.co'nun tasarım yaklaşımına benzer şekilde, tam ekran bir galeri modal'ı ile hazır template görselleri sunulacak.
 
-### 2. SettingsTab - Yanlış Veri Yolları
-**Mevcut Durum:**
-- `siteDescription`: `generatedContent?.hero?.subtitle` (yanlış)
-- `favicon`: boş string (hiç okunmuyor)
+## Mevcut Durum
 
-**Olması Gereken:**
-- `siteDescription`: `generatedContent?.metadata?.seoDescription` veya `generatedContent?.metadata?.tagline`
-- `favicon`: `generatedContent?.siteSettings?.favicon`
-
-### 3. WebsiteDashboardTab - Simüle Edilmiş "Online Users"
-**Mevcut Durum:** `Math.random() * 50 + 5` ile sahte veri üretiliyor
-**Çözüm:** Bu metriği kaldır veya "Son 24 saat ziyaretçi" gibi gerçek veriye dönüştür
+- **CustomizeSidebar**: Şu an Colors, Fonts, Corners, Animations gibi seçenekler var ama "Change Template" yok
+- **Template Sistemi**: `src/templates/index.ts`'de tek template (temp1 - Healthcare Modern) kayıtlı
+- **Mevcut Görseller**: `src/assets/` klasöründe 8 adet showcase görseli mevcut (restaurant, dental, law-office, vs.)
+- **Template Değiştirme**: `Project.tsx` zaten `template_id` prop'unu `WebsitePreview`'e geçiriyor
 
 ---
 
-## Değişiklik Detayları
+## Uygulama Adımları
 
-### Dosya 1: `src/pages/WebsiteDashboard.tsx`
+### 1. Template Önizleme Görselleri Ekleme
 
-BlogTab'a `generated_content` prop'u ekle:
+**Dosya**: `src/assets/` klasörüne yeni template preview görselleri
 
-```typescript
-<TabsContent value="blog">
-  <BlogTab 
-    projectId={id!} 
-    generatedContent={project.generated_content} 
-  />
-</TabsContent>
+Mevcut showcase görsellerini template preview olarak kullanabiliriz. Ancak daha iyi bir deneyim için bunları template olarak yeniden isimlendireceğiz:
+
+```text
+Yeni template görselleri (mevcut showcase görsellerinden):
+- template-dental-clinic.jpg (showcase-dental.jpg'den)
+- template-restaurant.jpg (showcase-restaurant.jpg'den)
+- template-law-office.jpg (showcase-law-office.jpg'den)
+- template-digital-agency.jpg (showcase-digital-agency.jpg'den)
+- template-boutique.jpg (showcase-boutique.jpg'den)
+- template-pharmacy.jpg (showcase-pharmacy.jpg'den)
 ```
 
----
+### 2. Template Galeri Modal Bileşeni
 
-### Dosya 2: `src/components/website-dashboard/BlogTab.tsx`
-
-Bileşeni `generated_content.pages.blog.posts` verisini kullanacak şekilde güncelle:
+**Yeni Dosya**: `src/components/website-preview/ChangeTemplateModal.tsx`
 
 ```typescript
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, FileText, Calendar, Tag } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BlogPost } from '@/types/generated-website';
-
-interface BlogTabProps {
-  projectId: string;
-  generatedContent: any;
+interface TemplateOption {
+  id: string;
+  name: string;
+  category: string;
+  preview: string;
+  isCurrentTemplate?: boolean;
 }
 
-export function BlogTab({ projectId, generatedContent }: BlogTabProps) {
-  // generated_content.pages.blog.posts verisini al
-  const blogPosts: BlogPost[] = generatedContent?.pages?.blog?.posts || [];
-
-  // Blog yazılarını göster (varsa)
-  // Yoksa boş state göster
+interface ChangeTemplateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentTemplateId: string;
+  onSelectTemplate: (templateId: string) => void;
+  onPreview: (templateId: string) => void;
 }
 ```
 
-- AI tarafından oluşturulan blog yazılarını listele
-- Kategori ve tarih bilgilerini göster
-- Yazı yoksa "No blog posts yet" mesajı
+**Özellikler**:
+- Tam ekran modal (Dialog bileşeni)
+- Başlık: "Change template" + alt yazı açıklaması
+- Sağ üstte "Regenerate" butonu (template sırasını karıştırır, AI çağırmaz)
+- Grid düzeni: 4 sütun (desktop), 2 sütun (tablet), 1 sütun (mobil)
+- Her template kartı:
+  - Preview görseli (sabit boyut, aspect-ratio korunur)
+  - "Your template" rozeti (mevcut template için)
+  - Hover'da vurgu efekti
+- Seçilen template'de "Details" ve "Preview" butonları
 
----
+### 3. CustomizeSidebar Güncellemesi
 
-### Dosya 3: `src/components/website-dashboard/SettingsTab.tsx`
+**Dosya**: `src/components/website-preview/CustomizeSidebar.tsx`
 
-Doğru veri yollarını kullan:
-
+Yeni menu item ekleme:
 ```typescript
-const [settings, setSettings] = useState({
-  siteName: projectName || '',
-  // Düzeltilmiş yollar:
-  siteDescription: generatedContent?.metadata?.tagline || 
-                   generatedContent?.metadata?.seoDescription || '',
-  metaTitle: generatedContent?.metadata?.siteName || projectName || '',
-  metaDescription: generatedContent?.metadata?.seoDescription || '',
-  // siteSettings'den oku:
-  favicon: generatedContent?.siteSettings?.favicon || '',
-  ogImage: generatedContent?.siteSettings?.ogImage || '',
-});
+const menuItems = [
+  { id: 'template' as const, icon: LayoutGrid, label: 'Change Template', isAction: true },
+  // ... mevcut menu items
+];
 ```
 
-Ayrıca kaydetme fonksiyonunu da güncelle:
+Yeni prop'lar:
 ```typescript
-const handleSave = async () => {
-  const updatedContent = {
-    ...generatedContent,
-    metadata: {
-      ...generatedContent?.metadata,
-      siteName: settings.siteName,
-      tagline: settings.siteDescription,
-      seoDescription: settings.metaDescription,
+interface CustomizeSidebarProps {
+  // ... mevcut props
+  currentTemplateId?: string;
+  onChangeTemplate?: () => void;
+}
+```
+
+### 4. Project.tsx Güncellemesi
+
+**Dosya**: `src/pages/Project.tsx`
+
+Yeni state'ler ve handler'lar:
+```typescript
+const [changeTemplateModalOpen, setChangeTemplateModalOpen] = useState(false);
+
+const handleTemplateChange = useCallback(async (templateId: string) => {
+  // Template ID'yi veritabanına kaydet
+  await supabase
+    .from('projects')
+    .update({ template_id: templateId })
+    .eq('id', id);
+  
+  // Local state'i güncelle
+  setProject(prev => prev ? { ...prev, template_id: templateId } : null);
+  
+  // Modal'ı kapat
+  setChangeTemplateModalOpen(false);
+  
+  toast({
+    title: 'Template changed',
+    description: 'Your website is now using the new template.',
+  });
+}, [id, toast]);
+
+const handleTemplatePreview = useCallback((templateId: string) => {
+  // Geçici olarak template'i değiştirerek önizleme göster
+  setProject(prev => prev ? { ...prev, template_id: templateId } : null);
+}, []);
+```
+
+### 5. Template Veri Yapısı Güncelleme
+
+**Dosya**: `src/templates/index.ts`
+
+Template kayıtlarına preview görseli ekleme:
+```typescript
+import templateDental from '@/assets/showcase-dental.jpg';
+import templateRestaurant from '@/assets/showcase-restaurant.jpg';
+// ... diğer görseller
+
+const templateRegistry: Record<string, {...}> = {
+  temp1: {
+    config: {
+      id: 'temp1',
+      name: 'Healthcare Modern',
+      description: 'Clean, professional template for healthcare',
+      category: 'Healthcare',
+      preview: templateDental, // Önizleme görseli
+      supportedProfessions: ['doctor', 'dentist'],
+      supportedTones: ['professional', 'friendly'],
     },
-    siteSettings: {
-      ...generatedContent?.siteSettings,
-      favicon: settings.favicon,
-      ogImage: settings.ogImage,
+    component: HealthcareModernTemplate,
+  },
+  temp2: {
+    config: {
+      id: 'temp2',
+      name: 'Restaurant & Cafe',
+      description: 'Elegant template for food business',
+      category: 'Restaurant',
+      preview: templateRestaurant,
+      // ... diğer config
     },
-  };
-  // ...save to database
+    component: HealthcareModernTemplate, // Aynı bileşen, farklı görsel
+  },
+  // ... daha fazla template
 };
 ```
 
----
+### 6. Template Types Güncelleme
 
-### Dosya 4: `src/components/website-dashboard/WebsiteDashboardTab.tsx`
-
-"Online Users" metriğini "Last 7 Days Views" ile değiştir:
+**Dosya**: `src/templates/types.ts`
 
 ```typescript
-// Kaldır:
-onlineUsers: Math.floor(Math.random() * 50) + 5,
-
-// Değiştir (metrik kartı):
-<Card>
-  <CardContent className="pt-6">
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-        <TrendingUp className="w-6 h-6 text-green-600" />
-      </div>
-      <div>
-        <p className="text-3xl font-bold">{data.viewsLast7Days}</p>
-        <p className="text-sm text-muted-foreground">Views (last 7 days)</p>
-      </div>
-    </div>
-  </CardContent>
-</Card>
-```
-
----
-
-## Özet Tablo
-
-| Dosya | Değişiklik |
-|-------|------------|
-| `WebsiteDashboard.tsx` | BlogTab'a `generatedContent` prop'u ekle |
-| `BlogTab.tsx` | Statik veriyi kaldır, `generated_content.pages.blog.posts` kullan |
-| `SettingsTab.tsx` | `metadata` ve `siteSettings` yollarını düzelt |
-| `WebsiteDashboardTab.tsx` | "Online Users"ı "Views (last 7 days)" ile değiştir |
-
----
-
-## Teknik Notlar
-
-### GeneratedContent Yapısı (Referans)
-```typescript
-{
-  pages: {
-    blog?: {
-      hero: { title, subtitle },
-      posts: BlogPost[]  // ← BlogTab bu veriyi kullanmalı
-    }
-  },
-  metadata: {
-    siteName,
-    tagline,
-    seoDescription  // ← SettingsTab bu veriyi kullanmalı
-  },
-  siteSettings?: {
-    favicon,  // ← Studio'dan uygulanan favicon buraya kaydediliyor
-    colors,
-    fonts
-  }
+export interface TemplateConfig {
+  id: string;
+  name: string;
+  description: string;
+  category: string;           // Yeni: kategori
+  preview: string;            // Yeni: önizleme görseli yolu
+  supportedProfessions: string[];
+  supportedTones: string[];
 }
 ```
 
-### Test Adımları
-1. Website Dashboard'a git
-2. Blog sekmesini aç - AI oluşturmuş blog yazıları görünmeli
-3. Settings sekmesini aç - siteName, description ve favicon değerleri doğru gelmeli
-4. Dashboard sekmesini aç - "Online Users" yerine "Views (last 7 days)" gösterilmeli
-5. Değişiklikleri kaydet ve veritabanında doğru yere yazıldığını kontrol et
+---
+
+## UI Tasarımı
+
+### Change Template Modal Görünümü
+
+```text
++------------------------------------------------------------------+
+|  Change template                                     [Regenerate] |
+|  Your original images and text will be used,                   X |
+|  but they may be rearranged to fit the new layout.               |
++------------------------------------------------------------------+
+|                                                                  |
+|  +---------------+  +---------------+  +---------------+  +---+  |
+|  | [Your        ]|  |               |  |               |  |   |  |
+|  | template]     |  |               |  |               |  |   |  |
+|  |               |  |               |  |               |  |   |  |
+|  |   [Preview]   |  |  [İmage]      |  |  [Image]      |  |   |  |
+|  |               |  |               |  |               |  |   |  |
+|  +---------------+  +---------------+  +---------------+  +---+  |
+|  Dental Clinic      Book Store         Tech Blog                 |
+|                                                                  |
+|  [<]                                                        [>]  |
+|                                                                  |
++------------------------------------------------------------------+
+```
+
+### Template Kartı Yapısı
+
+```text
++----------------------+
+| [Your template]      |  <-- Rozet (sadece mevcut template'de)
+|                      |
+|    [PREVIEW IMAGE]   |
+|    (Tall card)       |
+|                      |
++----------------------+
+| [Details] [Preview]  |  <-- Hover'da görünür
++----------------------+
+```
+
+---
+
+## Dosya Değişiklikleri Özeti
+
+| Dosya | Değişiklik |
+|-------|------------|
+| `src/components/website-preview/ChangeTemplateModal.tsx` | **YENİ** - Template galeri modal'ı |
+| `src/components/website-preview/CustomizeSidebar.tsx` | "Change Template" menu item ekle |
+| `src/pages/Project.tsx` | Modal state ve handler'lar ekle |
+| `src/templates/types.ts` | `category` ve `preview` alanları ekle |
+| `src/templates/index.ts` | Template'lere preview görselleri ekle |
+
+---
+
+## Önemli Notlar
+
+1. **Regenerate Butonu**: AI çağırmayacak, sadece mevcut template'lerin gösterim sırasını karıştıracak
+
+2. **Preview Fonksiyonu**: Kullanıcı "Preview" butonuna tıkladığında, geçici olarak template değişecek ve site o template ile render edilecek
+
+3. **Template Değişikliği**: Aslında tüm template'ler aynı bileşeni (HealthcareModernTemplate) kullanıyor, sadece görsel önizlemeler farklı. Gerçek template çeşitliliği için Phase 2'de yeni template bileşenleri oluşturulabilir.
+
+4. **Mevcut Görseller**: Şu an `src/assets/` klasöründe 8 adet showcase görseli var, bunları template önizlemeleri olarak kullanacağız
+
+5. **Veritabanı**: `projects` tablosunda zaten `template_id` kolonu var, güncelleme hazır
+
+---
+
+## Teknik Detaylar
+
+### Modal Carousel/Grid
+
+- `embla-carousel-react` zaten projede yüklü, horizontal scroll için kullanılabilir
+- Alternatif: Basit CSS Grid + ok butonları ile pagination
+
+### Template Seçim Akışı
+
+1. Kullanıcı Customize → Change Template tıklar
+2. Modal açılır, template galerisini görür
+3. Template kartına tıklar → "Details" ve "Preview" butonları görünür
+4. "Preview" tıklar → Modal kapanır, site yeni template ile render edilir
+5. "Details" → Template hakkında bilgi gösterir (opsiyonel)
+6. Değişiklik otomatik kaydedilir
