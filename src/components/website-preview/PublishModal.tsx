@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, Check, X, Loader2, Copy, ExternalLink, Lock, Sparkles } from 'lucide-react';
+import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings } from 'lucide-react';
+import { DomainSettingsModal } from './DomainSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -46,6 +47,7 @@ export function PublishModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
+  const [domainModalOpen, setDomainModalOpen] = useState(false);
 
   // Initialize subdomain from current or generate from name
   useEffect(() => {
@@ -265,29 +267,40 @@ export function PublishModal({
             </div>
           </div>
 
-          {/* Premium Upsell */}
-          <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          {/* Custom Domain Link */}
+          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0">
-                <Lock className="w-4 h-4 text-amber-600" />
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Settings className="w-4 h-4 text-primary" />
               </div>
-              <div>
-                <p className="font-medium text-sm">Want a custom domain?</p>
+              <div className="flex-1">
+                <p className="font-medium text-sm">Özel Domain Bağla</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Connect your own domain like www.yoursite.com
+                  Kendi alan adınızı bağlayarak profesyonel görünüm elde edin
                 </p>
-                <Button variant="link" className="h-auto p-0 mt-2 text-amber-600">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Upgrade to Premium
+                <Button 
+                  variant="link" 
+                  className="h-auto p-0 mt-2 text-primary"
+                  onClick={() => setDomainModalOpen(true)}
+                >
+                  <Globe className="w-3 h-3 mr-1" />
+                  Domain Ayarları
                 </Button>
               </div>
             </div>
           </div>
 
           <Button variant="outline" onClick={handleClose} className="mt-2">
-            Done
+            Kapat
           </Button>
         </DialogContent>
+
+        {/* Domain Settings Modal */}
+        <DomainSettingsModal
+          isOpen={domainModalOpen}
+          onClose={() => setDomainModalOpen(false)}
+          projectId={projectId}
+        />
       </Dialog>
     );
   }
