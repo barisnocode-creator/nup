@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.remove-domain]
 verify_jwt = false
+
+[functions.studio-generate-image]
+verify_jwt = false

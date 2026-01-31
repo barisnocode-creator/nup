@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
 import Analytics from "./pages/Analytics";
+import Studio from "./pages/Studio";
 import PublicWebsite from "./pages/PublicWebsite";
 import NotFound from "./pages/NotFound";
 
@@ -44,6 +45,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/studio"
+              element={
+                <ProtectedRoute>
+                  <Studio />
                 </ProtectedRoute>
               }
             />

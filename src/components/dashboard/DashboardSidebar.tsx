@@ -1,4 +1,4 @@
-import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown } from 'lucide-react';
+import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown, Wand2 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -32,6 +32,7 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
       icon: Globe,
       disabled: !activeProjectId 
     },
+    { title: 'Studio', url: '/studio', icon: Wand2 },
     { 
       title: 'Analytics', 
       url: activeProjectId ? `/project/${activeProjectId}/analytics` : '/dashboard', 
