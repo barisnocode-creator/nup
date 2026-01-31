@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Wand2, ImageIcon, Loader2, Type, Sparkles, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { ImageUploadButton } from './ImageUploadButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -70,6 +71,9 @@ interface EditorSidebarProps {
   imageOptions?: ImageOption[];
   isLoadingImageOptions?: boolean;
   onSelectImageOption?: (url: string) => void;
+  // Image upload
+  projectId?: string;
+  onImageUpload?: (url: string) => void;
 }
 
 const heroLayoutOptions: { id: HeroVariant; label: string; description: string }[] = [
@@ -111,6 +115,8 @@ export function EditorSidebar({
   imageOptions = [],
   isLoadingImageOptions = false,
   onSelectImageOption,
+  projectId,
+  onImageUpload,
 }: EditorSidebarProps) {
   const [localFields, setLocalFields] = useState<Record<string, string>>({});
   const [altText, setAltText] = useState('');
@@ -265,23 +271,23 @@ export function EditorSidebar({
                   </div>
 
                   {/* Image Action Buttons */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={onImageRegenerate}
                       disabled={isRegenerating || isLoadingImageOptions}
                       className={cn(
-                        'gap-2',
+                        'gap-1.5 text-xs px-2',
                         isDark && 'border-slate-600 hover:bg-slate-800'
                       )}
                     >
                       {isRegenerating ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <Wand2 className="w-4 h-4" />
+                        <Wand2 className="w-3.5 h-3.5" />
                       )}
-                      Find Similar
+                      Benzer
                     </Button>
                     <Button
                       variant="outline"
@@ -289,17 +295,26 @@ export function EditorSidebar({
                       onClick={() => selection.imageData && onImageChange(selection.imageData.imagePath)}
                       disabled={isRegenerating || isLoadingImageOptions}
                       className={cn(
-                        'gap-2',
+                        'gap-1.5 text-xs px-2',
                         isDark && 'border-slate-600 hover:bg-slate-800'
                       )}
                     >
                       {isLoadingImageOptions ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
-                        <ImageIcon className="w-4 h-4" />
+                        <ImageIcon className="w-3.5 h-3.5" />
                       )}
-                      Change
+                      Değiştir
                     </Button>
+                    {projectId && onImageUpload && (
+                      <ImageUploadButton
+                        projectId={projectId}
+                        onUploadComplete={onImageUpload}
+                        disabled={isRegenerating || isLoadingImageOptions}
+                        isDark={isDark}
+                        className="text-xs px-2"
+                      />
+                    )}
                   </div>
 
                   {/* Image Options Grid */}
