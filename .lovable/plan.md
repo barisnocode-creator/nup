@@ -1,259 +1,373 @@
 
-# Change Template Özelliği - Kapsamlı Uygulama Planı
+# Template Sistemi Genişletme Planı
 
-## Özellik Açıklaması
+## Genel Bakış
 
-Customize sidebar'a "Change Template" seçeneği eklenerek, kullanıcıların farklı web sitesi şablonları arasından seçim yapmasını sağlayan yeni bir özellik. Durable.co'nun tasarım yaklaşımına benzer şekilde, tam ekran bir galeri modal'ı ile hazır template görselleri sunulacak.
-
-## Mevcut Durum
-
-- **CustomizeSidebar**: Şu an Colors, Fonts, Corners, Animations gibi seçenekler var ama "Change Template" yok
-- **Template Sistemi**: `src/templates/index.ts`'de tek template (temp1 - Healthcare Modern) kayıtlı
-- **Mevcut Görseller**: `src/assets/` klasöründe 8 adet showcase görseli mevcut (restaurant, dental, law-office, vs.)
-- **Template Değiştirme**: `Project.tsx` zaten `template_id` prop'unu `WebsitePreview`'e geçiriyor
+Mevcut tek template sistemini **2 farklı template** ve **section varyasyonları** ile genişleterek gerçek template değişikliği sağlayacağız. Preview + Onayla akışı ile kullanıcı güvenli bir şekilde template değiştirebilecek.
 
 ---
 
-## Uygulama Adımları
-
-### 1. Template Önizleme Görselleri Ekleme
-
-**Dosya**: `src/assets/` klasörüne yeni template preview görselleri
-
-Mevcut showcase görsellerini template preview olarak kullanabiliriz. Ancak daha iyi bir deneyim için bunları template olarak yeniden isimlendireceğiz:
+## Yeni Template Yapısı
 
 ```text
-Yeni template görselleri (mevcut showcase görsellerinden):
-- template-dental-clinic.jpg (showcase-dental.jpg'den)
-- template-restaurant.jpg (showcase-restaurant.jpg'den)
-- template-law-office.jpg (showcase-law-office.jpg'den)
-- template-digital-agency.jpg (showcase-digital-agency.jpg'den)
-- template-boutique.jpg (showcase-boutique.jpg'den)
-- template-pharmacy.jpg (showcase-pharmacy.jpg'den)
+src/templates/
+├── temp1/                    # Mevcut: Healthcare Modern
+│   ├── sections/
+│   │   ├── hero/ (4 varyant ✓ zaten var)
+│   │   ├── about/ (yeni varyantlar)
+│   │   └── services/ (yeni varyantlar)
+│   └── index.tsx
+│
+├── temp2/                    # YENİ: Bold Agency
+│   ├── sections/
+│   │   ├── hero/
+│   │   ├── about/
+│   │   └── services/
+│   ├── components/
+│   │   ├── TemplateHeader.tsx
+│   │   └── TemplateFooter.tsx
+│   └── index.tsx
+│
+└── index.ts                  # Registry güncellemesi
 ```
 
-### 2. Template Galeri Modal Bileşeni
+---
 
-**Yeni Dosya**: `src/components/website-preview/ChangeTemplateModal.tsx`
+## Template 1: Healthcare Modern (temp1) - Mevcut
+
+**Karakteristik**:
+- Yumuşak köşeler
+- Primary renk tonları
+- Profesyonel görünüm
+- Sans-serif tipografi
+
+**Yeni Section Varyasyonları**:
+- About: Inline, Fullwidth, Timeline
+- Services: Grid, List, Cards
+
+---
+
+## Template 2: Bold Agency (temp2) - YENİ
+
+**Karakteristik**:
+- Büyük tipografi
+- Koyu arka planlar
+- Gradient aksanlar
+- Bold başlıklar
+- Daha dramatik animasyonlar
+
+**Dosyalar**:
+```text
+src/templates/temp2/
+├── index.tsx                 # Ana template bileşeni
+├── components/
+│   ├── TemplateHeader.tsx    # Farklı header tasarımı
+│   └── TemplateFooter.tsx    # Farklı footer tasarımı
+├── pages/
+│   └── FullLandingPage.tsx   # Section render
+└── sections/
+    ├── hero/
+    │   ├── HeroBold.tsx      # Büyük metin, minimal görsel
+    │   ├── HeroVideo.tsx     # Video arka plan destekli
+    │   └── index.ts
+    ├── about/
+    │   ├── AboutCards.tsx
+    │   └── index.ts
+    └── services/
+        ├── ServicesShowcase.tsx
+        └── index.ts
+```
+
+---
+
+## Preview + Onayla Akışı
+
+### Mevcut Durum
+
+```text
+[Template Seç] → [Anında Değişir] → [Veritabanına Kaydedilir]
+```
+
+### Yeni Akış
+
+```text
+[Template Seç] → [Preview Modu] → [Beğendiysen: Uygula] → [Veritabanına Kaydet]
+                       ↓
+              [Beğenmediysen: İptal] → [Eski template'e dön]
+```
+
+### Durum Yönetimi
 
 ```typescript
-interface TemplateOption {
-  id: string;
-  name: string;
-  category: string;
-  preview: string;
-  isCurrentTemplate?: boolean;
+// Project.tsx'de yeni state'ler
+const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+const [originalTemplateId, setOriginalTemplateId] = useState<string | null>(null);
+
+// Aktif template (preview varsa onu, yoksa gerçek template'i kullan)
+const activeTemplateId = previewTemplateId || project?.template_id || 'temp1';
+
+// Preview modunda üst banner göster
+const isPreviewMode = previewTemplateId !== null;
+```
+
+---
+
+## UI Değişiklikleri
+
+### 1. Preview Modu Banner
+
+Template preview modundayken üstte banner gösterilecek:
+
+```text
++------------------------------------------------------------------+
+| 🔍 Previewing: Bold Agency          [Apply Template] [Cancel]    |
++------------------------------------------------------------------+
+|                                                                  |
+|                    [Website Preview]                             |
+|                                                                  |
++------------------------------------------------------------------+
+```
+
+### 2. ChangeTemplateModal Güncellemesi
+
+- Preview butonu: Modal'ı kapatıp preview moduna geç
+- Template'e tıklama: Seç ve preview moduna geç
+- "Use this template" butonu yerine "Preview this template"
+
+---
+
+## Kod Değişiklikleri
+
+### Dosya 1: src/templates/temp2/index.tsx (YENİ)
+
+Bold Agency template'in ana bileşeni:
+
+```typescript
+export function BoldAgencyTemplate({
+  content,
+  colorPreference,
+  isEditable,
+  // ... diğer props
+}: TemplateProps) {
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <BoldHeader siteName={content.metadata.siteName} />
+      <main>
+        <BoldHero content={content} />
+        <BoldAbout content={content} />
+        <BoldServices content={content} />
+        {/* Diğer sections */}
+      </main>
+      <BoldFooter siteName={content.metadata.siteName} />
+    </div>
+  );
 }
+```
 
-interface ChangeTemplateModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentTemplateId: string;
-  onSelectTemplate: (templateId: string) => void;
-  onPreview: (templateId: string) => void;
+### Dosya 2: src/templates/temp2/sections/hero/HeroBold.tsx (YENİ)
+
+```typescript
+export function HeroBold({ title, subtitle, description }: HeroProps) {
+  return (
+    <section className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black flex items-center">
+      <div className="container mx-auto px-4 text-center">
+        <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tight text-white">
+          {title}
+        </h1>
+        <p className="text-xl md:text-2xl text-gray-400 mt-6 max-w-2xl mx-auto">
+          {subtitle}
+        </p>
+        <div className="mt-12 flex gap-4 justify-center">
+          <button className="px-8 py-4 bg-white text-black font-bold rounded-none hover:bg-gray-200">
+            GET STARTED
+          </button>
+        </div>
+      </div>
+    </section>
+  );
 }
 ```
 
-**Özellikler**:
-- Tam ekran modal (Dialog bileşeni)
-- Başlık: "Change template" + alt yazı açıklaması
-- Sağ üstte "Regenerate" butonu (template sırasını karıştırır, AI çağırmaz)
-- Grid düzeni: 4 sütun (desktop), 2 sütun (tablet), 1 sütun (mobil)
-- Her template kartı:
-  - Preview görseli (sabit boyut, aspect-ratio korunur)
-  - "Your template" rozeti (mevcut template için)
-  - Hover'da vurgu efekti
-- Seçilen template'de "Details" ve "Preview" butonları
+### Dosya 3: src/templates/index.ts Güncellemesi
 
-### 3. CustomizeSidebar Güncellemesi
-
-**Dosya**: `src/components/website-preview/CustomizeSidebar.tsx`
-
-Yeni menu item ekleme:
 ```typescript
-const menuItems = [
-  { id: 'template' as const, icon: LayoutGrid, label: 'Change Template', isAction: true },
-  // ... mevcut menu items
-];
-```
+import { BoldAgencyTemplate } from './temp2';
 
-Yeni prop'lar:
-```typescript
-interface CustomizeSidebarProps {
-  // ... mevcut props
-  currentTemplateId?: string;
-  onChangeTemplate?: () => void;
-}
-```
-
-### 4. Project.tsx Güncellemesi
-
-**Dosya**: `src/pages/Project.tsx`
-
-Yeni state'ler ve handler'lar:
-```typescript
-const [changeTemplateModalOpen, setChangeTemplateModalOpen] = useState(false);
-
-const handleTemplateChange = useCallback(async (templateId: string) => {
-  // Template ID'yi veritabanına kaydet
-  await supabase
-    .from('projects')
-    .update({ template_id: templateId })
-    .eq('id', id);
-  
-  // Local state'i güncelle
-  setProject(prev => prev ? { ...prev, template_id: templateId } : null);
-  
-  // Modal'ı kapat
-  setChangeTemplateModalOpen(false);
-  
-  toast({
-    title: 'Template changed',
-    description: 'Your website is now using the new template.',
-  });
-}, [id, toast]);
-
-const handleTemplatePreview = useCallback((templateId: string) => {
-  // Geçici olarak template'i değiştirerek önizleme göster
-  setProject(prev => prev ? { ...prev, template_id: templateId } : null);
-}, []);
-```
-
-### 5. Template Veri Yapısı Güncelleme
-
-**Dosya**: `src/templates/index.ts`
-
-Template kayıtlarına preview görseli ekleme:
-```typescript
-import templateDental from '@/assets/showcase-dental.jpg';
-import templateRestaurant from '@/assets/showcase-restaurant.jpg';
-// ... diğer görseller
-
-const templateRegistry: Record<string, {...}> = {
+const templateRegistry = {
   temp1: {
     config: {
       id: 'temp1',
       name: 'Healthcare Modern',
-      description: 'Clean, professional template for healthcare',
-      category: 'Healthcare',
-      preview: templateDental, // Önizleme görseli
-      supportedProfessions: ['doctor', 'dentist'],
-      supportedTones: ['professional', 'friendly'],
+      description: 'Clean, professional template',
+      category: 'Professional',
+      preview: showcaseDental,
     },
     component: HealthcareModernTemplate,
   },
   temp2: {
     config: {
       id: 'temp2',
-      name: 'Restaurant & Cafe',
-      description: 'Elegant template for food business',
-      category: 'Restaurant',
-      preview: templateRestaurant,
-      // ... diğer config
+      name: 'Bold Agency',
+      description: 'High-impact template for agencies',
+      category: 'Creative',
+      preview: showcaseDigitalAgency,
     },
-    component: HealthcareModernTemplate, // Aynı bileşen, farklı görsel
+    component: BoldAgencyTemplate,  // FARKLI BİLEŞEN
   },
-  // ... daha fazla template
+  // Diğer template'ler (temp3-temp8) birini kullanabilir
 };
 ```
 
-### 6. Template Types Güncelleme
-
-**Dosya**: `src/templates/types.ts`
+### Dosya 4: src/pages/Project.tsx Güncellemesi
 
 ```typescript
-export interface TemplateConfig {
-  id: string;
-  name: string;
-  description: string;
-  category: string;           // Yeni: kategori
-  preview: string;            // Yeni: önizleme görseli yolu
-  supportedProfessions: string[];
-  supportedTones: string[];
+// Preview state'leri
+const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+const [originalTemplateId, setOriginalTemplateId] = useState<string | null>(null);
+
+// Preview'i başlat
+const handleTemplatePreview = (templateId: string) => {
+  if (!originalTemplateId) {
+    setOriginalTemplateId(project?.template_id || 'temp1');
+  }
+  setPreviewTemplateId(templateId);
+  setChangeTemplateModalOpen(false);
+};
+
+// Preview'i onayla ve kaydet
+const handleApplyTemplate = async () => {
+  if (!previewTemplateId) return;
+  
+  await supabase
+    .from('projects')
+    .update({ template_id: previewTemplateId })
+    .eq('id', id);
+  
+  setProject(prev => prev ? { ...prev, template_id: previewTemplateId } : null);
+  setPreviewTemplateId(null);
+  setOriginalTemplateId(null);
+  toast({ title: 'Template applied!' });
+};
+
+// Preview'i iptal et
+const handleCancelPreview = () => {
+  setPreviewTemplateId(null);
+  setOriginalTemplateId(null);
+};
+
+// Aktif template ID
+const activeTemplateId = previewTemplateId || project?.template_id || 'temp1';
+```
+
+### Dosya 5: src/components/website-preview/TemplatePreviewBanner.tsx (YENİ)
+
+```typescript
+interface TemplatePreviewBannerProps {
+  templateName: string;
+  onApply: () => void;
+  onCancel: () => void;
+}
+
+export function TemplatePreviewBanner({ templateName, onApply, onCancel }: Props) {
+  return (
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Eye className="w-5 h-5" />
+        <span>Previewing: <strong>{templateName}</strong></span>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="secondary" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button size="sm" className="bg-white text-purple-600" onClick={onApply}>
+          Apply Template
+        </Button>
+      </div>
+    </div>
+  );
 }
 ```
 
 ---
 
-## UI Tasarımı
-
-### Change Template Modal Görünümü
-
-```text
-+------------------------------------------------------------------+
-|  Change template                                     [Regenerate] |
-|  Your original images and text will be used,                   X |
-|  but they may be rearranged to fit the new layout.               |
-+------------------------------------------------------------------+
-|                                                                  |
-|  +---------------+  +---------------+  +---------------+  +---+  |
-|  | [Your        ]|  |               |  |               |  |   |  |
-|  | template]     |  |               |  |               |  |   |  |
-|  |               |  |               |  |               |  |   |  |
-|  |   [Preview]   |  |  [İmage]      |  |  [Image]      |  |   |  |
-|  |               |  |               |  |               |  |   |  |
-|  +---------------+  +---------------+  +---------------+  +---+  |
-|  Dental Clinic      Book Store         Tech Blog                 |
-|                                                                  |
-|  [<]                                                        [>]  |
-|                                                                  |
-+------------------------------------------------------------------+
-```
-
-### Template Kartı Yapısı
-
-```text
-+----------------------+
-| [Your template]      |  <-- Rozet (sadece mevcut template'de)
-|                      |
-|    [PREVIEW IMAGE]   |
-|    (Tall card)       |
-|                      |
-+----------------------+
-| [Details] [Preview]  |  <-- Hover'da görünür
-+----------------------+
-```
-
----
-
-## Dosya Değişiklikleri Özeti
+## Dosya Listesi
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/components/website-preview/ChangeTemplateModal.tsx` | **YENİ** - Template galeri modal'ı |
-| `src/components/website-preview/CustomizeSidebar.tsx` | "Change Template" menu item ekle |
-| `src/pages/Project.tsx` | Modal state ve handler'lar ekle |
-| `src/templates/types.ts` | `category` ve `preview` alanları ekle |
-| `src/templates/index.ts` | Template'lere preview görselleri ekle |
+| `src/templates/temp2/index.tsx` | YENİ - Bold Agency template |
+| `src/templates/temp2/components/TemplateHeader.tsx` | YENİ - Bold header |
+| `src/templates/temp2/components/TemplateFooter.tsx` | YENİ - Bold footer |
+| `src/templates/temp2/pages/FullLandingPage.tsx` | YENİ - Section render |
+| `src/templates/temp2/sections/hero/HeroBold.tsx` | YENİ - Bold hero |
+| `src/templates/temp2/sections/hero/index.ts` | YENİ - Hero registry |
+| `src/templates/temp2/sections/about/AboutCards.tsx` | YENİ - Cards layout |
+| `src/templates/temp2/sections/services/ServicesShowcase.tsx` | YENİ - Showcase |
+| `src/templates/index.ts` | GÜNCELLE - temp2 ekle |
+| `src/pages/Project.tsx` | GÜNCELLE - Preview state'leri |
+| `src/components/website-preview/TemplatePreviewBanner.tsx` | YENİ - Preview banner |
+| `src/components/website-preview/ChangeTemplateModal.tsx` | GÜNCELLE - Preview akışı |
 
 ---
 
-## Önemli Notlar
+## Template Karşılaştırması
 
-1. **Regenerate Butonu**: AI çağırmayacak, sadece mevcut template'lerin gösterim sırasını karıştıracak
-
-2. **Preview Fonksiyonu**: Kullanıcı "Preview" butonuna tıkladığında, geçici olarak template değişecek ve site o template ile render edilecek
-
-3. **Template Değişikliği**: Aslında tüm template'ler aynı bileşeni (HealthcareModernTemplate) kullanıyor, sadece görsel önizlemeler farklı. Gerçek template çeşitliliği için Phase 2'de yeni template bileşenleri oluşturulabilir.
-
-4. **Mevcut Görseller**: Şu an `src/assets/` klasöründe 8 adet showcase görseli var, bunları template önizlemeleri olarak kullanacağız
-
-5. **Veritabanı**: `projects` tablosunda zaten `template_id` kolonu var, güncelleme hazır
+| Özellik | temp1 (Healthcare) | temp2 (Bold Agency) |
+|---------|-------------------|---------------------|
+| Arka plan | Açık/Nötr | Koyu/Siyah |
+| Tipografi | Sans-serif, normal ağırlık | Sans-serif, bold/black |
+| Köşeler | Yuvarlatılmış | Keskin |
+| Hero | Overlay/Split | Büyük tipografi, minimal |
+| Renk paleti | Primary ağırlıklı | Gradientler, kontrast |
+| Genel his | Profesyonel, güvenilir | Cesur, modern, etkileyici |
 
 ---
 
-## Teknik Detaylar
+## Uygulama Sırası
 
-### Modal Carousel/Grid
+1. **temp2 klasör yapısı oluştur** - index.tsx, components/, sections/
+2. **Bold header/footer bileşenleri** - Farklı tasarım
+3. **Bold hero bileşeni** - Büyük tipografi
+4. **Bold about/services** - Farklı layout'lar
+5. **templates/index.ts güncelle** - temp2 kaydet
+6. **Project.tsx preview state'leri** - Preview mode
+7. **TemplatePreviewBanner** - Onay/iptal UI
+8. **ChangeTemplateModal güncelle** - Preview akışı
 
-- `embla-carousel-react` zaten projede yüklü, horizontal scroll için kullanılabilir
-- Alternatif: Basit CSS Grid + ok butonları ile pagination
+---
 
-### Template Seçim Akışı
+## Preview Akışı Diyagramı
 
-1. Kullanıcı Customize → Change Template tıklar
-2. Modal açılır, template galerisini görür
-3. Template kartına tıklar → "Details" ve "Preview" butonları görünür
-4. "Preview" tıklar → Modal kapanır, site yeni template ile render edilir
-5. "Details" → Template hakkında bilgi gösterir (opsiyonel)
-6. Değişiklik otomatik kaydedilir
+```text
+Kullanıcı                   Sistem
+   |                          |
+   |-- Change Template -->    |
+   |                          |-- Modal aç
+   |<-- Template listesi --   |
+   |                          |
+   |-- Preview tıkla -->      |
+   |                          |-- Modal kapat
+   |                          |-- previewTemplateId = seçilen
+   |<-- Preview banner gör -- |
+   |<-- Site yeni template -- |
+   |                          |
+   |-- Apply Template -->     |
+   |                          |-- Veritabanına kaydet
+   |                          |-- Preview state temizle
+   |<-- Başarı mesajı --      |
+   |                          |
+   | VEYA                     |
+   |                          |
+   |-- Cancel -->             |
+   |                          |-- Preview state temizle
+   |<-- Eski template geri -- |
+```
+
+---
+
+## Sonuç
+
+Bu plan tamamlandığında:
+- 2 görsel olarak farklı template olacak
+- Kullanıcı önizleme yapıp onaylayabilecek
+- Template değişikliği gerçekten sitenin görünümünü değiştirecek
+- Mevcut editör sistemi her iki template ile de çalışacak
