@@ -1,114 +1,203 @@
 
 
-# Tüm Sektörler için Özelleştirilmiş İçerik Üretimi - Geliştirme Planı
+# Tüm Sektörlere Dinamik İçerik ve Görsel Üretimi - Kapsamlı Düzeltme Planı
 
-## Problem Özeti
+## Tespit Edilen Sorunlar
 
-AI chatbot'tan toplanan zengin işletme bilgileri (hizmetler, hikaye, hedef kitle, çalışma saatleri vb.) `generate-website` edge function'ında kullanılmıyor. Prompt sadece temel bilgileri içeriyor ve sektöre özgü içerik üretmiyor.
+### Sorun 1: generate-images Edge Function Sadece Sağlık Sektörü İçin Çalışıyor
+`supabase/functions/generate-images/index.ts` dosyasında `getImagePrompts` fonksiyonu sadece 3 sektör tanımlı:
+- doctor
+- dentist
+- pharmacist
 
-**Mevcut Durum (Eksik):**
-```text
-BUSINESS INFORMATION:
-- Business Name: X Giyim
-- Business Type/Sector: retail
-- Location: İstanbul, Türkiye
-- Contact Phone: 555 55 55
-- Contact Email: xgiyim@gmail.com
-```
+**Sonuç:** Kebapçı Halil gibi bir restoran oluşturulunca `profession` değeri `food` veya `service` geliyor, bu değer `professionImages` objesinde bulunamıyor ve fallback olarak `professionImages.doctor` kullanılıyor. Bu yüzden "Kebabçı Halil Medical Clinic" gibi sağlık görselleri üretiliyor.
 
-**Olması Gereken (Zengin):**
-```text
-BUSINESS INFORMATION:
-- Business Name: X Giyim
-- Sector: retail (Perakende/Mağaza)
-- Location: İstanbul, Türkiye
-- Contact: 555 55 55 / xgiyim@gmail.com
+### Sorun 2: fetch-image-options Fonksiyonunda Eksik Sektör Mapping
+`supabase/functions/fetch-image-options/index.ts` dosyasında bazı sektörler (food, retail, creative, technology) eksik.
 
-DETAILED BUSINESS CONTEXT:
-- Services/Products: Online kıyafet satışı
-- Target Audience: 18-40 yaş arası kadınlar
-- Business Story: 2020'de kuruldu, modern ve şık tasarımlar sunuyor.
-- Website Goals: Doğrudan satış
-- Working Hours: Online satış
-```
+### Sorun 3: İçerik Dilinin Varsayılan Olarak Türkçe Olmaması
+`generate-website` fonksiyonundaki prompt İngilizce varsayılan dil kullanıyor. Kullanıcı Türkçe seçse bile bazen İngilizce içerik üretiliyor.
+
+### Sorun 4: Template Registry Çoğunlukla Sağlık Odaklı
+`src/templates/index.ts` içindeki kategori ve açıklamalar ağırlıklı olarak "Healthcare" odaklı.
 
 ---
 
 ## Çözüm Planı
 
-### Değişiklik 1: generate-website/index.ts - buildPrompt Fonksiyonu Güncelleme
+### Değişiklik 1: generate-images/index.ts - Tüm Sektörler İçin Dinamik Prompt Üretimi
 
-`buildPrompt` fonksiyonunda `extractedData` parametresi eklenecek ve tüm zengin veriler AI prompt'una dahil edilecek.
-
-**Güncel fonksiyon imzası:**
+**Mevcut Sorunlu Kod (satır 15-62):**
 ```typescript
-function buildPrompt(profession: string, formData: FormData, sector?: string): string
+function getImagePrompts(profession: string, businessName: string): ImagePrompt[] {
+  const professionImages: Record<string, ImagePrompt[]> = {
+    doctor: [...],
+    dentist: [...],
+    pharmacist: [...]
+  };
+  return professionImages[profession] || professionImages.doctor;  // HATA: doctor'a fallback
+}
 ```
 
-**Yeni fonksiyon imzası:**
+**Yeni Kod:**
 ```typescript
-function buildPrompt(
+function getImagePrompts(
   profession: string, 
-  formData: FormData, 
-  sector?: string,
-  extractedData?: ExtractedBusinessData
-): string
+  businessName: string, 
+  extractedData?: any
+): ImagePrompt[] {
+  // Sektör bazlı anahtar kelimeler
+  const sectorKeywords: Record<string, { primary: string; secondary: string; style: string }> = {
+    food: {
+      primary: "restaurant cafe food dining",
+      secondary: "chef kitchen culinary",
+      style: "warm inviting appetizing"
+    },
+    retail: {
+      primary: "store shop retail interior",
+      secondary: "shopping customer products",
+      style: "modern bright welcoming"
+    },
+    service: {
+      primary: "professional office business",
+      secondary: "team consultation meeting",
+      style: "professional trustworthy"
+    },
+    creative: {
+      primary: "design studio creative workspace",
+      secondary: "artist designer portfolio",
+      style: "modern artistic innovative"
+    },
+    technology: {
+      primary: "tech startup office modern",
+      secondary: "software developer coding",
+      style: "innovative digital modern"
+    },
+    other: {
+      primary: "professional business modern",
+      secondary: "team office workspace",
+      style: "professional clean"
+    }
+  };
+
+  const keywords = sectorKeywords[profession] || sectorKeywords.other;
+  const services = extractedData?.services?.slice(0, 2).join(', ') || '';
+  
+  return [
+    {
+      key: "heroHome",
+      prompt: `Professional ${keywords.primary} for ${businessName}, ${services ? `featuring ${services},` : ''} ${keywords.style}, high quality photography, 16:9 hero image`
+    },
+    {
+      key: "heroAbout",
+      prompt: `${keywords.secondary} team at ${businessName}, professional atmosphere, ${keywords.style}, 16:9 aspect ratio`
+    },
+    {
+      key: "heroServices",
+      prompt: `${keywords.primary} showcasing services at ${businessName}, ${keywords.style}, professional setting, 16:9 aspect ratio`
+    }
+  ];
+}
 ```
 
-### Değişiklik 2: Prompt İçeriğini Zenginleştirme
+**Blog görseli için de düzeltme (satır 222):**
+```typescript
+// MEVCUT (sağlık odaklı):
+const blogImagePrompt = `Professional blog article featured image about "${post.title}", healthcare topic...`;
 
-Prompt'a eklenmesi gereken yeni bölüm:
-
-```text
-DETAILED BUSINESS CONTEXT (use this information to make content highly specific):
-- Services/Products Offered: ${extractedData?.services?.join(', ') || 'Not specified'}
-- Target Audience: ${extractedData?.targetAudience || 'General audience'}
-- Business Story: ${extractedData?.story || 'A dedicated business serving customers.'}
-- Unique Value Proposition: ${extractedData?.uniqueValue || 'Quality and reliability'}
-- Website Goals: ${extractedData?.siteGoals || 'Inform and connect with customers'}
-- Working Hours: ${extractedData?.workingHours || 'Standard business hours'}
-- Years of Experience: ${extractedData?.yearsExperience || 'Established business'}
-
-IMPORTANT: Use this specific business context to generate AUTHENTIC content that reflects THIS business, not generic sector content.
+// YENİ (sektör bazlı):
+const sectorName = profession === 'food' ? 'culinary' : 
+                   profession === 'retail' ? 'shopping' : 
+                   profession === 'technology' ? 'tech' : 'business';
+const blogImagePrompt = `Professional blog article featured image about "${post.title}", ${sectorName} topic, clean modern design, professional photography style, 16:9 aspect ratio`;
 ```
 
-### Değişiklik 3: Fonksiyon Çağrısını Güncelleme
+### Değişiklik 2: fetch-image-options/index.ts - Eksik Sektörleri Ekle
 
-**Satır 691 civarı değişiklik:**
+**Satır 23-39 güncellenecek:**
+```typescript
+const professionKeywords: Record<string, string> = {
+  // Yeni sektörler
+  food: 'restaurant cafe food dining culinary kitchen',
+  retail: 'store shop retail shopping products display',
+  service: 'professional business consulting office',
+  creative: 'design studio creative art portfolio',
+  technology: 'tech startup software coding modern',
+  other: 'professional business modern office',
+  // Eski (legacy) değerler korunuyor
+  pharmacist: 'pharmacy medicine healthcare',
+  doctor: 'medical doctor clinic healthcare',
+  dentist: 'dental dentist teeth clinic',
+  lawyer: 'lawyer legal office professional',
+  restaurant: 'restaurant food dining culinary',
+  // ... diğerleri
+};
+```
+
+### Değişiklik 3: generate-website/index.ts - Dil Tercihini Zorunlu Türkçe Yap
+
+**buildPrompt fonksiyonunda (satır 219-224):**
 ```typescript
 // MEVCUT:
-content: buildPrompt(profession, formData, extractedSector),
+WEBSITE PREFERENCES:
+- Language: ${prefs?.language || "English"} - ALL content MUST be in this language
 
 // YENİ:
-content: buildPrompt(profession, formData, extractedSector, (formData as any)?.extractedData),
+// Dil tercihi: extractedData'dan veya websitePreferences'tan al
+const selectedLanguage = extractedData?.languages?.[0] || prefs?.language || "Turkish";
+const languageInstruction = selectedLanguage === "Turkish" || selectedLanguage === "Türkçe" 
+  ? "Türkçe - Tüm içerik MUTLAKA Türkçe olmalı, İngilizce kelime KULLANMA"
+  : "English - ALL content MUST be in English";
+
+WEBSITE PREFERENCES:
+- Language: ${languageInstruction}
 ```
 
-### Değişiklik 4: FormData Interface Güncelleme
+### Değişiklik 4: Proje Oluştururken extractedData'yı generate-images'a Aktar
 
-Edge function içinde ExtractedBusinessData tipi tanımlanacak:
-
+**Project.tsx'te generateImages çağrısını güncelle (satır 165-201):**
 ```typescript
-interface ExtractedBusinessData {
-  businessName?: string;
-  sector?: string;
-  city?: string;
-  country?: string;
-  services?: string[];
-  targetAudience?: string;
-  uniqueValue?: string;
-  story?: string;
-  siteGoals?: string;
-  workingHours?: string;
-  yearsExperience?: string;
-  phone?: string;
-  email?: string;
-}
+const generateImages = async (projectId: string) => {
+  setGeneratingImages(true);
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-images', {
+      body: { 
+        projectId,
+        // extractedData'yı da gönder
+        extractedData: project?.form_data?.extractedData 
+      },
+    });
+    // ... rest
+  }
+};
+```
 
-interface FormData {
-  businessInfo?: { ... };
-  professionalDetails?: { ... };
-  websitePreferences?: { ... };
-  extractedData?: ExtractedBusinessData;  // YENİ
+**generate-images/index.ts'te extractedData'yı al ve kullan:**
+```typescript
+const { projectId, extractedData: requestExtractedData } = await req.json();
+
+// ...
+
+const profession = project.profession;
+const formData = project.form_data || {};
+const extractedData = requestExtractedData || formData.extractedData;
+const businessName = extractedData?.businessName || formData?.businessInfo?.businessName || "Business";
+
+// getImagePrompts'a extractedData'yı da gönder
+const imagePrompts = getImagePrompts(profession, businessName, extractedData);
+```
+
+### Değişiklik 5: Template Registry'yi Güncellle (Opsiyonel ama Önerilen)
+
+**src/templates/index.ts - Kategorileri daha genel yap:**
+```typescript
+// temp1 için:
+config: {
+  id: 'temp1',
+  name: 'Modern Professional',  // 'Healthcare Modern' yerine
+  description: 'Clean, professional template for all business types',
+  category: 'Professional',     // 'Healthcare' yerine
+  // ...
 }
 ```
 
@@ -116,46 +205,53 @@ interface FormData {
 
 ## Dosya Değişiklikleri Özeti
 
-| Dosya | Değişiklik |
-|-------|-----------|
-| `supabase/functions/generate-website/index.ts` | buildPrompt fonksiyonunu güncelle, extractedData kullan |
+| Dosya | Değişiklik Türü |
+|-------|-----------------|
+| `supabase/functions/generate-images/index.ts` | Sektör bazlı dinamik prompt üretimi |
+| `supabase/functions/fetch-image-options/index.ts` | Eksik sektörleri ekle |
+| `supabase/functions/generate-website/index.ts` | Dil tercihini doğru uygula |
+| `src/pages/Project.tsx` | extractedData'yı generate-images'a aktar |
+| `src/templates/index.ts` | Kategori isimlerini genelleştir (opsiyonel) |
 
 ---
 
-## Örnek Senaryo - Öncesi ve Sonrası
+## Teknik Detaylar
 
-### Senaryo: "X Giyim" Online Moda Mağazası
+### Sektör Değerleri ve Karşılık Gelen Anahtar Kelimeler
 
-**ÖNCESİ (Jenerik İçerik):**
-```text
-Hero: "Discover Our Quality Products"
-About: "We are a retail business serving customers..."
-Services: "Product Display, Customer Service, Shopping Experience"
-```
+| Sektör | Görsel Arama Terimleri |
+|--------|------------------------|
+| food | restaurant, cafe, food, dining, culinary, kitchen, chef |
+| retail | store, shop, products, shopping, display, customer |
+| service | professional, office, consultation, business, meeting |
+| creative | design, studio, art, portfolio, creative workspace |
+| technology | tech, startup, coding, software, digital, innovation |
+| other | professional, business, modern, office, workspace |
 
-**SONRASI (İşletmeye Özel İçerik):**
-```text
-Hero: "Tarzınızı Yansıtan Modern Tasarımlar"
-About: "2020'den bu yana 18-40 yaş arası şık kadınlara modern ve trend kıyafetler sunuyoruz..."
-Services: "Online Kıyafet Satışı, Hızlı Teslimat, Kolay İade"
-```
+### Dil Değerleri
 
----
-
-## Teknik Notlar
-
-1. **Fallback Mantığı**: extractedData yoksa veya alanlar boşsa, mevcut jenerik değerler kullanılacak
-2. **Dil Desteği**: Prompt içindeki dil tercihi korunacak (Türkçe/İngilizce)
-3. **Geriye Uyumluluk**: Eski projelerde extractedData olmayabilir, bu durumda mevcut mantık çalışacak
-4. **Blog Konuları**: İşletmenin hizmetlerine ve hedef kitlesine göre dinamik olacak
+| Kullanıcı Seçimi | Prompt Talimatı |
+|------------------|-----------------|
+| Turkish / Türkçe | "Tüm içerik MUTLAKA Türkçe olmalı, İngilizce kelime KULLANMA" |
+| English / İngilizce | "ALL content MUST be in English" |
 
 ---
 
 ## Beklenen Sonuçlar
 
-1. Restoran → yemek/menü temalı içerik
-2. Hukuk bürosu → hukuki danışmanlık temalı içerik  
-3. Moda mağazası → kıyafet/trend temalı içerik
-4. Yazılım şirketi → teknoloji/çözüm temalı içerik
-5. Her işletme kendi hikayesi, hedef kitlesi ve hizmetleriyle özelleştirilmiş içerik alacak
+1. **Kebapçı Halil örneği:**
+   - Sektör: food
+   - Görseller: Restaurant, cafe, food presentation görselleri
+   - İçerik: Türkçe menü, yemek tanıtımları
+   - Asla "Medical Clinic" yazmayacak
+
+2. **Hukuk Bürosu örneği:**
+   - Sektör: service
+   - Görseller: Professional office, legal team görselleri
+   - İçerik: Türkçe hukuki danışmanlık metinleri
+
+3. **Online Moda Mağazası örneği:**
+   - Sektör: retail
+   - Görseller: Store, fashion, products görselleri
+   - İçerik: Türkçe ürün tanıtımları
 
