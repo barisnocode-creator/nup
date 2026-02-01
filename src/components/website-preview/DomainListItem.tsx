@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, Loader2, Check, X, Trash2, RefreshCw, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,12 +14,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { DNSInstructions } from './DNSInstructions';
+import { supabase } from '@/integrations/supabase/client';
 
+// Safe domain type without verification_token
 export interface CustomDomain {
   id: string;
   domain: string;
   status: string;
-  verification_token: string;
   is_primary: boolean;
   created_at: string;
   verified_at: string | null;
@@ -30,6 +31,13 @@ interface DomainListItemProps {
   onVerify: (id: string) => Promise<void>;
   onRemove: (id: string) => Promise<void>;
   isVerifying?: boolean;
+}
+
+interface DNSRecord {
+  type: string;
+  label: string;
+  host: string;
+  value: string;
 }
 
 const statusConfig = {
@@ -57,10 +65,36 @@ const statusConfig = {
 
 export function DomainListItem({ domain, onVerify, onRemove, isVerifying = false }: DomainListItemProps) {
   const [isRemoving, setIsRemoving] = useState(false);
+  const [dnsRecords, setDnsRecords] = useState<DNSRecord[] | null>(null);
+  const [loadingDns, setLoadingDns] = useState(false);
   
   const status = statusConfig[domain.status as keyof typeof statusConfig] || statusConfig.pending;
   const StatusIcon = status.icon;
   const showVerifyButton = domain.status === 'pending' || domain.status === 'failed';
+
+  // Fetch DNS instructions via secure RPC function
+  useEffect(() => {
+    const fetchDnsInstructions = async () => {
+      if (showVerifyButton && !dnsRecords) {
+        setLoadingDns(true);
+        try {
+          const { data, error } = await supabase
+            .rpc('get_domain_dns_instructions', { domain_id: domain.id });
+          
+          if (!error && data && typeof data === 'object' && 'records' in data) {
+            const records = (data as unknown as { records: DNSRecord[] }).records;
+            setDnsRecords(records);
+          }
+        } catch (err) {
+          console.error('Error fetching DNS instructions:', err);
+        } finally {
+          setLoadingDns(false);
+        }
+      }
+    };
+    
+    fetchDnsInstructions();
+  }, [domain.id, showVerifyButton, dnsRecords]);
 
   const handleVerify = async () => {
     await onVerify(domain.id);
@@ -154,13 +188,19 @@ export function DomainListItem({ domain, onVerify, onRemove, isVerifying = false
         </div>
       </div>
 
-      {/* DNS Instructions (for pending/failed) */}
+      {/* DNS Instructions (for pending/failed) - loaded securely */}
       {showVerifyButton && (
-        <DNSInstructions
-          domain={domain.domain}
-          verificationToken={domain.verification_token}
-          defaultOpen={domain.status === 'pending'}
-        />
+        loadingDns ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : dnsRecords ? (
+          <DNSInstructions
+            domain={domain.domain}
+            records={dnsRecords}
+            defaultOpen={domain.status === 'pending'}
+          />
+        ) : null
       )}
     </div>
   );

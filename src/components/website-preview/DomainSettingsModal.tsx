@@ -21,14 +21,15 @@ export function DomainSettingsModal({ isOpen, onClose, projectId }: DomainSettin
   const [isAdding, setIsAdding] = useState(false);
   const [verifyingDomainId, setVerifyingDomainId] = useState<string | null>(null);
 
-  // Fetch domains
+  // Fetch domains using safe view (excludes verification_token)
   const fetchDomains = useCallback(async () => {
     if (!projectId) return;
     
     setIsLoading(true);
     try {
+      // Use the safe view that doesn't expose verification_token
       const { data, error } = await supabase
-        .from('custom_domains')
+        .from('custom_domains_safe')
         .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: false });
