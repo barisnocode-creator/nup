@@ -44,6 +44,11 @@
 
     --radius: 0.5rem;
 
+    /* AI Video Studio accent colors */
+    --accent-blue: 217 91% 60%;
+    --accent-emerald: 160 84% 39%;
+    --accent-purple: 262 83% 58%;
+
     /* Custom colors */
     --heading: 0 0% 10%;
     --body: 0 0% 29%;

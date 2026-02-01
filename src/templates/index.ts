@@ -2,6 +2,7 @@ import { TemplateConfig, TemplateComponent } from './types';
 import { HealthcareModernTemplate } from './temp1';
 import { BoldAgencyTemplate } from './temp2';
 import { ElegantMinimalTemplate } from './temp3';
+import { VideoStudioTemplate } from './temp4-video-studio';
 
 // Import preview images
 import showcaseDental from '@/assets/showcase-dental.jpg';
@@ -12,6 +13,7 @@ import showcaseBoutique from '@/assets/showcase-boutique.jpg';
 import showcasePharmacy from '@/assets/showcase-pharmacy.jpg';
 import showcaseEyeClinic from '@/assets/showcase-eye-clinic.jpg';
 import showcaseFamilyDoctor from '@/assets/showcase-family-doctor.jpg';
+import showcaseVideoStudio from '@/assets/showcase-video-studio.jpg';
 
 // Template registry - add new templates here
 const templateRegistry: Record<string, {
@@ -113,6 +115,18 @@ const templateRegistry: Record<string, {
       supportedTones: ['friendly', 'warm', 'approachable'],
     },
     component: HealthcareModernTemplate,
+  },
+  temp9: {
+    config: {
+      id: 'temp9',
+      name: 'AI Video Studio',
+      description: 'Cinematic dark template for video production studios and creative agencies',
+      category: 'Creative',
+      preview: showcaseVideoStudio,
+      supportedProfessions: ['video-production', 'film-studio', 'creative-agency', 'animation', 'media'],
+      supportedTones: ['cinematic', 'bold', 'dramatic', 'modern'],
+    },
+    component: VideoStudioTemplate,
   },
 };
 
