@@ -203,7 +203,7 @@ export default function Project() {
   // Deep update helper for nested object paths like "pages.home.hero.title"
   const updateNestedValue = (obj: any, path: string, value: any): any => {
     const keys = path.split('.');
-    const result = JSON.parse(JSON.stringify(obj)); // Deep clone
+    const result = JSON.parse(JSON.stringify(obj || {})); // Deep clone, handle null
     
     let current = result;
     for (let i = 0; i < keys.length - 1; i++) {
@@ -211,8 +211,22 @@ export default function Project() {
       const key = keys[i];
       const arrayMatch = key.match(/^(\w+)\[(\d+)\]$/);
       if (arrayMatch) {
-        current = current[arrayMatch[1]][parseInt(arrayMatch[2])];
+        const arrKey = arrayMatch[1];
+        const arrIndex = parseInt(arrayMatch[2]);
+        // Initialize array if it doesn't exist
+        if (!current[arrKey]) {
+          current[arrKey] = [];
+        }
+        // Initialize array element if it doesn't exist
+        if (!current[arrKey][arrIndex]) {
+          current[arrKey][arrIndex] = {};
+        }
+        current = current[arrKey][arrIndex];
       } else {
+        // Initialize object if it doesn't exist
+        if (!current[key]) {
+          current[key] = {};
+        }
         current = current[key];
       }
     }
@@ -220,7 +234,12 @@ export default function Project() {
     const lastKey = keys[keys.length - 1];
     const lastArrayMatch = lastKey.match(/^(\w+)\[(\d+)\]$/);
     if (lastArrayMatch) {
-      current[lastArrayMatch[1]][parseInt(lastArrayMatch[2])] = value;
+      const arrKey = lastArrayMatch[1];
+      const arrIndex = parseInt(lastArrayMatch[2]);
+      if (!current[arrKey]) {
+        current[arrKey] = [];
+      }
+      current[arrKey][arrIndex] = value;
     } else {
       current[lastKey] = value;
     }
