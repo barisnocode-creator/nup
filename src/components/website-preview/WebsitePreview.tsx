@@ -1,4 +1,4 @@
-import { GeneratedContent } from '@/types/generated-website';
+import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import { getTemplate } from '@/templates';
 import type { EditorSelection, ImageData } from './EditorSidebar';
 
@@ -14,6 +14,8 @@ interface WebsitePreviewProps {
   sectionOrder?: string[];
   onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void;
   onDeleteSection?: (sectionId: string) => void;
+  // Section style overrides
+  sectionStyles?: { [sectionId: string]: SectionStyle };
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -30,6 +32,7 @@ export function WebsitePreview({
   sectionOrder,
   onMoveSection,
   onDeleteSection,
+  sectionStyles,
   selectedImage,
   onImageSelect,
 }: WebsitePreviewProps) {
@@ -52,6 +55,7 @@ export function WebsitePreview({
       sectionOrder={sectionOrder}
       onMoveSection={onMoveSection}
       onDeleteSection={onDeleteSection}
+      sectionStyles={sectionStyles}
       selectedImage={selectedImage}
       onImageSelect={onImageSelect}
     />

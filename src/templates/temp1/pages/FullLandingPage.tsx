@@ -1,4 +1,4 @@
-import { GeneratedContent } from '@/types/generated-website';
+import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import { EditableSection } from '@/components/website-preview/EditableSection';
 import { getHeroComponent, HeroVariant } from '../sections/hero';
 import { StatisticsSection } from '../sections/StatisticsSection';
@@ -25,6 +25,8 @@ interface FullLandingPageProps {
   sectionOrder?: string[];
   onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void;
   onDeleteSection?: (sectionId: string) => void;
+  // Section style overrides
+  sectionStyles?: { [sectionId: string]: SectionStyle };
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -47,6 +49,7 @@ export function FullLandingPage({
   sectionOrder = DEFAULT_SECTION_ORDER,
   onMoveSection,
   onDeleteSection,
+  sectionStyles,
   selectedImage,
   onImageSelect,
 }: FullLandingPageProps) {
@@ -115,6 +118,7 @@ export function FullLandingPage({
               onFieldEdit={onFieldEdit}
               editorSelection={editorSelection}
               onEditorSelect={onEditorSelect}
+              sectionStyle={sectionStyles?.hero}
               selectedImage={selectedImage}
               onImageSelect={onImageSelect}
             />

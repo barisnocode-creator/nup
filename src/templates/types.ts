@@ -1,5 +1,5 @@
 import { ComponentType } from 'react';
-import { GeneratedContent } from '@/types/generated-website';
+import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
 
 export interface TemplateConfig {
@@ -24,6 +24,8 @@ export interface TemplateProps {
   sectionOrder?: string[];
   onMoveSection?: (sectionId: string, direction: 'up' | 'down') => void;
   onDeleteSection?: (sectionId: string) => void;
+  // Section style overrides
+  sectionStyles?: { [sectionId: string]: SectionStyle };
   // Legacy image-only props (for backward compatibility)
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;

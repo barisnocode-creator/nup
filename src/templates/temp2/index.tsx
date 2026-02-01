@@ -16,6 +16,7 @@ export function BoldAgencyTemplate({
   sectionOrder,
   onMoveSection,
   onDeleteSection,
+  sectionStyles,
   selectedImage,
   onImageSelect,
 }: TemplateProps) {

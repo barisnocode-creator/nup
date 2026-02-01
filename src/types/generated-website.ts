@@ -13,6 +13,13 @@ export interface Statistic {
   label: string;
 }
 
+// Section style configuration for real-time styling
+export interface SectionStyle {
+  fontSize?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+  textAlign?: 'left' | 'center' | 'right';
+  textColor?: 'primary' | 'secondary' | 'muted';
+}
+
 export interface ProcessStep {
   step: number;
   title: string;
@@ -142,6 +149,10 @@ export interface GeneratedContent {
     about?: 'inline' | 'fullwidth' | 'timeline';
     testimonials?: 'carousel' | 'grid' | 'single';
     contact?: 'inline' | 'fullwidth' | 'map';
+  };
+  // Section-specific style overrides
+  sectionStyles?: {
+    [sectionId: string]: SectionStyle;
   };
   metadata: {
     siteName: string;

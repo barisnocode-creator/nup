@@ -4,6 +4,27 @@ import { cn } from '@/lib/utils';
 import type { HeroProps } from './types';
 import type { ImageData } from '@/components/website-preview/EditorSidebar';
 
+// Dynamic style helpers
+const getTextSizeClass = (size?: string) => {
+  const sizeMap: Record<string, string> = {
+    sm: 'text-3xl md:text-4xl',
+    base: 'text-4xl md:text-5xl lg:text-6xl',
+    lg: 'text-5xl md:text-6xl lg:text-7xl',
+    xl: 'text-6xl md:text-7xl lg:text-8xl',
+    '2xl': 'text-7xl md:text-8xl lg:text-9xl',
+  };
+  return sizeMap[size || 'base'] || sizeMap.base;
+};
+
+const getTextAlignClass = (align?: string) => {
+  const alignMap: Record<string, string> = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+  };
+  return alignMap[align || 'left'] || alignMap.left;
+};
+
 export function HeroSplit({
   title,
   subtitle,
@@ -14,6 +35,7 @@ export function HeroSplit({
   isEditable,
   editorSelection,
   onEditorSelect,
+  sectionStyle,
   selectedImage,
   onImageSelect,
 }: HeroProps) {
@@ -38,6 +60,10 @@ export function HeroSplit({
     }
   };
 
+  // Apply dynamic styles from sectionStyle
+  const titleSizeClass = getTextSizeClass(sectionStyle?.fontSize);
+  const textAlignClass = getTextAlignClass(sectionStyle?.textAlign);
+
   return (
     <section className={cn(
       'min-h-[80vh] flex items-center',
@@ -45,8 +71,7 @@ export function HeroSplit({
     )}>
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left - Text Content */}
-          <div className="space-y-6 py-12 lg:py-20">
+          <div className={cn('space-y-6 py-12 lg:py-20', textAlignClass)}>
             <div className={cn(
               'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium',
               isDark ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'
@@ -81,7 +106,8 @@ export function HeroSplit({
                 },
               ]}
               className={cn(
-                'text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-display',
+                titleSizeClass,
+                'font-bold leading-tight font-display',
                 isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
               )}
             />

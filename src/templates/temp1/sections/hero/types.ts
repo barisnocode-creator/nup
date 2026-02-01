@@ -1,4 +1,5 @@
 import type { EditorSelection, ImageData } from '@/components/website-preview/EditorSidebar';
+import type { SectionStyle } from '@/types/generated-website';
 
 export type HeroVariant = 'split' | 'overlay' | 'centered' | 'gradient';
 
@@ -14,6 +15,8 @@ export interface HeroProps {
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
   editorSelection?: EditorSelection | null;
   onEditorSelect?: (selection: EditorSelection) => void;
+  // Section style overrides
+  sectionStyle?: SectionStyle;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
