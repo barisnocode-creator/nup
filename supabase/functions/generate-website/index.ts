@@ -201,6 +201,14 @@ CRITICAL INSTRUCTION: Use the above SPECIFIC business context to generate AUTHEN
 DO NOT use generic sector content. Every piece of text should be tailored to this specific business's story, services, and target audience.
 ` : '';
 
+  // Determine language with proper Turkish default
+  const selectedLanguage = (extractedData as any)?.languages?.[0] || prefs?.language || "Turkish";
+  const isTurkish = selectedLanguage.toLowerCase().includes("turk") || selectedLanguage.toLowerCase().includes("türk");
+  const languageInstruction = isTurkish 
+    ? "Türkçe - Tüm içerik MUTLAKA Türkçe olmalı. Hiçbir İngilizce kelime veya ifade KULLANMA. Başlıklar, açıklamalar, blog yazıları, hepsi %100 Türkçe olmalı."
+    : `${selectedLanguage} - ALL content MUST be in ${selectedLanguage}. Do NOT use any other language.`;
+  const languageForContent = isTurkish ? "Türkçe (Turkish)" : selectedLanguage;
+
   return `You are a professional website content writer.
 
 Generate comprehensive, detailed, and authentic website content for a business website.
@@ -216,12 +224,12 @@ ${businessContextSection}
 ${sectorInstructions}
 
 WEBSITE PREFERENCES:
-- Language: ${prefs?.language || "English"} - ALL content MUST be in this language
+- Language: ${languageInstruction}
 - Tone: ${prefs?.tone || "professional"} - use this tone consistently throughout
 - This is INFORMATIONAL only - NO prices, NO e-commerce, NO booking systems
 
 CONTENT REQUIREMENTS:
-1. ALL content must be in ${prefs?.language || "English"}
+1. ALL content must be in ${languageForContent} - THIS IS CRITICAL
 2. Use ${prefs?.tone || "professional"} tone throughout
 3. NO pricing information anywhere
 4. Focus on building trust and providing valuable information
