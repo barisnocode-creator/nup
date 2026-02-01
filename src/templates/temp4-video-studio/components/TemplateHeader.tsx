@@ -24,11 +24,11 @@ export function TemplateHeader({ siteName, isDark = true }: TemplateHeaderProps)
   }, []);
 
   const navLinks = [
-    { label: 'Work', href: '#portfolio' },
-    { label: 'Services', href: '#services' },
-    { label: 'About', href: '#about' },
-    { label: 'Team', href: '#team' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Projeler', href: '#portfolio' },
+    { label: 'Hizmetler', href: '#services' },
+    { label: 'Hakkımızda', href: '#about' },
+    { label: 'Ekip', href: '#team' },
+    { label: 'İletişim', href: '#contact' },
   ];
 
   return (
@@ -37,10 +37,10 @@ export function TemplateHeader({ siteName, isDark = true }: TemplateHeaderProps)
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={cn(
-          'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+          'sticky top-14 left-0 right-0 z-40 transition-all duration-300',
           isScrolled
             ? 'bg-slate-950/95 backdrop-blur-md shadow-lg border-b border-slate-800'
-            : 'bg-transparent'
+            : 'bg-slate-950/80 backdrop-blur-sm border-b border-slate-800/50'
         )}
       >
         <div className="container mx-auto px-4">
@@ -90,7 +90,7 @@ export function TemplateHeader({ siteName, isDark = true }: TemplateHeaderProps)
               <Button
                 className="hidden md:flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full"
               >
-                Start Project
+                Proje Başlat
               </Button>
 
               {/* Mobile Menu Toggle */}
@@ -137,7 +137,7 @@ export function TemplateHeader({ siteName, isDark = true }: TemplateHeaderProps)
               <Button
                 className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full w-full py-6"
               >
-                Start Project
+                Proje Başlat
               </Button>
             </nav>
           </motion.div>

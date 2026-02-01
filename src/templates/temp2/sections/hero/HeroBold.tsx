@@ -107,16 +107,16 @@ export function HeroBold({
               {ctaText}
             </button>
             <button className="px-10 py-5 border-2 border-white/30 text-white font-bold text-lg uppercase tracking-wide hover:bg-white/10 transition-all">
-              Learn More
+              Daha Fazla
             </button>
           </div>
 
           {/* Stats Row */}
           <div className="mt-20 pt-10 border-t border-white/10 grid grid-cols-3 gap-8 max-w-2xl">
             {[
-              { number: '500+', label: 'Projects' },
-              { number: '98%', label: 'Satisfaction' },
-              { number: '12+', label: 'Years' },
+              { number: '500+', label: 'Proje' },
+              { number: '98%', label: 'Memnuniyet' },
+              { number: '12+', label: 'Yıl' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-3xl md:text-4xl font-black text-white mb-1">{stat.number}</div>
@@ -129,7 +129,7 @@ export function HeroBold({
 
       {/* Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-gray-500">
-        <span className="text-xs uppercase tracking-widest">Scroll</span>
+        <span className="text-xs uppercase tracking-widest">Aşağı Kaydır</span>
         <div className="w-px h-16 bg-gradient-to-b from-gray-500 to-transparent" />
       </div>
     </section>

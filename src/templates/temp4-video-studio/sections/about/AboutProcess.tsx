@@ -24,11 +24,11 @@ interface AboutProcessProps {
 }
 
 const defaultSteps: ProcessStep[] = [
-  { step: 1, title: 'Discovery', description: 'We learn about your vision and goals' },
-  { step: 2, title: 'Storyboard', description: 'Crafting the perfect narrative' },
-  { step: 3, title: 'Production', description: 'AI-powered video creation' },
-  { step: 4, title: 'Refinement', description: 'Polishing every detail' },
-  { step: 5, title: 'Delivery', description: 'Your masterpiece is ready' },
+  { step: 1, title: 'Keşif', description: 'Vizyonunuzu ve hedeflerinizi öğreniyoruz' },
+  { step: 2, title: 'Storyboard', description: 'Mükemmel hikayeyi oluşturuyoruz' },
+  { step: 3, title: 'Prodüksiyon', description: 'Yapay zeka destekli video üretimi' },
+  { step: 4, title: 'İyileştirme', description: 'Her detayı parlatıyoruz' },
+  { step: 5, title: 'Teslimat', description: 'Şaheseriniz hazır' },
 ];
 
 const stepIcons = [FileText, MessageSquare, Film, Sparkles, CheckCircle];
@@ -69,7 +69,7 @@ export function AboutProcess({
               viewport={{ once: true }}
               className="inline-block px-4 py-1 rounded-full bg-purple-500/10 text-purple-400 text-sm font-medium mb-4"
             >
-              Our Process
+              Sürecimiz
             </motion.span>
             <EditableText
               value={title}
@@ -120,7 +120,7 @@ export function AboutProcess({
                               <div key={i} className="w-2 h-3 bg-slate-700 rounded-sm" />
                             ))}
                           </div>
-                          <span className="text-xs text-slate-500 font-mono">SCENE {step.step}</span>
+                          <span className="text-xs text-slate-500 font-mono">SAHNE {step.step}</span>
                           <div className="flex gap-1">
                             {[...Array(3)].map((_, i) => (
                               <div key={i} className="w-2 h-3 bg-slate-700 rounded-sm" />

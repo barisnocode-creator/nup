@@ -13,11 +13,11 @@ interface BoldHeaderProps {
 }
 
 const navItems = [
-  { id: 'hero', label: 'HOME' },
-  { id: 'about', label: 'ABOUT' },
-  { id: 'services', label: 'SERVICES' },
-  { id: 'gallery', label: 'WORK' },
-  { id: 'contact', label: 'CONTACT' },
+  { id: 'hero', label: 'ANA SAYFA' },
+  { id: 'about', label: 'HAKKIMIZDA' },
+  { id: 'services', label: 'HİZMETLER' },
+  { id: 'gallery', label: 'ÇALIŞMALAR' },
+  { id: 'contact', label: 'İLETİŞİM' },
 ];
 
 export function BoldHeader({
@@ -100,7 +100,7 @@ export function BoldHeader({
 
           {/* CTA Button */}
           <button className="hidden md:block px-6 py-3 bg-white text-gray-950 font-bold text-sm uppercase tracking-wide hover:bg-gray-200 transition-colors">
-            Get Started
+            Başla
           </button>
 
           {/* Mobile Menu Button */}

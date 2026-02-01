@@ -29,10 +29,10 @@ export function BoldTestimonialsSection({
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-2 bg-white/5 text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 border border-gray-800">
-            Testimonials
+            Referanslar
           </span>
           <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
-            What Clients Say
+            Müşterilerimiz Ne Diyor
           </h2>
         </div>
 

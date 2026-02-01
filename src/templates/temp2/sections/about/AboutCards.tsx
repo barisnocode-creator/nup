@@ -35,7 +35,7 @@ export function AboutCards({
         {/* Section Header */}
         <div className="max-w-3xl mb-16">
           <span className="inline-block px-3 py-1 bg-white/5 text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 border-l-4 border-white">
-            About Us
+            Hakkımızda
           </span>
           
           <EditableText
@@ -71,7 +71,7 @@ export function AboutCards({
             {/* Mission Card */}
             <div className="p-8 bg-gray-950 border border-gray-800 relative">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500" />
-              <h3 className="text-xl font-bold uppercase tracking-wide text-white mb-4">Our Mission</h3>
+              <h3 className="text-xl font-bold uppercase tracking-wide text-white mb-4">Misyonumuz</h3>
               <EditableText
                 value={mission}
                 fieldPath="pages.about.mission"

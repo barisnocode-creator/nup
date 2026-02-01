@@ -26,25 +26,25 @@ interface PortfolioSectionProps {
 
 const defaultItems: PortfolioItem[] = [
   { 
-    title: 'Brand Story Film', 
-    category: 'Commercial',
+    title: 'Marka Hikayesi', 
+    category: 'Reklam',
     thumbnail: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?w=800&q=80'
   },
   { 
-    title: 'Product Launch', 
-    category: 'Marketing',
+    title: 'Ürün Lansmanı', 
+    category: 'Pazarlama',
     thumbnail: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&q=80'
   },
   { 
-    title: 'Documentary', 
+    title: 'Belgesel', 
     category: 'Film',
     thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80'
   },
 ];
 
 export function PortfolioSection({
-  title = 'Featured Work',
-  subtitle = 'Our latest projects that showcase our creative excellence',
+  title = 'Öne Çıkan Çalışmalar',
+  subtitle = 'Yaratıcı mükemmelliğimizi sergileyen son projelerimiz',
   items = defaultItems,
   isEditable = false,
   editorSelection,
@@ -75,7 +75,7 @@ export function PortfolioSection({
               viewport={{ once: true }}
               className="inline-block px-4 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium mb-4"
             >
-              Portfolio
+              Portfolyo
             </motion.span>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">{title}</h2>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto">{subtitle}</p>
@@ -171,7 +171,7 @@ export function PortfolioSection({
               size="lg"
               className="border-slate-600 text-white hover:bg-slate-800"
             >
-              View All Projects
+              Tüm Projeleri Gör
               <ExternalLink className="w-4 h-4 ml-2" />
             </Button>
           </motion.div>
