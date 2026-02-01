@@ -1,177 +1,147 @@
 
+# Settings ve Help Sayfaları Uygulama Planı
 
-# AI Video Studio Template Entegrasyonu
+## Genel Bakış
 
-## Kaynak Analizi
+Dashboard'daki Settings ve Help linkleri şu anda `/dashboard`'a yönlendiriyor ve hiçbir işlev sunmuyor. Bu plan, kullanıcı hesap yönetimi için tam işlevsel Settings sayfası ve Help/Destek sistemi oluşturmayı hedefliyor.
 
-GitHub repository'den aldığım AI Video Studio landing page:
-- **URL**: https://github.com/barisnocode-creator/remix-of-ai-video-studio-landing-page
-- **Teknoloji**: React + TypeScript + Tailwind (Lovable projesi)
-- **Bölümler**: Hero (video arka plan), Portfolio, Awards, About (process steps), Services, Team ("Wanted" poster tarzı), Contact (Cal.com entegrasyonu), Footer
-- **Tasarım**: Modern dark/light tema, gradient renkler (blue, emerald, purple), motion animasyonları
+---
 
-## Mevcut Section'lar
+## Mevcut Durum Analizi
 
-| Bölüm | Özellikler |
-|-------|------------|
-| **Hero** | Video arka plan, mobil menü, scroll tetiklemeli header |
-| **Portfolio** | YouTube video embed, featured work |
-| **Awards** | 6 adet ödül rozeti animasyonlu |
-| **About** | 5 adımlı süreç (storyboard tarzı) |
-| **Services** | Polaroid tarzı kartlar, hover efektleri |
-| **Team** | "Wanted" poster temalı ekip tanıtımı |
-| **Contact** | Cal.com takvim entegrasyonu |
+| Bileşen | Konum | Durum |
+|---------|-------|-------|
+| Settings Link | `DashboardSidebar.tsx` satır 42 | `/dashboard`'a yönleniyor |
+| Help Link | `DashboardSidebar.tsx` satır 43 | `/dashboard`'a yönleniyor |
+| AuthContext | `contexts/AuthContext.tsx` | Şifre değiştirme yok |
+| Veritabanı | - | `profiles` tablosu yok |
 
 ---
 
 ## Uygulama Planı
 
-### Adım 1: Template Klasör Yapısı
+### Bölüm 1: Settings Sayfası
 
+#### 1.1 Yeni Dosyalar
+
+**`src/pages/Settings.tsx`** - Ana settings sayfası
+
+Özellikleri:
+- DashboardLayout kullanarak tutarlı görünüm
+- Tab yapısı: Profile, Security, Preferences, Danger Zone
+- Responsive tasarım
+
+**`src/components/settings/ProfileSection.tsx`**
+- Kullanıcı adı/görünen isim düzenleme
+- Avatar yükleme (opsiyonel - storage kullanır)
+- Email gösterimi (salt okunur)
+- Kayıt tarihi gösterimi
+
+**`src/components/settings/SecuritySection.tsx`**
+- Şifre değiştirme formu (mevcut şifre + yeni şifre + onay)
+- Supabase `auth.updateUser({ password })` kullanımı
+- Şifre sıfırlama email gönderme
+- Aktif oturumları gösterme (gelecekte)
+
+**`src/components/settings/PreferencesSection.tsx`**
+- Dil tercihi (Türkçe/İngilizce) - localStorage
+- Email bildirim tercihleri
+- Tema tercihi (karanlık/aydınlık) - next-themes entegrasyonu mevcut
+
+**`src/components/settings/DangerZoneSection.tsx`**
+- Hesap silme (tüm projeleri siler)
+- Onay dialog'u ile güvenlik
+
+#### 1.2 AuthContext Güncellemesi
+
+`src/contexts/AuthContext.tsx` dosyasına eklenmesi gereken fonksiyonlar:
+
+```text
+updatePassword(newPassword: string) -> Promise<{ error: Error | null }>
+resetPassword(email: string) -> Promise<{ error: Error | null }>
+deleteAccount() -> Promise<{ error: Error | null }>
 ```
-src/templates/temp4-video-studio/
-├── index.tsx                    # Ana template bileşeni
-├── components/
-│   ├── TemplateHeader.tsx       # Scroll tetiklemeli header
-│   └── TemplateFooter.tsx       # Footer
-├── sections/
-│   ├── hero/
-│   │   ├── HeroVideo.tsx        # Video arka planlı hero
-│   │   └── index.ts
-│   ├── portfolio/
-│   │   ├── PortfolioSection.tsx # Video showcase
-│   │   └── index.ts
-│   ├── awards/
-│   │   ├── AwardsSection.tsx    # Ödül rozetleri
-│   │   └── index.ts
-│   ├── about/
-│   │   ├── AboutProcess.tsx     # Süreç adımları
-│   │   └── index.ts
-│   ├── services/
-│   │   ├── ServicesCards.tsx    # Polaroid kartlar
-│   │   └── index.ts
-│   ├── team/
-│   │   ├── TeamWanted.tsx       # Wanted poster tarzı
-│   │   └── index.ts
-│   └── contact/
-│       ├── ContactEmbed.tsx     # Takvim entegrasyonu
-│       └── index.ts
-└── pages/
-    └── FullLandingPage.tsx      # Tüm section'ları birleştirir
+
+#### 1.3 Veritabanı Değişikliği (Opsiyonel)
+
+Eğer profil bilgileri (görünen ad, avatar) saklanacaksa:
+
+```text
+profiles tablosu:
+- id: uuid (primary key, auth.users.id referansı)
+- display_name: text
+- avatar_url: text
+- preferences: jsonb (dil, tema, bildirimler)
+- created_at: timestamp
+- updated_at: timestamp
+```
+
+RLS Politikaları:
+- Kullanıcı kendi profilini görüntüleyebilir
+- Kullanıcı kendi profilini güncelleyebilir
+
+---
+
+### Bölüm 2: Help Sayfası
+
+#### 2.1 Yeni Dosyalar
+
+**`src/pages/Help.tsx`** - Ana yardım sayfası
+
+İçerik bölümleri:
+- SSS (Sıkça Sorulan Sorular) - Accordion komponenti
+- Hızlı Başlangıç Rehberi
+- Video Eğitimler (linkler)
+- İletişim/Destek Formu
+
+**`src/components/help/FAQSection.tsx`**
+- Kategorize edilmiş sorular
+- Accordion UI (shadcn/ui mevcut)
+- Arama fonksiyonu
+
+**`src/components/help/ContactSupport.tsx`**
+- Destek formu
+- Konu seçimi (dropdown)
+- Mesaj alanı
+- Email edge function ile gönderim (opsiyonel)
+
+#### 2.2 SSS İçerikleri (Örnek)
+
+```text
+Genel:
+- Open Lucius nedir?
+- Nasıl başlarım?
+- Ücretsiz mi?
+
+Website Oluşturma:
+- Template nasıl değiştirilir?
+- Görseller nereden geliyor?
+- AI içerik nasıl düzenlenir?
+
+Yayınlama:
+- Subdomain nasıl alınır?
+- Custom domain nasıl bağlanır?
+- SEO ayarları nerede?
 ```
 
 ---
 
-### Adım 2: CSS Değişkenleri ve Tema
+### Bölüm 3: Routing ve Navigation Güncellemeleri
 
-`src/index.css` dosyasına yeni accent renkler eklenmeli:
+#### 3.1 App.tsx Güncellemesi
 
-```css
-:root {
-  /* AI Video Studio accent colors */
-  --accent-blue: #2563eb;
-  --accent-emerald: #059669;
-  --accent-purple: #7c3aed;
-}
+```text
+Yeni route'lar:
+- /settings -> ProtectedRoute içinde Settings sayfası
+- /help -> ProtectedRoute içinde Help sayfası
 ```
 
----
+#### 3.2 DashboardSidebar.tsx Güncellemesi
 
-### Adım 3: Hero Section Özellikleri
-
-```
-+-------------------------------------------+
-|  [Video Background - Auto-play Muted]     |
-|                                           |
-|  ┌────────────────────────────────────┐   |
-|  │  SCROLL-TRIGGERED HEADER           │   |
-|  │  Logo    Nav Links      🔊 Mute    │   |
-|  └────────────────────────────────────┘   |
-|                                           |
-|        ★ AI VIDEO PRODUCTION ★            |
-|                                           |
-|      BRING YOUR                           |
-|      STORIES TO LIFE                      |
-|                                           |
-|   We craft stunning AI-powered video...   |
-|                                           |
-|   [Get Started]  [Watch Showreel]         |
-|                                           |
-|   Trusted by: [Brand Logos...]            |
-|                                           |
-+-------------------------------------------+
-```
-
-Önemli: Video arka plan orijinal projeden kullanılabilir veya placeholder video URL'si kullanılabilir.
-
----
-
-### Adım 4: GeneratedContent Uyumluluğu
-
-Template, mevcut `GeneratedContent` yapısıyla çalışacak şekilde adapte edilmeli:
-
-| Kaynak Alan | Template Kullanımı |
-|-------------|-------------------|
-| `pages.home.hero.title` | Hero başlık |
-| `pages.home.hero.subtitle` | Hero alt başlık |
-| `pages.home.hero.description` | Hero açıklama |
-| `pages.services.servicesList` | Services kartları |
-| `pages.about.story` | About bölümü |
-| `pages.about.values` | Process adımları (adapte) |
-| `pages.contact.info` | İletişim bilgileri |
-| `pages.home.highlights` | Awards/Portfolio fallback |
-
----
-
-### Adım 5: Template Registry Güncellemesi
-
-`src/templates/index.ts` dosyasına ekleme:
-
-```typescript
-temp9: {
-  config: {
-    id: 'temp9',
-    name: 'AI Video Studio',
-    description: 'Cinematic dark template for video production studios and creative agencies',
-    category: 'Creative',
-    preview: showcaseVideoStudio, // Yeni preview görseli gerekli
-    supportedProfessions: ['video-production', 'film-studio', 'creative-agency', 'animation', 'media'],
-    supportedTones: ['cinematic', 'bold', 'dramatic', 'modern'],
-  },
-  component: VideoStudioTemplate,
-}
-```
-
----
-
-### Adım 6: Framer Motion Bağımlılığı
-
-Orijinal template `framer-motion` kullanıyor. Bu paket eklenmeli:
-
-```bash
-npm install framer-motion
-```
-
-Alternatif olarak, animasyonlar Tailwind CSS `animate-*` class'larıyla değiştirilebilir.
-
----
-
-### Adım 7: Editör Entegrasyonu
-
-Tüm metin ve görsel alanları `EditableText` ve `EditableImage` bileşenleriyle sarmalanmalı:
-
-```typescript
-<EditableText
-  value={title}
-  fieldPath="pages.home.hero.title"
-  fieldLabel="Hero Title"
-  sectionTitle="Hero Section"
-  sectionId="hero"
-  as="h1"
-  isEditable={isEditable}
-  isSelected={isTitleSelected}
-  onSelect={onEditorSelect}
-/>
+```text
+navItems dizisi güncellemesi:
+- Settings: url -> '/settings'
+- Help: url -> '/help'
 ```
 
 ---
@@ -180,39 +150,97 @@ Tüm metin ve görsel alanları `EditableText` ve `EditableImage` bileşenleriyl
 
 | Dosya | İşlem |
 |-------|-------|
-| `src/templates/temp4-video-studio/index.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/components/TemplateHeader.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/components/TemplateFooter.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/hero/HeroVideo.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/services/ServicesCards.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/about/AboutProcess.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/team/TeamWanted.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/portfolio/PortfolioSection.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/awards/AwardsSection.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/sections/contact/ContactEmbed.tsx` | Yeni oluştur |
-| `src/templates/temp4-video-studio/pages/FullLandingPage.tsx` | Yeni oluştur |
-| `src/templates/index.ts` | Güncelle (temp9 ekle) |
-| `src/index.css` | Güncelle (accent renkler) |
-| `package.json` | Güncelle (framer-motion ekle) |
-| `src/assets/showcase-video-studio.jpg` | Yeni ekle (preview görsel) |
+| `src/pages/Settings.tsx` | Yeni oluştur |
+| `src/pages/Help.tsx` | Yeni oluştur |
+| `src/components/settings/ProfileSection.tsx` | Yeni oluştur |
+| `src/components/settings/SecuritySection.tsx` | Yeni oluştur |
+| `src/components/settings/PreferencesSection.tsx` | Yeni oluştur |
+| `src/components/settings/DangerZoneSection.tsx` | Yeni oluştur |
+| `src/components/help/FAQSection.tsx` | Yeni oluştur |
+| `src/components/help/ContactSupport.tsx` | Yeni oluştur |
+| `src/App.tsx` | Güncelle (2 yeni route) |
+| `src/contexts/AuthContext.tsx` | Güncelle (3 yeni fonksiyon) |
+| `src/components/dashboard/DashboardSidebar.tsx` | Güncelle (URL'ler) |
 
 ---
 
-## Beklenen Sonuçlar
+## Veritabanı Değişikliği (Opsiyonel)
 
-1. Yeni "AI Video Studio" template'i galeri'de görünecek
-2. Video prodüksiyon, film stüdyoları ve kreatif ajanslar için uygun
-3. Koyu tema, sinematik görünüm
-4. Tüm bölümler düzenlenebilir (EditableText/EditableImage)
-5. Section sıralaması değiştirilebilir
-6. Gerçek zamanlı stil güncellemeleri çalışacak
+Eğer profil bilgileri saklanacaksa migration gerekli:
+
+```text
+1. profiles tablosu oluştur
+2. RLS politikaları ekle
+3. Trigger: auth.users insert sonrası otomatik profil oluştur
+```
+
+---
+
+## UI Tasarım
+
+### Settings Sayfası Yapısı
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  [Sidebar]  │           Settings                         │
+│             │  ┌───────────────────────────────────────┐ │
+│  Home       │  │ [Profile] [Security] [Preferences]   │ │
+│  Website    │  └───────────────────────────────────────┘ │
+│  Studio     │                                            │
+│  Analytics  │  ┌────────────────────────────────────────┐│
+│  Settings ◄ │  │  Profile Section                       ││
+│  Help       │  │  ┌────────────────────────────────┐   ││
+│             │  │  │ Avatar    Display Name         │   ││
+│             │  │  │ [  👤  ]  [________________]    │   ││
+│             │  │  │                                │   ││
+│             │  │  │ Email (read-only)              │   ││
+│             │  │  │ user@example.com               │   ││
+│             │  │  └────────────────────────────────┘   ││
+│             │  │                           [Save]       ││
+│             │  └────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────┘
+```
+
+### Help Sayfası Yapısı
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  [Sidebar]  │           Help & Support                   │
+│             │                                            │
+│             │  [Search FAQ...                    🔍]     │
+│             │                                            │
+│             │  Frequently Asked Questions               │
+│             │  ┌────────────────────────────────────────┐│
+│             │  │ ▸ Nasıl website oluştururum?          ││
+│             │  │ ▸ Template nasıl değiştirilir?        ││
+│             │  │ ▸ Custom domain nasıl bağlanır?       ││
+│             │  │ ▸ AI görseller nereden geliyor?       ││
+│             │  └────────────────────────────────────────┘│
+│             │                                            │
+│             │  Need More Help?                          │
+│             │  ┌────────────────────────────────────────┐│
+│             │  │ 📧 support@openlucius.com             ││
+│             │  │ 💬 Destek Formu                       ││
+│             │  └────────────────────────────────────────┘│
+└──────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Teknik Notlar
 
-- **Video Arka Plan**: Performans için `poster` attribute ve lazy loading kullanılmalı
-- **Animasyonlar**: Framer Motion veya CSS animasyonları (tercihe bağlı)
-- **Responsive**: Mobil menü ve responsive grid yapısı korunmalı
-- **Cal.com Entegrasyonu**: Opsiyonel - genel form ile değiştirilebilir
+1. **Şifre Değiştirme**: Supabase `auth.updateUser({ password })` kullanır, kullanıcı zaten oturum açmış olmalı
+2. **Hesap Silme**: İlişkili tüm verileri (projects, studio_images, analytics_events, custom_domains) silmeli - CASCADE veya manuel
+3. **Avatar Storage**: Mevcut `user-images` bucket'ı kullanılabilir
+4. **Tema Tercihi**: `next-themes` paketi zaten kurulu, entegrasyon kolay
+5. **Dil Tercihi**: localStorage + React Context ile basit uygulama
 
+---
+
+## Beklenen Sonuçlar
+
+1. Settings sayfası tam işlevsel olacak
+2. Kullanıcılar şifrelerini değiştirebilecek
+3. Hesap silme güvenli şekilde çalışacak
+4. Help sayfası SSS ve destek formu içerecek
+5. Sidebar navigasyonu düzgün çalışacak
