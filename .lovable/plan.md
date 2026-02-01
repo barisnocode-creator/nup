@@ -1,97 +1,161 @@
 
-# AI İçerik Üretimi - Sektör Bilgisi Düzeltme Planı
 
-## Problem Tanımı
+# Tüm Sektörler için Özelleştirilmiş İçerik Üretimi - Geliştirme Planı
 
-AI sohbetinde kullanıcıdan toplanan sektör bilgisi (restoran, kafe, hukuk bürosu vb.) `generate-website` edge function'ına doğru şekilde aktarılmıyor. Bu nedenle AI, kullanıcının gerçek sektörü yerine varsayılan veya sağlık sektörü için içerik üretiyor.
+## Problem Özeti
 
-## Mevcut Durum Analizi
+AI chatbot'tan toplanan zengin işletme bilgileri (hizmetler, hikaye, hedef kitle, çalışma saatleri vb.) `generate-website` edge function'ında kullanılmıyor. Prompt sadece temel bilgileri içeriyor ve sektöre özgü içerik üretmiyor.
 
-### Veri Akışı
-
+**Mevcut Durum (Eksik):**
 ```text
-AIChatStep.tsx
-    ↓ extractedData (sector: "food")
-CreateWebsiteWizard.tsx
-    ↓ form_data: { extractedData: { sector: "food", ... } }
-projects tablosu
-    ↓ form_data JSON
-generate-website edge function
-    ↓ HATA: formData.sector aramak yerine formData.extractedData.sector olmalı
+BUSINESS INFORMATION:
+- Business Name: X Giyim
+- Business Type/Sector: retail
+- Location: İstanbul, Türkiye
+- Contact Phone: 555 55 55
+- Contact Email: xgiyim@gmail.com
 ```
 
-### Sorunlu Kod (generate-website/index.ts satır 667)
+**Olması Gereken (Zengin):**
+```text
+BUSINESS INFORMATION:
+- Business Name: X Giyim
+- Sector: retail (Perakende/Mağaza)
+- Location: İstanbul, Türkiye
+- Contact: 555 55 55 / xgiyim@gmail.com
 
-```typescript
-// ŞU AN:
-const extractedSector = (formData as any)?.sector;
-
-// OLMASI GEREKEN:
-const extractedSector = (formData as any)?.extractedData?.sector || (formData as any)?.sector;
+DETAILED BUSINESS CONTEXT:
+- Services/Products: Online kıyafet satışı
+- Target Audience: 18-40 yaş arası kadınlar
+- Business Story: 2020'de kuruldu, modern ve şık tasarımlar sunuyor.
+- Website Goals: Doğrudan satış
+- Working Hours: Online satış
 ```
-
-### Neden Çalışmıyor?
-
-1. `CreateWebsiteWizard.tsx` sektör bilgisini `form_data.extractedData.sector` yolunda kaydediyor
-2. `generate-website` fonksiyonu `form_data.sector` yolunda arıyor
-3. Bulamadığında `profession` değerine (service, other) dönüyor
-4. Sektör spesifik içerik üretilmiyor
 
 ---
 
 ## Çözüm Planı
 
-### Değişiklik 1: generate-website/index.ts
+### Değişiklik 1: generate-website/index.ts - buildPrompt Fonksiyonu Güncelleme
 
-**Satır 666-669 civarı güncellenecek:**
+`buildPrompt` fonksiyonunda `extractedData` parametresi eklenecek ve tüm zengin veriler AI prompt'una dahil edilecek.
 
+**Güncel fonksiyon imzası:**
 ```typescript
-// MEVCUT:
-const formData = project.form_data as FormData;
-const profession = project.profession;
-const extractedSector = (formData as any)?.sector;
-
-// YENİ:
-const formData = project.form_data as FormData;
-const profession = project.profession;
-
-// Check multiple possible locations for sector data
-const extractedSector = 
-  (formData as any)?.extractedData?.sector || 
-  (formData as any)?.sector || 
-  profession;
-
-console.log("Form data extractedData:", (formData as any)?.extractedData);
-console.log("Detected sector:", extractedSector);
+function buildPrompt(profession: string, formData: FormData, sector?: string): string
 ```
 
-### Ek İyileştirmeler
+**Yeni fonksiyon imzası:**
+```typescript
+function buildPrompt(
+  profession: string, 
+  formData: FormData, 
+  sector?: string,
+  extractedData?: ExtractedBusinessData
+): string
+```
 
-1. **Loglama Geliştirmesi**: Hangi sektörün algılandığını net görmek için daha detaylı log
-2. **Fallback Zinciri**: `extractedData.sector` → `sector` → `profession` sıralaması
+### Değişiklik 2: Prompt İçeriğini Zenginleştirme
+
+Prompt'a eklenmesi gereken yeni bölüm:
+
+```text
+DETAILED BUSINESS CONTEXT (use this information to make content highly specific):
+- Services/Products Offered: ${extractedData?.services?.join(', ') || 'Not specified'}
+- Target Audience: ${extractedData?.targetAudience || 'General audience'}
+- Business Story: ${extractedData?.story || 'A dedicated business serving customers.'}
+- Unique Value Proposition: ${extractedData?.uniqueValue || 'Quality and reliability'}
+- Website Goals: ${extractedData?.siteGoals || 'Inform and connect with customers'}
+- Working Hours: ${extractedData?.workingHours || 'Standard business hours'}
+- Years of Experience: ${extractedData?.yearsExperience || 'Established business'}
+
+IMPORTANT: Use this specific business context to generate AUTHENTIC content that reflects THIS business, not generic sector content.
+```
+
+### Değişiklik 3: Fonksiyon Çağrısını Güncelleme
+
+**Satır 691 civarı değişiklik:**
+```typescript
+// MEVCUT:
+content: buildPrompt(profession, formData, extractedSector),
+
+// YENİ:
+content: buildPrompt(profession, formData, extractedSector, (formData as any)?.extractedData),
+```
+
+### Değişiklik 4: FormData Interface Güncelleme
+
+Edge function içinde ExtractedBusinessData tipi tanımlanacak:
+
+```typescript
+interface ExtractedBusinessData {
+  businessName?: string;
+  sector?: string;
+  city?: string;
+  country?: string;
+  services?: string[];
+  targetAudience?: string;
+  uniqueValue?: string;
+  story?: string;
+  siteGoals?: string;
+  workingHours?: string;
+  yearsExperience?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface FormData {
+  businessInfo?: { ... };
+  professionalDetails?: { ... };
+  websitePreferences?: { ... };
+  extractedData?: ExtractedBusinessData;  // YENİ
+}
+```
 
 ---
 
-## Etkilenen Dosyalar
+## Dosya Değişiklikleri Özeti
 
 | Dosya | Değişiklik |
 |-------|-----------|
-| `supabase/functions/generate-website/index.ts` | Sektör algılama mantığını düzelt |
+| `supabase/functions/generate-website/index.ts` | buildPrompt fonksiyonunu güncelle, extractedData kullan |
 
 ---
 
-## Beklenen Sonuç
+## Örnek Senaryo - Öncesi ve Sonrası
 
-1. Kullanıcı "restoran" dediğinde → `food` sektörü algılanacak
-2. Görsel aramaları restoran/yemek temalı olacak
-3. İçerik metinleri sektöre uygun olacak
-4. Blog yazıları sektöre özel konularda olacak
+### Senaryo: "X Giyim" Online Moda Mağazası
+
+**ÖNCESİ (Jenerik İçerik):**
+```text
+Hero: "Discover Our Quality Products"
+About: "We are a retail business serving customers..."
+Services: "Product Display, Customer Service, Shopping Experience"
+```
+
+**SONRASI (İşletmeye Özel İçerik):**
+```text
+Hero: "Tarzınızı Yansıtan Modern Tasarımlar"
+About: "2020'den bu yana 18-40 yaş arası şık kadınlara modern ve trend kıyafetler sunuyoruz..."
+Services: "Online Kıyafet Satışı, Hızlı Teslimat, Kolay İade"
+```
 
 ---
 
-## Test Senaryosu
+## Teknik Notlar
 
-1. Wizard'da "Botanik Cafe" gibi bir restoran/kafe işletmesi oluştur
-2. AI sohbetinde sektörün `food` olarak algılandığını doğrula
-3. Üretilen içeriğin yemek/kafe temalı olduğunu kontrol et
-4. Görsellerin restoran/kafe ile ilgili olduğunu doğrula
+1. **Fallback Mantığı**: extractedData yoksa veya alanlar boşsa, mevcut jenerik değerler kullanılacak
+2. **Dil Desteği**: Prompt içindeki dil tercihi korunacak (Türkçe/İngilizce)
+3. **Geriye Uyumluluk**: Eski projelerde extractedData olmayabilir, bu durumda mevcut mantık çalışacak
+4. **Blog Konuları**: İşletmenin hizmetlerine ve hedef kitlesine göre dinamik olacak
+
+---
+
+## Beklenen Sonuçlar
+
+1. Restoran → yemek/menü temalı içerik
+2. Hukuk bürosu → hukuki danışmanlık temalı içerik  
+3. Moda mağazası → kıyafet/trend temalı içerik
+4. Yazılım şirketi → teknoloji/çözüm temalı içerik
+5. Her işletme kendi hikayesi, hedef kitlesi ve hizmetleriyle özelleştirilmiş içerik alacak
+
