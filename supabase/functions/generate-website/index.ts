@@ -663,9 +663,15 @@ serve(async (req) => {
     const formData = project.form_data as FormData;
     const profession = project.profession;
     
-    // Extract sector from form_data if available (from wizard-chat)
-    const extractedSector = (formData as any)?.sector;
+    // Extract sector from form_data - check multiple possible locations
+    // Wizard saves to extractedData.sector, but also check direct sector field as fallback
+    const extractedSector = 
+      (formData as any)?.extractedData?.sector || 
+      (formData as any)?.sector || 
+      profession;
 
+    console.log("Form data extractedData:", JSON.stringify((formData as any)?.extractedData));
+    console.log("Detected sector:", extractedSector);
     console.log("Generating enhanced content for:", profession, "sector:", extractedSector);
 
     // Call Lovable AI Gateway for text content
