@@ -7,6 +7,28 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Extracted business data from AI chat - rich context for content generation
+interface ExtractedBusinessData {
+  businessName?: string;
+  sector?: string;
+  city?: string;
+  country?: string;
+  services?: string[];
+  targetAudience?: string;
+  uniqueValue?: string;
+  story?: string;
+  siteGoals?: string;
+  workingHours?: string;
+  yearsExperience?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  vision?: string;
+  achievements?: string;
+  mainCTA?: string;
+  additionalInfo?: string;
+}
+
 interface FormData {
   businessInfo?: {
     businessName: string;
@@ -26,6 +48,8 @@ interface FormData {
     tone: string;
     colorPreference: string;
   };
+  // Rich extracted data from AI chatbot conversation
+  extractedData?: ExtractedBusinessData;
 }
 
 // Template selection logic - automatically picks the best template
@@ -123,7 +147,7 @@ SECTOR REQUIREMENTS - GENERAL BUSINESS:
   return sectorInstructions[sector] || sectorInstructions.other;
 }
 
-function buildPrompt(profession: string, formData: FormData, sector?: string): string {
+function buildPrompt(profession: string, formData: FormData, sector?: string, extractedData?: ExtractedBusinessData): string {
   const businessInfo = formData.businessInfo;
   const details = formData.professionalDetails;
   const prefs = formData.websitePreferences;
@@ -135,7 +159,7 @@ function buildPrompt(profession: string, formData: FormData, sector?: string): s
 
   const sectorInstructions = getSectorSpecificInstructions(effectiveSector, profession, details);
 
-  // Dynamic blog topics based on sector
+  // Dynamic blog topics based on sector - use extracted services if available
   const blogTopicsMap: Record<string, string> = {
     service: "industry insights, professional tips, client success stories, best practices, expert advice",
     retail: "product guides, shopping tips, new arrivals, style guides, seasonal recommendations",
@@ -152,19 +176,43 @@ function buildPrompt(profession: string, formData: FormData, sector?: string): s
     pharmacist: "medication guides, health supplements information, wellness tips, pharmacy services explained"
   };
 
-  const blogTopics = legacyBlogTopics[profession] || blogTopicsMap[effectiveSector] || blogTopicsMap.other;
+  // Use extracted services for blog topics if available
+  const extractedServices = extractedData?.services?.join(', ');
+  const blogTopics = extractedServices 
+    ? `${extractedServices}, industry insights, helpful tips related to ${effectiveSector}`
+    : (legacyBlogTopics[profession] || blogTopicsMap[effectiveSector] || blogTopicsMap.other);
+
+  // Build detailed business context section from extracted data
+  const businessContextSection = extractedData ? `
+DETAILED BUSINESS CONTEXT (use this information to make content highly specific and authentic):
+- Services/Products Offered: ${extractedData.services?.join(', ') || 'Not specified'}
+- Target Audience: ${extractedData.targetAudience || 'General audience'}
+- Business Story: ${extractedData.story || 'A dedicated business serving customers.'}
+- Vision: ${extractedData.vision || 'To provide excellent service'}
+- Unique Value Proposition: ${extractedData.uniqueValue || 'Quality and reliability'}
+- Website Goals: ${extractedData.siteGoals || 'Inform and connect with customers'}
+- Main Call-to-Action: ${extractedData.mainCTA || 'Contact us'}
+- Working Hours: ${extractedData.workingHours || 'Standard business hours'}
+- Years of Experience: ${extractedData.yearsExperience || 'Established business'}
+- Achievements/Highlights: ${extractedData.achievements || 'Trusted by many customers'}
+- Additional Info: ${extractedData.additionalInfo || ''}
+
+CRITICAL INSTRUCTION: Use the above SPECIFIC business context to generate AUTHENTIC content that reflects THIS EXACT business. 
+DO NOT use generic sector content. Every piece of text should be tailored to this specific business's story, services, and target audience.
+` : '';
 
   return `You are a professional website content writer.
 
 Generate comprehensive, detailed, and authentic website content for a business website.
 
 BUSINESS INFORMATION:
-- Business Name: ${businessInfo?.businessName || "Business Name"}
+- Business Name: ${extractedData?.businessName || businessInfo?.businessName || "Business Name"}
 - Business Type/Sector: ${effectiveSector}
-- Location: ${businessInfo?.city || "City"}, ${businessInfo?.country || "Country"}
-- Contact Phone: ${businessInfo?.phone || ""}
-- Contact Email: ${businessInfo?.email || ""}
-
+- Location: ${extractedData?.city || businessInfo?.city || "City"}, ${extractedData?.country || businessInfo?.country || "Country"}
+- Contact Phone: ${extractedData?.phone || businessInfo?.phone || ""}
+- Contact Email: ${extractedData?.email || businessInfo?.email || ""}
+- Address: ${extractedData?.address || ""}
+${businessContextSection}
 ${sectorInstructions}
 
 WEBSITE PREFERENCES:
@@ -177,8 +225,8 @@ CONTENT REQUIREMENTS:
 2. Use ${prefs?.tone || "professional"} tone throughout
 3. NO pricing information anywhere
 4. Focus on building trust and providing valuable information
-5. Make content specific, detailed, and authentic for this ${effectiveSector} business
-6. Include compelling statistics section with 4 key metrics
+5. Make content HIGHLY SPECIFIC to this exact business - use the business story, services, and target audience provided
+6. Include compelling statistics section with 4 key metrics based on the business context
 7. Generate 3-5 detailed blog posts about ${blogTopics}
 8. Each blog post should have 4-5 paragraphs of genuinely helpful content
 9. Include FAQ section with 4-5 common questions and detailed answers
@@ -688,7 +736,7 @@ serve(async (req) => {
           messages: [
             {
               role: "user",
-              content: buildPrompt(profession, formData, extractedSector),
+              content: buildPrompt(profession, formData, extractedSector, (formData as any)?.extractedData),
             },
           ],
           temperature: 0.7,
