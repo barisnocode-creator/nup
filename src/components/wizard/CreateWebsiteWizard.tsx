@@ -85,6 +85,16 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
   const canProceed = stepValidity[currentStep];
 
   const handleNext = () => {
+    // AI chat adımından çıkarken extractedData kontrolü
+    if (currentStep === 1 && !formData.extractedData) {
+      toast({
+        title: 'Dikkat',
+        description: 'Sohbet tamamlanmadan devam edilemez. Lütfen AI asistan ile sohbeti tamamlayın.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep((prev) => prev + 1);
     }

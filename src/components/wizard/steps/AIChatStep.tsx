@@ -109,27 +109,89 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     onDone(fullContent);
   }, []);
 
-  const processCompletedResponse = useCallback((content: string) => {
+  const processCompletedResponse = useCallback((content: string): { 
+    isCompleteResponse: boolean; 
+    cleanResponse: string; 
+    extractedData: ExtractedBusinessData | null;
+  } => {
     const isCompleteResponse = content.includes('CHAT_COMPLETE');
     let cleanResponse = content;
-    let extractedData = null;
+    let extractedData: ExtractedBusinessData | null = null;
+    let parseError = false;
 
     if (isCompleteResponse) {
-      const jsonMatch = content.match(/CHAT_COMPLETE\s*(\{[\s\S]*\})/);
+      // Try multiple JSON extraction patterns
+      let jsonMatch = content.match(/CHAT_COMPLETE\s*```json\s*(\{[\s\S]*?\})\s*```/);
+      if (!jsonMatch) {
+        jsonMatch = content.match(/CHAT_COMPLETE\s*(\{[\s\S]*\})/);
+      }
+      
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[1]);
           // Map sector to valid profession
           extractedData = {
-            ...parsed,
-            sector: mapSectorToProfession(parsed.sector),
+            businessName: parsed.businessName || 'Yeni İşletme',
+            sector: mapSectorToProfession(parsed.sector) || 'other',
+            city: parsed.city || '',
+            country: parsed.country || 'Turkey',
+            services: parsed.services || [],
+            targetAudience: parsed.targetAudience || '',
+            phone: parsed.phone || '',
+            email: parsed.email || '',
+            workingHours: parsed.workingHours || '',
+            story: parsed.story || '',
+            siteGoals: parsed.siteGoals || '',
+            colorTone: parsed.colorTone || 'neutral',
+            colorMode: parsed.colorMode || 'light',
+            languages: parsed.languages || ['Turkish'],
+            uniqueValue: parsed.uniqueValue || '',
+            yearsExperience: parsed.yearsExperience || '',
+            address: parsed.address || '',
+            vision: parsed.vision || '',
+            achievements: parsed.achievements || '',
+            mainCTA: parsed.mainCTA || '',
+            additionalInfo: parsed.additionalInfo || '',
           };
         } catch (e) {
           console.error('Failed to parse extracted data:', e);
+          parseError = true;
         }
+      } else {
+        parseError = true;
       }
+      
       cleanResponse = content.split('CHAT_COMPLETE')[0].trim();
-      cleanResponse += '\n\n✨ Harika! Tüm bilgileri topladım. Şimdi web sitenizi oluşturmaya hazırız!';
+      
+      // Create fallback if parse error or no data
+      if (parseError || !extractedData) {
+        extractedData = {
+          businessName: 'Yeni İşletme',
+          sector: 'other',
+          city: '',
+          country: 'Turkey',
+          services: [],
+          targetAudience: '',
+          phone: '',
+          email: '',
+          workingHours: '',
+          story: '',
+          siteGoals: '',
+          colorTone: 'neutral',
+          colorMode: 'light',
+          languages: ['Turkish'],
+          uniqueValue: '',
+          yearsExperience: '',
+          address: '',
+          vision: '',
+          achievements: '',
+          mainCTA: '',
+          additionalInfo: '',
+        };
+        cleanResponse += '\n\n⚠️ Bazı bilgiler eksik kaldı. Devam edebilirsiniz, eksik bilgileri daha sonra düzenleyebilirsiniz.';
+      } else {
+        cleanResponse += '\n\n✨ Harika! Tüm bilgileri topladım. Şimdi web sitenizi oluşturmaya hazırız!';
+      }
     }
 
     return { isCompleteResponse, cleanResponse, extractedData };
@@ -195,14 +257,12 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
               { role: 'assistant', content: cleanResponse },
             ]);
             
-            if (isCompleteResponse) {
+            if (isCompleteResponse && extractedData) {
               setQuestionNumber(TOTAL_QUESTIONS);
               setIsComplete(true);
               onValidityChange(true);
-              if (extractedData) {
-                onComplete(extractedData);
-              }
-            } else {
+              onComplete(extractedData);
+            } else if (!isCompleteResponse) {
               setQuestionNumber(prev => Math.min(prev + 1, TOTAL_QUESTIONS));
             }
             

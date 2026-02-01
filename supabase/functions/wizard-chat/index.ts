@@ -87,24 +87,35 @@ RENK DEĞERLERİ:
 - açık tema → "light"
 - koyu tema → "dark"
 
-JSON FORMATI (tüm bilgiler toplandığında):
+JSON FORMATI (tüm bilgiler toplandığında - ÇOK ÖNEMLİ!):
+Tüm bilgileri topladığında MUTLAKA şu formatı kullan:
+
 CHAT_COMPLETE
+\`\`\`json
 {
-  "businessName": "...",
+  "businessName": "İşletme Adı",
   "sector": "service|retail|food|creative|technology|other",
-  "city": "...",
-  "country": "...",
-  "services": ["...", "...", "..."],
-  "targetAudience": "...",
-  "phone": "...",
-  "email": "...",
-  "workingHours": "...",
-  "story": "...",
-  "siteGoals": "...",
+  "city": "Şehir",
+  "country": "Ülke",
+  "services": ["Hizmet1", "Hizmet2", "Hizmet3"],
+  "targetAudience": "Hedef kitle açıklaması",
+  "phone": "Telefon numarası",
+  "email": "email@example.com",
+  "workingHours": "Çalışma saatleri",
+  "story": "İşletme hikayesi",
+  "siteGoals": "Site amacı",
   "colorTone": "warm|cool|neutral",
   "colorMode": "light|dark|neutral",
-  "languages": ["Turkish"] veya ["English"] veya ["Turkish", "English"]
+  "languages": ["Turkish"]
 }
+\`\`\`
+
+ÖNEMLİ JSON KURALLARI:
+- JSON mutlaka geçerli olmalı, tırnak işaretlerini doğru kullan!
+- Tüm string değerler çift tırnak içinde olmalı
+- services mutlaka bir array olmalı: ["a", "b", "c"]
+- languages mutlaka bir array olmalı: ["Turkish"] veya ["English"] veya ["Turkish", "English"]
+- sector değeri MUTLAKA şunlardan biri olmalı: service, retail, food, creative, technology, other
 
 KURAL: Sadece bilmediğini sor, anladığını varsay ve onay ver!`;
 };
