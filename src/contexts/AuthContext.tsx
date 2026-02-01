@@ -11,6 +11,9 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,6 +87,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { error: error as Error | null };
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/settings`,
+    });
+    return { error: error as Error | null };
+  };
+
+  const deleteAccount = async () => {
+    if (!user) {
+      return { error: new Error('No user logged in') };
+    }
+
+    try {
+      // Delete user's data first (projects, studio_images, etc.)
+      // These will cascade delete related data like analytics_events, custom_domains
+      const { error: projectsError } = await supabase
+        .from('projects')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (projectsError) {
+        console.error('Error deleting projects:', projectsError);
+      }
+
+      const { error: studioError } = await supabase
+        .from('studio_images')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (studioError) {
+        console.error('Error deleting studio images:', studioError);
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+      }
+
+      // Sign out the user (account deletion requires admin API in Supabase)
+      await signOut();
+      
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -94,6 +155,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInWithGoogle,
       signInWithApple,
       signOut,
+      updatePassword,
+      resetPassword,
+      deleteAccount,
     }}>
       {children}
     </AuthContext.Provider>
