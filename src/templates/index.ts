@@ -1,6 +1,7 @@
 import { TemplateConfig, TemplateComponent } from './types';
 import { HealthcareModernTemplate } from './temp1';
 import { BoldAgencyTemplate } from './temp2';
+import { ElegantMinimalTemplate } from './temp3';
 
 // Import preview images
 import showcaseDental from '@/assets/showcase-dental.jpg';
@@ -44,14 +45,14 @@ const templateRegistry: Record<string, {
   temp3: {
     config: {
       id: 'temp3',
-      name: 'Restaurant & Cafe',
-      description: 'Elegant template for restaurants and food businesses',
-      category: 'Restaurant',
+      name: 'Elegant Minimal',
+      description: 'Premium minimal template with warm tones and serif typography',
+      category: 'Minimal',
       preview: showcaseRestaurant,
-      supportedProfessions: ['restaurant', 'cafe', 'bakery'],
-      supportedTones: ['warm', 'elegant', 'modern'],
+      supportedProfessions: ['boutique', 'agency', 'consulting', 'luxury', 'restaurant', 'cafe', 'bakery'],
+      supportedTones: ['elegant', 'minimal', 'premium', 'warm'],
     },
-    component: HealthcareModernTemplate,
+    component: ElegantMinimalTemplate,
   },
   temp4: {
     config: {

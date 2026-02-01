@@ -1,0 +1,1 @@
+export { TestimonialsElegant } from './TestimonialsElegant';

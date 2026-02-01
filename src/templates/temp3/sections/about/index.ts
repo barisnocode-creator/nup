@@ -1,0 +1,1 @@
+export { AboutElegant } from './AboutElegant';
