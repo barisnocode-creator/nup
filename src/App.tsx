@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
 import Analytics from "./pages/Analytics";
 import Studio from "./pages/Studio";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
 import WebsiteDashboard from "./pages/WebsiteDashboard";
 import PublicWebsite from "./pages/PublicWebsite";
 import NotFound from "./pages/NotFound";
@@ -62,6 +64,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Studio />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <Help />
                 </ProtectedRoute>
               }
             />

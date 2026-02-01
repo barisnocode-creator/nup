@@ -39,8 +39,8 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
       icon: BarChart3,
       disabled: !activeProjectId 
     },
-    { title: 'Settings', url: '/dashboard', icon: Settings },
-    { title: 'Help', url: '/dashboard', icon: HelpCircle },
+    { title: 'Settings', url: '/settings', icon: Settings },
+    { title: 'Help', url: '/help', icon: HelpCircle },
   ];
 
   return (
