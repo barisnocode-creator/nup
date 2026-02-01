@@ -1,135 +1,218 @@
 
-# Editör Gerçek Zamanlı Stil Güncelleme Planı
 
-## Mevcut Durum Analizi
+# AI Video Studio Template Entegrasyonu
 
-Kod incelemesi sonucunda tespit edilen sorunlar:
+## Kaynak Analizi
 
-1. **EditorSidebar'daki Style Tab değişiklikleri kaydedilmiyor**: Font boyutu, metin hizalaması ve metin rengi değişiklikleri sadece `useState` ile local state'te tutuluyor (`fontSize`, `textAlign`, `textColor`). Bu değerler hiçbir yere kaydedilmiyor ve template bileşenlerine iletilmiyor.
+GitHub repository'den aldığım AI Video Studio landing page:
+- **URL**: https://github.com/barisnocode-creator/remix-of-ai-video-studio-landing-page
+- **Teknoloji**: React + TypeScript + Tailwind (Lovable projesi)
+- **Bölümler**: Hero (video arka plan), Portfolio, Awards, About (process steps), Services, Team ("Wanted" poster tarzı), Contact (Cal.com entegrasyonu), Footer
+- **Tasarım**: Modern dark/light tema, gradient renkler (blue, emerald, purple), motion animasyonları
 
-2. **Image Position düzgün çalışıyor**: `handleUpdateImagePosition` fonksiyonu `imagePositions` nesnesini güncelliyor ve template'ler bu değeri `heroImagePosition` olarak alıyor.
+## Mevcut Section'lar
 
-3. **EditorSidebar'da gerekli callback'ler eksik**: `onStyleChange` prop'u yok, bu yüzden stil değişiklikleri parent'a bildirilemiyor.
+| Bölüm | Özellikler |
+|-------|------------|
+| **Hero** | Video arka plan, mobil menü, scroll tetiklemeli header |
+| **Portfolio** | YouTube video embed, featured work |
+| **Awards** | 6 adet ödül rozeti animasyonlu |
+| **About** | 5 adımlı süreç (storyboard tarzı) |
+| **Services** | Polaroid tarzı kartlar, hover efektleri |
+| **Team** | "Wanted" poster temalı ekip tanıtımı |
+| **Contact** | Cal.com takvim entegrasyonu |
 
 ---
 
-## Uygulama Adımları
+## Uygulama Planı
 
-### Adım 1: GeneratedContent Tipine SectionStyle Ekle
+### Adım 1: Template Klasör Yapısı
 
-**Dosya:** `src/types/generated-website.ts`
+```
+src/templates/temp4-video-studio/
+├── index.tsx                    # Ana template bileşeni
+├── components/
+│   ├── TemplateHeader.tsx       # Scroll tetiklemeli header
+│   └── TemplateFooter.tsx       # Footer
+├── sections/
+│   ├── hero/
+│   │   ├── HeroVideo.tsx        # Video arka planlı hero
+│   │   └── index.ts
+│   ├── portfolio/
+│   │   ├── PortfolioSection.tsx # Video showcase
+│   │   └── index.ts
+│   ├── awards/
+│   │   ├── AwardsSection.tsx    # Ödül rozetleri
+│   │   └── index.ts
+│   ├── about/
+│   │   ├── AboutProcess.tsx     # Süreç adımları
+│   │   └── index.ts
+│   ├── services/
+│   │   ├── ServicesCards.tsx    # Polaroid kartlar
+│   │   └── index.ts
+│   ├── team/
+│   │   ├── TeamWanted.tsx       # Wanted poster tarzı
+│   │   └── index.ts
+│   └── contact/
+│       ├── ContactEmbed.tsx     # Takvim entegrasyonu
+│       └── index.ts
+└── pages/
+    └── FullLandingPage.tsx      # Tüm section'ları birleştirir
+```
 
-Yeni interface ekle:
-```typescript
-export interface SectionStyle {
-  fontSize?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-  textAlign?: 'left' | 'center' | 'right';
-  textColor?: 'primary' | 'secondary' | 'muted';
+---
+
+### Adım 2: CSS Değişkenleri ve Tema
+
+`src/index.css` dosyasına yeni accent renkler eklenmeli:
+
+```css
+:root {
+  /* AI Video Studio accent colors */
+  --accent-blue: #2563eb;
+  --accent-emerald: #059669;
+  --accent-purple: #7c3aed;
 }
 ```
 
-`GeneratedContent` interface'ine ekle:
+---
+
+### Adım 3: Hero Section Özellikleri
+
+```
++-------------------------------------------+
+|  [Video Background - Auto-play Muted]     |
+|                                           |
+|  ┌────────────────────────────────────┐   |
+|  │  SCROLL-TRIGGERED HEADER           │   |
+|  │  Logo    Nav Links      🔊 Mute    │   |
+|  └────────────────────────────────────┘   |
+|                                           |
+|        ★ AI VIDEO PRODUCTION ★            |
+|                                           |
+|      BRING YOUR                           |
+|      STORIES TO LIFE                      |
+|                                           |
+|   We craft stunning AI-powered video...   |
+|                                           |
+|   [Get Started]  [Watch Showreel]         |
+|                                           |
+|   Trusted by: [Brand Logos...]            |
+|                                           |
++-------------------------------------------+
+```
+
+Önemli: Video arka plan orijinal projeden kullanılabilir veya placeholder video URL'si kullanılabilir.
+
+---
+
+### Adım 4: GeneratedContent Uyumluluğu
+
+Template, mevcut `GeneratedContent` yapısıyla çalışacak şekilde adapte edilmeli:
+
+| Kaynak Alan | Template Kullanımı |
+|-------------|-------------------|
+| `pages.home.hero.title` | Hero başlık |
+| `pages.home.hero.subtitle` | Hero alt başlık |
+| `pages.home.hero.description` | Hero açıklama |
+| `pages.services.servicesList` | Services kartları |
+| `pages.about.story` | About bölümü |
+| `pages.about.values` | Process adımları (adapte) |
+| `pages.contact.info` | İletişim bilgileri |
+| `pages.home.highlights` | Awards/Portfolio fallback |
+
+---
+
+### Adım 5: Template Registry Güncellemesi
+
+`src/templates/index.ts` dosyasına ekleme:
+
 ```typescript
-sectionStyles?: {
-  [sectionId: string]: SectionStyle;
-};
+temp9: {
+  config: {
+    id: 'temp9',
+    name: 'AI Video Studio',
+    description: 'Cinematic dark template for video production studios and creative agencies',
+    category: 'Creative',
+    preview: showcaseVideoStudio, // Yeni preview görseli gerekli
+    supportedProfessions: ['video-production', 'film-studio', 'creative-agency', 'animation', 'media'],
+    supportedTones: ['cinematic', 'bold', 'dramatic', 'modern'],
+  },
+  component: VideoStudioTemplate,
+}
 ```
 
 ---
 
-### Adım 2: EditorSidebar'a Style Callback Ekle
+### Adım 6: Framer Motion Bağımlılığı
 
-**Dosya:** `src/components/website-preview/EditorSidebar.tsx`
+Orijinal template `framer-motion` kullanıyor. Bu paket eklenmeli:
 
-Yeni prop'lar ekle:
-- `onStyleChange?: (sectionId: string, style: SectionStyle) => void`
-- `currentSectionStyle?: SectionStyle`
+```bash
+npm install framer-motion
+```
 
-Style tab'daki font size, text align ve text color değişikliklerinde `onStyleChange` callback'ini çağır. Mevcut stil değerlerini `currentSectionStyle` prop'undan oku.
+Alternatif olarak, animasyonlar Tailwind CSS `animate-*` class'larıyla değiştirilebilir.
 
 ---
 
-### Adım 3: Project.tsx'e Style Handler Ekle
+### Adım 7: Editör Entegrasyonu
 
-**Dosya:** `src/pages/Project.tsx`
-
-Yeni handler fonksiyonu ekle:
-```typescript
-const handleSectionStyleChange = useCallback((sectionId: string, style: SectionStyle) => {
-  // generated_content.sectionStyles'ı güncelle
-  // debouncedSave ile kaydet
-});
-```
-
-EditorSidebar'a bu prop'ları geçir:
-- `onStyleChange={handleSectionStyleChange}`
-- `currentSectionStyle={project.generated_content?.sectionStyles?.[editorSelection?.sectionId]}`
-
----
-
-### Adım 4: TemplateProps'a SectionStyles Ekle
-
-**Dosya:** `src/templates/types.ts`
+Tüm metin ve görsel alanları `EditableText` ve `EditableImage` bileşenleriyle sarmalanmalı:
 
 ```typescript
-sectionStyles?: {
-  [sectionId: string]: SectionStyle;
-};
+<EditableText
+  value={title}
+  fieldPath="pages.home.hero.title"
+  fieldLabel="Hero Title"
+  sectionTitle="Hero Section"
+  sectionId="hero"
+  as="h1"
+  isEditable={isEditable}
+  isSelected={isTitleSelected}
+  onSelect={onEditorSelect}
+/>
 ```
-
----
-
-### Adım 5: Template Bileşenlerini Güncelle
-
-Template'lerin section bileşenlerinde `sectionStyles` prop'unu al ve uygula.
-
-**Örnek (HeroSplit):**
-```typescript
-const getTextSizeClass = (size?: string) => {
-  const sizeMap = {
-    sm: 'text-3xl md:text-4xl',
-    base: 'text-4xl md:text-5xl',
-    lg: 'text-5xl md:text-6xl',
-    xl: 'text-6xl md:text-7xl',
-    '2xl': 'text-7xl md:text-8xl',
-  };
-  return sizeMap[size] || sizeMap.base;
-};
-```
-
-Güncellenecek dosyalar:
-- `src/templates/temp1/pages/FullLandingPage.tsx` - sectionStyles prop'u al ve section'lara ilet
-- `src/templates/temp1/sections/hero/*.tsx` - stil class'larını uygula
-- `src/templates/temp2/pages/FullLandingPage.tsx`
-- `src/templates/temp2/sections/hero/*.tsx`
-- `src/templates/temp3/pages/FullLandingPage.tsx`
-- `src/templates/temp3/sections/hero/*.tsx`
-- `src/components/website-preview/WebsitePreview.tsx` - sectionStyles prop'unu template'e ilet
 
 ---
 
 ## Dosya Değişiklikleri Özeti
 
-| Dosya | Değişiklik |
-|-------|------------|
-| `src/types/generated-website.ts` | `SectionStyle` interface ve `sectionStyles` alanı |
-| `src/components/website-preview/EditorSidebar.tsx` | `onStyleChange`, `currentSectionStyle` prop'ları ve callback entegrasyonu |
-| `src/pages/Project.tsx` | `handleSectionStyleChange` handler ve EditorSidebar prop geçişi |
-| `src/templates/types.ts` | `sectionStyles` prop ekleme |
-| `src/components/website-preview/WebsitePreview.tsx` | `sectionStyles` prop geçişi |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | `sectionStyles` prop alıp section'lara iletme |
-| `src/templates/temp1/sections/hero/HeroSplit.tsx` | Dinamik stil class'ları |
-| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | Dinamik stil class'ları |
-| `src/templates/temp1/sections/hero/HeroCentered.tsx` | Dinamik stil class'ları |
-| `src/templates/temp1/sections/hero/HeroGradient.tsx` | Dinamik stil class'ları |
-| `src/templates/temp1/sections/hero/types.ts` | `sectionStyle` prop ekleme |
+| Dosya | İşlem |
+|-------|-------|
+| `src/templates/temp4-video-studio/index.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/components/TemplateHeader.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/components/TemplateFooter.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/hero/HeroVideo.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/services/ServicesCards.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/about/AboutProcess.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/team/TeamWanted.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/portfolio/PortfolioSection.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/awards/AwardsSection.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/sections/contact/ContactEmbed.tsx` | Yeni oluştur |
+| `src/templates/temp4-video-studio/pages/FullLandingPage.tsx` | Yeni oluştur |
+| `src/templates/index.ts` | Güncelle (temp9 ekle) |
+| `src/index.css` | Güncelle (accent renkler) |
+| `package.json` | Güncelle (framer-motion ekle) |
+| `src/assets/showcase-video-studio.jpg` | Yeni ekle (preview görsel) |
 
 ---
 
 ## Beklenen Sonuçlar
 
-1. Font boyutu değiştirildiğinde anında hero başlığında görülecek
-2. Metin hizalaması değiştirildiğinde anında yansıyacak
-3. Metin rengi değiştirildiğinde anında uygulanacak
-4. Tüm değişiklikler otomatik olarak veritabanına kaydedilecek
-5. Sayfa yenilendiğinde stiller korunacak
+1. Yeni "AI Video Studio" template'i galeri'de görünecek
+2. Video prodüksiyon, film stüdyoları ve kreatif ajanslar için uygun
+3. Koyu tema, sinematik görünüm
+4. Tüm bölümler düzenlenebilir (EditableText/EditableImage)
+5. Section sıralaması değiştirilebilir
+6. Gerçek zamanlı stil güncellemeleri çalışacak
+
+---
+
+## Teknik Notlar
+
+- **Video Arka Plan**: Performans için `poster` attribute ve lazy loading kullanılmalı
+- **Animasyonlar**: Framer Motion veya CSS animasyonları (tercihe bağlı)
+- **Responsive**: Mobil menü ve responsive grid yapısı korunmalı
+- **Cal.com Entegrasyonu**: Opsiyonel - genel form ile değiştirilebilir
+
