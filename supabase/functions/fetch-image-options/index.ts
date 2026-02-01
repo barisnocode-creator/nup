@@ -21,31 +21,45 @@ interface PixabayImage {
 
 // Image type to search query mapping
 function getSearchQuery(imageType: string, profession: string): string {
+  // Comprehensive sector-based keywords
   const professionKeywords: Record<string, string> = {
-    pharmacist: 'pharmacy medicine healthcare',
-    doctor: 'medical doctor clinic healthcare',
-    dentist: 'dental dentist teeth clinic',
-    lawyer: 'lawyer legal office professional',
-    accountant: 'accounting finance office business',
-    architect: 'architecture building design modern',
-    therapist: 'therapy wellness mental health calm',
-    veterinarian: 'veterinary pets animal clinic',
-    chiropractor: 'chiropractic spine health wellness',
-    optometrist: 'eye care optometry vision glasses',
-    restaurant: 'restaurant food dining culinary',
-    salon: 'salon beauty hair styling',
-    gym: 'fitness gym workout health',
-    spa: 'spa wellness relaxation massage',
+    // New sector-based keywords
+    food: 'restaurant cafe food dining culinary kitchen chef',
+    retail: 'store shop retail shopping products display fashion',
+    service: 'professional business consulting office corporate',
+    creative: 'design studio creative art portfolio workspace',
+    technology: 'tech startup software coding office modern',
+    other: 'professional business modern office workspace',
+    
+    // Legacy healthcare professions
+    pharmacist: 'pharmacy medicine healthcare drugstore',
+    doctor: 'medical doctor clinic healthcare hospital',
+    dentist: 'dental dentist teeth clinic orthodontics',
+    
+    // Additional professions
+    lawyer: 'lawyer legal office professional law firm',
+    accountant: 'accounting finance office business corporate',
+    architect: 'architecture building design modern blueprint',
+    therapist: 'therapy wellness mental health calm peaceful',
+    veterinarian: 'veterinary pets animal clinic care',
+    chiropractor: 'chiropractic spine health wellness clinic',
+    optometrist: 'eye care optometry vision glasses clinic',
+    restaurant: 'restaurant food dining culinary chef kitchen',
+    salon: 'salon beauty hair styling fashion',
+    gym: 'fitness gym workout health exercise',
+    spa: 'spa wellness relaxation massage peaceful',
+    bakery: 'bakery pastry bread cafe dessert',
+    boutique: 'boutique fashion clothing store stylish',
   };
 
-  const baseQuery = professionKeywords[profession.toLowerCase()] || `${profession} professional business`;
+  const baseQuery = professionKeywords[profession.toLowerCase()] || `${profession} professional business modern`;
 
   const typeQueries: Record<string, string> = {
-    hero: `${baseQuery} modern professional`,
-    about: `${baseQuery} team people`,
-    gallery: `${baseQuery} interior facility`,
-    cta: `${baseQuery} success happy customer`,
-    service: `${baseQuery} service work`,
+    hero: `${baseQuery} modern professional high quality`,
+    about: `${baseQuery} team people working together`,
+    gallery: `${baseQuery} interior facility workspace`,
+    cta: `${baseQuery} success happy customer satisfaction`,
+    service: `${baseQuery} service work professional`,
   };
 
   return typeQueries[imageType] || baseQuery;
