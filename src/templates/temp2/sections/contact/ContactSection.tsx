@@ -34,11 +34,11 @@ export function BoldContactSection({
           {/* Left: Contact Info */}
           <div>
             <span className="inline-block px-3 py-1 bg-white/5 text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 border-l-4 border-white">
-              Get In Touch
+              İletişim
             </span>
             
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white mb-8">
-              {headline || "Let's Work Together"}
+              {headline || "Birlikte Çalışalım"}
             </h2>
 
             <div className="space-y-6">
@@ -51,7 +51,7 @@ export function BoldContactSection({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Address</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Adres</div>
                   <div className="text-gray-300">{address}</div>
                 </div>
               </div>
@@ -64,7 +64,7 @@ export function BoldContactSection({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Phone</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Telefon</div>
                   <div className="text-gray-300">{phone}</div>
                 </div>
               </div>
@@ -77,7 +77,7 @@ export function BoldContactSection({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Email</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">E-posta</div>
                   <div className="text-gray-300">{email}</div>
                 </div>
               </div>
@@ -90,7 +90,7 @@ export function BoldContactSection({
                   </svg>
                 </div>
                 <div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Hours</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-1">Çalışma Saatleri</div>
                   <div className="text-gray-300">{hours}</div>
                 </div>
               </div>
@@ -100,40 +100,40 @@ export function BoldContactSection({
           {/* Right: Contact Form */}
           <div className="bg-gray-900 p-8 lg:p-12 border border-gray-800">
             <h3 className="text-2xl font-bold uppercase tracking-wide text-white mb-8">
-              Send a Message
+              Mesaj Gönderin
             </h3>
             
             <form className="space-y-6">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
-                  Name
+                  Adınız
                 </label>
                 <input
                   type="text"
                   className="w-full px-4 py-4 bg-gray-950 border border-gray-800 text-white focus:border-white focus:outline-none transition-colors"
-                  placeholder="Your name"
+                  placeholder="Adınız"
                 />
               </div>
               
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
-                  Email
+                  E-posta
                 </label>
                 <input
                   type="email"
                   className="w-full px-4 py-4 bg-gray-950 border border-gray-800 text-white focus:border-white focus:outline-none transition-colors"
-                  placeholder="your@email.com"
+                  placeholder="ornek@email.com"
                 />
               </div>
               
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
-                  Message
+                  Mesajınız
                 </label>
                 <textarea
                   rows={4}
                   className="w-full px-4 py-4 bg-gray-950 border border-gray-800 text-white focus:border-white focus:outline-none transition-colors resize-none"
-                  placeholder="Tell us about your project..."
+                  placeholder="Projeniz hakkında bilgi verin..."
                 />
               </div>
               
@@ -141,7 +141,7 @@ export function BoldContactSection({
                 type="submit"
                 className="w-full py-5 bg-white text-gray-950 font-bold uppercase tracking-wide hover:bg-gray-200 transition-colors"
               >
-                Send Message
+                Mesaj Gönder
               </button>
             </form>
           </div>

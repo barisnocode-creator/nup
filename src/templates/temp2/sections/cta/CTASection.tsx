@@ -17,15 +17,15 @@ export function BoldCTASection({ headline, ctaText }: BoldCTASectionProps) {
 
       <div className="container mx-auto px-4 relative z-10 text-center">
         <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tight text-gray-950 max-w-4xl mx-auto mb-12">
-          Ready to Start Your Next Project?
+          Yeni Projenize Başlamaya Hazır mısınız?
         </h2>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button className="px-12 py-6 bg-gray-950 text-white font-bold text-lg uppercase tracking-wide hover:bg-gray-800 transition-all">
-            {ctaText || 'Get Started'}
+            {ctaText || 'Başla'}
           </button>
           <button className="px-12 py-6 border-2 border-gray-950 text-gray-950 font-bold text-lg uppercase tracking-wide hover:bg-gray-950 hover:text-white transition-all">
-            Contact Us
+            Bize Ulaşın
           </button>
         </div>
       </div>

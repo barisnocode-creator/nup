@@ -38,7 +38,7 @@ export function ServicesShowcase({
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-20">
           <span className="inline-block px-4 py-2 bg-white/5 text-sm font-bold uppercase tracking-widest text-gray-400 mb-6 border border-gray-800">
-            What We Do
+            Hizmetlerimiz
           </span>
           
           <EditableText
@@ -114,7 +114,7 @@ export function ServicesShowcase({
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
           <button className="px-10 py-5 border-2 border-white text-white font-bold uppercase tracking-wide hover:bg-white hover:text-gray-950 transition-all">
-            View All Services
+            Tüm Hizmetler
           </button>
         </div>
       </div>

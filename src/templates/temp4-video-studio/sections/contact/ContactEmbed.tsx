@@ -63,7 +63,7 @@ export function ContactEmbed({
               viewport={{ once: true }}
             >
               <span className="inline-block px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-medium mb-4">
-                Get In Touch
+                Bize Ulaşın
               </span>
               <EditableText
                 value={title}
@@ -91,7 +91,7 @@ export function ContactEmbed({
                     <MapPin className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Location</h4>
+                    <h4 className="text-white font-semibold mb-1">Konum</h4>
                     <p className="text-slate-400">{info.address}</p>
                   </div>
                 </motion.div>
@@ -107,7 +107,7 @@ export function ContactEmbed({
                     <Mail className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Email</h4>
+                    <h4 className="text-white font-semibold mb-1">E-posta</h4>
                     <p className="text-slate-400">{info.email}</p>
                   </div>
                 </motion.div>
@@ -123,7 +123,7 @@ export function ContactEmbed({
                     <Phone className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Phone</h4>
+                    <h4 className="text-white font-semibold mb-1">Telefon</h4>
                     <p className="text-slate-400">{info.phone}</p>
                   </div>
                 </motion.div>
@@ -139,7 +139,7 @@ export function ContactEmbed({
                     <Clock className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-white font-semibold mb-1">Hours</h4>
+                    <h4 className="text-white font-semibold mb-1">Çalışma Saatleri</h4>
                     <p className="text-slate-400">{info.hours}</p>
                   </div>
                 </motion.div>
@@ -153,36 +153,36 @@ export function ContactEmbed({
               viewport={{ once: true }}
             >
               <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800">
-                <h3 className="text-2xl font-bold text-white mb-6">Send us a message</h3>
+                <h3 className="text-2xl font-bold text-white mb-6">Bize mesaj gönderin</h3>
                 <form className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm text-slate-400 mb-2 block">Name</label>
+                      <label className="text-sm text-slate-400 mb-2 block">Adınız</label>
                       <Input
-                        placeholder="Your name"
+                        placeholder="Adınız"
                         className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                       />
                     </div>
                     <div>
-                      <label className="text-sm text-slate-400 mb-2 block">Email</label>
+                      <label className="text-sm text-slate-400 mb-2 block">E-posta</label>
                       <Input
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder="ornek@email.com"
                         className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400 mb-2 block">Subject</label>
+                    <label className="text-sm text-slate-400 mb-2 block">Konu</label>
                     <Input
-                      placeholder="Project inquiry"
+                      placeholder="Proje talebi"
                       className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-slate-400 mb-2 block">Message</label>
+                    <label className="text-sm text-slate-400 mb-2 block">Mesajınız</label>
                     <Textarea
-                      placeholder="Tell us about your project..."
+                      placeholder="Projeniz hakkında bilgi verin..."
                       rows={5}
                       className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 resize-none"
                     />
@@ -191,7 +191,7 @@ export function ContactEmbed({
                     size="lg"
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
                   >
-                    Send Message
+                    Mesaj Gönder
                     <Send className="w-4 h-4 ml-2" />
                   </Button>
                 </form>

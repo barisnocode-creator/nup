@@ -86,7 +86,7 @@ export function ServicesCards({
               viewport={{ once: true }}
               className="inline-block px-4 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-medium mb-4"
             >
-              What We Do
+              Neler Yapıyoruz
             </motion.span>
             <EditableText
               value={title}

@@ -21,15 +21,18 @@ export function BoldFooter({ siteName, tagline }: BoldFooterProps) {
           </div>
           
           <nav className="flex flex-wrap justify-center gap-8">
-            {['Home', 'About', 'Services', 'Work', 'Contact'].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-sm font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
-              >
-                {item}
-              </a>
-            ))}
+            {['Ana Sayfa', 'Hakkımızda', 'Hizmetler', 'Çalışmalar', 'İletişim'].map((item, index) => {
+              const hrefs = ['home', 'about', 'services', 'gallery', 'contact'];
+              return (
+                <a
+                  key={item}
+                  href={`#${hrefs[index]}`}
+                  className="text-sm font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-colors"
+                >
+                  {item}
+                </a>
+              );
+            })}
           </nav>
         </div>
 
@@ -39,7 +42,7 @@ export function BoldFooter({ siteName, tagline }: BoldFooterProps) {
         {/* Bottom section */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} {siteName}. All rights reserved.
+            © {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.
           </p>
           <p className="text-xs text-gray-600 max-w-md">
             {tagline}

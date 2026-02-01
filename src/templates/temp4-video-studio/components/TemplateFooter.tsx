@@ -15,11 +15,11 @@ export function TemplateFooter({ siteName, tagline }: TemplateFooterProps) {
   ];
 
   const footerLinks = [
-    { label: 'Work', href: '#portfolio' },
-    { label: 'Services', href: '#services' },
-    { label: 'About', href: '#about' },
-    { label: 'Team', href: '#team' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Projeler', href: '#portfolio' },
+    { label: 'Hizmetler', href: '#services' },
+    { label: 'Hakkımızda', href: '#about' },
+    { label: 'Ekip', href: '#team' },
+    { label: 'İletişim', href: '#contact' },
   ];
 
   return (
@@ -59,7 +59,7 @@ export function TemplateFooter({ siteName, tagline }: TemplateFooterProps) {
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+            <h4 className="text-white font-semibold mb-4">Hızlı Bağlantılar</h4>
             <ul className="space-y-3">
               {footerLinks.map((link) => (
                 <li key={link.label}>
@@ -77,14 +77,14 @@ export function TemplateFooter({ siteName, tagline }: TemplateFooterProps) {
 
           {/* Newsletter */}
           <div>
-            <h4 className="text-white font-semibold mb-4">Stay Updated</h4>
+            <h4 className="text-white font-semibold mb-4">Güncel Kalın</h4>
             <p className="text-slate-400 text-sm mb-4">
-              Subscribe for creative insights and project updates.
+              Yaratıcı içerikler ve proje güncellemeleri için abone olun.
             </p>
             <div className="flex gap-2">
               <input
                 type="email"
-                placeholder="your@email.com"
+                placeholder="ornek@email.com"
                 className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
               />
               <motion.button
@@ -92,7 +92,7 @@ export function TemplateFooter({ siteName, tagline }: TemplateFooterProps) {
                 whileTap={{ scale: 0.95 }}
                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-medium"
               >
-                Join
+                Abone Ol
               </motion.button>
             </div>
           </div>
@@ -101,14 +101,14 @@ export function TemplateFooter({ siteName, tagline }: TemplateFooterProps) {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} {siteName}. All rights reserved.
+            © {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.
           </p>
           <div className="flex items-center gap-6 text-sm">
             <a href="#" className="text-slate-500 hover:text-white transition-colors">
-              Privacy Policy
+              Gizlilik Politikası
             </a>
             <a href="#" className="text-slate-500 hover:text-white transition-colors">
-              Terms of Service
+              Kullanım Şartları
             </a>
           </div>
         </div>

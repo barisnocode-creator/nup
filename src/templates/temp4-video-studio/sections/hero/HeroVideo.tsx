@@ -119,7 +119,7 @@ export function HeroVideo({
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-6 text-lg rounded-full shadow-lg shadow-purple-500/25"
             >
-              Get Started
+              Hemen Başla
             </Button>
             <Button
               size="lg"
@@ -127,7 +127,7 @@ export function HeroVideo({
               className="border-slate-600 text-white hover:bg-slate-800 px-8 py-6 text-lg rounded-full"
             >
               <Play className="w-5 h-5 mr-2" />
-              Watch Showreel
+              Demo İzle
             </Button>
           </motion.div>
 
@@ -138,7 +138,7 @@ export function HeroVideo({
             transition={{ delay: 0.8, duration: 0.5 }}
             className="mt-16 pt-10 border-t border-slate-800"
           >
-            <p className="text-slate-500 text-sm mb-6">Trusted by leading brands</p>
+            <p className="text-slate-500 text-sm mb-6">Güvenilen markalar arasındayız</p>
             <div className="flex flex-wrap items-center justify-center gap-8 opacity-50">
               {['Netflix', 'Apple', 'Google', 'Meta', 'Amazon'].map((brand) => (
                 <span key={brand} className="text-slate-400 font-semibold text-lg">
