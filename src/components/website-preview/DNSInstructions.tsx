@@ -4,9 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 
+interface DNSRecord {
+  type: string;
+  label: string;
+  host: string;
+  value: string;
+}
+
 interface DNSInstructionsProps {
   domain: string;
-  verificationToken: string;
+  records: DNSRecord[];
   defaultOpen?: boolean;
 }
 
@@ -63,11 +70,8 @@ function DNSRecordRow({ label, type, host, value }: DNSRecordRowProps) {
   );
 }
 
-export function DNSInstructions({ domain, verificationToken, defaultOpen = false }: DNSInstructionsProps) {
+export function DNSInstructions({ domain, records, defaultOpen = false }: DNSInstructionsProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  // Extract root domain (remove www. if present)
-  const rootDomain = domain.replace(/^www\./, '');
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
@@ -89,26 +93,15 @@ export function DNSInstructions({ domain, verificationToken, defaultOpen = false
           Domain sağlayıcınızın DNS ayarlarına gidin ve aşağıdaki kayıtları ekleyin:
         </p>
 
-        <DNSRecordRow
-          label="A Kaydı (Root Domain)"
-          type="A"
-          host="@"
-          value="185.158.133.1"
-        />
-
-        <DNSRecordRow
-          label="A Kaydı (WWW)"
-          type="A"
-          host="www"
-          value="185.158.133.1"
-        />
-
-        <DNSRecordRow
-          label="TXT Kaydı (Doğrulama)"
-          type="TXT"
-          host="_lovable"
-          value={`lovable_verify=${verificationToken}`}
-        />
+        {records.map((record, index) => (
+          <DNSRecordRow
+            key={index}
+            label={record.label}
+            type={record.type}
+            host={record.host}
+            value={record.value}
+          />
+        ))}
 
         <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <p className="text-xs text-amber-700 dark:text-amber-400">

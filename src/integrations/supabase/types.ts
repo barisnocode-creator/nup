@@ -214,6 +214,51 @@ export type Database = {
       }
     }
     Views: {
+      custom_domains_safe: {
+        Row: {
+          created_at: string | null
+          domain: string | null
+          id: string | null
+          is_primary: boolean | null
+          project_id: string | null
+          status: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain?: string | null
+          id?: string | null
+          is_primary?: boolean | null
+          project_id?: string | null
+          status?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string | null
+          id?: string | null
+          is_primary?: boolean | null
+          project_id?: string | null
+          status?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_domains_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_domains_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_projects: {
         Row: {
           custom_domain: string | null
@@ -230,6 +275,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_domain_dns_instructions: {
+        Args: { domain_id: string }
+        Returns: Json
+      }
       hash_visitor_id: { Args: { raw_visitor_id: string }; Returns: string }
       user_owns_project: { Args: { project_id: string }; Returns: boolean }
     }
