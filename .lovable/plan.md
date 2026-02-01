@@ -1,104 +1,90 @@
 
-# Editör Gerçek Zamanlı Güncelleme ve Pixabay Entegrasyonu Planı
+# Editör Gerçek Zamanlı Stil Güncelleme Planı
 
-## Tespit Edilen Sorunlar
+## Mevcut Durum Analizi
 
-### 1. Style Tab Değişiklikleri Kaydedilmiyor
-EditorSidebar'daki "Style" sekmesindeki font boyutu, metin hizalaması ve metin rengi değişiklikleri sadece local React state'inde tutuluyor. Bu değerler:
-- `generated_content`'e kaydedilmiyor
-- Template bileşenlerine iletilmiyor
-- Dolayısıyla anında görsel değişiklik olmuyor
+Kod incelemesi sonucunda tespit edilen sorunlar:
 
-### 2. Image Pozisyon Güncellemesi
-Image pozisyonu `handleUpdateImagePosition` ile `generated_content.imagePositions` altına kaydediliyor ama template'lerin `EditableImage` bileşenleri bu değeri okumak için doğru yapılandırılmış mı kontrol edilmeli.
+1. **EditorSidebar'daki Style Tab değişiklikleri kaydedilmiyor**: Font boyutu, metin hizalaması ve metin rengi değişiklikleri sadece `useState` ile local state'te tutuluyor (`fontSize`, `textAlign`, `textColor`). Bu değerler hiçbir yere kaydedilmiyor ve template bileşenlerine iletilmiyor.
 
-### 3. Regenerate Butonu (SORUN YOK)
-`handleImageRegenerate` fonksiyonu zaten `fetch-image-options` edge function'ını çağırıyor ve bu Pixabay'den görsel çekiyor. Bu kısım doğru çalışıyor.
+2. **Image Position düzgün çalışıyor**: `handleUpdateImagePosition` fonksiyonu `imagePositions` nesnesini güncelliyor ve template'ler bu değeri `heroImagePosition` olarak alıyor.
+
+3. **EditorSidebar'da gerekli callback'ler eksik**: `onStyleChange` prop'u yok, bu yüzden stil değişiklikleri parent'a bildirilemiyor.
 
 ---
 
-## Çözüm Planı
+## Uygulama Adımları
 
-### Aşama 1: Section Style Settings Altyapısı
+### Adım 1: GeneratedContent Tipine SectionStyle Ekle
 
-`GeneratedContent` tipine section-bazlı stil ayarları ekle:
+**Dosya:** `src/types/generated-website.ts`
 
+Yeni interface ekle:
 ```typescript
-// src/types/generated-website.ts
 export interface SectionStyle {
   fontSize?: 'sm' | 'base' | 'lg' | 'xl' | '2xl';
   textAlign?: 'left' | 'center' | 'right';
   textColor?: 'primary' | 'secondary' | 'muted';
 }
-
-export interface GeneratedContent {
-  // ... mevcut alanlar ...
-  
-  sectionStyles?: {
-    [sectionId: string]: SectionStyle;
-  };
-}
 ```
 
-### Aşama 2: EditorSidebar - Style Callback Ekleme
-
-EditorSidebar'a yeni prop'lar ekle:
-
+`GeneratedContent` interface'ine ekle:
 ```typescript
-interface EditorSidebarProps {
-  // ... mevcut prop'lar ...
-  
-  // Style değişikliği için callback
-  onStyleChange?: (sectionId: string, style: SectionStyle) => void;
-  currentSectionStyle?: SectionStyle;
-}
-```
-
-Style tab'daki değişiklikleri anında parent'a bildir:
-
-```typescript
-const handleFontSizeChange = (value: string) => {
-  setFontSize(value);
-  if (onStyleChange && selection?.sectionId) {
-    onStyleChange(selection.sectionId, {
-      fontSize: value as SectionStyle['fontSize'],
-      textAlign,
-      textColor,
-    });
-  }
+sectionStyles?: {
+  [sectionId: string]: SectionStyle;
 };
 ```
 
-### Aşama 3: Project.tsx - Style Handler Ekleme
+---
 
+### Adım 2: EditorSidebar'a Style Callback Ekle
+
+**Dosya:** `src/components/website-preview/EditorSidebar.tsx`
+
+Yeni prop'lar ekle:
+- `onStyleChange?: (sectionId: string, style: SectionStyle) => void`
+- `currentSectionStyle?: SectionStyle`
+
+Style tab'daki font size, text align ve text color değişikliklerinde `onStyleChange` callback'ini çağır. Mevcut stil değerlerini `currentSectionStyle` prop'undan oku.
+
+---
+
+### Adım 3: Project.tsx'e Style Handler Ekle
+
+**Dosya:** `src/pages/Project.tsx`
+
+Yeni handler fonksiyonu ekle:
 ```typescript
 const handleSectionStyleChange = useCallback((sectionId: string, style: SectionStyle) => {
-  if (!project?.generated_content) return;
-
-  const updatedContent = {
-    ...project.generated_content,
-    sectionStyles: {
-      ...project.generated_content.sectionStyles,
-      [sectionId]: style,
-    },
-  };
-  
-  setProject(prev => prev ? {
-    ...prev,
-    generated_content: updatedContent,
-  } : null);
-  
-  setHasUnsavedChanges(true);
-  debouncedSave(updatedContent);
-}, [project, debouncedSave]);
+  // generated_content.sectionStyles'ı güncelle
+  // debouncedSave ile kaydet
+});
 ```
 
-### Aşama 4: Template Bileşenlerini Güncelle
+EditorSidebar'a bu prop'ları geçir:
+- `onStyleChange={handleSectionStyleChange}`
+- `currentSectionStyle={project.generated_content?.sectionStyles?.[editorSelection?.sectionId]}`
 
-Her section bileşeni `sectionStyles` prop'unu alsın ve uygulasın:
+---
+
+### Adım 4: TemplateProps'a SectionStyles Ekle
+
+**Dosya:** `src/templates/types.ts`
 
 ```typescript
-// Örnek: HeroSection
+sectionStyles?: {
+  [sectionId: string]: SectionStyle;
+};
+```
+
+---
+
+### Adım 5: Template Bileşenlerini Güncelle
+
+Template'lerin section bileşenlerinde `sectionStyles` prop'unu al ve uygula.
+
+**Örnek (HeroSplit):**
+```typescript
 const getTextSizeClass = (size?: string) => {
   const sizeMap = {
     sm: 'text-3xl md:text-4xl',
@@ -109,68 +95,41 @@ const getTextSizeClass = (size?: string) => {
   };
   return sizeMap[size] || sizeMap.base;
 };
-
-const style = sectionStyles?.hero;
-
-<h1 className={cn(
-  getTextSizeClass(style?.fontSize),
-  style?.textAlign === 'left' && 'text-left',
-  style?.textAlign === 'right' && 'text-right',
-  style?.textColor === 'muted' && 'text-muted-foreground',
-)}>
-  {title}
-</h1>
 ```
 
-### Aşama 5: Image Position Doğrulaması
-
-EditableImage'ın pozisyon değerlerini okuyup uyguladığını doğrula ve template'lerin `imagePositions` değerini section'lara ilettiğini kontrol et:
-
-```typescript
-// FullLandingPage içinde
-const heroPosition = content.imagePositions?.heroHome;
-
-<EditableImage
-  src={heroImage}
-  positionX={heroPosition?.x ?? 50}
-  positionY={heroPosition?.y ?? 50}
-  ...
-/>
-```
+Güncellenecek dosyalar:
+- `src/templates/temp1/pages/FullLandingPage.tsx` - sectionStyles prop'u al ve section'lara ilet
+- `src/templates/temp1/sections/hero/*.tsx` - stil class'larını uygula
+- `src/templates/temp2/pages/FullLandingPage.tsx`
+- `src/templates/temp2/sections/hero/*.tsx`
+- `src/templates/temp3/pages/FullLandingPage.tsx`
+- `src/templates/temp3/sections/hero/*.tsx`
+- `src/components/website-preview/WebsitePreview.tsx` - sectionStyles prop'unu template'e ilet
 
 ---
 
-## Dosya Değişiklikleri
+## Dosya Değişiklikleri Özeti
 
 | Dosya | Değişiklik |
 |-------|------------|
-| `src/types/generated-website.ts` | `SectionStyle` interface ve `sectionStyles` alanı ekle |
-| `src/components/website-preview/EditorSidebar.tsx` | `onStyleChange` callback, gerçek zamanlı stil güncellemeleri |
-| `src/pages/Project.tsx` | `handleSectionStyleChange` handler, EditorSidebar'a prop geçişi |
-| `src/templates/temp1/sections/*.tsx` | Section bileşenlerinde style prop desteği |
-| `src/templates/temp2/sections/*.tsx` | Section bileşenlerinde style prop desteği |
-| `src/templates/temp3/sections/*.tsx` | Section bileşenlerinde style prop desteği |
-| `src/templates/types.ts` | TemplateProps'a sectionStyles ekle |
+| `src/types/generated-website.ts` | `SectionStyle` interface ve `sectionStyles` alanı |
+| `src/components/website-preview/EditorSidebar.tsx` | `onStyleChange`, `currentSectionStyle` prop'ları ve callback entegrasyonu |
+| `src/pages/Project.tsx` | `handleSectionStyleChange` handler ve EditorSidebar prop geçişi |
+| `src/templates/types.ts` | `sectionStyles` prop ekleme |
+| `src/components/website-preview/WebsitePreview.tsx` | `sectionStyles` prop geçişi |
+| `src/templates/temp1/pages/FullLandingPage.tsx` | `sectionStyles` prop alıp section'lara iletme |
+| `src/templates/temp1/sections/hero/HeroSplit.tsx` | Dinamik stil class'ları |
+| `src/templates/temp1/sections/hero/HeroOverlay.tsx` | Dinamik stil class'ları |
+| `src/templates/temp1/sections/hero/HeroCentered.tsx` | Dinamik stil class'ları |
+| `src/templates/temp1/sections/hero/HeroGradient.tsx` | Dinamik stil class'ları |
+| `src/templates/temp1/sections/hero/types.ts` | `sectionStyle` prop ekleme |
 
 ---
 
-## Regenerate Butonu (Mevcut Durum - Doğru Çalışıyor)
+## Beklenen Sonuçlar
 
-Mevcut implementasyon zaten Pixabay kullanıyor:
-
-1. Kullanıcı "Benzer" veya "Değiştir" butonuna tıklıyor
-2. `handleImageRegenerate` veya `handleImageChange` çağrılıyor
-3. `fetch-image-options` edge function Pixabay'den görsel çekiyor
-4. Seçenekler EditorSidebar'da gösteriliyor
-
-AI görsel üretimi kullanılmıyor, Pixabay tabanlı stok görsel sistemi zaten aktif.
-
----
-
-## Özet
-
-Bu plan implementasyon sonrası:
-- Font boyutu, metin hizalaması, metin rengi değişiklikleri anında template'e yansıyacak
-- Horizontal/vertical görsel pozisyonu gerçek zamanlı güncellenecek
-- Tüm değişiklikler otomatik kaydedilecek
-- Regenerate butonu Pixabay'den konuya uygun görseller çekmeye devam edecek (zaten çalışıyor)
+1. Font boyutu değiştirildiğinde anında hero başlığında görülecek
+2. Metin hizalaması değiştirildiğinde anında yansıyacak
+3. Metin rengi değiştirildiğinde anında uygulanacak
+4. Tüm değişiklikler otomatik olarak veritabanına kaydedilecek
+5. Sayfa yenilendiğinde stiller korunacak
