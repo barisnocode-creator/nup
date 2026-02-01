@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import type { SectionStyle } from '@/types/generated-website';
 
 export interface ImageData {
   type: 'hero' | 'about' | 'gallery' | 'cta' | 'service';
@@ -74,6 +75,9 @@ interface EditorSidebarProps {
   // Image upload
   projectId?: string;
   onImageUpload?: (url: string) => void;
+  // Section style props
+  currentSectionStyle?: SectionStyle;
+  onStyleChange?: (sectionId: string, style: SectionStyle) => void;
 }
 
 const heroLayoutOptions: { id: HeroVariant; label: string; description: string }[] = [
@@ -117,14 +121,16 @@ export function EditorSidebar({
   onSelectImageOption,
   projectId,
   onImageUpload,
+  currentSectionStyle,
+  onStyleChange,
 }: EditorSidebarProps) {
   const [localFields, setLocalFields] = useState<Record<string, string>>({});
   const [altText, setAltText] = useState('');
   const [positionX, setPositionX] = useState(50);
   const [positionY, setPositionY] = useState(50);
-  const [fontSize, setFontSize] = useState('base');
-  const [textAlign, setTextAlign] = useState<'left' | 'center' | 'right'>('center');
-  const [textColor, setTextColor] = useState('primary');
+  const [fontSize, setFontSize] = useState<SectionStyle['fontSize']>('base');
+  const [textAlign, setTextAlign] = useState<SectionStyle['textAlign']>('center');
+  const [textColor, setTextColor] = useState<SectionStyle['textColor']>('primary');
 
   // Sync state when selection changes
   useEffect(() => {
@@ -142,6 +148,19 @@ export function EditorSidebar({
       }
     }
   }, [selection]);
+
+  // Sync style state when currentSectionStyle changes
+  useEffect(() => {
+    if (currentSectionStyle) {
+      setFontSize(currentSectionStyle.fontSize || 'base');
+      setTextAlign(currentSectionStyle.textAlign || 'center');
+      setTextColor(currentSectionStyle.textColor || 'primary');
+    } else {
+      setFontSize('base');
+      setTextAlign('center');
+      setTextColor('primary');
+    }
+  }, [currentSectionStyle]);
 
   const handleFieldChange = (fieldPath: string, value: string) => {
     setLocalFields(prev => ({ ...prev, [fieldPath]: value }));
@@ -537,7 +556,20 @@ export function EditorSidebar({
                 )}>
                   Font Size
                 </Label>
-                <Select value={fontSize} onValueChange={setFontSize}>
+                <Select 
+                  value={fontSize || 'base'} 
+                  onValueChange={(value) => {
+                    const newSize = value as SectionStyle['fontSize'];
+                    setFontSize(newSize);
+                    if (onStyleChange && selection?.sectionId) {
+                      onStyleChange(selection.sectionId, { 
+                        fontSize: newSize,
+                        textAlign,
+                        textColor,
+                      });
+                    }
+                  }}
+                >
                   <SelectTrigger className={cn(
                     isDark && 'bg-slate-800 border-slate-700 text-white'
                   )}>
@@ -563,13 +595,22 @@ export function EditorSidebar({
                 </Label>
                 <div className="flex gap-2">
                   {[
-                    { value: 'left', icon: AlignLeft },
-                    { value: 'center', icon: AlignCenter },
-                    { value: 'right', icon: AlignRight },
+                    { value: 'left' as const, icon: AlignLeft },
+                    { value: 'center' as const, icon: AlignCenter },
+                    { value: 'right' as const, icon: AlignRight },
                   ].map(({ value, icon: Icon }) => (
                     <button
                       key={value}
-                      onClick={() => setTextAlign(value as 'left' | 'center' | 'right')}
+                      onClick={() => {
+                        setTextAlign(value);
+                        if (onStyleChange && selection?.sectionId) {
+                          onStyleChange(selection.sectionId, { 
+                            fontSize,
+                            textAlign: value,
+                            textColor,
+                          });
+                        }
+                      }}
                       className={cn(
                         'flex-1 p-2 rounded-lg border transition-all flex items-center justify-center',
                         textAlign === value
@@ -597,7 +638,17 @@ export function EditorSidebar({
                   {textColorOptions.map(option => (
                     <button
                       key={option.value}
-                      onClick={() => setTextColor(option.value)}
+                      onClick={() => {
+                        const newColor = option.value as SectionStyle['textColor'];
+                        setTextColor(newColor);
+                        if (onStyleChange && selection?.sectionId) {
+                          onStyleChange(selection.sectionId, { 
+                            fontSize,
+                            textAlign,
+                            textColor: newColor,
+                          });
+                        }
+                      }}
                       className={cn(
                         'flex-1 p-2 rounded-lg border transition-all flex items-center justify-center gap-2',
                         textColor === option.value

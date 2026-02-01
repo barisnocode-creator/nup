@@ -5,6 +5,27 @@ import type { HeroProps } from './types';
 import type { ImageData } from '@/components/website-preview/EditorSidebar';
 import { ImageIcon } from 'lucide-react';
 
+// Dynamic style helpers
+const getTextSizeClass = (size?: string) => {
+  const sizeMap: Record<string, string> = {
+    sm: 'text-3xl md:text-4xl lg:text-5xl',
+    base: 'text-4xl md:text-5xl lg:text-7xl',
+    lg: 'text-5xl md:text-6xl lg:text-8xl',
+    xl: 'text-6xl md:text-7xl lg:text-9xl',
+    '2xl': 'text-7xl md:text-8xl lg:text-[10rem]',
+  };
+  return sizeMap[size || 'base'] || sizeMap.base;
+};
+
+const getTextAlignClass = (align?: string) => {
+  const alignMap: Record<string, string> = {
+    left: 'text-left items-start',
+    center: 'text-center items-center',
+    right: 'text-right items-end',
+  };
+  return alignMap[align || 'center'] || alignMap.center;
+};
+
 export function HeroOverlay({
   title,
   subtitle,
@@ -16,6 +37,7 @@ export function HeroOverlay({
   isEditable,
   editorSelection,
   onEditorSelect,
+  sectionStyle,
   selectedImage,
   onImageSelect,
 }: HeroProps) {
@@ -52,6 +74,10 @@ export function HeroOverlay({
       positionY: 50,
     });
   };
+
+  // Apply dynamic styles from sectionStyle
+  const titleSizeClass = getTextSizeClass(sectionStyle?.fontSize);
+  const textAlignClass = getTextAlignClass(sectionStyle?.textAlign);
 
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
@@ -104,8 +130,8 @@ export function HeroOverlay({
       </div>
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center py-20">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <div className="relative z-10 container mx-auto px-4 py-20">
+        <div className={cn('max-w-4xl mx-auto space-y-8 flex flex-col', textAlignClass)}>
           <EditableText
             value="Welcome to our practice"
             fieldPath="pages.home.welcome.title"
@@ -145,7 +171,7 @@ export function HeroOverlay({
                 canRegenerate: true,
               },
             ]}
-            className="text-4xl md:text-5xl lg:text-7xl font-bold leading-tight text-white drop-shadow-lg font-display"
+            className={cn(titleSizeClass, 'font-bold leading-tight text-white drop-shadow-lg font-display')}
           />
 
           <EditableText

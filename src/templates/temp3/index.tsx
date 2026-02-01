@@ -16,6 +16,7 @@ export function ElegantMinimalTemplate({
   sectionOrder,
   onMoveSection,
   onDeleteSection,
+  sectionStyles,
   selectedImage,
   onImageSelect,
 }: TemplateProps) {

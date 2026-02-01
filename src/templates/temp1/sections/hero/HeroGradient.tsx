@@ -2,6 +2,27 @@ import { EditableText } from '@/components/website-preview/EditableText';
 import { cn } from '@/lib/utils';
 import type { HeroProps } from './types';
 
+// Dynamic style helpers
+const getTextSizeClass = (size?: string) => {
+  const sizeMap: Record<string, string> = {
+    sm: 'text-3xl md:text-4xl lg:text-5xl',
+    base: 'text-4xl md:text-5xl lg:text-7xl',
+    lg: 'text-5xl md:text-6xl lg:text-8xl',
+    xl: 'text-6xl md:text-7xl lg:text-9xl',
+    '2xl': 'text-7xl md:text-8xl lg:text-[10rem]',
+  };
+  return sizeMap[size || 'base'] || sizeMap.base;
+};
+
+const getTextAlignClass = (align?: string) => {
+  const alignMap: Record<string, string> = {
+    left: 'text-left items-start',
+    center: 'text-center items-center',
+    right: 'text-right items-end',
+  };
+  return alignMap[align || 'center'] || alignMap.center;
+};
+
 export function HeroGradient({
   title,
   subtitle,
@@ -11,9 +32,14 @@ export function HeroGradient({
   isEditable,
   editorSelection,
   onEditorSelect,
+  sectionStyle,
 }: HeroProps) {
   const isTitleSelected = editorSelection?.sectionId === 'hero' && 
     editorSelection?.fields.some(f => f.fieldPath === 'pages.home.hero.title');
+
+  // Apply dynamic styles from sectionStyle
+  const titleSizeClass = getTextSizeClass(sectionStyle?.fontSize);
+  const textAlignClass = getTextAlignClass(sectionStyle?.textAlign);
 
   return (
     <section className={cn(
@@ -50,8 +76,8 @@ export function HeroGradient({
       />
 
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 text-center py-20">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <div className="relative z-10 container mx-auto px-4 py-20">
+        <div className={cn('max-w-4xl mx-auto space-y-8 flex flex-col', textAlignClass)}>
           <div className={cn(
             'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm border',
             isDark 
@@ -87,10 +113,11 @@ export function HeroGradient({
                 canRegenerate: true,
               },
             ]}
-            className={cn(
-              'text-4xl md:text-5xl lg:text-7xl font-bold leading-tight font-display',
-              isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
-            )}
+              className={cn(
+                titleSizeClass,
+                'font-bold leading-tight font-display',
+                isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
+              )}
           />
 
           <EditableText

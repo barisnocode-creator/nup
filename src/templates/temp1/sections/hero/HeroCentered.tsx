@@ -4,6 +4,27 @@ import { cn } from '@/lib/utils';
 import type { HeroProps } from './types';
 import type { ImageData } from '@/components/website-preview/EditorSidebar';
 
+// Dynamic style helpers
+const getTextSizeClass = (size?: string) => {
+  const sizeMap: Record<string, string> = {
+    sm: 'text-3xl md:text-4xl',
+    base: 'text-4xl md:text-5xl lg:text-6xl',
+    lg: 'text-5xl md:text-6xl lg:text-7xl',
+    xl: 'text-6xl md:text-7xl lg:text-8xl',
+    '2xl': 'text-7xl md:text-8xl lg:text-9xl',
+  };
+  return sizeMap[size || 'base'] || sizeMap.base;
+};
+
+const getTextAlignClass = (align?: string) => {
+  const alignMap: Record<string, string> = {
+    left: 'text-left items-start',
+    center: 'text-center items-center',
+    right: 'text-right items-end',
+  };
+  return alignMap[align || 'center'] || alignMap.center;
+};
+
 export function HeroCentered({
   title,
   subtitle,
@@ -14,6 +35,7 @@ export function HeroCentered({
   isEditable,
   editorSelection,
   onEditorSelect,
+  sectionStyle,
   selectedImage,
   onImageSelect,
 }: HeroProps) {
@@ -38,6 +60,10 @@ export function HeroCentered({
     }
   };
 
+  // Apply dynamic styles from sectionStyle
+  const titleSizeClass = getTextSizeClass(sectionStyle?.fontSize);
+  const textAlignClass = getTextAlignClass(sectionStyle?.textAlign);
+
   return (
     <section className={cn(
       'min-h-[100vh] flex flex-col items-center justify-center py-20',
@@ -45,7 +71,7 @@ export function HeroCentered({
     )}>
       <div className="container mx-auto px-4">
         {/* Text Content - Centered */}
-        <div className="text-center max-w-4xl mx-auto space-y-6 mb-12">
+        <div className={cn('max-w-4xl mx-auto space-y-6 mb-12 flex flex-col', textAlignClass)}>
           <div className={cn(
             'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium',
             isDark ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'
@@ -79,10 +105,11 @@ export function HeroCentered({
                 canRegenerate: true,
               },
             ]}
-            className={cn(
-              'text-4xl md:text-5xl lg:text-6xl font-bold leading-tight font-display',
-              isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
-            )}
+              className={cn(
+                titleSizeClass,
+                'font-bold leading-tight font-display',
+                isDark ? 'text-white' : isNeutral ? 'text-stone-900' : 'text-gray-900'
+              )}
           />
 
           <EditableText

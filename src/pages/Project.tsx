@@ -17,7 +17,7 @@ import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePrev
 import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
 import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
 import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSidebar';
-import { GeneratedContent } from '@/types/generated-website';
+import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
@@ -747,6 +747,30 @@ export default function Project() {
     });
   }, [toast]);
 
+  // Handle section style change for real-time styling
+  const handleSectionStyleChange = useCallback((sectionId: string, style: SectionStyle) => {
+    if (!project?.generated_content) return;
+
+    const updatedContent = {
+      ...project.generated_content,
+      sectionStyles: {
+        ...project.generated_content.sectionStyles,
+        [sectionId]: {
+          ...project.generated_content.sectionStyles?.[sectionId],
+          ...style,
+        },
+      },
+    };
+    
+    setProject(prev => prev ? {
+      ...prev,
+      generated_content: updatedContent,
+    } : null);
+    
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+  }, [project, debouncedSave]);
+
   const handleGoogleSignIn = async () => {
     const { error } = await signInWithGoogle();
     if (error) {
@@ -914,6 +938,7 @@ export default function Project() {
             sectionOrder={sectionOrder}
             onMoveSection={handleMoveSection}
             onDeleteSection={handleDeleteSection}
+            sectionStyles={project.generated_content?.sectionStyles}
           />
         )}
       </div>
@@ -947,6 +972,8 @@ export default function Project() {
         imageOptions={imageOptions}
         isLoadingImageOptions={isLoadingImageOptions}
         onSelectImageOption={handleSelectImageOption}
+        currentSectionStyle={editorSelection?.sectionId ? project.generated_content?.sectionStyles?.[editorSelection.sectionId] : undefined}
+        onStyleChange={handleSectionStyleChange}
       />
 
       {/* Email Auth Modal */}
