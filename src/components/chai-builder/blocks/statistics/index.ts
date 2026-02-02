@@ -1,0 +1,1 @@
+export { StatisticsCounterBlock } from './StatisticsCounter';

@@ -1,17 +1,10 @@
-// Chaibuilder Theme Presets - Open Lucius Design System
+// Chaibuilder Theme Presets - Template-based Design System
+// Using SDK's ChaiThemeValues type for compatibility
 
-export interface ChaiThemeValues {
-  fontFamily: {
-    heading: string;
-    body: string;
-  };
-  borderRadius: string;
-  colors: {
-    [key: string]: [string, string]; // [light, dark]
-  };
-}
+import type { ChaiThemeValues } from '@chaibuilder/sdk';
 
-export const modernProfessionalPreset: ChaiThemeValues = {
+// Modern Professional (temp1) - Clean, Orange accent
+export const modernProfessionalPreset: Partial<ChaiThemeValues> = {
   fontFamily: {
     heading: "Inter",
     body: "Inter",
@@ -20,7 +13,7 @@ export const modernProfessionalPreset: ChaiThemeValues = {
   colors: {
     background: ["#ffffff", "#0d0d0d"],
     foreground: ["#1a1a1a", "#fafafa"],
-    primary: ["#f97316", "#fb923c"], // Orange
+    primary: ["#f97316", "#fb923c"],
     "primary-foreground": ["#ffffff", "#0d0d0d"],
     secondary: ["#f4f4f5", "#262626"],
     "secondary-foreground": ["#4a4a4a", "#cccccc"],
@@ -40,12 +33,73 @@ export const modernProfessionalPreset: ChaiThemeValues = {
   },
 };
 
-export const corporateBluePreset: ChaiThemeValues = {
+// Bold Agency (temp2) - Dark, Dramatic, White accent
+export const boldAgencyPreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Space Grotesk",
+    body: "Inter",
+  },
+  borderRadius: "0px",
+  colors: {
+    background: ["#0f0f0f", "#0f0f0f"],
+    foreground: ["#ffffff", "#ffffff"],
+    primary: ["#ffffff", "#ffffff"],
+    "primary-foreground": ["#0f0f0f", "#0f0f0f"],
+    secondary: ["#1a1a1a", "#1a1a1a"],
+    "secondary-foreground": ["#a3a3a3", "#a3a3a3"],
+    muted: ["#1a1a1a", "#1a1a1a"],
+    "muted-foreground": ["#737373", "#737373"],
+    accent: ["#ffffff", "#ffffff"],
+    "accent-foreground": ["#0f0f0f", "#0f0f0f"],
+    destructive: ["#ef4444", "#f87171"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#2e2e2e", "#2e2e2e"],
+    input: ["#2e2e2e", "#2e2e2e"],
+    ring: ["#ffffff", "#ffffff"],
+    card: ["#141414", "#141414"],
+    "card-foreground": ["#ffffff", "#ffffff"],
+    popover: ["#141414", "#141414"],
+    "popover-foreground": ["#ffffff", "#ffffff"],
+  },
+};
+
+// Elegant Minimal (temp3) - Warm, Serif, Brown tones
+export const elegantMinimalPreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Playfair Display",
+    body: "Lora",
+  },
+  borderRadius: "4px",
+  colors: {
+    background: ["#F7F5F3", "#1a1814"],
+    foreground: ["#37322F", "#e8e4e0"],
+    primary: ["#37322F", "#e8e4e0"],
+    "primary-foreground": ["#F7F5F3", "#1a1814"],
+    secondary: ["#EAE6E1", "#2d2820"],
+    "secondary-foreground": ["#5c5347", "#d4cfc6"],
+    muted: ["#EAE6E1", "#2d2820"],
+    "muted-foreground": ["#8b8177", "#a69d91"],
+    accent: ["#a67c52", "#c49a6c"],
+    "accent-foreground": ["#ffffff", "#1a1814"],
+    destructive: ["#c53030", "#fc8181"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#DDD8D2", "#3d362c"],
+    input: ["#DDD8D2", "#3d362c"],
+    ring: ["#37322F", "#e8e4e0"],
+    card: ["#ffffff", "#221e19"],
+    "card-foreground": ["#37322F", "#e8e4e0"],
+    popover: ["#ffffff", "#221e19"],
+    "popover-foreground": ["#37322F", "#e8e4e0"],
+  },
+};
+
+// Corporate Blue (gith2) - Professional, Blue accent
+export const corporateBluePreset: Partial<ChaiThemeValues> = {
   fontFamily: {
     heading: "Poppins",
     body: "Open Sans",
   },
-  borderRadius: "4px",
+  borderRadius: "6px",
   colors: {
     background: ["#ffffff", "#0a0a0f"],
     foreground: ["#0f172a", "#f8fafc"],
@@ -69,7 +123,8 @@ export const corporateBluePreset: ChaiThemeValues = {
   },
 };
 
-export const minimalDarkPreset: ChaiThemeValues = {
+// Minimal Dark (gith3) - Clean, Minimalist, Monochrome
+export const minimalDarkPreset: Partial<ChaiThemeValues> = {
   fontFamily: {
     heading: "Space Grotesk",
     body: "Inter",
@@ -98,36 +153,68 @@ export const minimalDarkPreset: ChaiThemeValues = {
   },
 };
 
-export const elegantSerifPreset: ChaiThemeValues = {
+// Modern SaaS (gith1) - Tech, Purple accent
+export const modernSaasPreset: Partial<ChaiThemeValues> = {
   fontFamily: {
-    heading: "Playfair Display",
-    body: "Lora",
+    heading: "Inter",
+    body: "Inter",
   },
   borderRadius: "12px",
   colors: {
-    background: ["#faf9f7", "#1a1814"],
-    foreground: ["#1a1814", "#f5f4f2"],
-    primary: ["#a67c52", "#c49a6c"],
-    "primary-foreground": ["#ffffff", "#1a1814"],
-    secondary: ["#f0ebe4", "#2d2820"],
-    "secondary-foreground": ["#5c5347", "#d4cfc6"],
-    muted: ["#f0ebe4", "#2d2820"],
-    "muted-foreground": ["#8b8177", "#a69d91"],
-    accent: ["#a67c52", "#c49a6c"],
-    "accent-foreground": ["#ffffff", "#1a1814"],
-    destructive: ["#c53030", "#fc8181"],
+    background: ["#ffffff", "#0f0f23"],
+    foreground: ["#0f0f23", "#ffffff"],
+    primary: ["#8B5CF6", "#a78bfa"],
+    "primary-foreground": ["#ffffff", "#0f0f23"],
+    secondary: ["#f1f0ff", "#1e1e3f"],
+    "secondary-foreground": ["#5b5b9d", "#c4c4ff"],
+    muted: ["#f1f0ff", "#1e1e3f"],
+    "muted-foreground": ["#7c7c9e", "#9f9fc4"],
+    accent: ["#06b6d4", "#22d3ee"],
+    "accent-foreground": ["#ffffff", "#0f0f23"],
+    destructive: ["#ef4444", "#f87171"],
     "destructive-foreground": ["#ffffff", "#ffffff"],
-    border: ["#e8e2d9", "#3d362c"],
-    input: ["#e8e2d9", "#3d362c"],
-    ring: ["#a67c52", "#c49a6c"],
-    card: ["#ffffff", "#221e19"],
-    "card-foreground": ["#1a1814", "#f5f4f2"],
-    popover: ["#ffffff", "#221e19"],
-    "popover-foreground": ["#1a1814", "#f5f4f2"],
+    border: ["#e9e8ff", "#2d2d5a"],
+    input: ["#e9e8ff", "#2d2d5a"],
+    ring: ["#8B5CF6", "#a78bfa"],
+    card: ["#ffffff", "#161632"],
+    "card-foreground": ["#0f0f23", "#ffffff"],
+    popover: ["#ffffff", "#161632"],
+    "popover-foreground": ["#0f0f23", "#ffffff"],
   },
 };
 
-export const vibrantCreativePreset: ChaiThemeValues = {
+// AI Video Studio (temp4-video-studio) - Cinematic, Lime accent
+export const videoStudioPreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Space Grotesk",
+    body: "Inter",
+  },
+  borderRadius: "8px",
+  colors: {
+    background: ["#0a0a0a", "#0a0a0a"],
+    foreground: ["#fafafa", "#fafafa"],
+    primary: ["#a3e635", "#bef264"],
+    "primary-foreground": ["#0a0a0a", "#0a0a0a"],
+    secondary: ["#171717", "#171717"],
+    "secondary-foreground": ["#a3a3a3", "#a3a3a3"],
+    muted: ["#171717", "#171717"],
+    "muted-foreground": ["#737373", "#737373"],
+    accent: ["#a3e635", "#bef264"],
+    "accent-foreground": ["#0a0a0a", "#0a0a0a"],
+    destructive: ["#ef4444", "#f87171"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#262626", "#262626"],
+    input: ["#262626", "#262626"],
+    ring: ["#a3e635", "#bef264"],
+    card: ["#141414", "#141414"],
+    "card-foreground": ["#fafafa", "#fafafa"],
+    popover: ["#141414", "#141414"],
+    "popover-foreground": ["#fafafa", "#fafafa"],
+  },
+};
+
+// Vibrant Creative - Colorful, Purple/Cyan gradients
+export const vibrantCreativePreset: Partial<ChaiThemeValues> = {
   fontFamily: {
     heading: "Sora",
     body: "Inter",
@@ -156,12 +243,31 @@ export const vibrantCreativePreset: ChaiThemeValues = {
   },
 };
 
-export const themePresets = [
-  { id: "modern-professional", name: "Modern Profesyonel", ...modernProfessionalPreset },
-  { id: "corporate-blue", name: "Kurumsal Mavi", ...corporateBluePreset },
-  { id: "minimal-dark", name: "Minimal Koyu", ...minimalDarkPreset },
-  { id: "elegant-serif", name: "Zarif Serif", ...elegantSerifPreset },
-  { id: "vibrant-creative", name: "Canlı Yaratıcı", ...vibrantCreativePreset },
+// Theme presets array for ChaiBuilder - format: Record<string, Partial<ChaiThemeValues>>[]
+export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
+  { "Modern Profesyonel": modernProfessionalPreset },
+  { "Cesur Ajans": boldAgencyPreset },
+  { "Zarif Minimal": elegantMinimalPreset },
+  { "Kurumsal Mavi": corporateBluePreset },
+  { "Minimal Koyu": minimalDarkPreset },
+  { "Modern SaaS": modernSaasPreset },
+  { "Video Stüdyo": videoStudioPreset },
+  { "Canlı Yaratıcı": vibrantCreativePreset },
 ];
 
-export const defaultTheme = modernProfessionalPreset;
+// Default theme
+export const defaultTheme: Partial<ChaiThemeValues> = modernProfessionalPreset;
+
+// Export template ID to preset mapping
+export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
+  "temp1": modernProfessionalPreset,
+  "temp2": boldAgencyPreset,
+  "temp3": elegantMinimalPreset,
+  "temp4-video-studio": videoStudioPreset,
+  "gith1": modernSaasPreset,
+  "gith2": corporateBluePreset,
+  "gith3": minimalDarkPreset,
+};
+
+// Re-export the ChaiThemeValues type from SDK
+export type { ChaiThemeValues } from '@chaibuilder/sdk';
