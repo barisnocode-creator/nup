@@ -154,6 +154,8 @@ export interface GeneratedContent {
   sectionStyles?: {
     [sectionId: string]: SectionStyle;
   };
+  // Section order for drag-drop reordering
+  sectionOrder?: string[];
   metadata: {
     siteName: string;
     tagline: string;
