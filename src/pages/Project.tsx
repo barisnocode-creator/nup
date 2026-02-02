@@ -26,8 +26,8 @@ import { getTemplateConfig } from '@/templates';
 // Lazy load GrapeJS editor for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
 
-// Feature flag for GrapeJS editor - set to true to enable
-const USE_GRAPES_EDITOR = true;
+// Feature flag for GrapeJS editor - temporarily disabled for stability
+const USE_GRAPES_EDITOR = false;
 
 interface Project {
   id: string;

@@ -57,144 +57,166 @@ export function GrapesEditor({
   const [currentDevice, setCurrentDevice] = useState<DeviceType>('desktop');
   const [activePanel, setActivePanel] = useState<PanelType>('blocks');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // Initialize GrapeJS editor
   useEffect(() => {
     if (!containerRef.current || editorRef.current) return;
 
-    const editor = grapesjs.init({
-      container: containerRef.current,
-      height: '100%',
-      width: 'auto',
-      fromElement: false,
-      storageManager: {
-        type: 'supabase',
-        autosave: true,
-        autoload: false,
-        stepsBeforeSave: 3,
-      },
-      deviceManager: {
-        devices: [
-          { id: 'desktop', name: 'Masaüstü', width: '' },
-          { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
-          { id: 'mobile', name: 'Mobil', width: '375px', widthMedia: '480px' },
-        ],
-      },
-      layerManager: {
-        appendTo: '#layers-container',
-      },
-      blockManager: {
-        appendTo: '#blocks-container',
-      },
-      styleManager: {
-        appendTo: '#styles-container',
-        sectors: [
-          {
-            name: 'Genel',
-            open: true,
-            buildProps: ['float', 'display', 'position', 'top', 'right', 'left', 'bottom'],
-          },
-          {
-            name: 'Boyut',
-            open: false,
-            buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding'],
-          },
-          {
-            name: 'Yazı Tipi',
-            open: false,
-            buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'text-shadow'],
-          },
-          {
-            name: 'Dekorasyon',
-            open: false,
-            buildProps: ['background-color', 'border', 'border-radius', 'box-shadow', 'background'],
-          },
-          {
-            name: 'Ekstra',
-            open: false,
-            buildProps: ['opacity', 'transition', 'transform'],
-          },
-        ],
-      },
-      traitManager: {
-        appendTo: '#traits-container',
-      },
-      selectorManager: {
-        appendTo: '#selectors-container',
-      },
-      panels: {
-        defaults: [],
-      },
-      canvas: {
-        styles: [
-          'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-          'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
-        ],
-      },
-      plugins: [
-        gjsBlocksBasic,
-        gjsPresetWebpage,
-        gjsPluginForms,
-      ],
-      pluginsOpts: {
-        [gjsBlocksBasic as any]: {
-          blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video', 'map'],
-          flexGrid: true,
-          category: 'Temel',
+    try {
+      const editor = grapesjs.init({
+        container: containerRef.current,
+        height: '100%',
+        width: 'auto',
+        fromElement: false,
+        storageManager: {
+          type: 'supabase',
+          autosave: true,
+          autoload: false,
+          stepsBeforeSave: 3,
         },
-        [gjsPresetWebpage as any]: {
-          blocksBasicOpts: { flexGrid: true },
-          modalImportTitle: 'HTML İçe Aktar',
-          modalImportButton: 'İçe Aktar',
-          modalImportLabel: '',
+        deviceManager: {
+          devices: [
+            { id: 'desktop', name: 'Masaüstü', width: '' },
+            { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
+            { id: 'mobile', name: 'Mobil', width: '375px', widthMedia: '480px' },
+          ],
         },
-        [gjsPluginForms as any]: {
-          category: 'Formlar',
+        layerManager: {
+          appendTo: '#layers-container',
         },
-      },
-    });
+        blockManager: {
+          appendTo: '#blocks-container',
+        },
+        styleManager: {
+          appendTo: '#styles-container',
+          sectors: [
+            {
+              name: 'Genel',
+              open: true,
+              buildProps: ['float', 'display', 'position', 'top', 'right', 'left', 'bottom'],
+            },
+            {
+              name: 'Boyut',
+              open: false,
+              buildProps: ['width', 'height', 'max-width', 'min-height', 'margin', 'padding'],
+            },
+            {
+              name: 'Yazı Tipi',
+              open: false,
+              buildProps: ['font-family', 'font-size', 'font-weight', 'letter-spacing', 'color', 'line-height', 'text-align', 'text-decoration', 'text-shadow'],
+            },
+            {
+              name: 'Dekorasyon',
+              open: false,
+              buildProps: ['background-color', 'border', 'border-radius', 'box-shadow', 'background'],
+            },
+            {
+              name: 'Ekstra',
+              open: false,
+              buildProps: ['opacity', 'transition', 'transform'],
+            },
+          ],
+        },
+        traitManager: {
+          appendTo: '#traits-container',
+        },
+        selectorManager: {
+          appendTo: '#selectors-container',
+        },
+        panels: {
+          defaults: [],
+        },
+        canvas: {
+          styles: [
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+            'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
+          ],
+        },
+        plugins: [
+          gjsBlocksBasic,
+          gjsPresetWebpage,
+          gjsPluginForms,
+        ],
+        pluginsOpts: {
+          [gjsBlocksBasic as any]: {
+            blocks: ['column1', 'column2', 'column3', 'text', 'link', 'image', 'video', 'map'],
+            flexGrid: true,
+            category: 'Temel',
+          },
+          [gjsPresetWebpage as any]: {
+            blocksBasicOpts: { flexGrid: true },
+            modalImportTitle: 'HTML İçe Aktar',
+            modalImportButton: 'İçe Aktar',
+            modalImportLabel: '',
+          },
+          [gjsPluginForms as any]: {
+            category: 'Formlar',
+          },
+        },
+      });
 
-    // Apply custom plugins
-    supabaseStoragePlugin(editor, { projectId });
-    turkishLocalePlugin(editor);
-    templateBlocksPlugin(editor);
+      // Apply custom plugins
+      supabaseStoragePlugin(editor, { projectId });
+      turkishLocalePlugin(editor);
+      templateBlocksPlugin(editor);
 
-    // Load initial content
-    const grapesData = convertToGrapesFormat(initialContent, templateId);
-    if (grapesData && Object.keys(grapesData).length > 0) {
-      editor.loadProjectData(grapesData);
+      // Wait for editor to be fully ready before loading content
+      editor.on('load', () => {
+        try {
+          // Convert initial content to GrapeJS format
+          const grapesData = convertToGrapesFormat(initialContent, templateId);
+          
+          if (grapesData && grapesData['gjs-html']) {
+            // Use setComponents for HTML content (safer than loadProjectData)
+            editor.setComponents(grapesData['gjs-html']);
+            if (grapesData['gjs-css']) {
+              editor.setStyle(grapesData['gjs-css']);
+            }
+          }
+          
+          setIsReady(true);
+        } catch (loadError) {
+          console.error('Content load error:', loadError);
+          setIsReady(true); // Still show editor even if content fails
+        }
+      });
+
+      // Track changes
+      editor.on('change:changesCount', () => {
+        setHasUnsavedChanges(true);
+      });
+
+      // Save event
+      editor.on('storage:store', () => {
+        setHasUnsavedChanges(false);
+        toast({
+          title: 'Kaydedildi',
+          description: 'Değişiklikleriniz kaydedildi.',
+        });
+      });
+
+      // Error handling
+      editor.on('storage:error', (error: any) => {
+        console.error('Storage error:', error);
+        toast({
+          title: 'Kaydetme hatası',
+          description: 'Değişiklikler kaydedilemedi.',
+          variant: 'destructive',
+        });
+      });
+
+      editorRef.current = editor;
+    } catch (initError) {
+      console.error('GrapesJS init error:', initError);
+      setInitError('Editör başlatılamadı. Lütfen sayfayı yenileyin.');
     }
 
-    // Track changes
-    editor.on('change:changesCount', () => {
-      setHasUnsavedChanges(true);
-    });
-
-    // Save event
-    editor.on('storage:store', () => {
-      setHasUnsavedChanges(false);
-      toast({
-        title: 'Kaydedildi',
-        description: 'Değişiklikleriniz kaydedildi.',
-      });
-    });
-
-    // Error handling
-    editor.on('storage:error', (error: any) => {
-      console.error('Storage error:', error);
-      toast({
-        title: 'Kaydetme hatası',
-        description: 'Değişiklikler kaydedilemedi.',
-        variant: 'destructive',
-      });
-    });
-
-    editorRef.current = editor;
-    setIsReady(true);
-
     return () => {
-      editor.destroy();
-      editorRef.current = null;
+      if (editorRef.current) {
+        editorRef.current.destroy();
+        editorRef.current = null;
+      }
     };
   }, [projectId, templateId, initialContent, toast]);
 

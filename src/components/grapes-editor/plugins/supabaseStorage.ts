@@ -69,24 +69,31 @@ export function supabaseStoragePlugin(editor: Editor, opts: PluginOptions) {
 
 // Helper function to convert GeneratedContent to GrapeJS format
 export function convertToGrapesFormat(content: any, templateId: string): Record<string, any> {
-  if (!content) return {};
+  // Safety checks
+  if (!content || typeof content !== 'object') return {};
 
   // If already in GrapeJS format (has components/styles keys), return as-is
-  if (content.components || content.styles || content['gjs-components']) {
+  if (content.components || content.styles || content['gjs-components'] || content['gjs-html']) {
     return content;
   }
 
   // Convert from GeneratedContent format
-  const html = generateHtmlFromContent(content, templateId);
-  const css = generateCssFromContent(content);
+  try {
+    const html = generateHtmlFromContent(content, templateId);
+    const css = generateCssFromContent(content);
+    const assets = extractAssetsFromContent(content);
 
-  return {
-    'gjs-html': html,
-    'gjs-css': css,
-    'gjs-components': [],
-    'gjs-styles': [],
-    'gjs-assets': extractAssetsFromContent(content),
-  };
+    return {
+      'gjs-html': html,
+      'gjs-css': css,
+      'gjs-components': [],
+      'gjs-styles': [],
+      'gjs-assets': assets,
+    };
+  } catch (error) {
+    console.error('Format conversion error:', error);
+    return {};
+  }
 }
 
 function generateHtmlFromContent(content: any, templateId: string): string {
