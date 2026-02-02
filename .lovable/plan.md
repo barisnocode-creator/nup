@@ -1,405 +1,656 @@
 
-
-# Editör Geliştirme Planı: Bölüm Sıralama + GitHub Template Entegrasyonu
+# Chaibuilder SDK Entegrasyon Planı
 
 ## Proje Özeti
 
-Mevcut editöre iki ana özellik ekleyeceğiz:
-1. **Bölüm Sıralama İyileştirmesi:** Drag-and-drop ile bölüm sıralaması
-2. **GitHub Template Entegrasyonu:** 3 yeni template (gith1, gith2, gith3) GitHub'dan alınarak sisteme entegre edilecek
+Mevcut editör sistemini (GrapesJS + özel React template'ler) tamamen **Chaibuilder SDK** ile değiştireceğiz. Chaibuilder, React + Tailwind CSS tabanlı modern bir visual page builder SDK'sı olup, projemizin mevcut teknoloji yığınıyla (React 18, Tailwind CSS, Supabase) mükemmel uyum sağlar.
 
 ---
 
-## Mevcut Durum Analizi
+## Neden Chaibuilder?
 
-### Bölüm Sıralama (Mevcut)
-- `sectionOrder` state'i `Project.tsx` içinde yönetiliyor (satır 67-69)
-- `handleMoveSection` ve `handleDeleteSection` fonksiyonları mevcut (satır 723-754)
-- `EditableSection` bileşeni yukarı/aşağı ok butonları sunuyor
-- **Eksik:** Drag-and-drop desteği yok, sıralama veritabanına kaydedilmiyor
-
-### Template Sistemi (Mevcut)
-- 9 template tanımlı (`src/templates/index.ts`)
-- Her template `TemplateConfig` ve `TemplateComponent` içeriyor
-- `ChangeTemplateModal` ile template değiştirme mevcut
+| Özellik | Mevcut Sistem | Chaibuilder SDK |
+|---------|---------------|-----------------|
+| Mimari | GrapesJS (jQuery tabanlı) + React templates | Native React + Tailwind |
+| Blok Sistemi | Ayrı template dosyaları | JSON tabanlı block registry |
+| Tema Yönetimi | Özel CSS değişkenleri | Dahili theme presets |
+| AI Entegrasyonu | Yok | Dahili `askAiCallback` |
+| Kaydetme | Özel Supabase storage | `onSave` callback |
+| Çoklu Dil | Özel implementation | Dahili i18n desteği |
+| Responsive | Device emulators | Dahili breakpoint sistemi |
 
 ---
 
-## Faz 1: Bölüm Sıralama İyileştirmesi
+## Mimari Değişiklikler
 
-### Değişiklik 1.1: Drag-and-Drop Bölüm Sıralama
+### Mevcut Yapı (Kaldırılacak)
 
-`react-beautiful-dnd` veya native HTML5 drag-and-drop ile bölüm sıralama.
+```text
+src/
+├── components/grapes-editor/        # GrapesJS editör (KALDIRILACAK)
+├── components/website-preview/      # Özel editör bileşenleri (DÖNÜŞTÜRÜLECEK)
+├── templates/                       # React template'ler (BLOK'a DÖNÜŞECEK)
+└── pages/Project.tsx               # Editör sayfası (GÜNCELLENECEK)
+```
 
-**Dosya:** `src/templates/temp1/pages/FullLandingPage.tsx`
+### Yeni Yapı (Chaibuilder)
+
+```text
+src/
+├── components/chai-builder/
+│   ├── ChaiBuilderWrapper.tsx      # Ana wrapper
+│   ├── blocks/                     # Özel bloklar
+│   │   ├── hero/
+│   │   │   ├── HeroSplit.tsx
+│   │   │   ├── HeroOverlay.tsx
+│   │   │   └── index.ts
+│   │   ├── services/
+│   │   ├── testimonials/
+│   │   ├── contact/
+│   │   └── index.ts                # Tüm blokları register eden dosya
+│   ├── themes/
+│   │   ├── presets.ts              # Tema presetleri
+│   │   └── index.ts
+│   ├── plugins/
+│   │   ├── aiAssistant.ts          # AI entegrasyonu
+│   │   └── supabaseSync.ts         # Supabase kaydetme
+│   └── hooks/
+│       └── useChaiBuilder.ts
+├── lib/
+│   └── chai-blocks-renderer.tsx    # Render bileşeni
+└── pages/
+    └── Project.tsx                 # Güncellenmiş editör
+```
+
+---
+
+## Faz 1: Temel Kurulum
+
+### 1.1 Bağımlılık Kurulumu
+
+```json
+{
+  "dependencies": {
+    "@chaibuilder/sdk": "^3.2.14"
+  }
+}
+```
+
+### 1.2 Tailwind Yapılandırması
+
+Yeni dosya: `tailwind.chaibuilder.config.ts`
 
 ```typescript
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { getChaiBuilderTailwindConfig } from "@chaibuilder/sdk/tailwind";
+export default getChaiBuilderTailwindConfig(["./src/**/*.{js,ts,jsx,tsx}"]);
+```
 
-export function FullLandingPage({ ..., onReorderSections }) {
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
-    onReorderSections(result.source.index, result.destination.index);
-  };
+Yeni CSS dosyası: `src/styles/chaibuilder.tailwind.css`
 
+```css
+@config "./tailwind.chaibuilder.config.ts";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+### 1.3 Ana Wrapper Bileşeni
+
+Yeni dosya: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+
+```typescript
+import "@chaibuilder/sdk/styles";
+import "./chaibuilder.tailwind.css";
+import { ChaiBuilderEditor } from "@chaibuilder/sdk";
+import { loadWebBlocks } from "@chaibuilder/sdk/web-blocks";
+import { registerCustomBlocks } from "./blocks";
+import { themePresets, defaultTheme } from "./themes";
+
+loadWebBlocks();
+registerCustomBlocks();
+
+interface ChaiBuilderWrapperProps {
+  projectId: string;
+  projectName: string;
+  initialBlocks: any[];
+  initialTheme?: any;
+  onSave: (data: any) => Promise<boolean>;
+  onPublish: () => void;
+}
+
+export function ChaiBuilderWrapper({
+  projectId,
+  projectName,
+  initialBlocks,
+  initialTheme,
+  onSave,
+  onPublish,
+}: ChaiBuilderWrapperProps) {
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="sections">
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            {sectionOrder.map((sectionId, index) => (
-              <Draggable key={sectionId} draggableId={sectionId} index={index}>
-                {(provided, snapshot) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                  >
-                    {renderSection(sectionId)}
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <ChaiBuilderEditor
+      pageId={projectId}
+      blocks={initialBlocks}
+      theme={initialTheme || defaultTheme}
+      themePresets={themePresets}
+      onSave={onSave}
+      autoSave={true}
+      autoSaveActionsCount={5}
+      locale="tr"
+      // AI entegrasyonu
+      askAiCallBack={async (type, prompt, blocks, lang) => {
+        // Edge function çağrısı
+        const response = await fetch('/api/ai-assistant', {
+          method: 'POST',
+          body: JSON.stringify({ type, prompt, blocks, lang }),
+        });
+        return response.json();
+      }}
+    />
   );
 }
 ```
 
-### Değişiklik 1.2: Sıralama Kaydetme
-
-**Dosya:** `src/pages/Project.tsx`
-
-```typescript
-// sectionOrder'ı generated_content içinde saklama
-const handleReorderSections = useCallback((sourceIndex: number, destIndex: number) => {
-  const newOrder = [...sectionOrder];
-  const [removed] = newOrder.splice(sourceIndex, 1);
-  newOrder.splice(destIndex, 0, removed);
-  setSectionOrder(newOrder);
-
-  // Veritabanına kaydet
-  const updatedContent = {
-    ...project.generated_content,
-    sectionOrder: newOrder,
-  };
-  setProject(prev => prev ? { ...prev, generated_content: updatedContent } : null);
-  debouncedSave(updatedContent);
-}, [sectionOrder, project, debouncedSave]);
-```
-
-### Değişiklik 1.3: HomeEditorSidebar'da Sıralama UI
-
-**Dosya:** `src/components/website-preview/HomeEditorSidebar.tsx`
-
-Bölüm listesine drag handle ve yeniden sıralama özelliği ekle.
-
 ---
 
-## Faz 2: GitHub Template Entegrasyonu
+## Faz 2: Özel Blok Dönüşümü
 
-### 3 Yeni Template Kaynakları
+Mevcut template bölümlerini Chaibuilder bloklarına dönüştüreceğiz.
 
-Tailwind CSS tabanlı açık kaynak templateler:
+### 2.1 Mevcut Template -> Blok Mapping
 
-| ID | Kaynak | Stil |
-|----|--------|------|
-| gith1 | horizon-ui/free-tailwind-css-landing-kit-page | Modern SaaS |
-| gith2 | spacemadev/Free-blue-star-tailwind-landing-page-template | Corporate Blue |
-| gith3 | Tailwind + custom | Minimal Dark |
+| Mevcut Template | Chaibuilder Blok |
+|-----------------|------------------|
+| `HeroSplit.tsx` | `HeroSplitBlock` |
+| `HeroCentered.tsx` | `HeroCenteredBlock` |
+| `ServicesGrid.tsx` | `ServicesGridBlock` |
+| `TestimonialsSection.tsx` | `TestimonialsBlock` |
+| `ContactSection.tsx` | `ContactFormBlock` |
+| `FAQSection.tsx` | `FAQAccordionBlock` |
+| `CTASection.tsx` | `CTABannerBlock` |
 
-### Yeni Dosya Yapısı
+### 2.2 Örnek Blok Dönüşümü
 
-```text
-src/templates/
-├── gith1/                    # GitHub Template 1 - Modern SaaS
-│   ├── index.tsx
-│   ├── components/
-│   │   ├── TemplateHeader.tsx
-│   │   └── TemplateFooter.tsx
-│   ├── pages/
-│   │   └── FullLandingPage.tsx
-│   └── sections/
-│       ├── hero/
-│       ├── features/
-│       ├── pricing/
-│       └── cta/
-├── gith2/                    # GitHub Template 2 - Corporate
-│   ├── index.tsx
-│   └── ...
-└── gith3/                    # GitHub Template 3 - Minimal
-    ├── index.tsx
-    └── ...
-```
+Mevcut: `src/templates/temp1/sections/hero/HeroSplit.tsx`
 
-### Template Konfigürasyonları
-
-**Dosya:** `src/templates/index.ts`
+Yeni: `src/components/chai-builder/blocks/hero/HeroSplit.tsx`
 
 ```typescript
-import { GitH1Template } from './gith1';
-import { GitH2Template } from './gith2';
-import { GitH3Template } from './gith3';
+import {
+  registerChaiBlock,
+  registerChaiBlockSchema,
+  ChaiBlockComponentProps,
+  ChaiStyles,
+  StylesProp,
+} from "@chaibuilder/sdk/runtime";
 
-// Template registry'ye ekle
-const templateRegistry = {
-  // ... mevcut templateler
-  
-  gith1: {
-    config: {
-      id: 'gith1',
-      name: 'Modern SaaS',
-      description: 'GitHub tabanlı modern SaaS landing page şablonu',
-      category: 'SaaS',
-      preview: '/assets/gith1-preview.jpg',
-      supportedProfessions: ['saas', 'startup', 'tech', 'app'],
-      supportedTones: ['modern', 'tech', 'professional'],
-    },
-    component: GitH1Template,
-  },
-  
-  gith2: {
-    config: {
-      id: 'gith2',
-      name: 'Corporate Blue',
-      description: 'Kurumsal mavi tonlarında profesyonel şablon',
-      category: 'Corporate',
-      preview: '/assets/gith2-preview.jpg',
-      supportedProfessions: ['consulting', 'finance', 'legal', 'corporate'],
-      supportedTones: ['professional', 'trustworthy', 'corporate'],
-    },
-    component: GitH2Template,
-  },
-  
-  gith3: {
-    config: {
-      id: 'gith3',
-      name: 'Minimal Dark',
-      description: 'Minimalist koyu tema, portföy ve ajanslar için',
-      category: 'Minimal',
-      preview: '/assets/gith3-preview.jpg',
-      supportedProfessions: ['creative', 'portfolio', 'agency', 'designer'],
-      supportedTones: ['minimal', 'dark', 'elegant'],
-    },
-    component: GitH3Template,
-  },
-};
-```
-
----
-
-## Faz 3: Gith1 Template Detaylı Tasarım
-
-### sections/hero/HeroSaaS.tsx
-
-```typescript
-interface HeroSaaSProps {
+type HeroSplitProps = {
   title: string;
   subtitle: string;
   description: string;
-  heroImage?: string;
-  isDark: boolean;
-  isEditable: boolean;
-  onFieldEdit?: (path: string, value: string) => void;
-}
+  buttonText: string;
+  buttonLink: string;
+  image: string;
+  styles: ChaiStyles;
+};
 
-export function HeroSaaS({
-  title,
-  subtitle,
-  description,
-  heroImage,
-  isDark,
-  isEditable,
-  onFieldEdit,
-}: HeroSaaSProps) {
+const HeroSplit = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
+  const { 
+    blockProps, 
+    title, 
+    subtitle, 
+    description, 
+    buttonText,
+    buttonLink,
+    image,
+    styles,
+    inBuilder 
+  } = props;
+
   return (
-    <section className="relative overflow-hidden py-20 lg:py-32">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 opacity-10" />
-      
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            {subtitle}
+    <section {...blockProps} {...styles} className="relative min-h-[600px] flex items-center">
+      <div className="container mx-auto px-6">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-6">
+            {subtitle && (
+              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                {subtitle}
+              </span>
+            )}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              {title}
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-lg">
+              {description}
+            </p>
+            {buttonText && (
+              <a 
+                href={inBuilder ? "#" : buttonLink}
+                className="inline-flex items-center px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              >
+                {buttonText}
+              </a>
+            )}
           </div>
-          
-          {/* Title */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            {title}
-          </h1>
-          
-          {/* Description */}
-          <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            {description}
-          </p>
-          
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-4 bg-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-              Ücretsiz Başla
-            </button>
-            <button className="px-8 py-4 border-2 border-gray-200 rounded-xl font-semibold hover:bg-gray-50 transition-all">
-              Demo İzle
-            </button>
-          </div>
-        </div>
-        
-        {/* Hero Image */}
-        {heroImage && (
-          <div className="mt-16 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent z-10" />
+          <div className="relative">
             <img 
-              src={heroImage} 
-              alt="Product screenshot" 
-              className="rounded-2xl shadow-2xl mx-auto max-w-5xl w-full"
+              src={image || "/placeholder.svg"} 
+              alt={title}
+              className="rounded-2xl shadow-2xl w-full object-cover"
             />
           </div>
-        )}
+        </div>
       </div>
     </section>
   );
-}
+};
+
+const HeroSplitConfig = {
+  type: "HeroSplit",
+  label: "Hero - Split Layout",
+  category: "sections",
+  group: "hero",
+  description: "İki kolonlu hero bölümü - metin ve görsel",
+  icon: () => <span>🖼️</span>,
+  props: registerChaiBlockSchema({
+    properties: {
+      styles: StylesProp("py-20 bg-background"),
+      title: {
+        type: "string",
+        title: "Başlık",
+        default: "Profesyonel Web Siteniz",
+        ui: { "ui:widget": "richtext" },
+      },
+      subtitle: {
+        type: "string",
+        title: "Alt Başlık",
+        default: "Hoş Geldiniz",
+      },
+      description: {
+        type: "string",
+        title: "Açıklama",
+        default: "İşletmenizi dijital dünyada en iyi şekilde temsil eden profesyonel web sitesi.",
+        ui: { "ui:widget": "textarea" },
+      },
+      buttonText: {
+        type: "string",
+        title: "Buton Metni",
+        default: "Hemen Başlayın",
+      },
+      buttonLink: {
+        type: "string",
+        title: "Buton Linki",
+        default: "#contact",
+      },
+      image: {
+        type: "string",
+        title: "Görsel",
+        default: "",
+        ui: { "ui:widget": "image" },
+      },
+    },
+  }),
+};
+
+registerChaiBlock<HeroSplitProps>(HeroSplit, HeroSplitConfig);
+
+export { HeroSplit, HeroSplitConfig };
 ```
 
-### sections/features/FeaturesGrid.tsx
+### 2.3 Tüm Blokları Kayıt
+
+Yeni dosya: `src/components/chai-builder/blocks/index.ts`
 
 ```typescript
-export function FeaturesGrid({ features, isDark }) {
-  return (
-    <section className="py-20 bg-muted/30">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Özellikler
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            İşinizi büyütmek için ihtiyacınız olan tüm araçlar tek platformda.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <div 
-              key={index}
-              className="group p-8 bg-background rounded-2xl border hover:border-primary/50 hover:shadow-lg transition-all"
-            >
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
-                <span className="text-2xl">{feature.icon}</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+// Hero blocks
+import "./hero/HeroSplit";
+import "./hero/HeroCentered";
+import "./hero/HeroOverlay";
+import "./hero/HeroGradient";
+
+// Content blocks
+import "./services/ServicesGrid";
+import "./services/ServicesCards";
+import "./about/AboutSection";
+import "./about/AboutTimeline";
+
+// Social proof
+import "./testimonials/TestimonialsCarousel";
+import "./testimonials/TestimonialsGrid";
+
+// Conversion
+import "./cta/CTABanner";
+import "./cta/CTANewsletter";
+import "./contact/ContactForm";
+import "./contact/ContactMap";
+
+// FAQ
+import "./faq/FAQAccordion";
+
+// Utility
+import "./statistics/StatsCounter";
+import "./gallery/ImageGallery";
+
+export function registerCustomBlocks() {
+  console.log("Custom Chai blocks registered");
 }
 ```
 
 ---
 
-## Faz 4: Preview Görselleri
+## Faz 3: Tema Sistemi
 
-### Yeni Dosyalar
+### 3.1 Tema Presetleri
 
-```text
-src/assets/
-├── gith1-preview.jpg    # Modern SaaS screenshot
-├── gith2-preview.jpg    # Corporate Blue screenshot  
-├── gith3-preview.jpg    # Minimal Dark screenshot
+Yeni dosya: `src/components/chai-builder/themes/presets.ts`
+
+```typescript
+import { ChaiThemeValues } from "@chaibuilder/sdk/types";
+
+export const modernProfessionalPreset: ChaiThemeValues = {
+  fontFamily: {
+    heading: "Inter",
+    body: "Inter",
+  },
+  borderRadius: "8px",
+  colors: {
+    background: ["#ffffff", "#0a0a0a"],
+    foreground: ["#0a0a0a", "#fafafa"],
+    primary: ["#6366f1", "#818cf8"],
+    "primary-foreground": ["#ffffff", "#0a0a0a"],
+    secondary: ["#f1f5f9", "#1e293b"],
+    "secondary-foreground": ["#0f172a", "#f8fafc"],
+    muted: ["#f1f5f9", "#1e293b"],
+    "muted-foreground": ["#64748b", "#94a3b8"],
+    accent: ["#f1f5f9", "#1e293b"],
+    "accent-foreground": ["#0f172a", "#f8fafc"],
+    destructive: ["#ef4444", "#f87171"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#e2e8f0", "#334155"],
+    input: ["#e2e8f0", "#334155"],
+    ring: ["#6366f1", "#818cf8"],
+    card: ["#ffffff", "#0f172a"],
+    "card-foreground": ["#0f172a", "#f8fafc"],
+    popover: ["#ffffff", "#0f172a"],
+    "popover-foreground": ["#0f172a", "#f8fafc"],
+  },
+};
+
+export const corporateBluePreset: ChaiThemeValues = {
+  fontFamily: {
+    heading: "Poppins",
+    body: "Open Sans",
+  },
+  borderRadius: "4px",
+  colors: {
+    primary: ["#1e40af", "#3b82f6"],
+    // ... diğer renkler
+  },
+};
+
+export const minimalDarkPreset: ChaiThemeValues = {
+  fontFamily: {
+    heading: "Space Grotesk",
+    body: "Inter",
+  },
+  borderRadius: "0px",
+  colors: {
+    background: ["#0a0a0a", "#0a0a0a"],
+    foreground: ["#fafafa", "#fafafa"],
+    primary: ["#ffffff", "#ffffff"],
+    // ... diğer renkler
+  },
+};
+
+export const themePresets = [
+  { name: "Modern Professional", ...modernProfessionalPreset },
+  { name: "Corporate Blue", ...corporateBluePreset },
+  { name: "Minimal Dark", ...minimalDarkPreset },
+];
+
+export const defaultTheme = modernProfessionalPreset;
 ```
 
-Geçici olarak Unsplash görsellerini kullanabiliriz:
-- gith1: `https://images.unsplash.com/photo-1551434678-e076c223a692` (SaaS dashboard)
-- gith2: `https://images.unsplash.com/photo-1497366216548-37526070297c` (Corporate office)
-- gith3: `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe` (Dark minimal)
+---
+
+## Faz 4: Supabase Entegrasyonu
+
+### 4.1 Veri Yapısı Değişikliği
+
+Veritabanındaki `projects` tablosu güncellenecek:
+
+- `generated_content` -> `chai_blocks` (JSON array)
+- `grapes_content` -> kaldırılabilir
+
+### 4.2 Kaydetme Fonksiyonu
+
+```typescript
+// src/components/chai-builder/hooks/useChaiBuilder.ts
+import { supabase } from "@/integrations/supabase/client";
+
+export function useChaiBuilderSave(projectId: string) {
+  const saveToSupabase = async (data: {
+    blocks: any[];
+    theme?: any;
+    designTokens?: any;
+  }) => {
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        chai_blocks: data.blocks,
+        chai_theme: data.theme,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", projectId);
+
+    if (error) {
+      console.error("Save error:", error);
+      return false;
+    }
+    return true;
+  };
+
+  return { saveToSupabase };
+}
+```
+
+---
+
+## Faz 5: AI Entegrasyonu
+
+### 5.1 AI Callback Edge Function
+
+Yeni dosya: `supabase/functions/chai-ai-assistant/index.ts`
+
+```typescript
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+serve(async (req) => {
+  const { type, prompt, blocks, lang } = await req.json();
+
+  // Lovable AI kullanarak içerik/stil üret
+  const response = await fetch("https://api.lovable.ai/v1/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("LOVABLE_AI_KEY")}`,
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "system",
+          content: type === "styles" 
+            ? "You are a CSS/Tailwind expert. Suggest style improvements."
+            : "You are a content writer. Improve the given content."
+        },
+        { role: "user", content: prompt }
+      ],
+    }),
+  });
+
+  const result = await response.json();
+  
+  return new Response(JSON.stringify({
+    blocks: type === "styles" ? result.styleUpdates : result.contentUpdates,
+  }));
+});
+```
+
+---
+
+## Faz 6: Project.tsx Güncelleme
+
+### 6.1 Editör Değişimi
+
+```typescript
+// src/pages/Project.tsx
+
+import { ChaiBuilderWrapper } from "@/components/chai-builder/ChaiBuilderWrapper";
+import { RenderChaiBlocks } from "@chaibuilder/sdk/render";
+
+// Feature flag - artık true
+const USE_CHAI_BUILDER = true;
+
+export default function Project() {
+  // ... mevcut state'ler
+
+  const handleChaiSave = useCallback(async (data: any) => {
+    const { error } = await supabase
+      .from("projects")
+      .update({
+        chai_blocks: data.blocks,
+        chai_theme: data.theme,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) {
+      toast({ title: "Kaydetme hatası", variant: "destructive" });
+      return false;
+    }
+    
+    toast({ title: "Kaydedildi" });
+    return true;
+  }, [id, toast]);
+
+  // Editör render
+  if (USE_CHAI_BUILDER) {
+    return (
+      <ChaiBuilderWrapper
+        projectId={id}
+        projectName={project.name}
+        initialBlocks={project.chai_blocks || []}
+        initialTheme={project.chai_theme}
+        onSave={handleChaiSave}
+        onPublish={() => setPublishModalOpen(true)}
+      />
+    );
+  }
+
+  // Fallback - eski editör
+  return <WebsitePreview ... />;
+}
+```
+
+---
+
+## Faz 7: Public Website Render
+
+### 7.1 RenderChaiBlocks Kullanımı
+
+```typescript
+// src/pages/PublicWebsite.tsx
+import { RenderChaiBlocks } from "@chaibuilder/sdk/render";
+
+export default function PublicWebsite() {
+  const { project } = usePublicProject();
+
+  return (
+    <div className="min-h-screen">
+      <RenderChaiBlocks 
+        blocks={project.chai_blocks || []} 
+        theme={project.chai_theme}
+      />
+    </div>
+  );
+}
+```
 
 ---
 
 ## Dosya Değişiklikleri Özeti
 
-### Yeni Dosyalar
+### Yeni Dosyalar (Oluşturulacak)
 
 | Dosya | Açıklama |
 |-------|----------|
-| `src/templates/gith1/index.tsx` | Template 1 ana bileşeni |
-| `src/templates/gith1/components/TemplateHeader.tsx` | Header |
-| `src/templates/gith1/components/TemplateFooter.tsx` | Footer |
-| `src/templates/gith1/pages/FullLandingPage.tsx` | Ana sayfa |
-| `src/templates/gith1/sections/hero/HeroSaaS.tsx` | SaaS hero |
-| `src/templates/gith1/sections/features/FeaturesGrid.tsx` | Özellikler grid |
-| `src/templates/gith2/...` | Template 2 dosyaları |
-| `src/templates/gith3/...` | Template 3 dosyaları |
-| `src/assets/gith1-preview.jpg` | Preview görsel 1 |
-| `src/assets/gith2-preview.jpg` | Preview görsel 2 |
-| `src/assets/gith3-preview.jpg` | Preview görsel 3 |
+| `tailwind.chaibuilder.config.ts` | Chaibuilder Tailwind config |
+| `src/styles/chaibuilder.tailwind.css` | Chaibuilder CSS |
+| `src/components/chai-builder/ChaiBuilderWrapper.tsx` | Ana wrapper |
+| `src/components/chai-builder/blocks/hero/HeroSplit.tsx` | Hero blok |
+| `src/components/chai-builder/blocks/hero/HeroCentered.tsx` | Hero blok |
+| `src/components/chai-builder/blocks/hero/HeroOverlay.tsx` | Hero blok |
+| `src/components/chai-builder/blocks/services/ServicesGrid.tsx` | Hizmetler blok |
+| `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` | Testimonial blok |
+| `src/components/chai-builder/blocks/contact/ContactForm.tsx` | İletişim blok |
+| `src/components/chai-builder/blocks/faq/FAQAccordion.tsx` | FAQ blok |
+| `src/components/chai-builder/blocks/cta/CTABanner.tsx` | CTA blok |
+| `src/components/chai-builder/blocks/index.ts` | Blok registry |
+| `src/components/chai-builder/themes/presets.ts` | Tema presetleri |
+| `src/components/chai-builder/hooks/useChaiBuilder.ts` | Hook'lar |
+| `supabase/functions/chai-ai-assistant/index.ts` | AI edge function |
 
 ### Güncellenecek Dosyalar
 
 | Dosya | Değişiklik |
 |-------|-----------|
-| `package.json` | `@hello-pangea/dnd` (drag-drop library) |
-| `src/templates/index.ts` | 3 yeni template registry |
-| `src/pages/Project.tsx` | `handleReorderSections`, `sectionOrder` kaydetme |
-| `src/templates/temp1/pages/FullLandingPage.tsx` | Drag-drop wrapper |
-| `src/components/website-preview/HomeEditorSidebar.tsx` | Reorder UI |
-| `src/types/generated-website.ts` | `sectionOrder` tipi |
+| `package.json` | `@chaibuilder/sdk` ekleme |
+| `src/pages/Project.tsx` | ChaiBuilderWrapper kullanımı |
+| `src/pages/PublicWebsite.tsx` | RenderChaiBlocks kullanımı |
+| `tailwind.config.ts` | Chaibuilder extends |
+
+### Kaldırılacak/Arşivlenecek Dosyalar
+
+| Dosya | Durum |
+|-------|-------|
+| `src/components/grapes-editor/` | Arşivle (backup) |
+| `src/templates/temp1-temp9/` | Blok'lara dönüştür, sonra arşivle |
 
 ---
 
-## Bağımlılık
+## Veritabanı Migrasyonu
 
-```json
-{
-  "@hello-pangea/dnd": "^16.5.0"
-}
+```sql
+-- Yeni sütunlar ekle
+ALTER TABLE projects 
+ADD COLUMN chai_blocks JSONB DEFAULT '[]'::jsonb,
+ADD COLUMN chai_theme JSONB DEFAULT '{}'::jsonb;
+
+-- Mevcut içeriği dönüştür (opsiyonel migration script)
+-- Bu, generated_content'i chai_blocks formatına dönüştüren bir script olacak
 ```
 
-`@hello-pangea/dnd` seçildi çünkü:
-- React 18 uyumlu (`react-beautiful-dnd` artık bakımda değil)
-- Aynı API, kolay geçiş
-- Küçük bundle size (~45KB gzip)
+---
+
+## Zaman Çizelgesi
+
+| Faz | Süre | Öncelik |
+|-----|------|---------|
+| Faz 1: Temel Kurulum | 2-3 saat | Yüksek |
+| Faz 2: Blok Dönüşümü | 4-6 saat | Yüksek |
+| Faz 3: Tema Sistemi | 1-2 saat | Orta |
+| Faz 4: Supabase Entegrasyonu | 1-2 saat | Yüksek |
+| Faz 5: AI Entegrasyonu | 2-3 saat | Düşük |
+| Faz 6: Project.tsx | 2-3 saat | Yüksek |
+| Faz 7: Public Render | 1-2 saat | Yüksek |
+| **Toplam** | **13-21 saat** | - |
 
 ---
 
-## Teknik Detaylar
+## Risk ve Dikkat Edilecekler
 
-### Drag-Drop Entegrasyonu
-
-1. `DragDropContext` en üst seviyede wrapper
-2. Her bölüm `Draggable` ile sarılır
-3. `onDragEnd` callback'i sıralamayı günceller
-4. Animasyonlar smooth transition sağlar
-
-### Template Yapısı Standartları
-
-Her yeni template şunları içermelidir:
-- `index.tsx` - Ana export ve template wrapper
-- `components/TemplateHeader.tsx` - Navigation
-- `components/TemplateFooter.tsx` - Footer
-- `pages/FullLandingPage.tsx` - Tüm bölümleri birleştiren sayfa
-- `sections/` - Her bölüm için ayrı klasör
-
-### Türkçe İçerik
-
-Tüm yeni templateler Türkçe placeholder metinler ile gelecek:
-- "Hemen Başlayın" / "Ücretsiz Deneyin"
-- "Hizmetlerimiz" / "Özellikler"
-- "Hakkımızda" / "İletişim"
-
----
-
-## Beklenen Sonuçlar
-
-1. **Drag-Drop Sıralama:** Bölümleri sürükleyerek yeniden düzenleme
-2. **Sıralama Kalıcılığı:** Sıralama veritabanına kaydedilir
-3. **3 Yeni Template:** gith1, gith2, gith3 template galeriside görünür
-4. **Template Önizleme:** Her template için profesyonel preview görseli
-5. **Türkçe İçerik:** Tüm yeni templateler Türkçe
-
+1. **Mevcut Projelerin Uyumluluğu:** `generated_content` -> `chai_blocks` dönüşümü için migration script gerekli
+2. **Template Kaybı:** 12 template'in tamamı blok'lara dönüştürülmeli
+3. **Bundle Size:** Chaibuilder SDK ~200KB gzip, performans izlenmeli
+4. **Türkçe Lokalizasyon:** `locale="tr"` destekleniyor, ancak özel çeviriler eklenebilir
