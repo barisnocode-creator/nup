@@ -146,6 +146,7 @@ export type Database = {
           custom_domain: string | null
           form_data: Json | null
           generated_content: Json | null
+          grapes_content: Json | null
           id: string
           is_published: boolean | null
           name: string
@@ -162,6 +163,7 @@ export type Database = {
           custom_domain?: string | null
           form_data?: Json | null
           generated_content?: Json | null
+          grapes_content?: Json | null
           id?: string
           is_published?: boolean | null
           name?: string
@@ -178,6 +180,7 @@ export type Database = {
           custom_domain?: string | null
           form_data?: Json | null
           generated_content?: Json | null
+          grapes_content?: Json | null
           id?: string
           is_published?: boolean | null
           name?: string
