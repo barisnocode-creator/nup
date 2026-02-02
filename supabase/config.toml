@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.studio-generate-image]
 verify_jwt = false
+
+[functions.chai-ai-assistant]
+verify_jwt = false

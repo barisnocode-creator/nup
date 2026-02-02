@@ -1,0 +1,1 @@
+export { TestimonialsCarouselBlock } from './TestimonialsCarousel';

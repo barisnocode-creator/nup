@@ -23,11 +23,13 @@ import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
 
-// Lazy load GrapeJS editor for performance
+// Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
+const ChaiBuilderWrapper = lazy(() => import('@/components/chai-builder/ChaiBuilderWrapper').then(m => ({ default: m.ChaiBuilderWrapper })));
 
-// Feature flag for GrapeJS editor - temporarily disabled for stability
+// Feature flags for editors
 const USE_GRAPES_EDITOR = false;
+const USE_CHAI_BUILDER = true; // Enable ChaiBuilder SDK
 
 interface Project {
   id: string;
@@ -43,6 +45,8 @@ interface Project {
     };
   } | null;
   generated_content: GeneratedContent | null;
+  chai_blocks?: any[];
+  chai_theme?: any;
 }
 
 export default function Project() {
@@ -99,7 +103,7 @@ export default function Project() {
 
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, profession, status, subdomain, is_published, template_id, form_data, generated_content')
+        .select('id, name, profession, status, subdomain, is_published, template_id, form_data, generated_content, chai_blocks, chai_theme')
         .eq('id', id)
         .single();
 
@@ -956,7 +960,46 @@ export default function Project() {
     }
   };
 
-  // If GrapeJS editor is enabled and user is authenticated, show the new editor
+  // ChaiBuilder SDK Editor - new modern editor
+  if (USE_CHAI_BUILDER && isAuthenticated && project) {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-muted/30">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Editör yükleniyor...</p>
+          </div>
+        </div>
+      }>
+        <ChaiBuilderWrapper
+          projectId={id || ''}
+          projectName={project.name}
+          initialBlocks={project.chai_blocks || []}
+          initialTheme={project.chai_theme}
+          onPublish={() => setPublishModalOpen(true)}
+        />
+
+        {/* Publish Modal */}
+        <PublishModal
+          isOpen={publishModalOpen}
+          onClose={() => setPublishModalOpen(false)}
+          projectId={id || ''}
+          projectName={project.name}
+          currentSubdomain={project.subdomain}
+          isPublished={project.is_published}
+          onPublished={(subdomain) => {
+            setProject(prev => prev ? {
+              ...prev,
+              subdomain,
+              is_published: true,
+            } : null);
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  // GrapeJS Editor (legacy, currently disabled)
   if (USE_GRAPES_EDITOR && isAuthenticated && project.generated_content) {
     return (
       <Suspense fallback={

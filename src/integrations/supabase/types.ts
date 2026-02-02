@@ -142,6 +142,8 @@ export type Database = {
       }
       projects: {
         Row: {
+          chai_blocks: Json | null
+          chai_theme: Json | null
           created_at: string
           custom_domain: string | null
           form_data: Json | null
@@ -159,6 +161,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chai_blocks?: Json | null
+          chai_theme?: Json | null
           created_at?: string
           custom_domain?: string | null
           form_data?: Json | null
@@ -176,6 +180,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chai_blocks?: Json | null
+          chai_theme?: Json | null
           created_at?: string
           custom_domain?: string | null
           form_data?: Json | null
@@ -294,6 +300,8 @@ export type Database = {
       }
       public_projects: {
         Row: {
+          chai_blocks: Json | null
+          chai_theme: Json | null
           custom_domain: string | null
           generated_content: Json | null
           id: string | null
@@ -303,6 +311,32 @@ export type Database = {
           published_at: string | null
           subdomain: string | null
           template_id: string | null
+        }
+        Insert: {
+          chai_blocks?: Json | null
+          chai_theme?: Json | null
+          custom_domain?: string | null
+          generated_content?: Json | null
+          id?: string | null
+          is_published?: boolean | null
+          name?: string | null
+          profession?: string | null
+          published_at?: string | null
+          subdomain?: string | null
+          template_id?: string | null
+        }
+        Update: {
+          chai_blocks?: Json | null
+          chai_theme?: Json | null
+          custom_domain?: string | null
+          generated_content?: Json | null
+          id?: string | null
+          is_published?: boolean | null
+          name?: string | null
+          profession?: string | null
+          published_at?: string | null
+          subdomain?: string | null
+          template_id?: string | null
         }
         Relationships: []
       }
