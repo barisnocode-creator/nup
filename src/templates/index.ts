@@ -3,6 +3,9 @@ import { HealthcareModernTemplate } from './temp1';
 import { BoldAgencyTemplate } from './temp2';
 import { ElegantMinimalTemplate } from './temp3';
 import { VideoStudioTemplate } from './temp4-video-studio';
+import { GitH1Template } from './gith1';
+import { GitH2Template } from './gith2';
+import { GitH3Template } from './gith3';
 
 // Import preview images
 import showcaseDental from '@/assets/showcase-dental.jpg';
@@ -14,6 +17,9 @@ import showcasePharmacy from '@/assets/showcase-pharmacy.jpg';
 import showcaseEyeClinic from '@/assets/showcase-eye-clinic.jpg';
 import showcaseFamilyDoctor from '@/assets/showcase-family-doctor.jpg';
 import showcaseVideoStudio from '@/assets/showcase-video-studio.jpg';
+import gith1Preview from '@/assets/gith1-preview.jpg';
+import gith2Preview from '@/assets/gith2-preview.jpg';
+import gith3Preview from '@/assets/gith3-preview.jpg';
 
 // Template registry - add new templates here
 const templateRegistry: Record<string, {
@@ -127,6 +133,42 @@ const templateRegistry: Record<string, {
       supportedTones: ['cinematic', 'bold', 'dramatic', 'modern'],
     },
     component: VideoStudioTemplate,
+  },
+  gith1: {
+    config: {
+      id: 'gith1',
+      name: 'Modern SaaS',
+      description: 'GitHub tabanlı modern SaaS landing page şablonu',
+      category: 'SaaS',
+      preview: gith1Preview,
+      supportedProfessions: ['saas', 'startup', 'tech', 'app', 'software'],
+      supportedTones: ['modern', 'tech', 'professional'],
+    },
+    component: GitH1Template,
+  },
+  gith2: {
+    config: {
+      id: 'gith2',
+      name: 'Corporate Blue',
+      description: 'Kurumsal mavi tonlarında profesyonel şablon',
+      category: 'Corporate',
+      preview: gith2Preview,
+      supportedProfessions: ['consulting', 'finance', 'legal', 'corporate', 'business'],
+      supportedTones: ['professional', 'trustworthy', 'corporate'],
+    },
+    component: GitH2Template,
+  },
+  gith3: {
+    config: {
+      id: 'gith3',
+      name: 'Minimal Dark',
+      description: 'Minimalist koyu tema, portföy ve ajanslar için',
+      category: 'Minimal',
+      preview: gith3Preview,
+      supportedProfessions: ['creative', 'portfolio', 'agency', 'designer', 'photographer'],
+      supportedTones: ['minimal', 'dark', 'elegant'],
+    },
+    component: GitH3Template,
   },
 };
 

@@ -114,6 +114,11 @@ export default function Project() {
       setProject(projectData);
       setLoading(false);
 
+      // Load section order from saved content if available
+      if (projectData.generated_content?.sectionOrder) {
+        setSectionOrder(projectData.generated_content.sectionOrder);
+      }
+
       // If project is draft and no generated content, trigger generation
       if (projectData.status === 'draft' && !projectData.generated_content) {
         generateWebsite(id);
@@ -728,13 +733,51 @@ export default function Project() {
       if (newIndex < 0 || newIndex >= prev.length) return prev;
       const newOrder = [...prev];
       [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+      
+      // Save to database
+      if (project?.generated_content) {
+        const updatedContent = {
+          ...project.generated_content,
+          sectionOrder: newOrder,
+        };
+        debouncedSave(updatedContent);
+      }
+      
       return newOrder;
     });
     toast({
       title: 'Section moved',
       description: `${sectionId} section moved ${direction}.`,
     });
-  }, [toast]);
+  }, [toast, project, debouncedSave]);
+
+  // Drag and drop reorder handler
+  const handleReorderSections = useCallback((sourceIndex: number, destIndex: number) => {
+    setSectionOrder(prev => {
+      const newOrder = [...prev];
+      const [removed] = newOrder.splice(sourceIndex, 1);
+      newOrder.splice(destIndex, 0, removed);
+      
+      // Save to database
+      if (project?.generated_content) {
+        const updatedContent = {
+          ...project.generated_content,
+          sectionOrder: newOrder,
+        };
+        setProject(prevProject => prevProject ? {
+          ...prevProject,
+          generated_content: updatedContent,
+        } : null);
+        debouncedSave(updatedContent);
+      }
+      
+      return newOrder;
+    });
+    toast({
+      title: 'Sections reordered',
+      description: 'Section order has been updated.',
+    });
+  }, [project, debouncedSave, toast]);
 
   const handleDeleteSection = useCallback((sectionId: string) => {
     const protectedSections = ['hero'];
@@ -746,12 +789,25 @@ export default function Project() {
       });
       return;
     }
-    setSectionOrder(prev => prev.filter(s => s !== sectionId));
+    setSectionOrder(prev => {
+      const newOrder = prev.filter(s => s !== sectionId);
+      
+      // Save to database
+      if (project?.generated_content) {
+        const updatedContent = {
+          ...project.generated_content,
+          sectionOrder: newOrder,
+        };
+        debouncedSave(updatedContent);
+      }
+      
+      return newOrder;
+    });
     toast({
       title: 'Section deleted',
       description: `${sectionId} section has been removed.`,
     });
-  }, [toast]);
+  }, [toast, project, debouncedSave]);
 
   // Handle section style change for real-time styling
   const handleSectionStyleChange = useCallback((sectionId: string, style: SectionStyle) => {
@@ -1150,6 +1206,8 @@ export default function Project() {
           }}
           onGenerateGalleryImages={() => id && generateImages(id)}
           isGeneratingGallery={generatingImages}
+          sectionOrder={sectionOrder}
+          onReorderSections={handleReorderSections}
         />
       )}
     </div>
