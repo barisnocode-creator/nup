@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,12 @@ import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
+
+// Lazy load GrapeJS editor for performance
+const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
+
+// Feature flag for GrapeJS editor - set to true to enable
+const USE_GRAPES_EDITOR = true;
 
 interface Project {
   id: string;
@@ -894,6 +900,52 @@ export default function Project() {
     }
   };
 
+  // If GrapeJS editor is enabled and user is authenticated, show the new editor
+  if (USE_GRAPES_EDITOR && isAuthenticated && project.generated_content) {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-muted/30">
+          <div className="text-center space-y-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">Editör yükleniyor...</p>
+          </div>
+        </div>
+      }>
+        <GrapesEditor
+          projectId={id || ''}
+          projectName={project.name}
+          initialContent={project.generated_content}
+          templateId={activeTemplateId}
+          onSave={() => {
+            toast({
+              title: 'Kaydedildi',
+              description: 'Değişiklikleriniz başarıyla kaydedildi.',
+            });
+          }}
+          onPublish={() => setPublishModalOpen(true)}
+        />
+
+        {/* Publish Modal */}
+        <PublishModal
+          isOpen={publishModalOpen}
+          onClose={() => setPublishModalOpen(false)}
+          projectId={id || ''}
+          projectName={project.name}
+          currentSubdomain={project.subdomain}
+          isPublished={project.is_published}
+          onPublished={(subdomain) => {
+            setProject(prev => prev ? {
+              ...prev,
+              subdomain,
+              is_published: true,
+            } : null);
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  // Legacy editor
   return (
     <div className="relative min-h-screen">
       {/* Template Preview Banner */}
