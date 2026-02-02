@@ -1,0 +1,1 @@
+export { AboutSectionBlock } from './AboutSection';

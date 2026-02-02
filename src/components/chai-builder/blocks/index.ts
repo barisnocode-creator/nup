@@ -6,8 +6,20 @@ import './hero/HeroSplit';
 import './hero/HeroCentered';
 import './hero/HeroOverlay';
 
+// About blocks
+import './about/AboutSection';
+
 // Services blocks
 import './services/ServicesGrid';
+
+// Statistics blocks
+import './statistics/StatisticsCounter';
+
+// Gallery blocks
+import './gallery/ImageGallery';
+
+// Pricing blocks
+import './pricing/PricingTable';
 
 // Testimonials blocks
 import './testimonials/TestimonialsCarousel';
@@ -23,7 +35,11 @@ import './faq/FAQAccordion';
 
 // Export all blocks
 export * from './hero';
+export * from './about';
 export * from './services';
+export * from './statistics';
+export * from './gallery';
+export * from './pricing';
 export * from './testimonials';
 export * from './contact';
 export * from './cta';

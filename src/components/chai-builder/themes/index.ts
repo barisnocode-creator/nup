@@ -2,10 +2,14 @@ export {
   themePresets, 
   defaultTheme,
   modernProfessionalPreset,
+  boldAgencyPreset,
+  elegantMinimalPreset,
   corporateBluePreset,
   minimalDarkPreset,
-  elegantSerifPreset,
+  modernSaasPreset,
+  videoStudioPreset,
   vibrantCreativePreset,
+  templateToPreset,
 } from './presets';
 
-export type { ChaiThemeValues } from './presets';
+export type { ChaiThemeValues } from '@chaibuilder/sdk';

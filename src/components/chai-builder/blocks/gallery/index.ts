@@ -1,0 +1,1 @@
+export { ImageGalleryBlock } from './ImageGallery';
