@@ -1,0 +1,1 @@
+export { ServicesGridBlock } from './ServicesGrid';

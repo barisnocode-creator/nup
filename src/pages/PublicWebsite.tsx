@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
+import { RenderChaiBlocks } from '@chaibuilder/sdk/render';
 import { GeneratedContent } from '@/types/generated-website';
 import { Loader2, Globe } from 'lucide-react';
 import { usePageView } from '@/hooks/usePageView';
@@ -12,6 +13,9 @@ interface PublicProject {
   profession: string;
   subdomain: string;
   generated_content: GeneratedContent | null;
+  chai_blocks?: any[];
+  chai_theme?: any;
+  template_id?: string;
 }
 
 export default function PublicWebsite() {
@@ -32,7 +36,7 @@ export default function PublicWebsite() {
       // Use the secure public_projects view that excludes sensitive fields (user_id, form_data)
       const { data, error } = await supabase
         .from('public_projects')
-        .select('id, name, profession, subdomain, generated_content')
+        .select('id, name, profession, subdomain, generated_content, chai_blocks, chai_theme, template_id')
         .eq('subdomain', subdomain)
         .maybeSingle();
 
@@ -106,15 +110,27 @@ export default function PublicWebsite() {
   // Use default light theme since form_data is not exposed in public view for security
   const colorPreference = 'light';
 
+  // Check if project uses ChaiBuilder blocks
+  const hasChaiBlocks = project.chai_blocks && project.chai_blocks.length > 0;
+
   return (
     <>
-      {/* Website Preview - Read Only */}
-      {project.generated_content && (
-        <WebsitePreview 
-          content={project.generated_content} 
-          colorPreference={colorPreference}
-          isEditable={false}
-        />
+      {/* Render ChaiBuilder blocks if available */}
+      {hasChaiBlocks ? (
+        <div className="min-h-screen">
+          <RenderChaiBlocks 
+            blocks={project.chai_blocks || []} 
+          />
+        </div>
+      ) : (
+        /* Legacy Website Preview - Read Only */
+        project.generated_content && (
+          <WebsitePreview 
+            content={project.generated_content} 
+            colorPreference={colorPreference}
+            isEditable={false}
+          />
+        )
       )}
 
       {/* Powered by badge */}
