@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
+import { convertGeneratedContentToChaiBlocks, getThemeForTemplate } from '@/components/chai-builder/utils/convertToChaiBlocks';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -127,10 +128,58 @@ export default function Project() {
       if (projectData.status === 'draft' && !projectData.generated_content) {
         generateWebsite(id);
       }
+      
+      // If project has generated_content but empty chai_blocks, convert it
+      if (projectData.generated_content && 
+          (!projectData.chai_blocks || projectData.chai_blocks.length === 0)) {
+        convertAndSaveChaiBlocks(projectData);
+      }
     }
 
     fetchProject();
   }, [id, navigate]);
+
+  // Convert generated_content to chai_blocks and save
+  const convertAndSaveChaiBlocks = async (projectData: Project) => {
+    if (!projectData.generated_content || !projectData.id) return;
+    
+    try {
+      const blocks = convertGeneratedContentToChaiBlocks(
+        projectData.generated_content,
+        projectData.template_id
+      );
+      const theme = getThemeForTemplate(projectData.template_id);
+      
+      // Save to database
+      const { error } = await supabase
+        .from('projects')
+        .update({
+          chai_blocks: blocks as any,
+          chai_theme: theme as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', projectData.id);
+      
+      if (error) {
+        console.error('Error saving chai_blocks:', error);
+        return;
+      }
+      
+      // Update local state
+      setProject(prev => prev ? {
+        ...prev,
+        chai_blocks: blocks,
+        chai_theme: theme,
+      } : null);
+      
+      toast({
+        title: 'İçerik dönüştürüldü',
+        description: 'Mevcut siteniz editöre aktarıldı.',
+      });
+    } catch (err) {
+      console.error('Conversion error:', err);
+    }
+  };
 
   const generateWebsite = async (projectId: string) => {
     setGenerating(true);
