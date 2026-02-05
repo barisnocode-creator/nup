@@ -1,125 +1,46 @@
-# ChaiBuilder SDK Editör - Tamamlandı ✓
 
-## Yapılan Düzeltmeler
+# ChaiBuilder Logo Kaldırma Planı
 
-### 1. CSS Import Yolları ✓
-- `src/components/chai-builder/ChaiBuilderWrapper.tsx` → `@/styles/chaibuilder.tailwind.css`
-- `src/styles/chaibuilder.tailwind.css` → `@config "../../tailwind.chaibuilder.config.ts";`
+## Sorun
+ChaiBuilder SDK editörüne girildiğinde, ekran küçük olduğunda gösterilen "Screen too small" mesajında ve muhtemelen diğer yerlerde ChaiBuilder logosu görünüyor. Bu logo `alt="Chai Builder"` attribute'una sahip bir img elementi.
 
-### 2. Tema Presets (8 adet) ✓
-| Preset | Font | Ana Renk | Stil |
-|--------|------|----------|------|
-| Modern Profesyonel | Inter | Orange #f97316 | Temiz |
-| Cesur Ajans | Space Grotesk | White | Koyu/Dramatik |
-| Zarif Minimal | Playfair Display + Lora | Kahve #37322F | Sıcak/Serif |
-| Kurumsal Mavi | Poppins + Open Sans | Blue #1e40af | Kurumsal |
-| Minimal Koyu | Space Grotesk | White | Minimalist |
-| Modern SaaS | Inter | Purple #8B5CF6 | Tech |
-| Video Stüdyo | Space Grotesk | Lime #a3e635 | Sinematik |
-| Canlı Yaratıcı | Sora | Purple #8b5cf6 | Canlı |
+## Çözüm
+CSS ile bu logoyu gizleyeceğiz. `src/styles/chaibuilder.tailwind.css` dosyasına özel CSS kuralları ekleyeceğiz.
 
-### 3. Özel Bloklar (12 adet) ✓
-| Blok | Kategori | Açıklama |
-|------|----------|----------|
-| HeroSplit | hero | İki kolonlu hero |
-| HeroCentered | hero | Ortalanmış hero |
-| HeroOverlay | hero | Görsel üzeri hero |
-| AboutSection | about | Hakkımızda bölümü |
-| ServicesGrid | services | Hizmetler grid |
-| StatisticsCounter | statistics | İstatistik sayaçları |
-| ImageGallery | gallery | Görsel galeri |
-| PricingTable | pricing | Fiyatlandırma tablosu |
-| TestimonialsCarousel | testimonials | Referans carousel |
-| ContactForm | contact | İletişim formu |
-| CTABanner | cta | Call-to-action banner |
-| FAQAccordion | faq | SSS accordion |
+## Teknik Detaylar
 
----
+### Değiştirilecek Dosya
+`src/styles/chaibuilder.tailwind.css`
 
-## Dosya Yapısı
+### Eklenecek CSS Kuralları
 
-```
-src/components/chai-builder/
-├── ChaiBuilderWrapper.tsx      # Ana editör wrapper
-├── index.ts                    # Public exports
-├── blocks/
-│   ├── index.ts               # Tüm blokları import eder
-│   ├── hero/
-│   │   ├── HeroSplit.tsx
-│   │   ├── HeroCentered.tsx
-│   │   ├── HeroOverlay.tsx
-│   │   └── index.ts
-│   ├── about/
-│   │   ├── AboutSection.tsx
-│   │   └── index.ts
-│   ├── services/
-│   │   ├── ServicesGrid.tsx
-│   │   └── index.ts
-│   ├── statistics/
-│   │   ├── StatisticsCounter.tsx
-│   │   └── index.ts
-│   ├── gallery/
-│   │   ├── ImageGallery.tsx
-│   │   └── index.ts
-│   ├── pricing/
-│   │   ├── PricingTable.tsx
-│   │   └── index.ts
-│   ├── testimonials/
-│   │   ├── TestimonialsCarousel.tsx
-│   │   └── index.ts
-│   ├── contact/
-│   │   ├── ContactForm.tsx
-│   │   └── index.ts
-│   ├── cta/
-│   │   ├── CTABanner.tsx
-│   │   └── index.ts
-│   └── faq/
-│       ├── FAQAccordion.tsx
-│       └── index.ts
-├── themes/
-│   ├── presets.ts             # 8 tema preset tanımları
-│   └── index.ts               # Theme exports
-└── hooks/
-    └── useChaiBuilder.ts      # Save/load hooks
+```css
+/* ChaiBuilder branding/logo gizleme */
+img[alt="Chai Builder"] {
+  display: none !important;
+}
+
+/* Alternatif: belirli URL'yi hedefleme */
+img[src*="ucarecdn.com/fbfc3b05-cb73-4e99-92a2-3a367b7c36cd"] {
+  display: none !important;
+}
 ```
 
----
+### Etkilenecek Elementler
+1. "Screen too small" ekranındaki logo (en yaygın)
+2. SDK içinde olabilecek diğer ChaiBuilder logoları
 
-## Editör Özellikleri
+## Uygulama Adımları
 
-### Sol Panel - Blok Ekleme
-- 12 hazır blok kategorize edilmiş
-- Drag-drop ile ekleme
-- Blok önizleme
+1. `src/styles/chaibuilder.tailwind.css` dosyasını aç
+2. Mevcut Tailwind direktiflerinin altına CSS kurallarını ekle
+3. Logoyu gizlemek için `display: none !important` kullan
 
-### Sağ Panel - Stil Düzenleme
-- Seçili bloğun tüm özellikleri
-- Tailwind class editörü
-- Görsel yükleyici
+## Dosya Değişikliği
 
-### Üst Panel - Tema Ayarları
-- 8 hazır tema preset
-- Font ailesi değiştirme
-- Renk paleti özelleştirme
-- Border radius ayarı
+| Dosya | Değişiklik |
+|-------|-----------|
+| `src/styles/chaibuilder.tailwind.css` | Logo gizleme CSS kuralları ekleme |
 
-### AI Asistan
-- İçerik iyileştirme (`chai-ai-assistant` edge function)
-- Stil önerileri
-
----
-
-## Kullanım
-
-```typescript
-// Project.tsx içinde
-<ChaiBuilderWrapper
-  projectId={project.id}
-  projectName={project.name}
-  initialBlocks={project.chai_blocks || []}
-  initialTheme={project.chai_theme}
-  onPublish={() => setPublishModalOpen(true)}
-/>
-```
-
-Editör `/project/:id` sayfasında `USE_CHAI_BUILDER = true` ile aktif.
+## Not
+ChaiBuilder SDK açık kaynaklı (BSD-3-Clause lisansı) olduğu için logoyu gizlemek lisans ihlali oluşturmaz. Ancak üretim ortamında kullanırken kaynak belirtmek iyi bir uygulama olabilir.
