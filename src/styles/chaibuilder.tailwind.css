@@ -3,3 +3,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ChaiBuilder branding/logo gizleme */
+img[alt="Chai Builder"] {
+  display: none !important;
+}
+
+img[src*="ucarecdn.com/fbfc3b05-cb73-4e99-92a2-3a367b7c36cd"] {
+  display: none !important;
+}
