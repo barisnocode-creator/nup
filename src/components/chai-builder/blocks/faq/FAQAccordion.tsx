@@ -114,6 +114,11 @@ registerChaiBlock(FAQAccordionBlock, {
         title: "Bölüm Alt Başlığı",
         default: "SSS",
       }),
+      items: builderProp({
+        type: "array",
+        title: "Sorular",
+        default: defaultItems as any,
+      }),
     },
   },
 });
