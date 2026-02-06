@@ -113,6 +113,11 @@ registerChaiBlock(TestimonialsCarouselBlock, {
         title: "Bölüm Alt Başlığı",
         default: "Referanslar",
       }),
+      testimonials: builderProp({
+        type: "array",
+        title: "Müşteri Yorumları",
+        default: defaultTestimonials as any,
+      }),
     },
   },
 });

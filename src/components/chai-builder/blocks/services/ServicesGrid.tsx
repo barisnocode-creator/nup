@@ -130,6 +130,11 @@ registerChaiBlock(ServicesGridBlock, {
         default: "Size en iyi hizmeti sunmak için buradayız.",
         ui: { "ui:widget": "textarea" },
       }),
+      services: builderProp({
+        type: "array",
+        title: "Hizmetler",
+        default: defaultServices as any,
+      }),
     },
   },
 });

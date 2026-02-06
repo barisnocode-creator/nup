@@ -110,6 +110,21 @@ export default function Project() {
 
       if (error) {
         console.error('Error fetching project:', error);
+        
+        if (error.code === 'PGRST116') {
+          toast({
+            title: 'Proje bulunamadı',
+            description: 'Bu proje mevcut değil veya erişim yetkiniz yok.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Hata',
+            description: 'Proje yüklenirken bir sorun oluştu.',
+            variant: 'destructive',
+          });
+        }
+        
         navigate('/dashboard');
         return;
       }
