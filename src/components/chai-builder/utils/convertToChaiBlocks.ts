@@ -17,15 +17,20 @@ const generateBlockId = () => `block_${Math.random().toString(36).substr(2, 9)}`
 
 /**
  * Resolves the best available image URL from multiple fallback keys.
- * Skips overly large base64 strings (>100KB) to prevent DB bloat.
+ * - URL images (http/https) are always accepted regardless of size
+ * - Base64 images over 200KB are skipped to prevent DB bloat
  */
 function resolveImage(images: Record<string, any> | undefined, ...keys: string[]): string {
   if (!images) return '';
   for (const key of keys) {
     const val = images[key];
     if (typeof val === 'string' && val.length > 0) {
-      // Skip extremely large base64 data (>100KB) to prevent DB bloat
-      if (val.startsWith('data:') && val.length > 100000) continue;
+      // URL-based images are always safe (small string, actual data served by CDN)
+      if (val.startsWith('http://') || val.startsWith('https://')) {
+        return val;
+      }
+      // Skip extremely large base64 data (>200KB) to prevent DB bloat
+      if (val.startsWith('data:') && val.length > 200000) continue;
       return val;
     }
   }
@@ -155,10 +160,13 @@ export function convertGeneratedContentToChaiBlocks(
   // 6. Image Gallery
   const galleryImages = images?.galleryImages as string[] | undefined;
   if (galleryImages && galleryImages.length > 0) {
-    // Filter out oversized base64 images
-    const safeGallery = galleryImages.map(img =>
-      typeof img === 'string' && img.startsWith('data:') && img.length > 100000 ? '' : (img || '')
-    );
+    // Filter out oversized base64 images but allow URLs
+    const safeGallery = galleryImages.map(img => {
+      if (typeof img !== 'string') return '';
+      if (img.startsWith('http://') || img.startsWith('https://')) return img;
+      if (img.startsWith('data:') && img.length > 200000) return '';
+      return img || '';
+    });
     blocks.push({
       _id: generateBlockId(),
       _type: 'ImageGallery',
@@ -205,7 +213,6 @@ export function convertGeneratedContentToChaiBlocks(
   }
 
   // 9. CTA Section
-  const ctaImage = resolveImage(images, 'ctaImage', 'ctaBg');
   blocks.push({
     _id: generateBlockId(),
     _type: 'CTABanner',
@@ -227,8 +234,11 @@ export function blocksNeedImageRefresh(blocks: any[], content: GeneratedContent)
   if (!blocks || blocks.length === 0 || !content?.images) return false;
   
   const images = content.images;
+  // Check if there are URL-based images or small base64 images available
   const hasAvailableImages = Object.values(images).some(
-    v => typeof v === 'string' && v.length > 0 && v.length < 100000
+    v => typeof v === 'string' && v.length > 0 && (
+      v.startsWith('http://') || v.startsWith('https://') || v.length < 200000
+    )
   );
   if (!hasAvailableImages) return false;
 
@@ -283,8 +293,12 @@ export function patchBlocksWithImages(blocks: any[], content: GeneratedContent):
             const key = `image${i + 1}`;
             if (!block[key] && galleryImages[i]) {
               const img = galleryImages[i];
-              if (typeof img === 'string' && img.length < 100000) {
-                patches[key] = img;
+              if (typeof img === 'string') {
+                if (img.startsWith('http://') || img.startsWith('https://')) {
+                  patches[key] = img;
+                } else if (img.length < 200000) {
+                  patches[key] = img;
+                }
               }
             }
           }

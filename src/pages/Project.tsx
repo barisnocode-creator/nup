@@ -32,6 +32,90 @@ const ChaiBuilderWrapper = lazy(() => import('@/components/chai-builder/ChaiBuil
 const USE_GRAPES_EDITOR = false;
 const USE_CHAI_BUILDER = true; // Enable ChaiBuilder SDK
 
+/**
+ * Migrates base64 images in generated_content to Supabase Storage.
+ * Returns updated content with URLs, or null if no migration was needed.
+ */
+async function migrateBase64ImagesToStorage(
+  projectId: string,
+  content: GeneratedContent
+): Promise<GeneratedContent | null> {
+  if (!content?.images) return null;
+  
+  const images = content.images as Record<string, any>;
+  const updates: Record<string, string> = {};
+  let hasMigrations = false;
+
+  // Check each image key for base64 data
+  for (const [key, value] of Object.entries(images)) {
+    if (typeof value === 'string' && value.startsWith('data:') && value.length > 1000) {
+      try {
+        // Extract mime type and base64 data
+        const match = value.match(/^data:([^;]+);base64,(.+)$/);
+        if (!match) continue;
+
+        const mimeType = match[1];
+        const base64Data = match[2];
+        const extension = mimeType.split('/')[1] || 'png';
+        const filePath = `${projectId}/${key}_${Date.now()}.${extension}`;
+
+        // Convert base64 to blob
+        const binaryStr = atob(base64Data);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from('website-images')
+          .upload(filePath, bytes, { contentType: mimeType, upsert: true });
+
+        if (uploadError) {
+          console.warn(`[Migration] Failed to upload ${key}:`, uploadError);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('website-images')
+          .getPublicUrl(filePath);
+
+        if (urlData?.publicUrl) {
+          updates[key] = urlData.publicUrl;
+          hasMigrations = true;
+          console.log(`[Migration] Migrated ${key} to storage`);
+        }
+      } catch (err) {
+        console.warn(`[Migration] Error migrating ${key}:`, err);
+      }
+    }
+  }
+
+  if (!hasMigrations) return null;
+
+  // Update generated_content with new URLs
+  const updatedContent: GeneratedContent = {
+    ...content,
+    images: { ...images, ...updates },
+  };
+
+  // Save to database
+  const { error } = await supabase
+    .from('projects')
+    .update({
+      generated_content: updatedContent as any,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', projectId);
+
+  if (error) {
+    console.error('[Migration] Failed to save migrated content:', error);
+    return null;
+  }
+
+  console.log(`[Migration] Successfully migrated ${Object.keys(updates).length} images`);
+  return updatedContent;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -156,24 +240,30 @@ export default function Project() {
           (!projectData.chai_blocks || (Array.isArray(projectData.chai_blocks) && projectData.chai_blocks.length === 0))) {
         await convertAndSaveChaiBlocks(projectData);
       }
-      // If blocks exist but are missing images that are available in generated_content, patch them
-      else if (
-        projectData.chai_blocks && 
-        Array.isArray(projectData.chai_blocks) && 
-        projectData.chai_blocks.length > 0 && 
-        projectData.generated_content &&
-        blocksNeedImageRefresh(projectData.chai_blocks, projectData.generated_content)
-      ) {
-        const patchedBlocks = patchBlocksWithImages(projectData.chai_blocks, projectData.generated_content);
-        // Save patched blocks
-        const { error: patchError } = await supabase
-          .from('projects')
-          .update({ chai_blocks: patchedBlocks as any, updated_at: new Date().toISOString() })
-          .eq('id', projectData.id);
+      // Migrate base64 images to storage, then patch blocks
+      else if (projectData.generated_content) {
+        const migratedContent = await migrateBase64ImagesToStorage(projectData.id, projectData.generated_content);
+        const contentToUse = migratedContent || projectData.generated_content;
         
-        if (!patchError) {
-          setProject(prev => prev ? { ...prev, chai_blocks: patchedBlocks } : null);
-          console.log('[Project] Patched blocks with missing images');
+        if (
+          projectData.chai_blocks && 
+          Array.isArray(projectData.chai_blocks) && 
+          projectData.chai_blocks.length > 0 && 
+          blocksNeedImageRefresh(projectData.chai_blocks, contentToUse)
+        ) {
+          const patchedBlocks = patchBlocksWithImages(projectData.chai_blocks, contentToUse);
+          const { error: patchError } = await supabase
+            .from('projects')
+            .update({ chai_blocks: patchedBlocks as any, updated_at: new Date().toISOString() })
+            .eq('id', projectData.id);
+          
+          if (!patchError) {
+            setProject(prev => prev ? { ...prev, chai_blocks: patchedBlocks, generated_content: contentToUse } : null);
+            console.log('[Project] Patched blocks with migrated images');
+          }
+        } else if (migratedContent) {
+          // Content was migrated but blocks don't need patching - still update local state
+          setProject(prev => prev ? { ...prev, generated_content: migratedContent } : null);
         }
       }
     }
