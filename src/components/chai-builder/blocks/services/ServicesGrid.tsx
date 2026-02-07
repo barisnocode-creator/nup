@@ -17,6 +17,8 @@ export type ServicesGridProps = {
   sectionSubtitle: string;
   sectionDescription: string;
   services: ServiceItem[];
+  titleSize: string;
+  textAlign: string;
 };
 
 const defaultServices: ServiceItem[] = [
@@ -52,6 +54,13 @@ const defaultServices: ServiceItem[] = [
   },
 ];
 
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-2xl md:text-3xl lg:text-4xl',
+  xl: 'text-3xl md:text-4xl lg:text-5xl',
+  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
+  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
+};
+
 const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) => {
   const { 
     blockProps, 
@@ -59,19 +68,21 @@ const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) =>
     sectionSubtitle,
     sectionDescription,
     services = defaultServices,
+    titleSize = '2xl',
+    textAlign = 'center',
   } = props;
 
   return (
     <section {...blockProps} className="py-20 bg-background">
       <div className="container mx-auto px-6">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className={`text-${textAlign} max-w-3xl mx-auto mb-16`}>
           {sectionSubtitle && (
             <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
               {sectionSubtitle}
             </span>
           )}
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6">
+          <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground mb-6`}>
             {sectionTitle}
           </h2>
           {sectionDescription && (
@@ -133,6 +144,18 @@ registerChaiBlock(ServicesGridBlock, {
         type: "array",
         title: "Hizmetler",
         default: defaultServices as any,
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "center",
+        enum: ["left", "center", "right"],
       }),
     },
   },

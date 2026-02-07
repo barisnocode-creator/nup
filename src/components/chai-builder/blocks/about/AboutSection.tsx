@@ -13,6 +13,15 @@ export type AboutSectionProps = {
   features: string;
   image: string;
   imagePosition: "left" | "right";
+  titleSize: string;
+  textAlign: string;
+};
+
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-2xl md:text-3xl lg:text-4xl',
+  xl: 'text-3xl md:text-4xl lg:text-5xl',
+  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
+  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
 };
 
 const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) => {
@@ -24,6 +33,8 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
     features,
     image,
     imagePosition = "right",
+    titleSize = '2xl',
+    textAlign = 'left',
   } = props;
 
   const featureList = features ? features.split('\n').filter(f => f.trim()) : [];
@@ -42,7 +53,7 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
                 {subtitle}
               </span>
             )}
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+            <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground text-${textAlign}`}>
               {title}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
@@ -119,6 +130,18 @@ registerChaiBlock(AboutSectionBlock, {
         title: "Görsel Konumu",
         default: "right",
         enum: ["left", "right"],
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "left",
+        enum: ["left", "center", "right"],
       }),
     },
   },

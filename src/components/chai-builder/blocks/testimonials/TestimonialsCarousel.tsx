@@ -17,6 +17,8 @@ export type TestimonialsCarouselProps = {
   sectionTitle: string;
   sectionSubtitle: string;
   testimonials: Testimonial[];
+  titleSize: string;
+  textAlign: string;
 };
 
 const defaultTestimonials: Testimonial[] = [
@@ -40,25 +42,34 @@ const defaultTestimonials: Testimonial[] = [
   },
 ];
 
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-2xl md:text-3xl lg:text-4xl',
+  xl: 'text-3xl md:text-4xl lg:text-5xl',
+  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
+  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
+};
+
 const TestimonialsCarouselBlock = (props: ChaiBlockComponentProps<TestimonialsCarouselProps>) => {
   const { 
     blockProps, 
     sectionTitle,
     sectionSubtitle,
     testimonials = defaultTestimonials,
+    titleSize = '2xl',
+    textAlign = 'center',
   } = props;
 
   return (
     <section {...blockProps} className="py-20 bg-muted/30">
       <div className="container mx-auto px-6">
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className={`text-${textAlign} max-w-3xl mx-auto mb-16`}>
           {sectionSubtitle && (
             <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
               {sectionSubtitle}
             </span>
           )}
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+          <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground`}>
             {sectionTitle}
           </h2>
         </div>
@@ -116,6 +127,18 @@ registerChaiBlock(TestimonialsCarouselBlock, {
         type: "array",
         title: "Müşteri Yorumları",
         default: defaultTestimonials as any,
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "center",
+        enum: ["left", "center", "right"],
       }),
     },
   },

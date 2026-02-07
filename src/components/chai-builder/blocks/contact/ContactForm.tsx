@@ -14,6 +14,15 @@ export type ContactFormProps = {
   phone: string;
   address: string;
   submitButtonText: string;
+  titleSize: string;
+  textAlign: string;
+};
+
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-2xl md:text-3xl lg:text-4xl',
+  xl: 'text-3xl md:text-4xl lg:text-5xl',
+  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
+  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
 };
 
 const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
@@ -26,6 +35,8 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
     phone,
     address,
     submitButtonText,
+    titleSize = '2xl',
+    textAlign = 'left',
     inBuilder,
   } = props;
 
@@ -46,7 +57,7 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
                 {sectionSubtitle}
               </span>
             )}
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">
+            <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground text-${textAlign}`}>
               {sectionTitle}
             </h2>
             {sectionDescription && (
@@ -200,6 +211,18 @@ registerChaiBlock(ContactFormBlock, {
         type: "string",
         title: "Gönder Butonu Metni",
         default: "Mesaj Gönder",
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "left",
+        enum: ["left", "center", "right"],
       }),
     },
   },

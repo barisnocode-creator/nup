@@ -17,6 +17,8 @@ export type StatisticsCounterProps = {
   stat3Label: string;
   stat4Value: string;
   stat4Label: string;
+  titleSize: string;
+  textAlign: string;
 };
 
 const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounterProps>) => {
@@ -24,14 +26,12 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
     blockProps, 
     title,
     subtitle,
-    stat1Value,
-    stat1Label,
-    stat2Value,
-    stat2Label,
-    stat3Value,
-    stat3Label,
-    stat4Value,
-    stat4Label,
+    stat1Value, stat1Label,
+    stat2Value, stat2Label,
+    stat3Value, stat3Label,
+    stat4Value, stat4Label,
+    titleSize = '2xl',
+    textAlign = 'center',
   } = props;
 
   const stats = [
@@ -136,6 +136,18 @@ registerChaiBlock(StatisticsCounterBlock, {
         type: "string",
         title: "İstatistik 4 - Etiket",
         default: "Destek",
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "center",
+        enum: ["left", "center", "right"],
       }),
     },
   },
