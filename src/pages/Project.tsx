@@ -65,6 +65,7 @@ export default function Project() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [isConvertingBlocks, setIsConvertingBlocks] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -150,10 +151,10 @@ export default function Project() {
         generateWebsite(id);
       }
       
-      // If project has generated_content but empty chai_blocks, convert it
+      // If project has generated_content but empty chai_blocks, convert and await
       if (projectData.generated_content && 
-          (!projectData.chai_blocks || projectData.chai_blocks.length === 0)) {
-        convertAndSaveChaiBlocks(projectData);
+          (!projectData.chai_blocks || (Array.isArray(projectData.chai_blocks) && projectData.chai_blocks.length === 0))) {
+        await convertAndSaveChaiBlocks(projectData);
       }
     }
 
@@ -163,6 +164,8 @@ export default function Project() {
   // Convert generated_content to chai_blocks and save
   const convertAndSaveChaiBlocks = async (projectData: Project) => {
     if (!projectData.generated_content || !projectData.id) return;
+    
+    setIsConvertingBlocks(true);
     
     try {
       const blocks = convertGeneratedContentToChaiBlocks(
@@ -192,6 +195,11 @@ export default function Project() {
       
       if (error) {
         console.error('Error saving chai_blocks:', error);
+        toast({
+          title: 'Dönüştürme hatası',
+          description: 'İçerik editöre aktarılamadı. Lütfen sayfayı yenileyin.',
+          variant: 'destructive',
+        });
         return;
       }
       
@@ -208,6 +216,13 @@ export default function Project() {
       });
     } catch (err) {
       console.error('Conversion error:', err);
+      toast({
+        title: 'Beklenmeyen hata',
+        description: 'İçerik dönüştürülürken bir sorun oluştu.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsConvertingBlocks(false);
     }
   };
 
@@ -1041,6 +1056,30 @@ export default function Project() {
 
   // ChaiBuilder SDK Editor - new modern editor
   if (USE_CHAI_BUILDER && isAuthenticated && project) {
+    // Show loading screen while blocks are being converted
+    const hasBlocks = project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
+    
+    if (isConvertingBlocks || !hasBlocks) {
+      return (
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground text-lg">İçerik editöre aktarılıyor...</p>
+            <p className="text-muted-foreground/60 text-sm">Lütfen bekleyin, siteniz hazırlanıyor.</p>
+            {!isConvertingBlocks && !hasBlocks && project.generated_content && (
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => convertAndSaveChaiBlocks(project)}
+              >
+                Tekrar Dene
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center bg-muted/30">
