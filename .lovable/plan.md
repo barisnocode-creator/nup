@@ -1,72 +1,108 @@
 
-# Gorsel Sorununu Koklunden Cozme Plani
+# Blok Stil Kontrolleri Kapsamli Genisleme Plani
 
-## Mevcut Durum (Test Sonuclari)
+## Mevcut Durum
+Su anda her blokta yalnizca 2 stil kontrolu var:
+- `titleSize` (lg, xl, 2xl, 3xl)
+- `textAlign` (left, center, right)
 
-### Calisan Ozellikler
-- **Stil kontrolleri**: Baslik Boyutu ve Metin Hizalama sag panelde gorunuyor ve secim yapilabiliyor
-- **Tailwind yapilandirmasi**: CSS degiskenleri dogru sekilde Tailwind siniflarına baglandi
-- **Blok semalari**: Tum bloklarda titleSize ve textAlign prop'lari tanimli
+Kullanici, her yazi icin font agirligini, rengini, boyutunu, arka plan rengini, bosluk ayarlarini ve daha fazlasini kontrol edebilmek istiyor.
 
-### Calismayanlar
-- **Gorseller**: Hicbir gorsel bloklarda gorunmuyor. Tum gorseller veritabaninda 1.5MB+ base64 string olarak sakli. `resolveImage()` fonksiyonu 100KB ustu base64 verileri (dogru olarak) filtreliyor, dolayisiyla hicbir gorsel bloklara aktarilamiyor.
+## Eklenecek Yeni Kontroller
 
-## Kok Neden
+Her bloga asagidaki yeni stil ozellikleri eklenecek:
 
-`generate-images` edge function'i, AI goruntulerini base64 olarak uretip dogrudan `generated_content.images` JSON sutununa yaziyor. Bu gorseller 1.5-1.8MB boyutlarinda. `convertToChaiBlocks` ise performans ve veritabani guveniligi icin 100KB uzerini filtreliyor.
+| Kontrol | Secenekler | Etkiledigi Alan |
+|---------|-----------|-----------------|
+| Baslik Kalinligi | Normal, Orta, Kalin, Cok Kalin | Ana baslik (h1/h2) |
+| Baslik Rengi | Varsayilan, Birincil, Ikincil, Beyaz, Soluk | Ana baslik |
+| Aciklama Boyutu | Kucuk, Normal, Buyuk, Cok Buyuk | Aciklama metni |
+| Aciklama Rengi | Varsayilan, Birincil, Koyu, Soluk | Aciklama metni |
+| Alt Baslik Stili | Normal, Buyuk Harf | Alt baslik etiketi |
+| Arka Plan | Saydam, Varsayilan, Soluk, Kart, Birincil, Ikincil | Bolum arka plani |
+| Bolum Boslugu | Kucuk, Normal, Buyuk, Cok Buyuk | Ust/alt padding |
 
-Pixabay gorselleri (URL formatinda, kucuk boyutlu) ise `generate-website` tarafindan uretilmis olabilir ama `generate-images` calistiktan sonra sadece AI goruntulerinin (heroHome, heroAbout, heroServices) kaldigi, galleryImages/aboutImage/ctaImage gibi Pixabay URL'lerinin hic olmadigi goruldu.
+## Teknik Yaklasim
 
-## Cozum: Gorselleri Storage'a Yukle, URL Olarak Sakla
+### 1. Paylasilan Stil Yardimci Dosyasi Olusturma
+**Yeni dosya:** `src/components/chai-builder/blocks/shared/styleUtils.ts`
 
-### Adim 1: generate-images Edge Function'da Storage Yukleme
-**Dosya:** `supabase/functions/generate-images/index.ts`
+Tum bloklarin ortak kullanacagi harita (map) ve yardimci fonksiyonlar tek bir dosyada toplanacak:
+- `titleWeightMap`: font-normal, font-medium, font-semibold, font-bold, font-extrabold
+- `colorMap`: text-foreground, text-primary, text-muted-foreground, text-white, text-secondary-foreground
+- `descSizeMap`: text-sm, text-base, text-lg, text-xl
+- `bgColorMap`: bg-transparent, bg-background, bg-muted/30, bg-card, bg-primary, bg-secondary
+- `paddingMap`: py-12, py-20, py-28, py-36
+- `subtitleTransformMap`: normal-case, uppercase
+- `commonStyleProps()`: Tum bloklar icin ortak builderProp tanimlarini donduren fonksiyon
 
-Mevcut akis: `AI -> base64 -> dogrudan JSON'a kaydet`
-Yeni akis: `AI -> base64 -> Storage bucket'a yukle -> Public URL'yi JSON'a kaydet`
+Bu yaklasim, 11 blok dosyasindaki tekrari onler ve gelecekte yeni kontroller eklemeyi kolaylastirir.
 
-Degisiklikler:
-- Base64 veriyi decode edip Supabase Storage'a (ornegin `website-images` bucket) yukle
-- Her gorsel icin benzersiz bir path olustur: `{projectId}/{imageKey}.png`
-- Bucket'in public URL'sini `generated_content.images` icine kaydet
-- Bu sayede `resolveImage()` URL gordugunce filtrelemeden gecirmis olacak
+### 2. Tum Blok Dosyalarini Guncelleme
+Her blok dosyasinda yapilacak degisiklikler:
 
-```text
-Mevcut:  AI --> base64 (1.5MB) --> generated_content.images.heroHome
-Yeni:    AI --> base64 --> Storage upload --> URL --> generated_content.images.heroHome
+**a) Tip tanimlarina yeni alanlar ekleme:**
+```
+titleWeight: string;    // font kalinligi
+titleColor: string;     // baslik rengi
+descSize: string;       // aciklama boyutu
+descColor: string;      // aciklama rengi
+subtitleTransform: string; // alt baslik stili
+bgColor: string;        // arka plan rengi
+sectionPadding: string; // bolum boslugu
 ```
 
-### Adim 2: Storage Bucket Olusturma
-Veritabani migration ile `website-images` adinda public bir storage bucket olustur. RLS politikasi: Kullanicilar sadece kendi projelerine ait gorselleri okuyabilir/yazabilir.
+**b) JSX'te stil siniflarini dinamik uygulama:**
+- Baslik: `className={titleSizeMap[titleSize] + ' ' + titleWeightMap[titleWeight] + ' ' + colorMap[titleColor]}`
+- Aciklama: `className={descSizeMap[descSize] + ' ' + colorMap[descColor]}`
+- Section: `className={paddingMap[sectionPadding] + ' ' + bgColorMap[bgColor]}`
 
-### Adim 3: resolveImage Threshold Guncelleme
-**Dosya:** `src/components/chai-builder/utils/convertToChaiBlocks.ts`
+**c) Schema'ya yeni builderProp tanimlari ekleme:**
+`commonStyleProps()` fonksiyonundan spread ile ekleme.
 
-- URL formatlı gorseller (http/https ile baslayan) icin boyut siniri kaldır
-- Base64 filtrelemeyi koru ama threshold'u biraz yukselt (backward compatibility icin)
-- Yeni URL'ler sorunsuz gecsin
+### 3. Degistirilecek Dosyalar
 
-### Adim 4: Mevcut Projelerin Gorsellerini Migrate Etme
-**Dosya:** `src/pages/Project.tsx`
+Toplam 12 dosya:
 
-Editori yuklerken:
-1. `generated_content.images` icindeki base64 gorselleri tespit et
-2. Bunlari Storage'a yukle
-3. URL'leri geri yaz
-4. Bloklara patch'le
+1. **YENi** `src/components/chai-builder/blocks/shared/styleUtils.ts` - Ortak stil haritalari ve prop tanimlari
+2. `src/components/chai-builder/blocks/hero/HeroCentered.tsx` - 7 yeni kontrol
+3. `src/components/chai-builder/blocks/hero/HeroSplit.tsx` - 7 yeni kontrol
+4. `src/components/chai-builder/blocks/hero/HeroOverlay.tsx` - 7 yeni kontrol
+5. `src/components/chai-builder/blocks/about/AboutSection.tsx` - 7 yeni kontrol
+6. `src/components/chai-builder/blocks/services/ServicesGrid.tsx` - 7 yeni kontrol
+7. `src/components/chai-builder/blocks/contact/ContactForm.tsx` - 7 yeni kontrol
+8. `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` - 7 yeni kontrol
+9. `src/components/chai-builder/blocks/cta/CTABanner.tsx` - 7 yeni kontrol
+10. `src/components/chai-builder/blocks/faq/FAQAccordion.tsx` - 7 yeni kontrol
+11. `src/components/chai-builder/blocks/gallery/ImageGallery.tsx` - 7 yeni kontrol
+12. `src/components/chai-builder/blocks/statistics/StatisticsCounter.tsx` - 7 yeni kontrol
+13. `src/components/chai-builder/blocks/pricing/PricingTable.tsx` - 7 yeni kontrol
 
-Bu "tek seferlik migration" islemi, mevcut projelerin gorsellerini de kurtaracak.
+### 4. Ornek Sonuc (ServicesGrid icin Sag Panel Gorunumu)
 
-## Degistirilecek Dosyalar
+Mevcut:
+- Bolum Basligi (metin)
+- Bolum Alt Basligi (metin)
+- Hizmetler (dizi)
+- Baslik Boyutu (dropdown)
+- Metin Hizalama (dropdown)
 
-1. `supabase/functions/generate-images/index.ts` - Base64'u Storage'a yukle, URL dondur
-2. `src/components/chai-builder/utils/convertToChaiBlocks.ts` - URL gorselleri filtrelemeden gec
-3. `src/pages/Project.tsx` - Mevcut base64 gorselleri Storage'a migrate et ve bloklara yaz
-4. Veritabani migration - `website-images` storage bucket olustur
+Yeni:
+- Bolum Basligi (metin)
+- Bolum Alt Basligi (metin)
+- Hizmetler (dizi)
+- **--- Stil Ayarlari ---**
+- Baslik Boyutu (dropdown: lg/xl/2xl/3xl)
+- Baslik Kalinligi (dropdown: Normal/Orta/Kalin/Cok Kalin)
+- Baslik Rengi (dropdown: Varsayilan/Birincil/Ikincil/Beyaz/Soluk)
+- Metin Hizalama (dropdown: Sol/Orta/Sag)
+- Aciklama Boyutu (dropdown: Kucuk/Normal/Buyuk/Cok Buyuk)
+- Aciklama Rengi (dropdown: Varsayilan/Koyu/Soluk)
+- Alt Baslik Stili (dropdown: Normal/Buyuk Harf)
+- Arka Plan (dropdown: Saydam/Varsayilan/Soluk/Kart/Birincil/Ikincil)
+- Bolum Boslugu (dropdown: Kucuk/Normal/Buyuk/Cok Buyuk)
 
-## Beklenen Sonuc
-
-- Tum gorseller Storage'da guvenli sekilde saklanir
-- Bloklar icinde sadece kucuk URL string'leri bulunur (DB performansi artar)
-- Editorun canvas'inda gorseller gorunur hale gelir
-- Yeni olusturulan projelerde gorseller otomatik olarak URL formatinda saklanir
+## Notlar
+- `PricingTable` ve `StatisticsCounter` gibi ozel arka planli bloklarda `bgColor` varsayilani farkli olacak (ornegin primary)
+- `HeroOverlay` blogu baslik rengi icin beyaz'i varsayilan olarak kullanacak (overlay ustunde okunurluk)
+- Mevcut blok verileri bozulmayacak: tum yeni prop'lar varsayilan degerlere sahip olacak, mevcut kayitlarda eksik prop'lar varsayilani kullanacak
