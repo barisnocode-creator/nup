@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,7 +52,6 @@ const sectorKeywords: Record<string, { primary: string; secondary: string; style
     secondary: "team office collaboration meeting",
     style: "professional clean trustworthy"
   },
-  // Legacy healthcare professions
   doctor: {
     primary: "medical clinic healthcare hospital",
     secondary: "doctor patient consultation care",
@@ -74,10 +74,7 @@ function getImagePrompts(
   businessName: string,
   extractedData?: ExtractedData
 ): ImagePrompt[] {
-  // Get sector keywords, fallback to 'other' if not found
   const keywords = sectorKeywords[profession] || sectorKeywords.other;
-  
-  // Use extracted services if available
   const services = extractedData?.services?.slice(0, 2).join(', ') || '';
   const serviceContext = services ? `featuring ${services},` : '';
 
@@ -97,7 +94,6 @@ function getImagePrompts(
   ];
 }
 
-// Get sector-specific blog image topic
 function getBlogImageTopic(profession: string): string {
   const topicMap: Record<string, string> = {
     food: "culinary food cooking restaurant",
@@ -157,6 +153,57 @@ async function generateImage(prompt: string, apiKey: string): Promise<string | n
   }
 }
 
+/**
+ * Upload a base64 data URI to Supabase Storage and return the public URL.
+ */
+async function uploadBase64ToStorage(
+  supabase: any,
+  base64DataUri: string,
+  projectId: string,
+  imageKey: string
+): Promise<string | null> {
+  try {
+    // Extract mime type and base64 data from data URI
+    const match = base64DataUri.match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) {
+      console.error("Invalid base64 data URI for key:", imageKey);
+      return null;
+    }
+    
+    const mimeType = match[1];
+    const base64Data = match[2];
+    const extension = mimeType.split('/')[1] || 'png';
+    const filePath = `${projectId}/${imageKey}_${Date.now()}.${extension}`;
+    
+    // Decode base64 to Uint8Array
+    const bytes = base64Decode(base64Data);
+    
+    // Upload to storage
+    const { data, error } = await supabase.storage
+      .from('website-images')
+      .upload(filePath, bytes, {
+        contentType: mimeType,
+        upsert: true,
+      });
+    
+    if (error) {
+      console.error("Storage upload error for", imageKey, ":", error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('website-images')
+      .getPublicUrl(filePath);
+    
+    console.log("Uploaded", imageKey, "to storage:", urlData.publicUrl);
+    return urlData.publicUrl;
+  } catch (err) {
+    console.error("Upload exception for", imageKey, ":", err);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -197,12 +244,10 @@ serve(async (req) => {
       });
     }
 
-    // Create auth client with user's token
     const authClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Verify JWT and get claims
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await authClient.auth.getClaims(token);
     
@@ -217,7 +262,7 @@ serve(async (req) => {
     const userId = claimsData.claims.sub;
     console.log("Authenticated user:", userId);
 
-    // Create service role client for database operations
+    // Create service role client for database + storage operations
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Fetch project data
@@ -247,7 +292,6 @@ serve(async (req) => {
     const profession = project.profession;
     const formData = project.form_data || {};
     
-    // Use extractedData from request, form_data, or fallback
     const extractedData: ExtractedData = requestExtractedData || (formData as any)?.extractedData || {};
     const businessName = extractedData.businessName || 
                          (formData as any)?.businessInfo?.businessName || 
@@ -258,18 +302,27 @@ serve(async (req) => {
 
     console.log("Generating images for sector:", profession, "- Business:", businessName);
 
-    // Get prompts based on sector (not just healthcare)
     const imagePrompts = getImagePrompts(profession, businessName, extractedData);
     
-    // Generate images (one at a time to avoid rate limits)
+    // Generate images one at a time to avoid rate limits
     const images: Record<string, string> = {};
     
     for (const imagePrompt of imagePrompts) {
-      const imageUrl = await generateImage(imagePrompt.prompt, LOVABLE_API_KEY);
-      if (imageUrl) {
-        images[imagePrompt.key] = imageUrl;
+      const base64Image = await generateImage(imagePrompt.prompt, LOVABLE_API_KEY);
+      if (base64Image) {
+        // Upload to storage instead of storing base64 directly
+        if (base64Image.startsWith('data:')) {
+          const publicUrl = await uploadBase64ToStorage(supabase, base64Image, projectId, imagePrompt.key);
+          if (publicUrl) {
+            images[imagePrompt.key] = publicUrl;
+          } else {
+            console.warn("Failed to upload", imagePrompt.key, "to storage, skipping");
+          }
+        } else {
+          // Already a URL (shouldn't happen but handle gracefully)
+          images[imagePrompt.key] = base64Image;
+        }
       }
-      // Small delay between requests to avoid rate limiting
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
@@ -277,16 +330,24 @@ serve(async (req) => {
     const blogPosts = generatedContent.pages?.blog?.posts || [];
     const updatedBlogPosts = [];
     
-    // Get sector-specific topic for blog images
     const blogTopic = getBlogImageTopic(profession);
     
     for (const post of blogPosts) {
       if (!post.featuredImage) {
         const blogImagePrompt = `Professional blog article featured image about "${post.title}", ${blogTopic} topic, clean modern design, professional photography style, 16:9 aspect ratio, no text on image`;
-        const featuredImage = await generateImage(blogImagePrompt, LOVABLE_API_KEY);
+        const base64Image = await generateImage(blogImagePrompt, LOVABLE_API_KEY);
+        
+        let featuredImage: string | undefined;
+        if (base64Image && base64Image.startsWith('data:')) {
+          const publicUrl = await uploadBase64ToStorage(supabase, base64Image, projectId, `blog_${post.id || Date.now()}`);
+          featuredImage = publicUrl || undefined;
+        } else if (base64Image) {
+          featuredImage = base64Image;
+        }
+        
         updatedBlogPosts.push({
           ...post,
-          featuredImage: featuredImage || undefined
+          featuredImage
         });
         await new Promise(resolve => setTimeout(resolve, 1000));
       } else {
@@ -327,7 +388,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Images generated and saved successfully for sector:", profession);
+    console.log("Images generated and saved to storage successfully for sector:", profession);
     return new Response(
       JSON.stringify({
         success: true,
