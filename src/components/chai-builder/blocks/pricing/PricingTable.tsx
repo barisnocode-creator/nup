@@ -258,6 +258,18 @@ registerChaiBlock(PricingTableBlock, {
         title: "Plan 3 - Popüler",
         default: false,
       }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "center",
+        enum: ["left", "center", "right"],
+      }),
     },
   },
 });

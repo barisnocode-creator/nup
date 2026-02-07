@@ -16,6 +16,15 @@ export type ImageGalleryProps = {
   image5: string;
   image6: string;
   columns: "2" | "3" | "4";
+  titleSize: string;
+  textAlign: string;
+};
+
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-2xl md:text-3xl',
+  xl: 'text-3xl md:text-4xl',
+  '2xl': 'text-3xl md:text-4xl',
+  '3xl': 'text-4xl md:text-5xl',
 };
 
 const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) => {
@@ -30,6 +39,8 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
     image5,
     image6,
     columns = "3",
+    titleSize = '2xl',
+    textAlign = 'center',
   } = props;
 
   const images = [image1, image2, image3, image4, image5, image6].filter(Boolean);
@@ -46,14 +57,14 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
     >
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
-          <div className="text-center mb-12">
+          <div className={`text-${textAlign} mb-12`}>
             {subtitle && (
               <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
                 {subtitle}
               </span>
             )}
             {title && (
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground`}>
                 {title}
               </h2>
             )}
@@ -139,6 +150,18 @@ registerChaiBlock(ImageGalleryBlock, {
         title: "Görsel 6",
         default: "",
         ui: { "ui:widget": "image" },
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "center",
+        enum: ["left", "center", "right"],
       }),
     },
   },

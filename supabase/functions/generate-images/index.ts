@@ -294,10 +294,10 @@ serve(async (req) => {
       }
     }
 
-    // Update the generated_content with images
+    // Update the generated_content with images - MERGE with existing (preserve Pixabay images)
     const updatedContent = {
       ...generatedContent,
-      images,
+      images: { ...(generatedContent.images || {}), ...images },
       pages: {
         ...generatedContent.pages,
         blog: generatedContent.pages?.blog ? {

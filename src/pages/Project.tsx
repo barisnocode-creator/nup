@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
-import { convertGeneratedContentToChaiBlocks, getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/convertToChaiBlocks';
+import { convertGeneratedContentToChaiBlocks, getThemeForTemplate, getThemeFromColorPreferences, blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/convertToChaiBlocks';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -155,6 +155,26 @@ export default function Project() {
       if (projectData.generated_content && 
           (!projectData.chai_blocks || (Array.isArray(projectData.chai_blocks) && projectData.chai_blocks.length === 0))) {
         await convertAndSaveChaiBlocks(projectData);
+      }
+      // If blocks exist but are missing images that are available in generated_content, patch them
+      else if (
+        projectData.chai_blocks && 
+        Array.isArray(projectData.chai_blocks) && 
+        projectData.chai_blocks.length > 0 && 
+        projectData.generated_content &&
+        blocksNeedImageRefresh(projectData.chai_blocks, projectData.generated_content)
+      ) {
+        const patchedBlocks = patchBlocksWithImages(projectData.chai_blocks, projectData.generated_content);
+        // Save patched blocks
+        const { error: patchError } = await supabase
+          .from('projects')
+          .update({ chai_blocks: patchedBlocks as any, updated_at: new Date().toISOString() })
+          .eq('id', projectData.id);
+        
+        if (!patchError) {
+          setProject(prev => prev ? { ...prev, chai_blocks: patchedBlocks } : null);
+          console.log('[Project] Patched blocks with missing images');
+        }
       }
     }
 

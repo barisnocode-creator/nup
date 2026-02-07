@@ -14,6 +14,15 @@ export type HeroOverlayProps = {
   buttonLink: string;
   backgroundImage: string;
   overlayOpacity: number;
+  titleSize: string;
+  textAlign: string;
+};
+
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-3xl md:text-4xl lg:text-5xl',
+  xl: 'text-4xl md:text-5xl lg:text-6xl',
+  '2xl': 'text-4xl md:text-5xl lg:text-6xl',
+  '3xl': 'text-5xl md:text-6xl lg:text-7xl',
 };
 
 const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
@@ -26,6 +35,8 @@ const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
     buttonLink,
     backgroundImage,
     overlayOpacity = 60,
+    titleSize = '2xl',
+    textAlign = 'left',
     inBuilder 
   } = props;
 
@@ -59,7 +70,7 @@ const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
             </span>
           )}
           
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white mb-6">
+          <h1 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold leading-tight text-white mb-6 text-${textAlign}`}>
             {title}
           </h1>
           
@@ -128,6 +139,18 @@ registerChaiBlock(HeroOverlayBlock, {
         type: "number",
         title: "Overlay Opaklığı (%)",
         default: 60,
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "left",
+        enum: ["left", "center", "right"],
       }),
     },
   },

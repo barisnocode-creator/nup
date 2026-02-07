@@ -13,6 +13,15 @@ export type HeroSplitProps = {
   buttonText: string;
   buttonLink: string;
   image: string;
+  titleSize: string;
+  textAlign: string;
+};
+
+const titleSizeMap: Record<string, string> = {
+  lg: 'text-3xl md:text-4xl lg:text-5xl',
+  xl: 'text-4xl md:text-5xl lg:text-6xl',
+  '2xl': 'text-4xl md:text-5xl lg:text-6xl',
+  '3xl': 'text-5xl md:text-6xl lg:text-7xl',
 };
 
 const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
@@ -24,6 +33,8 @@ const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
     buttonText,
     buttonLink,
     image,
+    titleSize = '2xl',
+    textAlign = 'left',
     inBuilder 
   } = props;
 
@@ -41,7 +52,7 @@ const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
                 {subtitle}
               </span>
             )}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-foreground">
+            <h1 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold leading-tight text-foreground text-${textAlign}`}>
               {title}
             </h1>
             <p className="text-lg text-muted-foreground max-w-lg">
@@ -114,6 +125,18 @@ registerChaiBlock(HeroSplitBlock, {
         title: "Görsel",
         default: "",
         ui: { "ui:widget": "image" },
+      }),
+      titleSize: builderProp({
+        type: "string",
+        title: "Başlık Boyutu",
+        default: "2xl",
+        enum: ["lg", "xl", "2xl", "3xl"],
+      }),
+      textAlign: builderProp({
+        type: "string",
+        title: "Metin Hizalama",
+        default: "left",
+        enum: ["left", "center", "right"],
       }),
     },
   },
