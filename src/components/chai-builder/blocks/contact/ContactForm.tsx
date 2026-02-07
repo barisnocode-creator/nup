@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type ContactFormProps = {
   styles: ChaiStyles;
@@ -14,16 +15,7 @@ export type ContactFormProps = {
   phone: string;
   address: string;
   submitButtonText: string;
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-2xl md:text-3xl lg:text-4xl',
-  xl: 'text-3xl md:text-4xl lg:text-5xl',
-  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
-  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
-};
+} & CommonStyleProps;
 
 const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
   const { 
@@ -35,38 +27,36 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
     phone,
     address,
     submitButtonText,
-    titleSize = '2xl',
-    textAlign = 'left',
     inBuilder,
+    ...styleProps
   } = props;
+
+  const s = resolveStyles(styleProps);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inBuilder) return;
-    // Form submission logic would go here
   };
 
   return (
-    <section {...blockProps} className="py-20 bg-background">
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16">
-          {/* Info */}
           <div className="space-y-8">
             {sectionSubtitle && (
-              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform}`}>
                 {sectionSubtitle}
               </span>
             )}
-            <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground text-${textAlign}`}>
+            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign}`}>
               {sectionTitle}
             </h2>
             {sectionDescription && (
-              <p className="text-lg text-muted-foreground max-w-md">
+              <p className={`${s.descSize} ${s.descColor} max-w-md`}>
                 {sectionDescription}
               </p>
             )}
 
-            {/* Contact Info */}
             <div className="space-y-6 pt-4">
               {email && (
                 <div className="flex items-center gap-4">
@@ -104,60 +94,27 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
             </div>
           </div>
 
-          {/* Form */}
           <div className="p-8 rounded-2xl bg-card border border-border">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Adınız
-                  </label>
-                  <input 
-                    type="text"
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Adınızı girin"
-                    disabled={inBuilder}
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-2">Adınız</label>
+                  <input type="text" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Adınızı girin" disabled={inBuilder} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    E-posta
-                  </label>
-                  <input 
-                    type="email"
-                    className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="E-posta adresiniz"
-                    disabled={inBuilder}
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-2">E-posta</label>
+                  <input type="email" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="E-posta adresiniz" disabled={inBuilder} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Konu
-                </label>
-                <input 
-                  type="text"
-                  className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Konu başlığı"
-                  disabled={inBuilder}
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Konu</label>
+                <input type="text" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Konu başlığı" disabled={inBuilder} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Mesajınız
-                </label>
-                <textarea 
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  placeholder="Mesajınızı yazın..."
-                  disabled={inBuilder}
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Mesajınız</label>
+                <textarea rows={5} className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Mesajınızı yazın..." disabled={inBuilder} />
               </div>
-              <button 
-                type="submit"
-                className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-                disabled={inBuilder}
-              >
+              <button type="submit" className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors" disabled={inBuilder}>
                 {submitButtonText}
               </button>
             </form>
@@ -212,18 +169,7 @@ registerChaiBlock(ContactFormBlock, {
         title: "Gönder Butonu Metni",
         default: "Mesaj Gönder",
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "left",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ bgColor: "background", textAlign: "left" }),
     },
   },
 });

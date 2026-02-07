@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { heroTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type HeroOverlayProps = {
   styles: ChaiStyles;
@@ -14,16 +15,7 @@ export type HeroOverlayProps = {
   buttonLink: string;
   backgroundImage: string;
   overlayOpacity: number;
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-3xl md:text-4xl lg:text-5xl',
-  xl: 'text-4xl md:text-5xl lg:text-6xl',
-  '2xl': 'text-4xl md:text-5xl lg:text-6xl',
-  '3xl': 'text-5xl md:text-6xl lg:text-7xl',
-};
+} & CommonStyleProps;
 
 const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
   const { 
@@ -35,17 +27,17 @@ const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
     buttonLink,
     backgroundImage,
     overlayOpacity = 60,
-    titleSize = '2xl',
-    textAlign = 'left',
-    inBuilder 
+    inBuilder,
+    ...styleProps
   } = props;
+
+  const s = resolveStyles(styleProps);
 
   return (
     <section 
       {...blockProps} 
-      className="relative min-h-[600px] flex items-center"
+      className={`relative min-h-[600px] flex items-center`}
     >
-      {/* Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -55,26 +47,24 @@ const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
         }}
       />
       
-      {/* Overlay */}
       <div 
         className="absolute inset-0 bg-black"
         style={{ opacity: overlayOpacity / 100 }}
       />
 
-      {/* Content */}
-      <div className="relative container mx-auto px-6 py-20">
+      <div className={`relative container mx-auto px-6 ${s.sectionPadding}`}>
         <div className="max-w-2xl">
           {subtitle && (
-            <span className="inline-block px-4 py-2 bg-white/10 backdrop-blur text-white rounded-full text-sm font-medium mb-6">
+            <span className={`inline-block px-4 py-2 bg-white/10 backdrop-blur text-white rounded-full text-sm font-medium mb-6 ${s.subtitleTransform}`}>
               {subtitle}
             </span>
           )}
           
-          <h1 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold leading-tight text-white mb-6 text-${textAlign}`}>
+          <h1 className={`${s.titleSize(heroTitleSizeMap)} ${s.titleWeight} leading-tight ${s.titleColor} mb-6 text-${s.textAlign}`}>
             {title}
           </h1>
           
-          <p className="text-xl text-white/80 mb-10 max-w-xl">
+          <p className={`${s.descSize} ${s.descColor} mb-10 max-w-xl`}>
             {description}
           </p>
 
@@ -140,18 +130,7 @@ registerChaiBlock(HeroOverlayBlock, {
         title: "Overlay Opaklığı (%)",
         default: 60,
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "left",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ titleColor: "white", descColor: "white", textAlign: "left" }),
     },
   },
 });

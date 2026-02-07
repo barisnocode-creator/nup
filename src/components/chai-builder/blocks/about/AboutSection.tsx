@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type AboutSectionProps = {
   styles: ChaiStyles;
@@ -13,16 +14,7 @@ export type AboutSectionProps = {
   features: string;
   image: string;
   imagePosition: "left" | "right";
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-2xl md:text-3xl lg:text-4xl',
-  xl: 'text-3xl md:text-4xl lg:text-5xl',
-  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
-  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
-};
+} & CommonStyleProps;
 
 const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) => {
   const { 
@@ -33,30 +25,29 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
     features,
     image,
     imagePosition = "right",
-    titleSize = '2xl',
-    textAlign = 'left',
+    ...styleProps
   } = props;
 
+  const s = resolveStyles(styleProps);
   const featureList = features ? features.split('\n').filter(f => f.trim()) : [];
 
   return (
     <section 
       {...blockProps} 
-      className="py-20 bg-background"
+      className={`${s.sectionPadding} ${s.bgColor}`}
     >
       <div className="container mx-auto px-6">
         <div className={`grid lg:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'lg:flex-row-reverse' : ''}`}>
-          {/* Content */}
           <div className={`space-y-6 ${imagePosition === 'left' ? 'lg:order-2' : ''}`}>
             {subtitle && (
-              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
-            <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground text-${textAlign}`}>
+            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign}`}>
               {title}
             </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
+            <p className={`${s.descSize} ${s.descColor} leading-relaxed`}>
               {description}
             </p>
             
@@ -74,7 +65,6 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
             )}
           </div>
 
-          {/* Image */}
           <div className={`relative ${imagePosition === 'left' ? 'lg:order-1' : ''}`}>
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-30" />
             <img 
@@ -131,18 +121,7 @@ registerChaiBlock(AboutSectionBlock, {
         default: "right",
         enum: ["left", "right"],
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "left",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ bgColor: "background", textAlign: "left" }),
     },
   },
 });

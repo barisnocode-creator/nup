@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type StatisticsCounterProps = {
   styles: ChaiStyles;
@@ -17,9 +18,7 @@ export type StatisticsCounterProps = {
   stat3Label: string;
   stat4Value: string;
   stat4Label: string;
-  titleSize: string;
-  textAlign: string;
-};
+} & CommonStyleProps;
 
 const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounterProps>) => {
   const { 
@@ -30,32 +29,29 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
     stat2Value, stat2Label,
     stat3Value, stat3Label,
     stat4Value, stat4Label,
-    titleSize = '2xl',
-    textAlign = 'center',
+    ...styleProps
   } = props;
 
+  const s = resolveStyles(styleProps);
   const stats = [
     { value: stat1Value, label: stat1Label },
     { value: stat2Value, label: stat2Label },
     { value: stat3Value, label: stat3Label },
     { value: stat4Value, label: stat4Label },
-  ].filter(s => s.value && s.label);
+  ].filter(st => st.value && st.label);
 
   return (
-    <section 
-      {...blockProps} 
-      className="py-20 bg-primary text-primary-foreground"
-    >
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor} text-primary-foreground`}>
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
-          <div className="text-center mb-12">
+          <div className={`text-${s.textAlign} mb-12`}>
             {subtitle && (
-              <span className="inline-block px-4 py-2 bg-primary-foreground/10 rounded-full text-sm font-medium mb-4">
+              <span className={`inline-block px-4 py-2 bg-primary-foreground/10 rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
             {title && (
-              <h2 className="text-3xl md:text-4xl font-bold">
+              <h2 className={`${s.titleSize()} ${s.titleWeight}`}>
                 {title}
               </h2>
             )}
@@ -65,12 +61,8 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
         <div className={`grid grid-cols-2 md:grid-cols-${stats.length} gap-8 text-center`}>
           {stats.map((stat, index) => (
             <div key={index} className="space-y-2">
-              <div className="text-4xl md:text-5xl lg:text-6xl font-bold">
-                {stat.value}
-              </div>
-              <div className="text-primary-foreground/80 text-sm md:text-base">
-                {stat.label}
-              </div>
+              <div className="text-4xl md:text-5xl lg:text-6xl font-bold">{stat.value}</div>
+              <div className="text-primary-foreground/80 text-sm md:text-base">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -87,68 +79,17 @@ registerChaiBlock(StatisticsCounterBlock, {
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-primary"),
-      title: builderProp({
-        type: "string",
-        title: "Başlık",
-        default: "",
-      }),
-      subtitle: builderProp({
-        type: "string",
-        title: "Alt Başlık",
-        default: "",
-      }),
-      stat1Value: builderProp({
-        type: "string",
-        title: "İstatistik 1 - Değer",
-        default: "500+",
-      }),
-      stat1Label: builderProp({
-        type: "string",
-        title: "İstatistik 1 - Etiket",
-        default: "Mutlu Müşteri",
-      }),
-      stat2Value: builderProp({
-        type: "string",
-        title: "İstatistik 2 - Değer",
-        default: "10+",
-      }),
-      stat2Label: builderProp({
-        type: "string",
-        title: "İstatistik 2 - Etiket",
-        default: "Yıllık Deneyim",
-      }),
-      stat3Value: builderProp({
-        type: "string",
-        title: "İstatistik 3 - Değer",
-        default: "1000+",
-      }),
-      stat3Label: builderProp({
-        type: "string",
-        title: "İstatistik 3 - Etiket",
-        default: "Tamamlanan Proje",
-      }),
-      stat4Value: builderProp({
-        type: "string",
-        title: "İstatistik 4 - Değer",
-        default: "24/7",
-      }),
-      stat4Label: builderProp({
-        type: "string",
-        title: "İstatistik 4 - Etiket",
-        default: "Destek",
-      }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "center",
-        enum: ["left", "center", "right"],
-      }),
+      title: builderProp({ type: "string", title: "Başlık", default: "" }),
+      subtitle: builderProp({ type: "string", title: "Alt Başlık", default: "" }),
+      stat1Value: builderProp({ type: "string", title: "İstatistik 1 - Değer", default: "500+" }),
+      stat1Label: builderProp({ type: "string", title: "İstatistik 1 - Etiket", default: "Mutlu Müşteri" }),
+      stat2Value: builderProp({ type: "string", title: "İstatistik 2 - Değer", default: "10+" }),
+      stat2Label: builderProp({ type: "string", title: "İstatistik 2 - Etiket", default: "Yıllık Deneyim" }),
+      stat3Value: builderProp({ type: "string", title: "İstatistik 3 - Değer", default: "1000+" }),
+      stat3Label: builderProp({ type: "string", title: "İstatistik 3 - Etiket", default: "Tamamlanan Proje" }),
+      stat4Value: builderProp({ type: "string", title: "İstatistik 4 - Değer", default: "24/7" }),
+      stat4Label: builderProp({ type: "string", title: "İstatistik 4 - Etiket", default: "Destek" }),
+      ...commonStyleSchemaProps({ bgColor: "primary", titleColor: "white", descColor: "white", textAlign: "center" }),
     },
   },
 });

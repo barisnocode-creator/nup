@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type ImageGalleryProps = {
   styles: ChaiStyles;
@@ -16,55 +17,34 @@ export type ImageGalleryProps = {
   image5: string;
   image6: string;
   columns: "2" | "3" | "4";
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-2xl md:text-3xl',
-  xl: 'text-3xl md:text-4xl',
-  '2xl': 'text-3xl md:text-4xl',
-  '3xl': 'text-4xl md:text-5xl',
-};
+} & CommonStyleProps;
 
 const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) => {
   const { 
     blockProps, 
     title,
     subtitle,
-    image1,
-    image2,
-    image3,
-    image4,
-    image5,
-    image6,
+    image1, image2, image3, image4, image5, image6,
     columns = "3",
-    titleSize = '2xl',
-    textAlign = 'center',
+    ...styleProps
   } = props;
 
+  const s = resolveStyles(styleProps);
   const images = [image1, image2, image3, image4, image5, image6].filter(Boolean);
-  const gridCols = {
-    "2": "md:grid-cols-2",
-    "3": "md:grid-cols-3",
-    "4": "md:grid-cols-4",
-  };
+  const gridCols = { "2": "md:grid-cols-2", "3": "md:grid-cols-3", "4": "md:grid-cols-4" };
 
   return (
-    <section 
-      {...blockProps} 
-      className="py-20 bg-background"
-    >
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
-          <div className={`text-${textAlign} mb-12`}>
+          <div className={`text-${s.textAlign} mb-12`}>
             {subtitle && (
-              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4">
+              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
             {title && (
-              <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-foreground`}>
+              <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor}`}>
                 {title}
               </h2>
             )}
@@ -73,10 +53,7 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
 
         <div className={`grid grid-cols-1 ${gridCols[columns]} gap-4`}>
           {images.map((image, index) => (
-            <div 
-              key={index} 
-              className="relative group overflow-hidden rounded-xl aspect-square"
-            >
+            <div key={index} className="relative group overflow-hidden rounded-xl aspect-square">
               <img 
                 src={image || "/placeholder.svg"} 
                 alt={`Galeri ${index + 1}`}
@@ -115,54 +92,13 @@ registerChaiBlock(ImageGalleryBlock, {
         default: "3",
         enum: ["2", "3", "4"],
       }),
-      image1: builderProp({
-        type: "string",
-        title: "Görsel 1",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      image2: builderProp({
-        type: "string",
-        title: "Görsel 2",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      image3: builderProp({
-        type: "string",
-        title: "Görsel 3",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      image4: builderProp({
-        type: "string",
-        title: "Görsel 4",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      image5: builderProp({
-        type: "string",
-        title: "Görsel 5",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      image6: builderProp({
-        type: "string",
-        title: "Görsel 6",
-        default: "",
-        ui: { "ui:widget": "image" },
-      }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "center",
-        enum: ["left", "center", "right"],
-      }),
+      image1: builderProp({ type: "string", title: "Görsel 1", default: "", ui: { "ui:widget": "image" } }),
+      image2: builderProp({ type: "string", title: "Görsel 2", default: "", ui: { "ui:widget": "image" } }),
+      image3: builderProp({ type: "string", title: "Görsel 3", default: "", ui: { "ui:widget": "image" } }),
+      image4: builderProp({ type: "string", title: "Görsel 4", default: "", ui: { "ui:widget": "image" } }),
+      image5: builderProp({ type: "string", title: "Görsel 5", default: "", ui: { "ui:widget": "image" } }),
+      image6: builderProp({ type: "string", title: "Görsel 6", default: "", ui: { "ui:widget": "image" } }),
+      ...commonStyleSchemaProps({ bgColor: "background", textAlign: "center" }),
     },
   },
 });
