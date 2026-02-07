@@ -1,5 +1,8 @@
-import { getChaiBuilderTailwindConfig } from "@chaibuilder/sdk/tailwind";
-
-const chaiConfig = getChaiBuilderTailwindConfig(["./src/**/*.{js,ts,jsx,tsx}"]);
-
-export default chaiConfig;
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./src/**/*.{js,ts,jsx,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
