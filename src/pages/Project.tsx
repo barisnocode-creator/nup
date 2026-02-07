@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
-import { convertGeneratedContentToChaiBlocks, getThemeForTemplate } from '@/components/chai-builder/utils/convertToChaiBlocks';
+import { convertGeneratedContentToChaiBlocks, getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/convertToChaiBlocks';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -43,6 +43,12 @@ interface Project {
   form_data: {
     websitePreferences?: {
       colorPreference?: string;
+      colorTone?: 'warm' | 'cool' | 'neutral';
+      colorMode?: 'light' | 'dark' | 'neutral';
+    };
+    extractedData?: {
+      colorTone?: 'warm' | 'cool' | 'neutral';
+      colorMode?: 'light' | 'dark' | 'neutral';
     };
   } | null;
   generated_content: GeneratedContent | null;
@@ -163,7 +169,16 @@ export default function Project() {
         projectData.generated_content,
         projectData.template_id
       );
-      const theme = getThemeForTemplate(projectData.template_id);
+      
+      // Determine theme: prefer color preferences from form_data, fallback to template
+      const colorTone = projectData.form_data?.extractedData?.colorTone 
+        || projectData.form_data?.websitePreferences?.colorTone;
+      const colorMode = projectData.form_data?.extractedData?.colorMode 
+        || projectData.form_data?.websitePreferences?.colorMode;
+      
+      const theme = (colorTone || colorMode)
+        ? getThemeFromColorPreferences(colorTone, colorMode)
+        : getThemeForTemplate(projectData.template_id);
       
       // Save to database
       const { error } = await supabase

@@ -1,9 +1,49 @@
 import { GeneratedContent } from '@/types/generated-website';
 import { ChaiBlock } from '@chaibuilder/sdk';
-import { templateToPreset, modernProfessionalPreset } from '../themes/presets';
+import {
+  templateToPreset,
+  modernProfessionalPreset,
+  boldAgencyPreset,
+  elegantMinimalPreset,
+  corporateBluePreset,
+  minimalDarkPreset,
+  modernSaasPreset,
+  videoStudioPreset,
+  vibrantCreativePreset,
+} from '../themes/presets';
 
 // Unique ID generator
 const generateBlockId = () => `block_${Math.random().toString(36).substr(2, 9)}`;
+
+/**
+ * Maps user color preferences to a ChaiBuilder theme preset.
+ * colorTone: 'warm' | 'cool' | 'neutral'
+ * colorMode: 'light' | 'dark' | 'neutral'
+ */
+export function getThemeFromColorPreferences(
+  colorTone?: string,
+  colorMode?: string
+): any {
+  const tone = colorTone || 'neutral';
+  const mode = colorMode || 'light';
+
+  // Warm tones
+  if (tone === 'warm' && mode === 'light') return modernProfessionalPreset;
+  if (tone === 'warm' && mode === 'dark') return videoStudioPreset;
+  if (tone === 'warm' && mode === 'neutral') return vibrantCreativePreset;
+
+  // Cool tones
+  if (tone === 'cool' && mode === 'light') return corporateBluePreset;
+  if (tone === 'cool' && mode === 'dark') return modernSaasPreset;
+  if (tone === 'cool' && mode === 'neutral') return corporateBluePreset;
+
+  // Neutral tones
+  if (tone === 'neutral' && mode === 'light') return elegantMinimalPreset;
+  if (tone === 'neutral' && mode === 'dark') return minimalDarkPreset;
+  if (tone === 'neutral' && mode === 'neutral') return boldAgencyPreset;
+
+  return modernProfessionalPreset;
+}
 
 /**
  * Converts existing generated_content data to ChaiBuilder blocks format.

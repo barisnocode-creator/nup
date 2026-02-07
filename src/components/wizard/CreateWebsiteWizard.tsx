@@ -7,48 +7,37 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { WizardProgress } from './WizardProgress';
 import { AIChatStep } from './steps/AIChatStep';
-import { PreferencesStep } from './steps/PreferencesStep';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { WizardFormData, ExtractedBusinessData, Profession } from '@/types/wizard';
-import { initialWizardData, mapSectorToProfession } from '@/types/wizard';
+import { mapSectorToProfession } from '@/types/wizard';
 
 interface CreateWebsiteWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const TOTAL_STEPS = 2;
-
 export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [stepValidity, setStepValidity] = useState<Record<number, boolean>>({
-    1: false,
-    2: false,
-  });
+  const [isValid, setIsValid] = useState(false);
   
-  const [formData, setFormData] = useState<Partial<WizardFormData>>(() => ({
-    ...initialWizardData,
-  }));
+  const [formData, setFormData] = useState<Partial<WizardFormData>>({
+    extractedData: undefined,
+  });
 
   const handleAIChatComplete = useCallback((extractedData: ExtractedBusinessData) => {
-    // Map sector to valid profession using the utility function
     const profession: Profession = mapSectorToProfession(extractedData.sector);
     
-    setFormData((prev) => ({
-      ...prev,
+    setFormData({
       extractedData,
       profession,
-      // Also populate legacy fields for compatibility
       businessInfo: {
         businessName: extractedData.businessName,
         city: extractedData.city,
@@ -59,52 +48,18 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
       professionalDetails: {
         services: extractedData.services,
       },
-      // Pre-populate preferences from AI chat
       websitePreferences: {
-        ...prev.websitePreferences,
-        languages: extractedData.languages || prev.websitePreferences?.languages || ['Turkish'],
-        colorTone: extractedData.colorTone || prev.websitePreferences?.colorTone || 'neutral',
-        colorMode: extractedData.colorMode || prev.websitePreferences?.colorMode || 'light',
-        tone: prev.websitePreferences?.tone || 'professional',
+        languages: extractedData.languages || ['Turkish'],
+        tone: 'professional',
+        colorTone: extractedData.colorTone || 'neutral',
+        colorMode: extractedData.colorMode || 'light',
       },
-    }));
+    });
   }, []);
 
-  const handleAIChatValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 1: isValid }));
+  const handleAIChatValidityChange = useCallback((valid: boolean) => {
+    setIsValid(valid);
   }, []);
-
-  const handlePreferencesChange = useCallback((data: WizardFormData['websitePreferences']) => {
-    setFormData((prev) => ({ ...prev, websitePreferences: data }));
-  }, []);
-
-  const handlePreferencesValidityChange = useCallback((isValid: boolean) => {
-    setStepValidity((prev) => ({ ...prev, 2: isValid }));
-  }, []);
-
-  const canProceed = stepValidity[currentStep];
-
-  const handleNext = () => {
-    // AI chat adımından çıkarken extractedData kontrolü
-    if (currentStep === 1 && !formData.extractedData) {
-      toast({
-        title: 'Dikkat',
-        description: 'Sohbet tamamlanmadan devam edilemez. Lütfen AI asistan ile sohbeti tamamlayın.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep((prev) => prev + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
 
   const handleSubmit = async () => {
     if (!user) {
@@ -116,7 +71,15 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
       return;
     }
 
-    // Ensure we have a valid profession
+    if (!formData.extractedData) {
+      toast({
+        title: 'Dikkat',
+        description: 'Sohbet tamamlanmadan site oluşturulamaz.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const profession = formData.profession || mapSectorToProfession(formData.extractedData?.sector || '');
 
     setIsSubmitting(true);
@@ -162,15 +125,10 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
     }
   };
 
-  const resetWizard = () => {
-    setCurrentStep(1);
-    setFormData({ ...initialWizardData });
-    setStepValidity({ 1: false, 2: false });
-    onOpenChange(false);
-  };
-
   const handleClose = () => {
-    resetWizard();
+    setFormData({ extractedData: undefined });
+    setIsValid(false);
+    onOpenChange(false);
   };
 
   return (
@@ -180,58 +138,25 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
         <DialogDescription className="sr-only">
           AI asistanla sohbet ederek web sitenizi oluşturun
         </DialogDescription>
-        
-        <WizardProgress currentStep={currentStep} totalSteps={TOTAL_STEPS} />
 
         <div className="min-h-[300px]">
-          {currentStep === 1 && (
-            <AIChatStep
-              onComplete={handleAIChatComplete}
-              onValidityChange={handleAIChatValidityChange}
-            />
-          )}
-
-          {currentStep === 2 && (
-            <PreferencesStep
-              value={{
-                languages: formData.websitePreferences?.languages || ['Turkish'],
-                tone: formData.websitePreferences?.tone || 'professional',
-                colorTone: formData.websitePreferences?.colorTone || 'neutral',
-                colorMode: formData.websitePreferences?.colorMode || 'light',
-              }}
-              onChange={handlePreferencesChange}
-              onValidityChange={handlePreferencesValidityChange}
-            />
-          )}
+          <AIChatStep
+            onComplete={handleAIChatComplete}
+            onValidityChange={handleAIChatValidityChange}
+          />
         </div>
 
-        <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={currentStep === 1}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Geri
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={handleSubmit} disabled={!isValid || isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Oluşturuluyor...
+              </>
+            ) : (
+              '🚀 Web Sitesi Oluştur'
+            )}
           </Button>
-
-          {currentStep < TOTAL_STEPS ? (
-            <Button onClick={handleNext} disabled={!canProceed}>
-              Devam Et
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          ) : (
-            <Button onClick={handleSubmit} disabled={!canProceed || isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Oluşturuluyor...
-                </>
-              ) : (
-                'Web Sitesi Oluştur'
-              )}
-            </Button>
-          )}
         </div>
       </DialogContent>
     </Dialog>

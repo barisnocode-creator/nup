@@ -19,12 +19,12 @@ interface AIChatStepProps {
 }
 
 // Total number of questions in the wizard
-const TOTAL_QUESTIONS = 10 as const;
+const TOTAL_QUESTIONS = 3 as const;
 
 // Hardcoded first message for instant display
-const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size ${TOTAL_QUESTIONS} kısa soru sorarak işletmeniz için harika bir web sitesi oluşturacağım.
+const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 3 kısa soru sorarak hızlıca harika bir web sitesi oluşturacağım.
 
-**Soru 1/${TOTAL_QUESTIONS}:** İşletmenizin adı nedir?`;
+İşletmenizin adı nedir ve ne iş yapıyorsunuz? 🏢`;
 
 export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -415,7 +415,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         </div>
         {isComplete && (
           <p className="text-sm text-muted-foreground mt-2 text-center">
-            ✨ Bilgiler toplandı! Devam etmek için "Devam Et" butonuna tıklayın.
+            ✨ Bilgiler toplandı! "Web Sitesi Oluştur" butonuna tıklayın.
           </p>
         )}
       </div>
