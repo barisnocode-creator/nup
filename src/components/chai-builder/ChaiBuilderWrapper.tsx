@@ -7,6 +7,7 @@ import '@chaibuilder/sdk/styles';
 import '@/styles/chaibuilder.tailwind.css';
 import { useChaiBuilderSave } from './hooks/useChaiBuilder';
 import { supabase } from '@/integrations/supabase/client';
+import { ArrowLeft } from 'lucide-react';
 
 // Register custom blocks
 import './blocks';
@@ -91,7 +92,17 @@ export function ChaiBuilderWrapper({
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden relative">
+      {/* Back to Dashboard Button - overlayed on top of the editor */}
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="absolute top-2 left-2 z-[9999] flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background/90 backdrop-blur-sm border border-border shadow-sm hover:bg-accent transition-colors text-sm text-foreground"
+        title="Dashboard'a dön"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="hidden sm:inline">Geri</span>
+      </button>
+
       <ChaiBuilderEditor
         pageId={projectId}
         blocks={initialBlocks}
