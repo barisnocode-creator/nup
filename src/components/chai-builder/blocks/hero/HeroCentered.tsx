@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { heroCenteredTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type HeroCenteredProps = {
   styles: ChaiStyles;
@@ -15,16 +16,7 @@ export type HeroCenteredProps = {
   secondaryButtonText: string;
   secondaryButtonLink: string;
   backgroundImage: string;
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-3xl md:text-4xl lg:text-5xl',
-  xl: 'text-4xl md:text-5xl lg:text-6xl',
-  '2xl': 'text-4xl md:text-5xl lg:text-7xl',
-  '3xl': 'text-5xl md:text-6xl lg:text-8xl',
-};
+} & CommonStyleProps;
 
 const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) => {
   const { 
@@ -37,47 +29,44 @@ const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) =>
     secondaryButtonText,
     secondaryButtonLink,
     backgroundImage,
-    titleSize = '2xl',
-    textAlign = 'center',
-    inBuilder 
+    inBuilder,
+    ...styleProps
   } = props;
+
+  const s = resolveStyles(styleProps);
 
   return (
     <section 
       {...blockProps} 
-      className="relative min-h-[700px] flex items-center justify-center bg-background overflow-hidden"
+      className={`relative min-h-[700px] flex items-center justify-center ${s.bgColor} overflow-hidden`}
       style={{
         backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      {/* Overlay */}
       {backgroundImage && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       )}
 
-      {/* Decorative elements */}
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
 
-      {/* Content */}
-      <div className={`relative container mx-auto px-6 py-20 text-${textAlign}`}>
+      <div className={`relative container mx-auto px-6 ${s.sectionPadding} text-${s.textAlign}`}>
         {subtitle && (
-          <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6">
+          <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 ${s.subtitleTransform}`}>
             {subtitle}
           </span>
         )}
         
-        <h1 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold leading-tight text-foreground max-w-4xl mx-auto mb-6`}>
+        <h1 className={`${s.titleSize(heroCenteredTitleSizeMap)} ${s.titleWeight} ${s.titleColor} leading-tight max-w-4xl mx-auto mb-6`}>
           {title}
         </h1>
         
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+        <p className={`${s.descSize} ${s.descColor} max-w-2xl mx-auto mb-10`}>
           {description}
         </p>
 
-        {/* Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4">
           {primaryButtonText && (
             <a 
@@ -155,18 +144,7 @@ registerChaiBlock(HeroCenteredBlock, {
         default: "",
         ui: { "ui:widget": "image" },
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "center",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ bgColor: "background", textAlign: "center" }),
     },
   },
 });

@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { heroTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type HeroSplitProps = {
   styles: ChaiStyles;
@@ -13,16 +14,7 @@ export type HeroSplitProps = {
   buttonText: string;
   buttonLink: string;
   image: string;
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-3xl md:text-4xl lg:text-5xl',
-  xl: 'text-4xl md:text-5xl lg:text-6xl',
-  '2xl': 'text-4xl md:text-5xl lg:text-6xl',
-  '3xl': 'text-5xl md:text-6xl lg:text-7xl',
-};
+} & CommonStyleProps;
 
 const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
   const { 
@@ -33,29 +25,29 @@ const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
     buttonText,
     buttonLink,
     image,
-    titleSize = '2xl',
-    textAlign = 'left',
-    inBuilder 
+    inBuilder,
+    ...styleProps
   } = props;
+
+  const s = resolveStyles(styleProps);
 
   return (
     <section 
       {...blockProps} 
-      className="relative min-h-[600px] flex items-center bg-background py-20"
+      className={`relative min-h-[600px] flex items-center ${s.bgColor} ${s.sectionPadding}`}
     >
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Content */}
           <div className="space-y-6">
             {subtitle && (
-              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium">
+              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
-            <h1 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold leading-tight text-foreground text-${textAlign}`}>
+            <h1 className={`${s.titleSize(heroTitleSizeMap)} ${s.titleWeight} leading-tight ${s.titleColor} text-${s.textAlign}`}>
               {title}
             </h1>
-            <p className="text-lg text-muted-foreground max-w-lg">
+            <p className={`${s.descSize} ${s.descColor} max-w-lg`}>
               {description}
             </p>
             {buttonText && (
@@ -71,7 +63,6 @@ const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
             )}
           </div>
 
-          {/* Image */}
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-50" />
             <img 
@@ -126,18 +117,7 @@ registerChaiBlock(HeroSplitBlock, {
         default: "",
         ui: { "ui:widget": "image" },
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "left",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ bgColor: "background", textAlign: "left" }),
     },
   },
 });

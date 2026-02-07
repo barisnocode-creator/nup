@@ -1,9 +1,10 @@
 import { 
   registerChaiBlock,
   StylesProp,
-  builderProp,
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
+import { builderProp } from "@chaibuilder/sdk/runtime";
 
 export type CTABannerProps = {
   styles: ChaiStyles;
@@ -13,16 +14,7 @@ export type CTABannerProps = {
   buttonLink: string;
   secondaryButtonText: string;
   secondaryButtonLink: string;
-  titleSize: string;
-  textAlign: string;
-};
-
-const titleSizeMap: Record<string, string> = {
-  lg: 'text-2xl md:text-3xl lg:text-4xl',
-  xl: 'text-3xl md:text-4xl lg:text-5xl',
-  '2xl': 'text-3xl md:text-4xl lg:text-5xl',
-  '3xl': 'text-4xl md:text-5xl lg:text-6xl',
-};
+} & CommonStyleProps;
 
 const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
   const { 
@@ -33,19 +25,20 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
     buttonLink,
     secondaryButtonText,
     secondaryButtonLink,
-    titleSize = '2xl',
-    textAlign = 'center',
     inBuilder,
+    ...styleProps
   } = props;
 
+  const s = resolveStyles(styleProps);
+
   return (
-    <section {...blockProps} className="py-20 bg-primary">
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
-        <div className={`max-w-4xl mx-auto text-${textAlign}`}>
-          <h2 className={`${titleSizeMap[titleSize] || titleSizeMap['2xl']} font-bold text-primary-foreground mb-6`}>
+        <div className={`max-w-4xl mx-auto text-${s.textAlign}`}>
+          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} mb-6`}>
             {title}
           </h2>
-          <p className="text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
+          <p className={`${s.descSize} ${s.descColor} mb-10 max-w-2xl mx-auto`}>
             {description}
           </p>
           
@@ -116,18 +109,7 @@ registerChaiBlock(CTABannerBlock, {
         title: "İkinci Buton Linki",
         default: "#about",
       }),
-      titleSize: builderProp({
-        type: "string",
-        title: "Başlık Boyutu",
-        default: "2xl",
-        enum: ["lg", "xl", "2xl", "3xl"],
-      }),
-      textAlign: builderProp({
-        type: "string",
-        title: "Metin Hizalama",
-        default: "center",
-        enum: ["left", "center", "right"],
-      }),
+      ...commonStyleSchemaProps({ bgColor: "primary", titleColor: "white", descColor: "white", textAlign: "center" }),
     },
   },
 });
