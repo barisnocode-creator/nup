@@ -6,19 +6,8 @@ import { useNavigate } from 'react-router-dom';
 
 export function Header() {
   const [showAuth, setShowAuth] = useState(false);
-  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
   const { user } = useAuth();
   const navigate = useNavigate();
-
-  const openLogin = () => {
-    setAuthTab('login');
-    setShowAuth(true);
-  };
-
-  const openSignup = () => {
-    setAuthTab('signup');
-    setShowAuth(true);
-  };
 
   return (
     <>
@@ -37,10 +26,10 @@ export function Header() {
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={openLogin} className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" onClick={() => setShowAuth(true)} className="text-muted-foreground hover:text-foreground">
                   Giriş Yap
                 </Button>
-                <Button onClick={openSignup} className="bg-primary hover:bg-primary/90">
+                <Button onClick={() => setShowAuth(true)} className="bg-primary hover:bg-primary/90">
                   Ücretsiz Başla
                 </Button>
               </>
@@ -52,7 +41,6 @@ export function Header() {
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
-        defaultTab={authTab}
       />
     </>
   );
