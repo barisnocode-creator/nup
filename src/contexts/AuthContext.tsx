@@ -75,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const TEST_PASSWORD = 'TestPassword123!';
+  const TEST_PASSWORD = 'Xk9$mQ2vLpR7nW4j!';
 
   const quickSignIn = async (email: string) => {
     // Try signing in first
