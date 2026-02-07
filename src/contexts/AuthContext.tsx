@@ -9,6 +9,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  quickSignIn: (email: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -72,6 +73,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     return { error: error as Error | null };
+  };
+
+  const TEST_PASSWORD = 'TestPassword123!';
+
+  const quickSignIn = async (email: string) => {
+    // Try signing in first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password: TEST_PASSWORD,
+    });
+
+    if (!signInError) return { error: null };
+
+    // If sign in fails, create account
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password: TEST_PASSWORD,
+      options: { emailRedirectTo: `${window.location.origin}/` },
+    });
+
+    if (signUpError) return { error: signUpError as Error | null };
+
+    // Sign in after registration
+    const { error: retryError } = await supabase.auth.signInWithPassword({
+      email,
+      password: TEST_PASSWORD,
+    });
+
+    return { error: retryError as Error | null };
   };
 
   const signInWithGoogle = async () => {
@@ -164,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signIn,
       signInWithOtp,
+      quickSignIn,
       signInWithGoogle,
       signInWithApple,
       signOut,
