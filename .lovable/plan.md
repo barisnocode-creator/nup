@@ -1,276 +1,136 @@
 
-# ChaiBuilder Editör Kapsamlı Düzeltme Planı
 
-## Tespit Edilen Sorunlar
+# Sihirbazı 3 Soruya İndirme ve Renk Sistemi Entegrasyonu
 
-### 1. Veritabanı Erişim Sorunu (406 Hatası)
-Kullanıcı proje sayfasına girdiğinde 406 hatası alıyor ve dashboard'a yönlendiriliyor. RLS politikaları güncellenmiş ancak proje sayfası sorgusu başarısız oluyor.
+## Mevcut Durum
 
-**Kök Neden**: Browser'daki test kullanıcısı farklı bir hesapla giriş yapmış olabilir veya token doğrulaması başarısız. Ancak kod tarafında da bir kontrol eksikliği var - hata durumunda daha iyi geri bildirim gerekiyor.
+Şu an web sitesi oluşturma süreci 2 adımdan oluşuyor:
+1. AI sohbet: 10 soru soruyor (isim, sektör, konum, hizmetler, hedef kitle, iletişim, hikaye, site amacı, renk, dil)
+2. Tasarım Tercihleri sayfası: Dil, ton, renk tonu, tema modu seçimi
 
-### 2. Blok Prop İsimleri Uyumsuzluğu
-`convertToChaiBlocks.ts` fonksiyonu yanlış prop isimleri kullanıyor:
-
-| Dönüştürücüdeki İsim | Blok Şemasındaki Doğru İsim |
-|---------------------|----------------------------|
-| `title` | `sectionTitle` |
-| `subtitle` | `sectionSubtitle` |
-| `services` | (şemada tanımlı değil, hardcoded) |
-
-### 3. Eksik Blok Şema Tanımları
-Bazı bloklar için array/object props tanımlı değil:
-- `ServicesGrid`: `services` prop'u şemada yok
-- `TestimonialsCarousel`: `testimonials` prop'u şemada yok
-- `FAQAccordion`: `faqs` prop'u şemada yok
-- `ImageGallery`: `images` prop'u şemada yok
-
-### 4. ChaiBuilder SDK Entegrasyon Eksiklikleri
-- AI asistan endpoint düzeltildi ama test edilmedi
-- Tema önayarları doğru formatta değil olabilir
-- Blok kayıt sırası önemli ve kontrol edilmeli
+Sorun: Renk tercihleri toplanmasına rağmen siteye yansıtılmıyor - her site aynı "Modern Profesyonel" temasıyla oluşuruluyor.
 
 ---
 
-## Düzeltme Planı
+## Planlanan Degisiklikler
 
-### Aşama 1: Dönüştürücü Düzeltmesi
-**Dosya**: `src/components/chai-builder/utils/convertToChaiBlocks.ts`
+### 1. AI Sohbeti 3 Soruya Indirilecek
 
-Blok prop isimlerini şema ile uyumlu hale getir:
+Yeni soru akisi:
 
-```typescript
-// Hero bloğu - değişiklik yok, doğru
+```text
+Soru 1: Isletmenizin adi nedir ve ne is yapiyorsunuz?
+  (Isim + sektor + konum + hizmetler tek cevaptan cikarilacak)
 
-// Services bloğu düzeltmesi
-blocks.push({
-  _id: generateBlockId(),
-  _type: 'ServicesGrid',
-  sectionTitle: pages?.services?.hero?.title || 'Hizmetlerimiz',  // title → sectionTitle
-  sectionSubtitle: 'Neler Yapıyoruz',
-  sectionDescription: pages?.services?.intro?.content || '',
-  // services prop'u şemada yok, default kullanılacak
-});
+Soru 2: Sitenizde neler olmali? Iletisim bilgilerinizi paylasir misiniz?
+  (Site amaci + telefon + email + calisma saatleri)
 
-// Testimonials düzeltmesi
-blocks.push({
-  _id: generateBlockId(),
-  _type: 'TestimonialsCarousel',
-  sectionTitle: 'Müşteri Yorumları',  // title → sectionTitle
-  sectionSubtitle: 'Referanslar',
-  // testimonials prop'u şemada yok, default kullanılacak
-});
-
-// Contact düzeltmesi
-blocks.push({
-  _id: generateBlockId(),
-  _type: 'ContactForm',
-  sectionTitle: contact.form?.title || 'Bize Ulaşın',  // title → sectionTitle
-  sectionSubtitle: 'İletişim',
-  sectionDescription: contact.form?.subtitle || '',
-  email: contact.info.email || '',
-  phone: contact.info.phone || '',
-  address: contact.info.address || '',
-  submitButtonText: 'Mesaj Gönder',
-});
+Soru 3: Sitenizin renk ve tasarim tercihi ne olsun?
+  (Sicak/soguk/notr renkler + acik/koyu tema)
 ```
 
-### Aşama 2: Blok Şemalarına Array Props Eklenmesi
-Dinamik içerik için blok şemalarına array prop desteği eklenmeli:
+AI yine akilli cikarim yapacak - tek bir cevaptan birden fazla bilgi cikartacak. Eksik bilgiler icin makul varsayimlar kullanilacak.
 
-**ServicesGrid.tsx**:
-```typescript
-schema: {
-  properties: {
-    // ... mevcut props
-    services: builderProp({
-      type: "array",
-      title: "Hizmetler",
-      items: {
-        type: "object",
-        properties: {
-          icon: { type: "string", title: "İkon" },
-          title: { type: "string", title: "Başlık" },
-          description: { type: "string", title: "Açıklama" },
-        },
-      },
-      default: defaultServices,
-    }),
-  },
-},
-```
+### 2. Adim 2 (PreferencesStep) Kaldirilacak
 
-**TestimonialsCarousel.tsx**:
-```typescript
-schema: {
-  properties: {
-    // ... mevcut props
-    testimonials: builderProp({
-      type: "array",
-      title: "Müşteri Yorumları",
-      items: {
-        type: "object",
-        properties: {
-          name: { type: "string", title: "İsim" },
-          role: { type: "string", title: "Ünvan" },
-          content: { type: "string", title: "Yorum" },
-          avatar: { type: "string", title: "Avatar URL" },
-        },
-      },
-      default: defaultTestimonials,
-    }),
-  },
-},
-```
+Renk ve dil tercihleri artik AI sohbetinde soruldugu icin ayri bir "Tasarim Tercihleri" adimina gerek kalmayacak. Wizard tek adimli olacak - sohbet bitince direkt site olusturulacak.
 
-**FAQAccordion.tsx**:
-```typescript
-schema: {
-  properties: {
-    // ... mevcut props
-    faqs: builderProp({
-      type: "array",
-      title: "Sorular",
-      items: {
-        type: "object",
-        properties: {
-          question: { type: "string", title: "Soru" },
-          answer: { type: "string", title: "Cevap" },
-        },
-      },
-      default: defaultFaqs,
-    }),
-  },
-},
-```
+### 3. Renk Tercihlerinin Temaya Yansitilmasi
 
-### Aşama 3: Proje Sayfası Hata Yönetimi İyileştirmesi
-**Dosya**: `src/pages/Project.tsx`
+Kullanicinin sectigi renk kombinasyonu gercek bir ChaiBuilder tema presetine eslenecek:
 
-```typescript
-// Fetch hatası durumunda daha iyi geri bildirim
-useEffect(() => {
-  async function fetchProject() {
-    if (!id) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('...')
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching project:', error);
-        
-        // 406 hatası: Yetki sorunu
-        if (error.code === 'PGRST116' || error.message.includes('406')) {
-          toast({
-            title: 'Erişim Hatası',
-            description: 'Bu projeye erişim yetkiniz yok.',
-            variant: 'destructive',
-          });
-        }
-        
-        navigate('/dashboard');
-        return;
-      }
-      // ... devam
-    } catch (err) {
-      console.error('Fetch exception:', err);
-      navigate('/dashboard');
-    }
-  }
-  fetchProject();
-}, [id, navigate]);
-```
-
-### Aşama 4: Mevcut Blokların Güncellenmesi
-Her blok için şema ve component uyumunu sağla:
-
-| Blok | Düzeltilecek |
-|------|-------------|
-| `HeroCentered` | ✅ Doğru |
-| `HeroSplit` | ✅ Doğru |
-| `HeroOverlay` | ✅ Doğru |
-| `ServicesGrid` | ⚠️ services array prop eksik |
-| `TestimonialsCarousel` | ⚠️ testimonials array prop eksik |
-| `ContactForm` | ✅ Doğru |
-| `CTABanner` | ✅ Doğru |
-| `FAQAccordion` | ⚠️ faqs array prop eksik |
-| `AboutSection` | ⚠️ features array prop kontrol et |
-| `StatisticsCounter` | ⚠️ stats array prop kontrol et |
-| `ImageGallery` | ⚠️ images array prop kontrol et |
-| `PricingTable` | ⚠️ plans array prop kontrol et |
-
-### Aşama 5: Dönüşüm Sonrası Verileri Temizleme
-Mevcut projeler için `chai_blocks` verilerini sıfırlayıp yeniden dönüştürme:
-
-```sql
--- Önce mevcut hatalı blokları temizle
-UPDATE projects 
-SET chai_blocks = NULL, chai_theme = NULL 
-WHERE chai_blocks IS NOT NULL 
-AND jsonb_array_length(chai_blocks) > 0;
-```
-
-Bu sayede sayfa açıldığında `convertAndSaveChaiBlocks` tekrar çalışacak.
+| Renk Tonu | Tema Modu | Atanan Tema Preseti |
+|-----------|-----------|---------------------|
+| Sicak     | Acik      | Modern Profesyonel (turuncu aksan, beyaz zemin) |
+| Sicak     | Koyu      | Video Studyo (lime aksan, koyu zemin) |
+| Soguk     | Acik      | Kurumsal Mavi (mavi aksan, beyaz zemin) |
+| Soguk     | Koyu      | Modern SaaS (mor aksan, koyu zemin) |
+| Notr      | Acik      | Zarif Minimal (bej tonlar, acik zemin) |
+| Notr      | Koyu      | Minimal Koyu (monokrom, koyu zemin) |
+| Notr      | Notr      | Cesur Ajans (siyah-beyaz dramatik) |
+| Sicak     | Notr      | Canli Yaratici (mor/cyan aksan) |
+| Soguk     | Notr      | Kurumsal Mavi |
 
 ---
 
-## Dosya Değişiklikleri Özeti
+## Teknik Degisiklikler
 
-| Dosya | Değişiklik Türü |
-|-------|----------------|
-| `src/components/chai-builder/utils/convertToChaiBlocks.ts` | Prop isimleri düzeltme |
-| `src/components/chai-builder/blocks/services/ServicesGrid.tsx` | Array prop şeması ekleme |
-| `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` | Array prop şeması ekleme |
-| `src/components/chai-builder/blocks/faq/FAQAccordion.tsx` | Array prop şeması ekleme |
-| `src/components/chai-builder/blocks/about/AboutSection.tsx` | Array prop şeması kontrol |
-| `src/components/chai-builder/blocks/statistics/StatisticsCounter.tsx` | Array prop şeması kontrol |
-| `src/components/chai-builder/blocks/gallery/ImageGallery.tsx` | Array prop şeması kontrol |
-| `src/components/chai-builder/blocks/pricing/PricingTable.tsx` | Array prop şeması kontrol |
-| `src/pages/Project.tsx` | Hata yönetimi iyileştirme |
+### Dosya: `supabase/functions/wizard-chat/index.ts`
+- `TOTAL_QUESTIONS` 10'dan 3'e dusurulecek
+- System prompt tamamen yeniden yazilacak:
+  - 3 soru odakli yeni akis
+  - Daha fazla akilli cikarim (tek cevaptan maksimum bilgi)
+  - Renk/tasarim tercihini son soruda soracak
+  - Eksik bilgiler icin makul varsayimlar kullanacak
+  - JSON ciktisi ayni formatta kalacak (geriye uyumluluk)
 
----
+### Dosya: `src/components/wizard/steps/AIChatStep.tsx`
+- `TOTAL_QUESTIONS` 10'dan 3'e
+- Ilk mesaj guncelleme: "3 kisa soru" olarak
+- Progress bar orantisi guncellenecek
 
-## Test Senaryoları
+### Dosya: `src/components/wizard/CreateWebsiteWizard.tsx`
+- `TOTAL_STEPS` 2'den 1'e indirilecek
+- PreferencesStep tamamen kaldirilacak
+- Adim 2 butonlari yerine dogrudan "Web Sitesi Olustur" butonu
+- Sohbet tamamlaninca otomatik olarak varsayilan dil ve ton atanacak
+- Renk tercihleri AI sohbetinden gelecek
 
-Düzeltmeler sonrası test edilecekler:
+### Dosya: `src/components/chai-builder/utils/convertToChaiBlocks.ts`
+- Yeni fonksiyon: `getThemeFromColorPreferences(colorTone, colorMode)` 
+- `getThemeForTemplate` fonksiyonu renk tercihlerini de alacak
+- Renk esleme tablosu eklenecek (yukaridaki tablo)
 
-1. **Editör Açılma Testi**
-   - `/project/:id` sayfasına git
-   - ChaiBuilder editörünün yüklenmesini bekle
-   - Blokların canvas'ta görünmesini doğrula
+### Dosya: `src/pages/Project.tsx`
+- `convertAndSaveChaiBlocks` fonksiyonu guncellenecek
+- Tema secimi icin `form_data.websitePreferences` veya `form_data.extractedData` renk bilgilerini kullanacak
+- `getThemeForTemplate` yerine `getThemeFromColorPreferences` once kontrol edilecek
 
-2. **Blok Düzenleme Testi**
-   - Bir bloğa tıkla
-   - Sağ panelde prop'ların görünmesini doğrula
-   - Değer değiştir ve kaydet
+### Dosya: `src/types/wizard.ts`
+- Gerekli tip guncellemeleri (minimal)
 
-3. **Tema Değiştirme Testi**
-   - Tema preset dropdown'ını aç
-   - Farklı bir tema seç
-   - Renklerin değiştiğini doğrula
-
-4. **Otomatik Kayıt Testi**
-   - Değişiklik yap
-   - 5 değişiklik sonrası auto-save tetiklenmesini doğrula
-   - Veritabanında `chai_blocks` güncellenmesini kontrol et
-
-5. **Dönüşüm Testi**
-   - `chai_blocks` boş olan bir projeyi aç
-   - Otomatik dönüşümün çalışmasını doğrula
-   - Blokların doğru prop'larla oluşturulduğunu kontrol et
+### Dosya: `src/components/wizard/steps/PreferencesStep.tsx`
+- Dosya korunacak ama CreateWebsiteWizard'dan import kaldirilacak (ileride kullanilabilir)
 
 ---
 
-## Beklenen Sonuç
+## Renk Akisi (Uctan Uca)
 
-Düzeltmeler tamamlandığında:
+```text
+Kullanici: "Mavi tonlarda, koyu temali bir site istiyorum"
+    |
+    v
+wizard-chat: colorTone="cool", colorMode="dark" olarak cikarir
+    |
+    v
+AIChatStep: extractedData'ya kaydeder
+    |
+    v
+CreateWebsiteWizard: form_data.websitePreferences'a yazar
+    |
+    v
+Supabase projects tablosu: form_data JSON olarak saklanir
+    |
+    v
+Project.tsx: convertAndSaveChaiBlocks cagirilir
+    |
+    v
+convertToChaiBlocks: getThemeFromColorPreferences("cool", "dark")
+    |
+    v
+Sonuc: "Modern SaaS" preseti (mor aksan, koyu zemin) uygulanir
+    |
+    v
+ChaiBuilder editoru: Site dogru renklerle goruntulenir
+```
 
-1. ✅ Editör düzgün açılacak ve bloklar görünecek
-2. ✅ Blok prop'ları sağ panelde düzenlenebilecek
-3. ✅ Array içerikleri (hizmetler, yorumlar, SSS) dinamik olarak eklenip çıkarılabilecek
-4. ✅ Tema presetleri çalışacak
-5. ✅ Eski içerikler doğru şekilde dönüştürülecek
-6. ✅ Otomatik kayıt çalışacak
+---
+
+## Test Senaryolari
+
+1. Yeni site olusturma: 3 soru ile hizlica tamamlanmali
+2. Renk tercihi: "Sicak renkler, acik tema" secince turuncu aksanli site olusturulmali
+3. Renk tercihi: "Koyu tema" secince koyu arka planli tema gelmeli
+4. Eksik bilgi: Kullanici kisa cevap verse bile AI makul varsayimlarla tamamlamali
+5. Geriye uyumluluk: Mevcut projeler etkilenmemeli
+
