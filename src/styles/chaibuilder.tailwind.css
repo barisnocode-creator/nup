@@ -12,3 +12,8 @@ img[alt="Chai Builder"] {
 img[src*="ucarecdn.com/fbfc3b05-cb73-4e99-92a2-3a367b7c36cd"] {
   display: none !important;
 }
+
+/* ChaiBuilder "Screen too small" uyarisini gizle - Lovable preview paneli icin */
+section.fixed.inset-0[class*="z-[99999]"] {
+  display: none !important;
+}
