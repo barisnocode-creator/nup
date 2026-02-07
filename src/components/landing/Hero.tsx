@@ -78,7 +78,6 @@ export function Hero() {
       <AuthModal
         isOpen={showAuth}
         onClose={() => setShowAuth(false)}
-        defaultTab="signup"
       />
     </>
   );
