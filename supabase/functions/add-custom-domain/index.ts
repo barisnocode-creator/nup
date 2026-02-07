@@ -194,33 +194,13 @@ Deno.serve(async (req) => {
 
     console.log('Domain added successfully:', newDomain.id);
 
-    // Return success with DNS instructions
+    // Return success without exposing verification token
+    // Client should use get_domain_dns_instructions RPC to retrieve DNS setup details securely
     return new Response(
       JSON.stringify({
         success: true,
         domainId: newDomain.id,
         domain: normalizedDomain,
-        verificationToken: newDomain.verification_token,
-        dnsInstructions: {
-          aRecord: {
-            type: 'A',
-            host: '@',
-            value: '185.158.133.1',
-            description: 'Points your root domain to our servers'
-          },
-          wwwRecord: {
-            type: 'A',
-            host: 'www',
-            value: '185.158.133.1',
-            description: 'Points www subdomain to our servers'
-          },
-          txtRecord: {
-            type: 'TXT',
-            host: '_lovable',
-            value: `lovable_verify=${newDomain.verification_token}`,
-            description: 'Verifies domain ownership'
-          }
-        }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
