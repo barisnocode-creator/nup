@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChaiBuilderEditor, ChaiBlock, ChaiThemeValues } from '@chaibuilder/sdk';
+import { ChaiBuilderEditor, ChaiThemeValues } from '@chaibuilder/sdk';
+import type { ChaiBlock } from '@chaibuilder/sdk/types';
 import { loadWebBlocks } from '@chaibuilder/sdk/web-blocks';
 import '@chaibuilder/sdk/styles';
 import '@/styles/chaibuilder.tailwind.css';
@@ -94,7 +95,7 @@ export function ChaiBuilderWrapper({
       <ChaiBuilderEditor
         pageId={projectId}
         blocks={initialBlocks}
-        theme={initialTheme || defaultTheme}
+        theme={(initialTheme || defaultTheme) as ChaiThemeValues}
         themePresets={themePresets}
         onSave={handleSave}
         autoSave={true}

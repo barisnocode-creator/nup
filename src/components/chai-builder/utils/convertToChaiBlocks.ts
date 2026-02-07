@@ -1,5 +1,5 @@
 import { GeneratedContent } from '@/types/generated-website';
-import { ChaiBlock } from '@chaibuilder/sdk';
+import type { ChaiBlock } from '@chaibuilder/sdk/types';
 import {
   templateToPreset,
   modernProfessionalPreset,

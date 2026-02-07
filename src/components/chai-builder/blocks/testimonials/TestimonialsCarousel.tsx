@@ -1,10 +1,9 @@
 import { 
   registerChaiBlock,
-  ChaiBlockComponentProps,
-  ChaiStyles,
   StylesProp,
   builderProp,
 } from "@chaibuilder/sdk/runtime";
+import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 
 interface Testimonial {
   name: string;
