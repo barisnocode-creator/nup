@@ -354,6 +354,18 @@ export default function Project() {
       }
 
       if (data?.content) {
+        const updatedProject: Project = {
+          ...(project || {} as Project),
+          id: projectId,
+          generated_content: data.content,
+          status: 'generated',
+          name: project?.name || '',
+          profession: project?.profession || '',
+          form_data: project?.form_data || null,
+          chai_blocks: project?.chai_blocks || [],
+          chai_theme: project?.chai_theme || {},
+        };
+        
         setProject(prev => prev ? {
           ...prev,
           generated_content: data.content,
@@ -365,7 +377,8 @@ export default function Project() {
           description: 'Your professional website has been created.',
         });
 
-        // Images are now fetched from Pixabay during generate-website, no separate AI generation needed
+        // Auto-convert to chai blocks immediately after generation
+        await convertAndSaveChaiBlocks(updatedProject);
       }
     } catch (err) {
       console.error('Generation error:', err);
@@ -1130,22 +1143,39 @@ export default function Project() {
     // Show loading screen while blocks are being converted
     const hasBlocks = project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
     
-    if (isConvertingBlocks || !hasBlocks) {
+    if (isConvertingBlocks) {
       return (
         <div className="h-screen w-screen flex items-center justify-center bg-background">
           <div className="text-center space-y-4">
             <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
             <p className="text-muted-foreground text-lg">İçerik editöre aktarılıyor...</p>
             <p className="text-muted-foreground/60 text-sm">Lütfen bekleyin, siteniz hazırlanıyor.</p>
-            {!isConvertingBlocks && !hasBlocks && project.generated_content && (
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => convertAndSaveChaiBlocks(project)}
-              >
-                Tekrar Dene
-              </Button>
-            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (!hasBlocks && project.generated_content) {
+      // Auto-trigger conversion if blocks are missing but content exists
+      convertAndSaveChaiBlocks(project);
+      return (
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground text-lg">İçerik editöre aktarılıyor...</p>
+            <p className="text-muted-foreground/60 text-sm">Lütfen bekleyin, siteniz hazırlanıyor.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!hasBlocks) {
+      return (
+        <div className="h-screen w-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-muted-foreground text-lg">Web sitesi oluşturuluyor...</p>
+            <p className="text-muted-foreground/60 text-sm">Lütfen bekleyin.</p>
           </div>
         </div>
       );
