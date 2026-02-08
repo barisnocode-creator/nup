@@ -213,6 +213,7 @@ export function convertGeneratedContentToChaiBlocks(
   }
 
   // 9. CTA Section
+  const ctaImage = resolveImage(images, 'ctaImage', 'heroHome');
   blocks.push({
     _id: generateBlockId(),
     _type: 'CTABanner',
@@ -222,6 +223,7 @@ export function convertGeneratedContentToChaiBlocks(
     buttonLink: '#contact',
     secondaryButtonText: 'Daha Fazla Bilgi',
     secondaryButtonLink: '#about',
+    backgroundImage: ctaImage,
   });
 
   return blocks;

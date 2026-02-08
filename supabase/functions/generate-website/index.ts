@@ -340,12 +340,28 @@ Return ONLY valid JSON in this exact format:
       ]
     }
   },
+  "imageSearchTerms": {
+    "hero": "string (3-5 specific English keywords for Pixabay search for the hero/banner image, e.g. 'turkish restaurant interior dining ambiance')",
+    "about": "string (3-5 English keywords for the about/team section image)",
+    "services": "string (3-5 English keywords for services section image)",
+    "gallery": ["string (each item is 2-4 English keywords for a gallery photo, provide 6 items)", "..."],
+    "cta": "string (3-5 English keywords for call-to-action background image)",
+    "blog": "string (3-5 English keywords for default blog post featured image)"
+  },
   "metadata": {
     "siteName": "string",
     "tagline": "string (memorable tagline)",
     "seoDescription": "string (meta description for SEO, 150-160 characters)"
   }
-}`;
+}
+
+IMPORTANT for imageSearchTerms:
+- All search terms MUST be in English (Pixabay works best with English)
+- Make them VERY SPECIFIC to this exact business type and industry
+- For a Turkish restaurant: use "turkish kebab restaurant dining warm" NOT just "restaurant"
+- For a dental clinic: use "modern dental clinic chair equipment" NOT just "dentist"
+- For gallery: provide 6 different specific terms showing variety (e.g. interior, food, chef, ambiance, exterior, details)
+- Think about what real photos would look like for THIS specific business`;
 }
 
 // Sector-based search terms for Pixabay images
@@ -578,24 +594,53 @@ async function fetchMultipleImagesParallel(
 async function fetchAllImages(
   sector: string,
   blogPosts: Array<{ title: string; category?: string }>,
-  apiKey: string
+  apiKey: string,
+  aiSearchTerms?: { hero?: string; about?: string; services?: string; gallery?: string[]; cta?: string; blog?: string }
 ): Promise<{ images: Record<string, string | string[]>; updatedPosts: Array<{ featuredImage?: string }> }> {
-  const searchTerms = sectorSearchTerms[sector] || sectorSearchTerms.other;
-  const galleryTerms = gallerySearchTerms[sector] || gallerySearchTerms.other;
+  const staticTerms = sectorSearchTerms[sector] || sectorSearchTerms.other;
+  const staticGallery = gallerySearchTerms[sector] || gallerySearchTerms.other;
   const images: Record<string, string | string[]> = {};
 
-  // Fetch hero images in parallel
-  const heroPromises = Object.entries(searchTerms).map(async ([key, query]) => {
-    const imageUrl = await fetchPixabayImage(query, apiKey, 1920);
+  // Build dynamic search terms: AI-generated terms override static defaults
+  const dynamicTerms: Record<string, string> = { ...staticTerms };
+  if (aiSearchTerms?.hero) {
+    dynamicTerms.heroHome = aiSearchTerms.hero;
+    dynamicTerms.heroSplit = aiSearchTerms.hero;
+  }
+  if (aiSearchTerms?.about) {
+    dynamicTerms.aboutImage = aiSearchTerms.about;
+    dynamicTerms.heroAbout = aiSearchTerms.about;
+  }
+  if (aiSearchTerms?.services) {
+    dynamicTerms.heroServices = aiSearchTerms.services;
+  }
+  if (aiSearchTerms?.cta) {
+    dynamicTerms.ctaImage = aiSearchTerms.cta;
+  }
+
+  // Use AI gallery terms or fallback to static
+  const galleryTerms = (aiSearchTerms?.gallery && aiSearchTerms.gallery.length >= 3)
+    ? aiSearchTerms.gallery.slice(0, 6)
+    : staticGallery;
+
+  // Fetch hero/section images in parallel
+  const heroPromises = Object.entries(dynamicTerms).map(async ([key, query]) => {
+    let imageUrl = await fetchPixabayImage(query, apiKey, 1920);
+    // Fallback: if AI term returns nothing, try the static term
+    if (!imageUrl && staticTerms[key] && query !== staticTerms[key]) {
+      console.log(`AI term failed for ${key}, falling back to static: ${staticTerms[key]}`);
+      imageUrl = await fetchPixabayImage(staticTerms[key], apiKey, 1920);
+    }
     return { key, imageUrl };
   });
 
   // Fetch gallery images in parallel
   const galleryPromise = fetchMultipleImagesParallel(galleryTerms, apiKey, 1200);
 
-  // Fetch blog images in parallel
+  // Blog: use AI blog term or category-based fallback
+  const defaultBlogTerm = aiSearchTerms?.blog || '';
   const blogPromises = blogPosts.map(async (post) => {
-    const categoryTerms = blogCategorySearchTerms[(post.category || "default").toLowerCase()] || blogCategorySearchTerms.default;
+    const categoryTerms = blogCategorySearchTerms[(post.category || "default").toLowerCase()] || defaultBlogTerm || blogCategorySearchTerms.default;
     const featuredImage = await fetchPixabayImage(categoryTerms, apiKey, 1200);
     return { ...post, featuredImage: featuredImage || undefined };
   });
@@ -620,6 +665,7 @@ async function fetchAllImages(
   }
 
   console.log(`Fetched ${heroResults.filter(r => r.imageUrl).length} hero images, ${galleryImages.length} gallery images, ${updatedPosts.length} blog images`);
+  console.log(`Used AI search terms: ${aiSearchTerms ? 'yes' : 'no (static fallback)'}`);
 
   return { images, updatedPosts };
 }
@@ -809,16 +855,25 @@ serve(async (req) => {
       );
     }
 
+    // Extract AI-generated image search terms (if present)
+    const aiSearchTerms = generatedContent.imageSearchTerms || null;
+    if (aiSearchTerms) {
+      console.log("AI generated image search terms:", JSON.stringify(aiSearchTerms));
+      // Remove imageSearchTerms from final content (not needed in DB)
+      delete generatedContent.imageSearchTerms;
+    }
+
     // Fetch images from Pixabay (if API key is configured)
     if (PIXABAY_API_KEY) {
-      console.log("Fetching images from Pixabay...");
+      console.log("Fetching images from Pixabay with", aiSearchTerms ? "AI-generated" : "static", "search terms...");
       const blogPosts = generatedContent.pages?.blog?.posts || [];
       // Use sector for image search if available, otherwise fallback to profession
       const imageSearchKey = extractedSector || profession;
       const { images, updatedPosts } = await fetchAllImages(
         imageSearchKey,
         blogPosts,
-        PIXABAY_API_KEY
+        PIXABAY_API_KEY,
+        aiSearchTerms
       );
 
       // Add images to generated content
