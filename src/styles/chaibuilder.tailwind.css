@@ -13,7 +13,12 @@ img[src*="ucarecdn.com/fbfc3b05-cb73-4e99-92a2-3a367b7c36cd"] {
   display: none !important;
 }
 
-/* ChaiBuilder "Screen too small" uyarisini gizle - Lovable preview paneli icin */
+/* ChaiBuilder "Screen too small" uyarisini gizle - custom mobile layout kullaniyoruz */
 section.fixed.inset-0[class*="z-[99999]"] {
   display: none !important;
+}
+
+/* Safe area padding for mobile devices with notches */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
