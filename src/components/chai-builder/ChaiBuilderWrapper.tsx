@@ -7,7 +7,8 @@ import '@chaibuilder/sdk/styles';
 import '@/styles/chaibuilder.tailwind.css';
 import { useChaiBuilderSave } from './hooks/useChaiBuilder';
 import { supabase } from '@/integrations/supabase/client';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Monitor } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Register custom blocks
 import './blocks';
@@ -17,6 +18,8 @@ loadWebBlocks();
 
 // Import theme presets from centralized file
 import { themePresets, defaultTheme } from './themes';
+
+const MIN_EDITOR_WIDTH = 1280;
 
 interface ChaiBuilderWrapperProps {
   projectId: string;
@@ -36,6 +39,19 @@ export function ChaiBuilderWrapper({
   const navigate = useNavigate();
   const { saveToSupabase } = useChaiBuilderSave(projectId);
   const [isReady, setIsReady] = useState(false);
+  const [isScreenTooSmall, setIsScreenTooSmall] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < MIN_EDITOR_WIDTH : false
+  );
+
+  // Monitor screen width for editor minimum requirement
+  useEffect(() => {
+    const checkWidth = () => {
+      setIsScreenTooSmall(window.innerWidth < MIN_EDITOR_WIDTH);
+    };
+    window.addEventListener('resize', checkWidth);
+    checkWidth();
+    return () => window.removeEventListener('resize', checkWidth);
+  }, []);
 
   // Handle save callback
   const handleSave = useCallback(async (data: { 
@@ -79,6 +95,36 @@ export function ChaiBuilderWrapper({
     const timer = setTimeout(() => setIsReady(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Mobile/tablet screen warning
+  if (isScreenTooSmall) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-background p-6">
+        <div className="text-center space-y-6 max-w-md">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <Monitor className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-foreground">
+              Masaüstü Görünümü Gerekli
+            </h2>
+            <p className="text-muted-foreground">
+              Web sitesi editörü en az <strong>1280px</strong> ekran genişliği gerektirmektedir. 
+              Lütfen masaüstü bilgisayarınızdan veya daha geniş bir ekrandan açın.
+            </p>
+          </div>
+          <Button
+            onClick={() => navigate('/dashboard')}
+            variant="default"
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Dashboard'a Dön
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isReady) {
     return (
