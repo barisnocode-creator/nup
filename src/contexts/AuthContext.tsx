@@ -6,10 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
-  quickSignIn: (email: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -45,26 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
-      }
-    });
-    return { error: error as Error | null };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error: error as Error | null };
-  };
-
   const signInWithOtp = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -73,35 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
     });
     return { error: error as Error | null };
-  };
-
-  const TEST_PASSWORD = 'Xk9$mQ2vLpR7nW4j!';
-
-  const quickSignIn = async (email: string) => {
-    // Try signing in first
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: TEST_PASSWORD,
-    });
-
-    if (!signInError) return { error: null };
-
-    // If sign in fails, create account
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password: TEST_PASSWORD,
-      options: { emailRedirectTo: `${window.location.origin}/` },
-    });
-
-    if (signUpError) return { error: signUpError as Error | null };
-
-    // Sign in after registration
-    const { error: retryError } = await supabase.auth.signInWithPassword({
-      email,
-      password: TEST_PASSWORD,
-    });
-
-    return { error: retryError as Error | null };
   };
 
   const signInWithGoogle = async () => {
@@ -191,10 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       loading,
-      signUp,
-      signIn,
       signInWithOtp,
-      quickSignIn,
       signInWithGoogle,
       signInWithApple,
       signOut,
