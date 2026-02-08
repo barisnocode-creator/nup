@@ -1,108 +1,60 @@
 
-# Blok Stil Kontrolleri Kapsamli Genisleme Plani
+# Sifreli Girisi Kaldirma ve Magic Link Sistemine Gecis
 
-## Mevcut Durum
-Su anda her blokta yalnizca 2 stil kontrolu var:
-- `titleSize` (lg, xl, 2xl, 3xl)
-- `textAlign` (left, center, right)
+## Sorun
+Mevcut `quickSignIn` fonksiyonu arka planda sabit bir sifre (`Xk9$mQ2vLpR7nW4j!`) kullanarak hesap olusturuyor. Bu sifre, arka ucun guvenlik politikalari tarafindan "zayif" olarak reddediliyor ve kullanici giris yapamiyor.
 
-Kullanici, her yazi icin font agirligini, rengini, boyutunu, arka plan rengini, bosluk ayarlarini ve daha fazlasini kontrol edebilmek istiyor.
+## Cozum
+Sifre tabanli sistemi tamamen kaldirip **Magic Link** (sihirli baglanti) sistemine gecis yapilacak. Kullanici sadece e-posta adresini girer, gelen e-postadaki baglantiya tiklar ve otomatik olarak giris yapar.
 
-## Eklenecek Yeni Kontroller
+## Kullanici Deneyimi (Yeni Akis)
 
-Her bloga asagidaki yeni stil ozellikleri eklenecek:
-
-| Kontrol | Secenekler | Etkiledigi Alan |
-|---------|-----------|-----------------|
-| Baslik Kalinligi | Normal, Orta, Kalin, Cok Kalin | Ana baslik (h1/h2) |
-| Baslik Rengi | Varsayilan, Birincil, Ikincil, Beyaz, Soluk | Ana baslik |
-| Aciklama Boyutu | Kucuk, Normal, Buyuk, Cok Buyuk | Aciklama metni |
-| Aciklama Rengi | Varsayilan, Birincil, Koyu, Soluk | Aciklama metni |
-| Alt Baslik Stili | Normal, Buyuk Harf | Alt baslik etiketi |
-| Arka Plan | Saydam, Varsayilan, Soluk, Kart, Birincil, Ikincil | Bolum arka plani |
-| Bolum Boslugu | Kucuk, Normal, Buyuk, Cok Buyuk | Ust/alt padding |
-
-## Teknik Yaklasim
-
-### 1. Paylasilan Stil Yardimci Dosyasi Olusturma
-**Yeni dosya:** `src/components/chai-builder/blocks/shared/styleUtils.ts`
-
-Tum bloklarin ortak kullanacagi harita (map) ve yardimci fonksiyonlar tek bir dosyada toplanacak:
-- `titleWeightMap`: font-normal, font-medium, font-semibold, font-bold, font-extrabold
-- `colorMap`: text-foreground, text-primary, text-muted-foreground, text-white, text-secondary-foreground
-- `descSizeMap`: text-sm, text-base, text-lg, text-xl
-- `bgColorMap`: bg-transparent, bg-background, bg-muted/30, bg-card, bg-primary, bg-secondary
-- `paddingMap`: py-12, py-20, py-28, py-36
-- `subtitleTransformMap`: normal-case, uppercase
-- `commonStyleProps()`: Tum bloklar icin ortak builderProp tanimlarini donduren fonksiyon
-
-Bu yaklasim, 11 blok dosyasindaki tekrari onler ve gelecekte yeni kontroller eklemeyi kolaylastirir.
-
-### 2. Tum Blok Dosyalarini Guncelleme
-Her blok dosyasinda yapilacak degisiklikler:
-
-**a) Tip tanimlarina yeni alanlar ekleme:**
-```
-titleWeight: string;    // font kalinligi
-titleColor: string;     // baslik rengi
-descSize: string;       // aciklama boyutu
-descColor: string;      // aciklama rengi
-subtitleTransform: string; // alt baslik stili
-bgColor: string;        // arka plan rengi
-sectionPadding: string; // bolum boslugu
+```text
+1. Kullanici e-posta adresini girer
+2. "Giris Yap" butonuna tiklar
+3. Ekranda "E-postanizi kontrol edin" mesaji gosterilir
+4. Kullanici e-postasindaki baglantiya tiklar
+5. Otomatik olarak giris yapilir ve dashboard'a yonlendirilir
 ```
 
-**b) JSX'te stil siniflarini dinamik uygulama:**
-- Baslik: `className={titleSizeMap[titleSize] + ' ' + titleWeightMap[titleWeight] + ' ' + colorMap[titleColor]}`
-- Aciklama: `className={descSizeMap[descSize] + ' ' + colorMap[descColor]}`
-- Section: `className={paddingMap[sectionPadding] + ' ' + bgColorMap[bgColor]}`
+## Yapilacak Degisiklikler
 
-**c) Schema'ya yeni builderProp tanimlari ekleme:**
-`commonStyleProps()` fonksiyonundan spread ile ekleme.
+### 1. AuthContext - quickSignIn Fonksiyonunu Degistirme
+**Dosya:** `src/contexts/AuthContext.tsx`
 
-### 3. Degistirilecek Dosyalar
+- `quickSignIn` fonksiyonu kaldirilacak
+- `signInWithOtp` fonksiyonu ana giris yontemi olarak kullanilacak
+- Sabit sifre (`TEST_PASSWORD`) tamamen silinecek
+- `signUp` ve `signIn` (sifreli) fonksiyonlari tip tanimindan kaldirilacak (artik kullanilmiyor)
 
-Toplam 12 dosya:
+### 2. AuthModal - Magic Link UX Akisi
+**Dosya:** `src/components/auth/AuthModal.tsx`
 
-1. **YENi** `src/components/chai-builder/blocks/shared/styleUtils.ts` - Ortak stil haritalari ve prop tanimlari
-2. `src/components/chai-builder/blocks/hero/HeroCentered.tsx` - 7 yeni kontrol
-3. `src/components/chai-builder/blocks/hero/HeroSplit.tsx` - 7 yeni kontrol
-4. `src/components/chai-builder/blocks/hero/HeroOverlay.tsx` - 7 yeni kontrol
-5. `src/components/chai-builder/blocks/about/AboutSection.tsx` - 7 yeni kontrol
-6. `src/components/chai-builder/blocks/services/ServicesGrid.tsx` - 7 yeni kontrol
-7. `src/components/chai-builder/blocks/contact/ContactForm.tsx` - 7 yeni kontrol
-8. `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` - 7 yeni kontrol
-9. `src/components/chai-builder/blocks/cta/CTABanner.tsx` - 7 yeni kontrol
-10. `src/components/chai-builder/blocks/faq/FAQAccordion.tsx` - 7 yeni kontrol
-11. `src/components/chai-builder/blocks/gallery/ImageGallery.tsx` - 7 yeni kontrol
-12. `src/components/chai-builder/blocks/statistics/StatisticsCounter.tsx` - 7 yeni kontrol
-13. `src/components/chai-builder/blocks/pricing/PricingTable.tsx` - 7 yeni kontrol
+- `quickSignIn` yerine `signInWithOtp` kullanilacak
+- Basarili gonderim sonrasi "E-postanizi kontrol edin" mesaji gosterilecek
+- E-posta girisi ve basari durumu arasinda gecis yapan bir state eklenecek
+- Basari ekraninda: onay ikonu, "Sihirli baglanti gonderildi" basligi, "E-postanizda gelen baglantiya tiklayarak giris yapin" aciklamasi
 
-### 4. Ornek Sonuc (ServicesGrid icin Sag Panel Gorunumu)
+### 3. AuthWallOverlay - Ayni Mantik
+**Dosya:** `src/components/website-preview/AuthWallOverlay.tsx`
 
-Mevcut:
-- Bolum Basligi (metin)
-- Bolum Alt Basligi (metin)
-- Hizmetler (dizi)
-- Baslik Boyutu (dropdown)
-- Metin Hizalama (dropdown)
+- `onEmailSignIn` callback'i ayni kalacak (zaten AuthModal'i aciyor)
+- Degisiklik gerekmez
 
-Yeni:
-- Bolum Basligi (metin)
-- Bolum Alt Basligi (metin)
-- Hizmetler (dizi)
-- **--- Stil Ayarlari ---**
-- Baslik Boyutu (dropdown: lg/xl/2xl/3xl)
-- Baslik Kalinligi (dropdown: Normal/Orta/Kalin/Cok Kalin)
-- Baslik Rengi (dropdown: Varsayilan/Birincil/Ikincil/Beyaz/Soluk)
-- Metin Hizalama (dropdown: Sol/Orta/Sag)
-- Aciklama Boyutu (dropdown: Kucuk/Normal/Buyuk/Cok Buyuk)
-- Aciklama Rengi (dropdown: Varsayilan/Koyu/Soluk)
-- Alt Baslik Stili (dropdown: Normal/Buyuk Harf)
-- Arka Plan (dropdown: Saydam/Varsayilan/Soluk/Kart/Birincil/Ikincil)
-- Bolum Boslugu (dropdown: Kucuk/Normal/Buyuk/Cok Buyuk)
+### 4. Landing Sayfasi Bilesenleri
+**Dosyalar:** `src/components/landing/Hero.tsx` (varsa e-posta formu)
 
-## Notlar
-- `PricingTable` ve `StatisticsCounter` gibi ozel arka planli bloklarda `bgColor` varsayilani farkli olacak (ornegin primary)
-- `HeroOverlay` blogu baslik rengi icin beyaz'i varsayilan olarak kullanacak (overlay ustunde okunurluk)
-- Mevcut blok verileri bozulmayacak: tum yeni prop'lar varsayilan degerlere sahip olacak, mevcut kayitlarda eksik prop'lar varsayilani kullanacak
+- Eger dogrudan quickSignIn kullanan baska bilesenler varsa, bunlar da signInWithOtp'ye gecilecek
+
+## Teknik Detaylar
+
+- `signInWithOtp` Supabase'in yerlesik magic link ozelligini kullanir
+- E-posta redirect URL'i `window.location.origin/dashboard` olarak ayarlanir
+- Hesap yoksa otomatik olusturulur (Supabase OTP davranisi)
+- Sifre hic kullanilmaz, guvenlik politikasi sorunu tamamen ortadan kalkar
+- Google ve Apple OAuth giris secenekleri aynen kalacak
+
+## Degistirilecek Dosyalar
+
+1. `src/contexts/AuthContext.tsx` - quickSignIn kaldirilacak, signInWithOtp ana yontem olacak
+2. `src/components/auth/AuthModal.tsx` - Magic link UX akisi, basari durumu ekrani
