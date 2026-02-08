@@ -1,74 +1,67 @@
 
-# Tum Gorselleri Pixabay'den Cekme - AI Gorsel Uretimini Kaldirma
+# Mobil Sidebar Sorunu ve Yavas Editor Gecisi Cozumu
 
-## Mevcut Durum
-- `generate-website` edge function zaten sektore uygun Pixabay gorsellerini cekiyor (hero, galeri, blog icin)
-- Ancak `Project.tsx` icerisinde website olusturulduktan sonra `generate-images` edge function da cagriliyor
-- `generate-images` AI (Gemini) ile gorsel uretiyor ve Pixabay gorsellerinin ustune yaziyor
-- Bu gereksiz kredi kullaniyor ve sonuclar her zaman iyi olmuyor
+## Sorun 1: Mobil Gorunumde Sidebar'lar Acilmiyor
 
-## Cozum
-AI gorsel uretimini tamamen devre disi birakip, tum gorselleri Pixabay'den cekmek. `generate-website` zaten bunu yapiyor, sadece sonrasindaki AI gorsel uretim adimini kaldirmak yeterli.
+ChaiBuilder SDK editoru, **minimum 1280px ekran genisligi** gerektiriyor. Bu, SDK'nin ic yapisindan gelen bir sinirlamadır - 1280px'den kucuk ekranlarda "Screen too small" uyarisi gosteriyor ve sol/sag paneller (sidebar) render edilmiyor.
 
-Ayrica Pixabay arama terimlerini daha akilli hale getirmek: her bolum icin kullanicinin girdigi is turuyle (ornegin "Turk mutfagi restorani") eslesen spesifik arama terimleri kullanmak.
+Mevcut CSS'de bu uyari gizleniyor ama editor hala calismıyor. Yani mobil/tablet cihazlarda editor sidebarlarinin acilmasi mumkun degil.
+
+### Cozum: Mobil Uyari Ekrani
+
+Mobilde editor acildiginda, kullaniciya net bir mesaj gostermek:
+- "Bu editor masaustu icin optimize edilmistir"
+- "Lutfen 1280px veya daha genis bir ekranda acin"
+- Dashboard'a donus butonu sunmak
+
+Bu, kullanicinin bos ekranda takili kalmasini onler ve durumu anlamasini saglar.
+
+## Sorun 2: Editor Cok Yavas Aciliyor / "Tekrar Dene" Gerekiyor
+
+Ana sorun `Project.tsx` dosyasindaki akis hatasindan kaynaklaniyor:
+
+1. `generateWebsite()` fonksiyonu basarili bir sekilde icerik uretiyor ve `generated_content`'i state'e kaydediyor
+2. Ancak `convertAndSaveChaiBlocks()` otomatik olarak CAGRILMIYOR
+3. Render kodu `chai_blocks`'in bos oldugunu gordugununde "Icerik editore aktariliyor..." ekranini gosteriyor
+4. Kullanici "Tekrar Dne" butonuna basarak `convertAndSaveChaiBlocks`'i manuel tetiklemek zorunda kaliyor
+
+Sorunun teknik sebebi: `useEffect`'in bagimliliklari `[id, navigate]` oldugu icin, `generateWebsite` state guncelledikten sonra `useEffect` tekrar calismiyor.
+
+### Cozum: Otomatik Donusturme
+
+`generateWebsite()` fonksiyonu basarili olduğunda, hemen ardindan `convertAndSaveChaiBlocks()` fonksiyonunu cagiracak sekilde guncellenmeli. Bu sayede kullanici hicbir sey yapmadan, icerik uretimi biter bitmez bloklar hazirlanip editor otomatik acilacak.
 
 ## Yapilacak Degisiklikler
 
-### 1. Project.tsx - AI gorsel uretim cagrisini kaldirma
+### 1. Project.tsx - generateWebsite Sonrasi Otomatik Donusturme
 **Dosya:** `src/pages/Project.tsx`
 
-- `generateImages()` fonksiyonu ve `generate-images` edge function cagrisi kaldirılacak
-- `generateWebsite()` icerisindeki `generateImages(projectId)` satiri silinecek
-- `generatingImages` state ve ilgili UI elemanlari temizlenecek
-- `generate-website` zaten Pixabay gorsellerini getiriyor, ekstra cagri gerekmiyor
+`generateWebsite` fonksiyonunda, `data.content` basarili sekilde alinip state'e kaydedildikten sonra, `convertAndSaveChaiBlocks` otomatik olarak cagrilacak. Bu sayede:
+- Icerik uretimi tamamlanir
+- Bloklar otomatik donusturulur
+- Editor hemen acilir
+- "Tekrar Dne" butonuna gerek kalmaz
 
-### 2. generate-website Edge Function - Pixabay Arama Terimlerini Zenginlestirme
-**Dosya:** `supabase/functions/generate-website/index.ts`
+### 2. Project.tsx - Mobil Uyari Ekrani
+**Dosya:** `src/pages/Project.tsx`
 
-Mevcut sektorel arama terimleri yeterli ama iyilestirilebilir:
-- Kullanicinin girdigi `businessName` ve `services` bilgilerini Pixabay arama terimlerine ekleme
-- Ornegin "Turk mutfagi restorani" icin sadece "restaurant interior" degil, "turkish restaurant kebab dining" gibi spesifik aramalar
-- AI'dan (text generation sirasinda) her bolum icin en uygun Pixabay arama terimlerini de uretmesini isteme
-- Uretilen terimleri Pixabay'de arama ve en uygun gorselleri secme
+ChaiBuilder editor render edilmeden once, ekran genisligi 1280px'den kucukse kullaniciya bilgilendirme ekrani gosterilecek:
+- Aciklayici mesaj: "Editor masaustu gorunumunde calisir"
+- Dashboard'a donus butonu
+- Ekran genisligi yeterli olursa otomatik olarak editor acilacak
 
-### 3. generate-website Prompt'una Gorsel Arama Terimleri Ekleme
-**Dosya:** `supabase/functions/generate-website/index.ts`
+### 3. ChaiBuilderWrapper - Mobil Kontrol
+**Dosya:** `src/components/chai-builder/ChaiBuilderWrapper.tsx`
 
-AI'nin urettigi JSON'a yeni bir alan ekleme:
-```
-"imageSearchTerms": {
-  "hero": "turkish restaurant kebab interior dining warm ambiance",
-  "about": "chef kitchen turkish cooking team",
-  "services": "food dishes menu presentation gourmet",
-  "gallery": ["restaurant interior", "kebab plate", "chef cooking", "dining table", "dessert baklava", "outdoor terrace"],
-  "cta": "happy customers dining restaurant",
-  "blog_default": "food cooking culinary turkish"
-}
-```
+Wrapper icerisinde de ekran genisligi kontrolu eklenecek, SDK'nin kendi "Screen too small" mesaji yerine ozel Turkce bir bilgilendirme gosterilecek.
 
-Bu sayede AI, is turune ozel en uygun gorsel arama terimlerini belirleyecek ve Pixabay'de tam olarak o terimleri arayacak.
+## Teknik Detaylar
 
-### 4. generate-website'te Dinamik Gorsel Arama
-**Dosya:** `supabase/functions/generate-website/index.ts`
-
-Mevcut sabit `sectorSearchTerms` yerine, AI'nin urettigi `imageSearchTerms` oncelikli olacak:
-1. Once AI'nin urettigi ozel arama terimlerini kullan
-2. AI uretmediyse, mevcut sektorel varsayilan terimlere dusun (fallback)
-3. Pixabay'de sonuc bulunamazsa, daha genel terimlerle tekrar dene
-
-### 5. convertToChaiBlocks.ts - CTA ve Ek Gorsel Alanlari
-**Dosya:** `src/components/chai-builder/utils/convertToChaiBlocks.ts`
-
-- CTA blogu icin `ctaImage` alanini kullanma
-- Hizmet kartlari icin individual gorsel desteği (gelecek iyilestirme)
+- `generateWebsite` icinde donusturme: `data.content` basarili alindiginda, `project` state guncellendikten sonra dogrudan `convertAndSaveChaiBlocks` cagrilacak. `projectData` parametresi olarak guncel veri (`{ ...prev, generated_content: data.content }`) kullanilacak.
+- Mobil kontrol: `window.innerWidth` ve `matchMedia` ile 1280px siniri kontrol edilecek, `resize` event listener ile dinamik takip saglanacak.
+- Mevcut CSS'deki `section.fixed.inset-0[class*="z-[99999]"]` kuralı korunacak (yedek guvenlik).
 
 ## Degistirilecek Dosyalar
 
-1. `src/pages/Project.tsx` - `generateImages` cagrisini kaldirma (10-15 satir degisiklik)
-2. `supabase/functions/generate-website/index.ts` - AI prompt'una `imageSearchTerms` ekleme + dinamik arama mantigi
-
-## Sonuc
-- AI gorsel uretimi tamamen kalkar, kredi harcanmaz
-- Her bolum icin is turune ozel akilli Pixabay aramalari yapilir
-- AI, her bolum icin en uygun arama terimlerini belirler (ornegin "restoran" icin "Turkish kebab dining" gibi)
-- Mevcut Pixabay API anahtari zaten yapilandirilmis durumda, ek bir ayar gerekmez
+1. `src/pages/Project.tsx` - `generateWebsite` sonrasi otomatik donusturme + mobil uyari ekrani (ana duzeltme)
+2. `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Mobil ekran uyarisi (ek guvenlik katmani)
