@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, BarChart3, ImageIcon } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, BarChart3 } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { EditorToolbar } from '@/components/website-preview/EditorToolbar';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
@@ -154,7 +154,7 @@ export default function Project() {
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [generatingImages, setGeneratingImages] = useState(false);
+  
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState('');
   const [currentSection, setCurrentSection] = useState('hero');
@@ -365,8 +365,7 @@ export default function Project() {
           description: 'Your professional website has been created.',
         });
 
-        // Auto-generate images in background
-        generateImages(projectId);
+        // Images are now fetched from Pixabay during generate-website, no separate AI generation needed
       }
     } catch (err) {
       console.error('Generation error:', err);
@@ -380,44 +379,6 @@ export default function Project() {
     }
   };
 
-  // Generate AI images for the website
-  const generateImages = async (projectId: string) => {
-    setGeneratingImages(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-images', {
-        body: { projectId },
-      });
-
-      if (error) {
-        console.error('Image generation error:', error);
-        toast({
-          title: 'Image generation failed',
-          description: 'Could not generate images. You can try again later.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      if (data?.images) {
-        setProject(prev => prev ? {
-          ...prev,
-          generated_content: {
-            ...prev.generated_content!,
-            images: data.images,
-          },
-        } : null);
-        
-        toast({
-          title: 'Images generated!',
-          description: 'AI-generated images have been added to your website.',
-        });
-      }
-    } catch (err) {
-      console.error('Image generation error:', err);
-    } finally {
-      setGeneratingImages(false);
-    }
-  };
 
   // Deep update helper for nested object paths like "pages.home.hero.title"
   const updateNestedValue = (obj: any, path: string, value: any): any => {
@@ -1475,8 +1436,6 @@ export default function Project() {
             setHomeEditorSidebarOpen(false);
             setPageSettingsSidebarOpen(true);
           }}
-          onGenerateGalleryImages={() => id && generateImages(id)}
-          isGeneratingGallery={generatingImages}
           sectionOrder={sectionOrder}
           onReorderSections={handleReorderSections}
         />
