@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  testSignIn: () => Promise<{ error: Error | null }>;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
@@ -41,6 +42,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const testSignIn = async () => {
+    const testEmail = 'test@openlucius.com';
+    const testPassword = 'OL_Test#2026!xKz9';
+    // Try sign in first, if fails try sign up then sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: testEmail,
+      password: testPassword,
+    });
+    if (!signInError) return { error: null };
+
+    // User doesn't exist, create account
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (signUpError) return { error: signUpError as Error };
+
+    // Sign in with the newly created account
+    const { error } = await supabase.auth.signInWithPassword({
+      email: testEmail,
+      password: testPassword,
+    });
+    return { error: error as Error | null };
+  };
 
   const signInWithOtp = async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
@@ -139,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       session,
       loading,
+      testSignIn,
       signInWithOtp,
       signInWithGoogle,
       signInWithApple,
