@@ -75,6 +75,7 @@ registerChaiBlock(CTABannerBlock, {
   label: "CTA Banner",
   category: "cta",
   group: "sections",
+  inlineEditProps: ['title', 'description', 'buttonText', 'secondaryButtonText'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-primary"),

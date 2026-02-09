@@ -80,6 +80,7 @@ registerChaiBlock(TestimonialsCarouselBlock, {
   label: "Müşteri Yorumları",
   category: "testimonials",
   group: "sections",
+  inlineEditProps: ['sectionTitle', 'sectionSubtitle'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-muted/30"),

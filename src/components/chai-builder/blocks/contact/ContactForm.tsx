@@ -130,6 +130,7 @@ registerChaiBlock(ContactFormBlock, {
   label: "İletişim Formu",
   category: "contact",
   group: "sections",
+  inlineEditProps: ['sectionTitle', 'sectionSubtitle', 'sectionDescription'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

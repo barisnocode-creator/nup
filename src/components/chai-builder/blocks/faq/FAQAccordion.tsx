@@ -78,6 +78,7 @@ registerChaiBlock(FAQAccordionBlock, {
   label: "SSS - Akordeon",
   category: "faq",
   group: "sections",
+  inlineEditProps: ['sectionTitle', 'sectionSubtitle'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

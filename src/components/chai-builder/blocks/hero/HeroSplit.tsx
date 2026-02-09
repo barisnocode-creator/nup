@@ -82,6 +82,7 @@ registerChaiBlock(HeroSplitBlock, {
   label: "Hero - İki Kolon",
   category: "hero",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle', 'description', 'buttonText'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

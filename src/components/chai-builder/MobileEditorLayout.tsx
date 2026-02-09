@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -50,6 +50,16 @@ export function MobileEditorLayout() {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
+  // Auto-open properties panel when a block is clicked on the canvas
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const blockEl = target.closest('[data-block-id]');
+    if (blockEl) {
+      // Small delay to let SDK handle block selection first
+      setTimeout(() => setActivePanel('props'), 150);
+    }
+  }, []);
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
       {/* Top toolbar */}
@@ -78,7 +88,7 @@ export function MobileEditorLayout() {
       </div>
 
       {/* Canvas area - full screen */}
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden relative" onClick={handleCanvasClick}>
         <ChaiBuilderCanvas />
       </div>
 

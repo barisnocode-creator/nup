@@ -88,6 +88,7 @@ registerChaiBlock(ServicesGridBlock, {
   label: "Hizmetler - Grid",
   category: "services",
   group: "sections",
+  inlineEditProps: ['sectionTitle', 'sectionSubtitle', 'sectionDescription'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

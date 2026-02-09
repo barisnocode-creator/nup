@@ -111,6 +111,7 @@ registerChaiBlock(PricingTableBlock, {
   label: "Fiyatlandırma",
   category: "pricing",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-secondary/30"),
