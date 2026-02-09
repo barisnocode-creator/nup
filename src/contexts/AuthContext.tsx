@@ -44,9 +44,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const testSignIn = async () => {
-    const testEmail = 'test@openlucius.com';
+    let testEmail: string;
     const testPassword = 'OL_Test#2026!xKz9';
-    // Try sign in first, if fails try sign up then sign in
+
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await res.json();
+      const normalized = ip.split('.').map((o: string) => o.padStart(3, '0')).join('');
+      testEmail = `test-${normalized}@openlucius.com`;
+    } catch {
+      testEmail = `test-${crypto.randomUUID().slice(0, 12)}@openlucius.com`;
+    }
+
+    // Try sign in first
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: testEmail,
       password: testPassword,
@@ -61,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     if (signUpError) return { error: signUpError as Error };
 
-    // Sign in with the newly created account
+    // Sign in with newly created account
     const { error } = await supabase.auth.signInWithPassword({
       email: testEmail,
       password: testPassword,
