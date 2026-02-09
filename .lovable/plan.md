@@ -1,67 +1,86 @@
 
-# Mobil Sidebar Sorunu ve Yavas Editor Gecisi Cozumu
 
-## Sorun 1: Mobil Gorunumde Sidebar'lar Acilmiyor
+# Mobil Editor: Sag ve Sol Slide-in Sidebar Sistemi
 
-ChaiBuilder SDK editoru, **minimum 1280px ekran genisligi** gerektiriyor. Bu, SDK'nin ic yapisindan gelen bir sinirlamadır - 1280px'den kucuk ekranlarda "Screen too small" uyarisi gosteriyor ve sol/sag paneller (sidebar) render edilmiyor.
+## Mevcut Durum
 
-Mevcut CSS'de bu uyari gizleniyor ama editor hala calismıyor. Yani mobil/tablet cihazlarda editor sidebarlarinin acilmasi mumkun degil.
+Suanki `MobileEditorLayout.tsx`, alt kisimda bir Drawer (cekmece) kullanarak panelleri gosteriyor. Kullanici "Katmanlar", "Ekle", "Ozellikler", "Stiller" butonlarina bastiginda alttan yukariya bir panel aciliyor. Ancak bu yaklasim:
+- Masaustu editor deneyiminden cok farkli
+- Canvas alani kapatiyor
+- Sidebar benzeri bir is akisi sunmuyor
 
-### Cozum: Mobil Uyari Ekrani
+## Yeni Tasarim: Sol ve Sag Sheet (Slide-in Panel) Sistemi
 
-Mobilde editor acildiginda, kullaniciya net bir mesaj gostermek:
-- "Bu editor masaustu icin optimize edilmistir"
-- "Lutfen 1280px veya daha genis bir ekranda acin"
-- Dashboard'a donus butonu sunmak
+Drawer yerine **Sheet** (yan panel) kullanilacak. Radix Dialog tabanli Sheet bilesenimiz zaten projede mevcut ve `left` / `right` yonlerini destekliyor.
 
-Bu, kullanicinin bos ekranda takili kalmasini onler ve durumu anlamasini saglar.
+### Panel Yerlesimi
 
-## Sorun 2: Editor Cok Yavas Aciliyor / "Tekrar Dene" Gerekiyor
+```text
++--------------------------------------------------+
+|  <- Geri  |  Undo/Redo  |  Ekran Boyutu          |  <- Ust toolbar
++--------------------------------------------------+
+|                                                    |
+|                                                    |
+|  SOL PANEL        CANVAS           SAG PANEL       |
+|  (Katmanlar)    (Tam ekran)      (Ozellikler)      |
+|  (Blok Ekle)                     (Stiller)         |
+|  Soldan kayar                    Sagdan kayar       |
+|                                                    |
+|                                                    |
++--------------------------------------------------+
+|  [Katmanlar] [Ekle]    [Ozellikler] [Stiller]     |  <- Alt toolbar
++--------------------------------------------------+
+```
 
-Ana sorun `Project.tsx` dosyasindaki akis hatasindan kaynaklaniyor:
+### Nasil Calisacak
 
-1. `generateWebsite()` fonksiyonu basarili bir sekilde icerik uretiyor ve `generated_content`'i state'e kaydediyor
-2. Ancak `convertAndSaveChaiBlocks()` otomatik olarak CAGRILMIYOR
-3. Render kodu `chai_blocks`'in bos oldugunu gordugununde "Icerik editore aktariliyor..." ekranini gosteriyor
-4. Kullanici "Tekrar Dne" butonuna basarak `convertAndSaveChaiBlocks`'i manuel tetiklemek zorunda kaliyor
+1. **Alt toolbar'daki butonlar**: 4 buton kalacak
+   - **Katmanlar** -> Soldan kayarak acilir (blok agaci)
+   - **Ekle** -> Soldan kayarak acilir (blok ekleme paneli)
+   - **Ozellikler** -> Sagdan kayarak acilir (blok prop editor)
+   - **Stiller** -> Sagdan kayarak acilir (blok stil editor)
 
-Sorunun teknik sebebi: `useEffect`'in bagimliliklari `[id, navigate]` oldugu icin, `generateWebsite` state guncelledikten sonra `useEffect` tekrar calismiyor.
+2. **Panel ozellikleri**:
+   - Ekran genisliginin %75'ini kaplar (Sheet varsayilani, mobilde ideal)
+   - Yari saydam overlay ile canvas hala gorunur
+   - Kapatma butonu (X) panel icerisinde
+   - Panel disina tiklandiginda otomatik kapanir
+   - Animasyonlu acilma/kapanma (slide-in/slide-out)
 
-### Cozum: Otomatik Donusturme
-
-`generateWebsite()` fonksiyonu basarili olduğunda, hemen ardindan `convertAndSaveChaiBlocks()` fonksiyonunu cagiracak sekilde guncellenmeli. Bu sayede kullanici hicbir sey yapmadan, icerik uretimi biter bitmez bloklar hazirlanip editor otomatik acilacak.
-
-## Yapilacak Degisiklikler
-
-### 1. Project.tsx - generateWebsite Sonrasi Otomatik Donusturme
-**Dosya:** `src/pages/Project.tsx`
-
-`generateWebsite` fonksiyonunda, `data.content` basarili sekilde alinip state'e kaydedildikten sonra, `convertAndSaveChaiBlocks` otomatik olarak cagrilacak. Bu sayede:
-- Icerik uretimi tamamlanir
-- Bloklar otomatik donusturulur
-- Editor hemen acilir
-- "Tekrar Dne" butonuna gerek kalmaz
-
-### 2. Project.tsx - Mobil Uyari Ekrani
-**Dosya:** `src/pages/Project.tsx`
-
-ChaiBuilder editor render edilmeden once, ekran genisligi 1280px'den kucukse kullaniciya bilgilendirme ekrani gosterilecek:
-- Aciklayici mesaj: "Editor masaustu gorunumunde calisir"
-- Dashboard'a donus butonu
-- Ekran genisligi yeterli olursa otomatik olarak editor acilacak
-
-### 3. ChaiBuilderWrapper - Mobil Kontrol
-**Dosya:** `src/components/chai-builder/ChaiBuilderWrapper.tsx`
-
-Wrapper icerisinde de ekran genisligi kontrolu eklenecek, SDK'nin kendi "Screen too small" mesaji yerine ozel Turkce bir bilgilendirme gosterilecek.
+3. **Tum ekran boyutlarinda calismasi**:
+   - 320px (kucuk telefon): Panel %75 = 240px, yeterli alan
+   - 375px (iPhone): Panel %75 = 281px, rahat kullanim
+   - 414px (buyuk telefon): Panel %75 = 310px, genis alan
+   - 768px (tablet): Panel %75 = 576px, cok rahat
+   - 1024px (kucuk laptop): Panel max-w-sm = 384px, ideal
+   - 1280px+: Masaustu modu devreye girer, Sheet kullanilmaz
 
 ## Teknik Detaylar
 
-- `generateWebsite` icinde donusturme: `data.content` basarili alindiginda, `project` state guncellendikten sonra dogrudan `convertAndSaveChaiBlocks` cagrilacak. `projectData` parametresi olarak guncel veri (`{ ...prev, generated_content: data.content }`) kullanilacak.
-- Mobil kontrol: `window.innerWidth` ve `matchMedia` ile 1280px siniri kontrol edilecek, `resize` event listener ile dinamik takip saglanacak.
-- Mevcut CSS'deki `section.fixed.inset-0[class*="z-[99999]"]` kuralı korunacak (yedek guvenlik).
+### Degistirilecek Dosya: `src/components/chai-builder/MobileEditorLayout.tsx`
 
-## Degistirilecek Dosyalar
+Yapilacak degisiklikler:
 
-1. `src/pages/Project.tsx` - `generateWebsite` sonrasi otomatik donusturme + mobil uyari ekrani (ana duzeltme)
-2. `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Mobil ekran uyarisi (ek guvenlik katmani)
+1. **Import degisikligi**: `Drawer`/`DrawerContent` yerine `Sheet`/`SheetContent` kullanilacak
+2. **Panel tipi guncelleme**: Her panele bir `side` ozelligi eklenecek:
+   - `outline` -> `side: "left"`
+   - `add` -> `side: "left"`
+   - `props` -> `side: "right"`
+   - `styles` -> `side: "right"`
+3. **Sheet kullanimi**: Her panel icin ayri bir Sheet renderlanacak. Aktif panel hangisiyse o acilacak
+4. **Overlay ayari**: `noOverlay={false}` ile yari saydam arka plan saglanacak, boylece kullanici panelin disinda canvas'i gorebilir
+5. **Panel genisligi**: Mobilde `w-[85vw] max-w-sm` kullanilarak kucuk ekranlarda %85, buyuk ekranlarda max 384px
+6. **Icerik scroll**: Panel icerigi scroll edilebilir olacak (`overflow-y-auto`)
+7. **SheetTitle eklenmesi**: Accessibility icin her panele baslik eklenecek
+
+### Panel Acilma/Kapanma Mantigi
+
+- Mevcut `activePanel` state'i korunacak
+- Bir panel acikken ayni butona basilirsa kapanir
+- Farkli bir butona basilirsa onceki kapanir, yenisi acilir
+- Panel disina tiklanirsa kapanir
+- X butonuna basilirsa kapanir
+
+### Diger Dosyalar
+
+`ChaiBuilderWrapper.tsx` ve `chaibuilder.tailwind.css` dosyalarinda degisiklik gerekmiyor. Mevcut Sheet bilesenimiz (`src/components/ui/sheet.tsx`) tum gereklilikleri karsilamaktadir.
