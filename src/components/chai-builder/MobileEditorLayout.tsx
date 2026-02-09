@@ -8,40 +8,47 @@ import {
   ChaiScreenSizes,
   ChaiUndoRedo,
 } from '@chaibuilder/sdk';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import {
   Layers,
   Plus,
   Settings2,
   Paintbrush,
-  Save,
   ArrowLeft,
-  Undo2,
-  Redo2,
-  Monitor,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 type PanelType = 'outline' | 'add' | 'props' | 'styles' | null;
 
+type PanelConfig = {
+  key: Exclude<PanelType, null>;
+  icon: React.ElementType;
+  label: string;
+  side: 'left' | 'right';
+};
+
+const panels: PanelConfig[] = [
+  { key: 'outline', icon: Layers, label: 'Katmanlar', side: 'left' },
+  { key: 'add', icon: Plus, label: 'Ekle', side: 'left' },
+  { key: 'props', icon: Settings2, label: 'Özellikler', side: 'right' },
+  { key: 'styles', icon: Paintbrush, label: 'Stiller', side: 'right' },
+];
+
 /**
  * Mobile-optimized layout for ChaiBuilder editor.
- * Uses Drawer (bottom sheet) pattern to show panels on mobile devices.
+ * Uses Sheet (slide-in sidebar) pattern — left panels slide from left, right panels from right.
  */
 export function MobileEditorLayout() {
   const navigate = useNavigate();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
   const handlePanelToggle = (panel: PanelType) => {
-    setActivePanel(prev => (prev === panel ? null : panel));
+    setActivePanel((prev) => (prev === panel ? null : panel));
   };
-
-  const panels: { key: PanelType; icon: React.ElementType; label: string }[] = [
-    { key: 'outline', icon: Layers, label: 'Katmanlar' },
-    { key: 'add', icon: Plus, label: 'Ekle' },
-    { key: 'props', icon: Settings2, label: 'Özellikler' },
-    { key: 'styles', icon: Paintbrush, label: 'Stiller' },
-  ];
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
@@ -75,41 +82,35 @@ export function MobileEditorLayout() {
         <ChaiBuilderCanvas />
       </div>
 
-      {/* Bottom panel drawer */}
-      <Drawer
-        open={activePanel !== null}
-        onOpenChange={(open) => {
-          if (!open) setActivePanel(null);
-        }}
-        modal={false}
-      >
-        <DrawerContent className="max-h-[60vh] rounded-t-xl">
-          <div className="p-3 overflow-auto max-h-[55vh]">
-            {/* Panel header */}
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-foreground">
-                {activePanel === 'outline' && 'Katmanlar'}
-                {activePanel === 'add' && 'Blok Ekle'}
-                {activePanel === 'props' && 'Blok Özellikleri'}
-                {activePanel === 'styles' && 'Stil Düzenleme'}
-              </h3>
+      {/* Side panels via Sheet */}
+      {panels.map(({ key, label, side }) => (
+        <Sheet
+          key={key}
+          open={activePanel === key}
+          onOpenChange={(open) => {
+            if (!open) setActivePanel(null);
+          }}
+        >
+          <SheetContent
+            side={side}
+            className="w-[85vw] max-w-sm p-0 flex flex-col"
+          >
+            <div className="px-4 py-3 border-b border-border shrink-0">
+              <SheetTitle className="text-sm font-medium">
+                {label}
+              </SheetTitle>
             </div>
-
-            {/* Panel content */}
-            <div className="min-h-[200px]">
-              {activePanel === 'outline' && <ChaiOutline />}
-              {activePanel === 'add' && (
-                <ChaiAddBlocksPanel
-                  showHeading={false}
-                  fromSidebar={true}
-                />
+            <div className="flex-1 overflow-y-auto p-3">
+              {key === 'outline' && <ChaiOutline />}
+              {key === 'add' && (
+                <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />
               )}
-              {activePanel === 'props' && <ChaiBlockPropsEditor />}
-              {activePanel === 'styles' && <ChaiBlockStyleEditor />}
+              {key === 'props' && <ChaiBlockPropsEditor />}
+              {key === 'styles' && <ChaiBlockStyleEditor />}
             </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
+          </SheetContent>
+        </Sheet>
+      ))}
 
       {/* Bottom navigation bar */}
       <div className="flex items-center justify-around px-2 py-2 border-t border-border bg-background/95 backdrop-blur-sm shrink-0 safe-area-bottom">
