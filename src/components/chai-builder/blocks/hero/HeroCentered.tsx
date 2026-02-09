@@ -99,6 +99,7 @@ registerChaiBlock(HeroCenteredBlock, {
   label: "Hero - Ortalanmış",
   category: "hero",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle', 'description', 'primaryButtonText', 'secondaryButtonText'],
   schema: {
     properties: {
       styles: StylesProp("min-h-[700px]"),

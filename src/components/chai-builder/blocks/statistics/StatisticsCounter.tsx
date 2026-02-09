@@ -76,6 +76,7 @@ registerChaiBlock(StatisticsCounterBlock, {
   label: "İstatistikler",
   category: "statistics",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-primary"),

@@ -84,6 +84,7 @@ registerChaiBlock(AboutSectionBlock, {
   label: "Hakkımızda",
   category: "about",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle', 'description'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

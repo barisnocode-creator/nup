@@ -73,6 +73,7 @@ registerChaiBlock(ImageGalleryBlock, {
   label: "Görsel Galeri",
   category: "gallery",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle'],
   schema: {
     properties: {
       styles: StylesProp("py-20 bg-background"),

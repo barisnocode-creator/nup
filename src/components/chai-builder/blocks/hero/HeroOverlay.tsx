@@ -90,6 +90,7 @@ registerChaiBlock(HeroOverlayBlock, {
   label: "Hero - Overlay",
   category: "hero",
   group: "sections",
+  inlineEditProps: ['title', 'subtitle', 'description', 'buttonText'],
   schema: {
     properties: {
       styles: StylesProp("min-h-[600px]"),
