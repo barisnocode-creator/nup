@@ -1,86 +1,117 @@
 
-
-# Mobil Editor: Sag ve Sol Slide-in Sidebar Sistemi
+# Her Elemana Tikla ve Duzenle: Inline Editing + Otomatik Panel Acma
 
 ## Mevcut Durum
 
-Suanki `MobileEditorLayout.tsx`, alt kisimda bir Drawer (cekmece) kullanarak panelleri gosteriyor. Kullanici "Katmanlar", "Ekle", "Ozellikler", "Stiller" butonlarina bastiginda alttan yukariya bir panel aciliyor. Ancak bu yaklasim:
-- Masaustu editor deneyiminden cok farkli
-- Canvas alani kapatiyor
-- Sidebar benzeri bir is akisi sunmuyor
+ChaiBuilder SDK'nin blok mimarisi zaten canvas'ta blok secimi destekliyor:
+- Bir bolume tiklandiginda SDK o bloku secer ve sag panelde ozellikleri gosterir
+- Ancak bloklarin **monolitik** yapisi nedeniyle, tum bolum (ornegin hero, hizmetler) tek bir blok olarak seciliyor
+- Masaustunde bu iyi calisir cunku sag panel her zaman gorunur
+- **Mobilde** ise kullanici blok sectikten sonra manuel olarak "Ozellikler" panelini acmak zorunda
 
-## Yeni Tasarim: Sol ve Sag Sheet (Slide-in Panel) Sistemi
+## Sorunlar
 
-Drawer yerine **Sheet** (yan panel) kullanilacak. Radix Dialog tabanli Sheet bilesenimiz zaten projede mevcut ve `left` / `right` yonlerini destekliyor.
+1. **Mobilde**: Blok secildiginde "Ozellikler" paneli otomatik acilmiyor, kullanici alt barda butona basmak zorunda
+2. **Inline Editing yok**: Metin elemanlarina (baslik, aciklama, buton metni) tiklandiginda dogrudan duzenleme yapilabilmeli
+3. **Gorsel duzenleme**: Gorsellere tiklandiginda gorsel secici acilabilmeli
 
-### Panel Yerlesimi
+## Cozum
+
+### 1. Tum Bloklara `inlineEditProps` Ekleme
+
+ChaiBuilder SDK, blok konfigurasyonunda `inlineEditProps` destekliyor. Bu ozellik, hangi string prop'larin dogrudan canvas uzerinde duzenlenebilecegini belirtiyor. SDK, bu prop'lari iceren elemanlari `contentEditable` yapar.
+
+Her bloga uygun metin prop'lari icin `inlineEditProps` eklenecek:
+
+| Blok | Inline Editable Props |
+|------|----------------------|
+| HeroSplit | title, subtitle, description, buttonText |
+| HeroCentered | title, subtitle, description, primaryButtonText, secondaryButtonText |
+| HeroOverlay | title, subtitle, description, buttonText |
+| AboutSection | title, subtitle, description |
+| ServicesGrid | sectionTitle, sectionSubtitle, sectionDescription |
+| StatisticsCounter | title, subtitle |
+| ImageGallery | title, subtitle |
+| PricingTable | title, subtitle |
+| TestimonialsCarousel | sectionTitle, sectionSubtitle |
+| ContactForm | sectionTitle, sectionSubtitle, sectionDescription |
+| CTABanner | title, description, buttonText, secondaryButtonText |
+| FAQAccordion | sectionTitle, sectionSubtitle |
+
+### 2. Mobilde Blok Secildiginde Otomatik Panel Acma
+
+`MobileEditorLayout.tsx` icerisinde canvas'a bir click listener eklenerek, `data-block-id` iceren bir eleman tiklandiginda otomatik olarak "Ozellikler" (props) paneli acilacak. Boylece:
+
+- Kullanici herhangi bir bolume tiklar
+- Blok secilir VE sag taraftan "Ozellikler" paneli otomatik kayarak acilir
+- Kullanici hemen baslik, metin, gorsel URL, buton metni gibi tum alanlari gorup duzenleyebilir
+
+### 3. Canvas Click Handler Mantigi
 
 ```text
-+--------------------------------------------------+
-|  <- Geri  |  Undo/Redo  |  Ekran Boyutu          |  <- Ust toolbar
-+--------------------------------------------------+
-|                                                    |
-|                                                    |
-|  SOL PANEL        CANVAS           SAG PANEL       |
-|  (Katmanlar)    (Tam ekran)      (Ozellikler)      |
-|  (Blok Ekle)                     (Stiller)         |
-|  Soldan kayar                    Sagdan kayar       |
-|                                                    |
-|                                                    |
-+--------------------------------------------------+
-|  [Katmanlar] [Ekle]    [Ozellikler] [Stiller]     |  <- Alt toolbar
-+--------------------------------------------------+
+Kullanici Canvas'a tiklar
+      |
+      v
+data-block-id var mi?
+      |
+     Evet --> activePanel = "props" (Ozellikler paneli acilir)
+      |
+    Hayir --> Panel kapanir (bos alana tiklandi)
 ```
-
-### Nasil Calisacak
-
-1. **Alt toolbar'daki butonlar**: 4 buton kalacak
-   - **Katmanlar** -> Soldan kayarak acilir (blok agaci)
-   - **Ekle** -> Soldan kayarak acilir (blok ekleme paneli)
-   - **Ozellikler** -> Sagdan kayarak acilir (blok prop editor)
-   - **Stiller** -> Sagdan kayarak acilir (blok stil editor)
-
-2. **Panel ozellikleri**:
-   - Ekran genisliginin %75'ini kaplar (Sheet varsayilani, mobilde ideal)
-   - Yari saydam overlay ile canvas hala gorunur
-   - Kapatma butonu (X) panel icerisinde
-   - Panel disina tiklandiginda otomatik kapanir
-   - Animasyonlu acilma/kapanma (slide-in/slide-out)
-
-3. **Tum ekran boyutlarinda calismasi**:
-   - 320px (kucuk telefon): Panel %75 = 240px, yeterli alan
-   - 375px (iPhone): Panel %75 = 281px, rahat kullanim
-   - 414px (buyuk telefon): Panel %75 = 310px, genis alan
-   - 768px (tablet): Panel %75 = 576px, cok rahat
-   - 1024px (kucuk laptop): Panel max-w-sm = 384px, ideal
-   - 1280px+: Masaustu modu devreye girer, Sheet kullanilmaz
 
 ## Teknik Detaylar
 
-### Degistirilecek Dosya: `src/components/chai-builder/MobileEditorLayout.tsx`
+### Degistirilecek Dosyalar
 
-Yapilacak degisiklikler:
+**1. `src/components/chai-builder/blocks/hero/HeroSplit.tsx`**
+- `registerChaiBlock` cagirisina `inlineEditProps: ['title', 'subtitle', 'description', 'buttonText']` ekleme
 
-1. **Import degisikligi**: `Drawer`/`DrawerContent` yerine `Sheet`/`SheetContent` kullanilacak
-2. **Panel tipi guncelleme**: Her panele bir `side` ozelligi eklenecek:
-   - `outline` -> `side: "left"`
-   - `add` -> `side: "left"`
-   - `props` -> `side: "right"`
-   - `styles` -> `side: "right"`
-3. **Sheet kullanimi**: Her panel icin ayri bir Sheet renderlanacak. Aktif panel hangisiyse o acilacak
-4. **Overlay ayari**: `noOverlay={false}` ile yari saydam arka plan saglanacak, boylece kullanici panelin disinda canvas'i gorebilir
-5. **Panel genisligi**: Mobilde `w-[85vw] max-w-sm` kullanilarak kucuk ekranlarda %85, buyuk ekranlarda max 384px
-6. **Icerik scroll**: Panel icerigi scroll edilebilir olacak (`overflow-y-auto`)
-7. **SheetTitle eklenmesi**: Accessibility icin her panele baslik eklenecek
+**2. `src/components/chai-builder/blocks/hero/HeroCentered.tsx`**
+- `inlineEditProps: ['title', 'subtitle', 'description', 'primaryButtonText', 'secondaryButtonText']` ekleme
 
-### Panel Acilma/Kapanma Mantigi
+**3. `src/components/chai-builder/blocks/hero/HeroOverlay.tsx`**
+- `inlineEditProps: ['title', 'subtitle', 'description', 'buttonText']` ekleme
 
-- Mevcut `activePanel` state'i korunacak
-- Bir panel acikken ayni butona basilirsa kapanir
-- Farkli bir butona basilirsa onceki kapanir, yenisi acilir
-- Panel disina tiklanirsa kapanir
-- X butonuna basilirsa kapanir
+**4. `src/components/chai-builder/blocks/about/AboutSection.tsx`**
+- `inlineEditProps: ['title', 'subtitle', 'description']` ekleme
 
-### Diger Dosyalar
+**5. `src/components/chai-builder/blocks/services/ServicesGrid.tsx`**
+- `inlineEditProps: ['sectionTitle', 'sectionSubtitle', 'sectionDescription']` ekleme
 
-`ChaiBuilderWrapper.tsx` ve `chaibuilder.tailwind.css` dosyalarinda degisiklik gerekmiyor. Mevcut Sheet bilesenimiz (`src/components/ui/sheet.tsx`) tum gereklilikleri karsilamaktadir.
+**6. `src/components/chai-builder/blocks/statistics/StatisticsCounter.tsx`**
+- `inlineEditProps: ['title', 'subtitle']` ekleme
+
+**7. `src/components/chai-builder/blocks/gallery/ImageGallery.tsx`**
+- `inlineEditProps: ['title', 'subtitle']` ekleme
+
+**8. `src/components/chai-builder/blocks/pricing/PricingTable.tsx`**
+- `inlineEditProps: ['title', 'subtitle']` ekleme
+
+**9. `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx`**
+- `inlineEditProps: ['sectionTitle', 'sectionSubtitle']` ekleme
+
+**10. `src/components/chai-builder/blocks/contact/ContactForm.tsx`**
+- `inlineEditProps: ['sectionTitle', 'sectionSubtitle', 'sectionDescription']` ekleme
+
+**11. `src/components/chai-builder/blocks/cta/CTABanner.tsx`**
+- `inlineEditProps: ['title', 'description', 'buttonText', 'secondaryButtonText']` ekleme
+
+**12. `src/components/chai-builder/blocks/faq/FAQAccordion.tsx`**
+- `inlineEditProps: ['sectionTitle', 'sectionSubtitle']` ekleme
+
+**13. `src/components/chai-builder/MobileEditorLayout.tsx`**
+- Canvas div'ine click handler ekleme
+- Tiklanilan elemanin `data-block-id` icerisip icermedigini kontrol etme
+- Blok secildiyse `setActivePanel('props')` cagirarak Ozellikler panelini otomatik acma
+- Bos alana tiklandiginda paneli kapatma
+- Kucuk bir gecikme (setTimeout 150ms) ekleyerek SDK'nin kendi secim islemini tamamlamasini bekleme
+
+### Uygulama Ozeti
+
+Her blok dosyasindaki degisiklik cok kucuk: `registerChaiBlock` cagirisindaki config objesine sadece bir satir eklenmesi yeterli. Mobil layout degisikligi ise canvas wrapper'ina bir onClick handler eklemekten ibaret.
+
+Bu degisiklikler sayesinde:
+- Masaustunde metne cift tiklandiginda dogrudan duzenlenebilir (inline editing)
+- Tek tiklamayla blok secilir ve sag panelde tum ozellikler gorunur
+- Mobilde blok tiklandiginda otomatik olarak ozellikler paneli acilir
+- Gorseller, butonlar, metinler - hepsi sag panelden duzenlenebilir
