@@ -119,6 +119,12 @@ section.fixed.inset-0[class*="z-[99999]"] {
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
 }
 
+/* Select option capitalize fallback */
+[data-panel] select option,
+.rjsf select option {
+  text-transform: capitalize !important;
+}
+
 /* Checkbox */
 [data-panel] input[type="checkbox"],
 .rjsf input[type="checkbox"] {
