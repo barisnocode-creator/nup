@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -18,30 +18,7 @@ type RightTab = 'props' | 'styles';
 export function DesktopEditorLayout() {
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
-  const [showRight, setShowRight] = useState(false);
-
-  // Auto-open floating card on block selection, close on empty click
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-
-      // Ignore clicks on left sidebar buttons or floating card itself
-      if (target.closest('.editor-left-sidebar') || target.closest('.floating-edit-card')) return;
-
-      const isCanvasArea = target.closest('.chai-canvas-area');
-      if (!isCanvasArea) return;
-
-      const blockEl = target.closest('[data-block-id]');
-      if (blockEl) {
-        setShowRight(true);
-      } else {
-        setShowRight(false);
-      }
-    };
-
-    document.addEventListener('click', handleClick, true);
-    return () => document.removeEventListener('click', handleClick, true);
-  }, []);
+  const [showRight, setShowRight] = useState(true);
 
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background relative">
