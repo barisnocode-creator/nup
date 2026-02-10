@@ -1,53 +1,60 @@
 
-# Contextual Floating Edit Card
 
-## Current State
-The `DesktopEditorLayout` already uses `ChaiBlockPropsEditor` and `ChaiBlockStyleEditor` from the SDK, which are inherently context-aware -- they automatically show the correct fields based on the selected block type (text fields for text, image fields for images, section spacing for sections). The problem is: the card is always visible and doesn't respond to selection events.
+# Durable Tarzi Sag Panel - Kayan Edit Karti
 
-## Approach
-Since the SDK doesn't expose a `useSelectedBlock` hook, we'll use a MutationObserver on the props editor container to detect when the SDK populates it with content (block selected) vs when it's empty (no selection). This gives us reliable selection awareness without hacking the SDK internals.
+## Sorun
 
-## Changes
+Mevcut floating kart MutationObserver ile blok secimini algilmaya calisiyor ama SDK, canvas'i iframe icinde render ettigi icin observer dogru calismiyor. Ayrica SDK'nin kendi sag sidebar'i hala gorunuyor.
 
-### 1. `src/components/chai-builder/DesktopEditorLayout.tsx`
+## Cozum
 
-**Selection-aware visibility:**
-- Start with `showRight: false`
-- Use a `ref` on the props/styles container and a `MutationObserver` to detect when `ChaiBlockPropsEditor` renders content (meaning a block is selected)
-- When content appears, slide the card in; when it empties, slide it out
-- This replaces the manual toggle approach that didn't work with iframe clicks
+SDK'nin `ChaiBlockPropsEditor` ve `ChaiBlockStyleEditor` bilesenlerini kullanarak, sag taraftan kayan sabit bir panel olusturacagiz. Goruntulen referans gorseldeki Durable paneline benzer bir tasarim:
 
-**Improved animation:**
-- Slide-in from right: `initial={{ x: 30, opacity: 0, scale: 0.95 }}` with spring physics
-- Smooth exit with matching reverse animation
-- Card remains compact: `w-[280px]`, `max-h-[420px]`
+- Ust kisimda "Image" / "Text" / "Section" gibi kontekst basligi
+- Gorsel secildiginde: gorsel onizleme + Regenerate/Change butonlari + alt text + pozisyon slider'lari
+- Metin secildiginde: SDK'nin metin duzenleme alanlari
+- Panel sag taraftan slide-in animasyonla acilir, kapatildiginda slide-out
 
-**Manual toggle preserved:**
-- The Settings2 button in the toolbar acts as a force show/hide override
-- Closing the card via X button hides it until next block selection
+## Degisiklikler
 
-### 2. `src/styles/chaibuilder.tailwind.css`
+### 1. DesktopEditorLayout.tsx
 
-**Floating card refinements:**
-- Tighten the gradient border width from 3px to 2px for a sleeker look
-- Add subtle box-shadow for depth
-- Ensure the card doesn't overlap the screen-size toolbar buttons
+**Panel yaklasimi degisikligi:**
+- Floating kart yerine, sag taraftan kayan sabit genislikte (320px) panel
+- Panel her zaman gorunur olacak (showRight: true default), icerik SDK tarafindan otomatik doldurulur
+- `ChaiBlockPropsEditor` ve `ChaiBlockStyleEditor` zaten kontekst bazli calisir - secilen blogun tipine gore dogru alanlari gosterir
+- Panel basliginda "Ozellikler" / "Stiller" tab'lari
+- Kapatma butonu ile gizlenebilir, Settings2 butonu ile tekrar acilir
+- Framer Motion ile sag taraftan slide-in/out animasyon
 
-**SDK sidebar suppression:**
-- Strengthen the CSS rule that hides SDK's internal right sidebar so it never appears alongside the floating card
-
-## Technical Details
-
-The MutationObserver approach:
+**Layout yapisi:**
 ```text
-propsContainerRef --> MutationObserver(childList, subtree)
-  |
-  +-- Has child nodes? --> setShowRight(true)
-  +-- Empty?          --> setShowRight(false)
++----+-----------------------------------+--------+
+| L  |                                   | Panel  |
+| e  |         Canvas                    | 320px  |
+| f  |                                   |--------|
+| t  |                                   | Props  |
+|    |                                   | veya   |
+| 12 |                                   | Styles |
+| px |                                   |        |
++----+-----------------------------------+--------+
 ```
 
-This is reliable because `ChaiBlockPropsEditor` renders form fields only when a block is selected and clears them when deselected. The observer fires on DOM mutations inside the container.
+### 2. chaibuilder.tailwind.css
 
-### Files to modify:
-1. `src/components/chai-builder/DesktopEditorLayout.tsx` - MutationObserver logic, refined animation, compact layout
-2. `src/styles/chaibuilder.tailwind.css` - Tighter gradient border, stronger SDK sidebar suppression
+**SDK sidebar gizleme guclendirilmesi:**
+- Mevcut CSS selectoru SDK'nin iç sidebar'ini tamamen gizleyecek sekilde guncellenir
+- Floating gradient border kaldirilir, yerine temiz beyaz/koyu panel
+- Panel icin uygun golge ve kenarlik stilleri
+
+## Teknik Detaylar
+
+**Dosya degisiklikleri:**
+1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Panel layout, MutationObserver kaldirilip sabit panel yapisi, slide animasyon
+2. `src/styles/chaibuilder.tailwind.css` - SDK sidebar gizleme, panel stilleri
+
+**Onemli noktalar:**
+- `ChaiBlockPropsEditor` zaten kontekst bazli calisir, ek mantik gerekmez
+- Gorsel bloklari icin SDK kendi gorsel alanlarini gosterir
+- Metin bloklari icin SDK kendi metin alanlarini gosterir
+- Panel icerisinde Pixabay butonu olacak (mevcut `PixabayImagePicker`'i acar)
