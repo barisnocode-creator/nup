@@ -231,3 +231,62 @@ section.fixed.inset-0[class*="z-[99999]"] {
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
 }
+
+/* ===== Floating Edit Card - Animated Gradient Border ===== */
+.floating-edit-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.floating-edit-card::before {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 140%;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-image: linear-gradient(180deg, rgb(0, 183, 255), rgb(255, 48, 255));
+  animation: rotBGimg 3s linear infinite;
+  transition: all 0.2s linear;
+}
+
+@keyframes rotBGimg {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+.floating-edit-card::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 18px;
+  background: hsl(var(--background));
+  z-index: 1;
+}
+
+/* Card inner content needs z-index above ::after */
+.floating-edit-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* ===== Canvas Overlay / Backdrop Reduction ===== */
+/* Reduce the dark overlay when a block is selected */
+[data-radix-overlay],
+.chai-overlay,
+div[style*="background: rgba(0, 0, 0"],
+div[style*="background-color: rgba(0, 0, 0"] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+/* Soften selection highlighting instead of harsh darkening */
+iframe[title] + div[class*="absolute"][class*="inset-0"] {
+  background: transparent !important;
+}

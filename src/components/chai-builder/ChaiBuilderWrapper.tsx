@@ -9,6 +9,7 @@ import { useChaiBuilderSave } from './hooks/useChaiBuilder';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, ImageIcon } from 'lucide-react';
 import { MobileEditorLayout } from './MobileEditorLayout';
+import { DesktopEditorLayout } from './DesktopEditorLayout';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { toast } from 'sonner';
 
@@ -185,7 +186,7 @@ export function ChaiBuilderWrapper({
         locale="tr"
         askAiCallBack={handleAskAi}
         htmlDir="ltr"
-        layout={isMobileView ? MobileEditorLayout : undefined}
+        layout={isMobileView ? MobileEditorLayout : DesktopEditorLayout}
         smallScreenComponent={() => null}
         flags={{
           darkMode: true,
