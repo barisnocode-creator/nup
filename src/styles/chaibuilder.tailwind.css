@@ -4,21 +4,224 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ChaiBuilder branding/logo gizleme */
+/* ===== ChaiBuilder Branding Gizleme ===== */
 img[alt="Chai Builder"] {
   display: none !important;
 }
-
 img[src*="ucarecdn.com/fbfc3b05-cb73-4e99-92a2-3a367b7c36cd"] {
   display: none !important;
 }
 
-/* ChaiBuilder "Screen too small" uyarisini gizle - custom mobile layout kullaniyoruz */
+/* "Screen too small" uyarisini gizle */
 section.fixed.inset-0[class*="z-[99999]"] {
   display: none !important;
 }
 
-/* Safe area padding for mobile devices with notches */
+/* Safe area for mobile notch */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ===== Modern Scrollbar ===== */
+.chai-panel-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.chai-panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chai-panel-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 999px;
+}
+.chai-panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.35);
+}
+
+/* Firefox scrollbar */
+.chai-panel-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+
+/* ===== SDK Form Elements - Modern Overrides ===== */
+
+/* Input fields */
+[data-panel] input[type="text"],
+[data-panel] input[type="number"],
+[data-panel] input[type="url"],
+[data-panel] input[type="email"],
+[data-panel] textarea,
+.rjsf input[type="text"],
+.rjsf input[type="number"],
+.rjsf input[type="url"],
+.rjsf textarea {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  outline: none !important;
+  width: 100% !important;
+}
+
+[data-panel] input:focus,
+[data-panel] textarea:focus,
+.rjsf input:focus,
+.rjsf textarea:focus {
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
+}
+
+[data-panel] input::placeholder,
+[data-panel] textarea::placeholder,
+.rjsf input::placeholder,
+.rjsf textarea::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5) !important;
+  font-size: 12px !important;
+}
+
+/* Labels */
+[data-panel] label,
+.rjsf label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  color: hsl(var(--muted-foreground)) !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+}
+
+/* Select / Dropdown */
+[data-panel] select,
+.rjsf select {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  background: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+  outline: none !important;
+  width: 100% !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 10px center !important;
+  padding-right: 32px !important;
+}
+
+[data-panel] select:focus,
+.rjsf select:focus {
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1) !important;
+}
+
+/* Checkbox */
+[data-panel] input[type="checkbox"],
+.rjsf input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid hsl(var(--border)) !important;
+  accent-color: hsl(var(--primary)) !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+}
+
+[data-panel] input[type="checkbox"]:checked,
+.rjsf input[type="checkbox"]:checked {
+  background-color: hsl(var(--primary)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+/* Buttons inside SDK panels */
+[data-panel] button,
+.rjsf button {
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.15s !important;
+  cursor: pointer !important;
+}
+
+[data-panel] button:hover,
+.rjsf button:hover {
+  opacity: 0.85 !important;
+}
+
+/* Form group spacing */
+[data-panel] .form-group,
+[data-panel] .field,
+.rjsf .form-group,
+.rjsf .field {
+  margin-bottom: 12px !important;
+}
+
+/* ===== SDK Panel & Block Card Overrides ===== */
+
+/* Block cards in Add panel - hover effect */
+[data-panel="add"] [role="button"],
+[data-panel="add"] button[draggable="true"] {
+  border-radius: 12px !important;
+  transition: all 0.15s !important;
+  border: 1px solid transparent !important;
+}
+
+[data-panel="add"] [role="button"]:hover,
+[data-panel="add"] button[draggable="true"]:hover {
+  border-color: hsl(var(--border)) !important;
+  background: hsl(var(--accent) / 0.5) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px hsl(var(--foreground) / 0.04) !important;
+}
+
+/* Accordion / Collapsible headers */
+[data-panel] [data-state="open"] > button,
+[data-panel] [data-state="closed"] > button,
+[data-panel] summary {
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  letter-spacing: 0.02em !important;
+  padding: 8px 4px !important;
+  border-radius: 8px !important;
+  transition: background 0.15s !important;
+}
+
+[data-panel] [data-state="open"] > button:hover,
+[data-panel] [data-state="closed"] > button:hover,
+[data-panel] summary:hover {
+  background: hsl(var(--accent) / 0.5) !important;
+}
+
+/* Color picker rounded */
+[data-panel] input[type="color"] {
+  border-radius: 8px !important;
+  border: 2px solid hsl(var(--border)) !important;
+  cursor: pointer !important;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 2px !important;
+  overflow: hidden !important;
+}
+
+/* ===== Global panel scrollbars (for SDK internal panels too) ===== */
+[data-panel]::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar {
+  width: 5px;
+}
+[data-panel]::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-panel]::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.15);
+  border-radius: 999px;
+}
+[data-panel]::-webkit-scrollbar-thumb:hover,
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
 }
