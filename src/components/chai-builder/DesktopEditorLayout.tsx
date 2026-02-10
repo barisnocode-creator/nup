@@ -58,11 +58,12 @@ export function DesktopEditorLayout() {
       <AnimatePresence>
         {leftPanel && (
           <motion.div
+            data-editor-panel="left"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 260, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="editor-left-panel shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-10"
+            className="editor-left-panel shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30"
           >
             <div className="w-[260px] h-full flex flex-col">
               <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
@@ -118,11 +119,12 @@ export function DesktopEditorLayout() {
       <AnimatePresence>
         {showRight && (
           <motion.div
+            data-editor-panel="right"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-10 right-edit-panel"
+            className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel"
           >
             <div className="w-[320px] h-full flex flex-col">
               {/* Tab header */}
