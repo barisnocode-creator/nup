@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -18,7 +18,50 @@ type RightTab = 'props' | 'styles';
 export function DesktopEditorLayout() {
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
-  const [showRight, setShowRight] = useState(true);
+  const [showRight, setShowRight] = useState(false);
+  const [manualHide, setManualHide] = useState(false);
+  const propsContainerRef = useRef<HTMLDivElement>(null);
+
+  // MutationObserver: detect when SDK populates props editor (block selected)
+  useEffect(() => {
+    const container = propsContainerRef.current;
+    if (!container) return;
+
+    const checkContent = () => {
+      const hasContent = container.querySelector('[data-panel] *')?.children?.length 
+        ? true 
+        : (container.textContent?.trim().length ?? 0) > 0;
+      
+      if (hasContent && !manualHide) {
+        setShowRight(true);
+      } else if (!hasContent) {
+        setShowRight(false);
+        setManualHide(false);
+      }
+    };
+
+    const observer = new MutationObserver(checkContent);
+    observer.observe(container, { childList: true, subtree: true, characterData: true });
+
+    // Initial check
+    checkContent();
+
+    return () => observer.disconnect();
+  }, [manualHide]);
+
+  const handleManualClose = useCallback(() => {
+    setShowRight(false);
+    setManualHide(true);
+  }, []);
+
+  const handleToggleRight = useCallback(() => {
+    if (showRight) {
+      handleManualClose();
+    } else {
+      setManualHide(false);
+      setShowRight(true);
+    }
+  }, [showRight, handleManualClose]);
 
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background relative">
@@ -95,7 +138,7 @@ export function DesktopEditorLayout() {
             activeButtonClass="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20"
           />
           <button
-            onClick={() => setShowRight(!showRight)}
+            onClick={handleToggleRight}
             className={`p-2 rounded-xl backdrop-blur-xl border shadow-sm transition-all ${
               showRight
                 ? 'bg-primary/10 text-primary border-primary/20'
@@ -109,17 +152,24 @@ export function DesktopEditorLayout() {
 
         <ChaiBuilderCanvas />
 
-        {/* Floating edit card - INSIDE canvas area, absolute positioned */}
+        {/* Hidden container to observe SDK props editor content */}
+        <div ref={propsContainerRef} className="hidden">
+          <div data-panel="observer">
+            <ChaiBlockPropsEditor />
+          </div>
+        </div>
+
+        {/* Floating edit card */}
         <AnimatePresence>
           {showRight && (
             <motion.div
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 20, opacity: 0 }}
+              initial={{ x: 30, opacity: 0, scale: 0.95 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
+              exit={{ x: 30, opacity: 0, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              className="absolute right-3 top-14 z-40 w-[260px]"
+              className="absolute right-3 top-14 z-40 w-[280px]"
             >
-              <div className="floating-edit-card flex flex-col max-h-[380px]">
+              <div className="floating-edit-card flex flex-col max-h-[420px]">
                 {/* Tab switcher */}
                 <div className="relative z-10 flex items-center gap-1 p-1.5 border-b border-border/20">
                   <button
@@ -146,7 +196,7 @@ export function DesktopEditorLayout() {
                   </button>
                   <div className="flex-1" />
                   <button
-                    onClick={() => setShowRight(false)}
+                    onClick={handleManualClose}
                     className="p-1 rounded-md hover:bg-accent/50 text-muted-foreground transition-all"
                   >
                     <X className="w-3 h-3" />
@@ -154,7 +204,7 @@ export function DesktopEditorLayout() {
                 </div>
 
                 {/* Panel content */}
-                <ScrollArea className="flex-1 relative z-10 max-h-[320px]">
+                <ScrollArea className="flex-1 relative z-10 max-h-[360px]">
                   <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
                     {rightTab === 'props' && <ChaiBlockPropsEditor />}
                     {rightTab === 'styles' && <ChaiBlockStyleEditor />}
