@@ -292,8 +292,8 @@ iframe[title] + div[class*="absolute"][class*="inset-0"] {
 }
 
 /* ===== Hide SDK's internal right sidebar panel ===== */
-/* SDK may render its own sidebar - force hide it so only our floating card shows */
-.chai-canvas-area ~ div:not(.floating-edit-card):not([class*="z-30"]):not([class*="z-40"]) > [data-panel] {
+/* SDK renders its own sidebar — force hide so only our floating card shows */
+.chai-canvas-area ~ div:not([class*="z-30"]):not([class*="z-40"]) {
   display: none !important;
 }
 
@@ -301,4 +301,84 @@ iframe[title] + div[class*="absolute"][class*="inset-0"] {
 div[data-radix-portal] > div[data-radix-overlay] {
   pointer-events: none !important;
   background: transparent !important;
+}
+
+/* ===== Section Hover / Selection Outlines (Durable-style) ===== */
+
+/* Hover outline on sections inside canvas iframe - applied via SDK */
+.section-hover-outline {
+  outline: 2px solid hsl(var(--primary) / 0.4) !important;
+  outline-offset: -2px;
+  transition: outline 0.15s ease;
+}
+
+.section-selected-outline {
+  outline: 3px solid hsl(var(--primary)) !important;
+  outline-offset: -3px;
+  position: relative;
+}
+
+/* Corner indicators for selected sections */
+.section-selected-outline::before,
+.section-selected-outline::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 2px;
+  background: hsl(var(--background));
+  z-index: 10;
+}
+
+.section-selected-outline::before {
+  top: -5px;
+  left: -5px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.section-selected-outline::after {
+  bottom: -5px;
+  right: -5px;
+  border-left: none;
+  border-top: none;
+}
+
+/* ===== Floating Action Box ===== */
+.section-action-box {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: hsl(var(--background) / 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 0 4px 12px hsl(var(--foreground) / 0.08);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  z-index: 20;
+}
+
+*:hover > .section-action-box {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.section-action-box button {
+  padding: 6px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  transition: all 0.1s;
+}
+
+.section-action-box button:hover {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
 }
