@@ -253,8 +253,8 @@ iframe[title] + div[class*="absolute"][class*="inset-0"] {
 }
 
 /* ===== Hide SDK's internal right sidebar panel ===== */
-/* Only hide SDK's own panels, not our custom .right-edit-panel or left panels */
-.chai-canvas-area ~ div:not(.right-edit-panel):not(.editor-left-panel):not(.editor-left-sidebar):not([class*="z-"]) {
+/* Only hide elements WITHOUT our data-editor-panel attribute */
+.chai-canvas-area ~ div:not([data-editor-panel]) {
   display: none !important;
 }
 
