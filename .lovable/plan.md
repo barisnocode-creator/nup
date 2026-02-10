@@ -1,26 +1,42 @@
 
-# Floating Edit Kartini Kompakt Hale Getirme
 
-## Sorun
-Sag taraftaki duzenleme paneli hala ekranin tamamini kaplayan buyuk bir sidebar gibi gorunuyor. Kullanici, Uiverse.io ornegindeki gibi kucuk, kompakt bir yüzen kart istiyor - web sitesini rahatlıkla gorebilecegi sekilde.
+# Floating Edit Kartinin Duzeltilmesi ve Inline Duzenleme
+
+## Sorunlar
+1. Sag taraftaki floating kart hala cok buyuk ve sidebar gibi gorunuyor
+2. Blok secildiginde kart otomatik acilmiyor (her zaman acik)
+3. Yazi dogrudan canvas uzerinden degistirilemiyor (inlineEditProps tanimli ama SDK overlay'i engelliyor olabilir)
 
 ## Cozum
 
-### 1. DesktopEditorLayout.tsx - Kompakt Floating Kart
+### 1. DesktopEditorLayout.tsx - Kart Davranisini Iyilestir
 
-Mevcut floating panel `top-16 bottom-4` ile neredeyse tam ekran yuksekliginde. Bunu kompakt bir karta donusturecegiz:
+- `showRight` varsayilan degeri `false` olsun (kart kapali baslasın)
+- Canvas tiklamalarini dinle: bir bloga tiklandiginda floating karti otomatik ac
+- Canvas'a `onClick` handler ekle, `[data-block-id]` elementi aranarak blok secimini algila
+- Bos alana tiklandiginda karti kapat
 
-- **Genislik**: 320px -> 280px (daha dar)
-- **Yukseklik**: Tam ekran yerine `max-height: 420px` ile sinirli (icerige gore uzar ama siniri var)
-- **Konum**: `top-16 bottom-4` yerine `top-16 right-4` sabit, `bottom` olmadan - sadece icerik kadar yer kaplar
-- **h-full kaldirilacak**: Kart icerige gore boyutlanacak, tam yuksekligi doldurmayacak
-- ScrollArea'ya `max-h-[340px]` siniri konacak
+### 2. CSS ile SDK Ic Overlay/Sidebar Gizleme
 
-### 2. CSS Ince Ayar - chaibuilder.tailwind.css
+SDK'nin kendi ic mekanizmasinda acilan overlay/dark-backdrop'u CSS ile tamamen gizle:
+- `div[data-radix-overlay]`, `.chai-overlay` zaten override ediliyor ama yeterli degil
+- SDK'nin iframe disinda render ettigi koyu arkaplan overlay elementlerini hedefle
+- `iframe + div` gibi secicilerle secim karanligini kaldir
 
-- Floating kart `::before` gradient genisligi biraz daraltilacak (120px -> 100px) daha ince kenarlik icin
-- `inset: 2px` -> `inset: 3px` daha belirgin gradient kenarlık
+### 3. Inline Duzenleme Akisini Iyilestir
+
+Bloklar zaten `inlineEditProps` ile yapilandirilmis. SDK, canvas iframe'i icinde contentEditable desteği saglıyor. Sorun, tıklandığında panel odağı alması. Panel'in iframe'i kaplamaması ve inline edit'i engellemesi icin:
+- Floating kartı canvas'ın `div` elemanından ayır, sayfanın en üst seviyesine (portal-like) taşı
+- Canvas alanına `pointer-events` müdahalesi yapma
 
 ### Degistirilecek Dosyalar
-1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Floating panel boyutlarini kucult
-2. `src/styles/chaibuilder.tailwind.css` - Gradient ince ayar
+
+**`src/components/chai-builder/DesktopEditorLayout.tsx`**:
+- `showRight` varsayilan: `true` -> `false`
+- Canvas div'ine `onClick` handler ekle: bloğa tıklandığında `setShowRight(true)`, boş alana tıklandığında `setShowRight(false)`
+- Floating kart konumunu canvas div'in içinden çıkarıp ana container'a taşı (absolute positioning düzgün çalışsın)
+
+**`src/styles/chaibuilder.tailwind.css`**:
+- SDK'nın iç panellerinin yarattığı koyu overlay/backdrop'u CSS override ile tamamen şeffaf yap
+- `iframe` yanında çıkan seçim overlay elementlerini hedefle
+- Sağ panel sidebar olarak açılıyorsa CSS ile gizle (SDK'nın kendi sidebar'ını)
