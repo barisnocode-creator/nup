@@ -118,10 +118,10 @@ export function DesktopEditorLayout() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 40, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="absolute right-4 top-16 bottom-4 z-40 w-[320px]"
+            className="absolute right-4 top-16 z-40 w-[280px]"
           >
             {/* Gradient animated card */}
-            <div className="floating-edit-card h-full flex flex-col">
+            <div className="floating-edit-card flex flex-col max-h-[420px]">
               {/* Tab switcher */}
               <div className="relative z-10 flex items-center gap-1 p-2 border-b border-border/20">
                 <button
@@ -156,7 +156,7 @@ export function DesktopEditorLayout() {
               </div>
 
               {/* Panel content */}
-              <ScrollArea className="flex-1 relative z-10">
+              <ScrollArea className="flex-1 relative z-10 max-h-[340px]">
                 <div className="p-4 chai-panel-scroll" data-panel={rightTab}>
                   {rightTab === 'props' && <ChaiBlockPropsEditor />}
                   {rightTab === 'styles' && <ChaiBlockStyleEditor />}
