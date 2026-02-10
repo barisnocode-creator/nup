@@ -24,6 +24,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 type PanelType = 'outline' | 'add' | 'props' | 'styles' | null;
 
@@ -31,32 +32,24 @@ type PanelConfig = {
   key: Exclude<PanelType, null>;
   icon: React.ElementType;
   label: string;
+  description: string;
   side: 'left' | 'right';
 };
 
 const panels: PanelConfig[] = [
-  { key: 'outline', icon: Layers, label: 'Katmanlar', side: 'left' },
-  { key: 'add', icon: Plus, label: 'Ekle', side: 'left' },
-  { key: 'props', icon: Settings2, label: 'Özellikler', side: 'right' },
-  { key: 'styles', icon: Paintbrush, label: 'Stiller', side: 'right' },
+  { key: 'outline', icon: Layers, label: 'Katmanlar', description: 'Sayfa yapısını yönetin', side: 'left' },
+  { key: 'add', icon: Plus, label: 'Ekle', description: 'Yeni blok ekleyin', side: 'left' },
+  { key: 'props', icon: Settings2, label: 'Özellikler', description: 'Blok içeriğini düzenleyin', side: 'right' },
+  { key: 'styles', icon: Paintbrush, label: 'Stiller', description: 'Görünümü özelleştirin', side: 'right' },
 ];
 
-/**
- * Inject image URL into an image input in the props panel.
- * Searches for RJSF image widget inputs and sets the value.
- */
 function injectImageUrlToPropsPanel(url: string): boolean {
-  // Find image inputs in the props panel - RJSF renders them as text inputs
-  // Look for inputs that are associated with image widgets
   const propsPanel = document.querySelector('[data-panel="props"]') || document;
-  
-  // Strategy 1: Find inputs with image-related labels nearby
   const allInputs = propsPanel.querySelectorAll('input[type="text"]');
   let targetInput: HTMLInputElement | null = null;
 
   for (const input of allInputs) {
     const inputEl = input as HTMLInputElement;
-    // Check if this input's value looks like a URL or is empty (image field)
     const parent = inputEl.closest('.form-group, .field, [class*="field"]');
     if (parent) {
       const label = parent.querySelector('label');
@@ -71,7 +64,6 @@ function injectImageUrlToPropsPanel(url: string): boolean {
   }
 
   if (targetInput) {
-    // Use React's native value setter to bypass controlled input
     const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
       window.HTMLInputElement.prototype,
       'value'
@@ -88,10 +80,6 @@ function injectImageUrlToPropsPanel(url: string): boolean {
   return false;
 }
 
-/**
- * Mobile-optimized layout for ChaiBuilder editor.
- * Uses Sheet (slide-in sidebar) pattern — left panels slide from left, right panels from right.
- */
 export function MobileEditorLayout() {
   const navigate = useNavigate();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
@@ -101,30 +89,22 @@ export function MobileEditorLayout() {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
-  // Auto-open properties panel when a block is clicked on the canvas
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const blockEl = target.closest('[data-block-id]');
     if (blockEl) {
-      // Small delay to let SDK handle block selection first
       setTimeout(() => setActivePanel('props'), 150);
     }
   }, []);
 
   const handleImageSelect = useCallback((url: string) => {
-    // Try to inject into an open props panel image field
     setTimeout(() => {
       const injected = injectImageUrlToPropsPanel(url);
       if (!injected) {
-        // Fallback: copy to clipboard
         navigator.clipboard.writeText(url).then(() => {
-          toast.success('Görsel URL\'si kopyalandı! Görsel alanına yapıştırın.', {
-            duration: 4000,
-          });
+          toast.success('Görsel URL\'si kopyalandı! Görsel alanına yapıştırın.', { duration: 4000 });
         }).catch(() => {
-          toast.info('Görsel seçildi. Özellikler panelinden görsel alanını güncelleyin.', {
-            duration: 4000,
-          });
+          toast.info('Görsel seçildi. Özellikler panelinden görsel alanını güncelleyin.', { duration: 4000 });
         });
       } else {
         toast.success('Görsel uygulandı!');
@@ -134,24 +114,24 @@ export function MobileEditorLayout() {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      {/* Top toolbar */}
-      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border bg-background/95 backdrop-blur-sm z-10 shrink-0">
-        <div className="flex items-center gap-1">
+      {/* Top toolbar - glassmorphism */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-background/70 backdrop-blur-xl z-10 shrink-0">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-md hover:bg-accent transition-colors text-sm text-foreground"
+            className="flex items-center gap-1 px-2.5 py-2 rounded-xl hover:bg-accent/80 transition-all text-sm text-foreground active:scale-95"
             title="Dashboard'a dön"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <div className="h-5 w-px bg-border" />
+          <div className="h-5 w-px bg-border/50" />
           <ChaiUndoRedo />
         </div>
 
         <div className="flex items-center gap-1">
           <button
             onClick={() => setImagePickerOpen(true)}
-            className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
+            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground active:scale-95"
             title="Görsel Ara"
           >
             <ImageIcon className="w-4 h-4" />
@@ -160,19 +140,19 @@ export function MobileEditorLayout() {
             openDelay={0}
             canvas={false}
             tooltip={true}
-            buttonClass="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground"
-            activeButtonClass="p-1.5 rounded-md bg-accent text-foreground"
+            buttonClass="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground"
+            activeButtonClass="p-2 rounded-xl bg-primary/10 text-primary"
           />
         </div>
       </div>
 
-      {/* Canvas area - full screen */}
+      {/* Canvas area */}
       <div className="flex-1 overflow-hidden relative" onClick={handleCanvasClick}>
         <ChaiBuilderCanvas />
       </div>
 
       {/* Side panels via Sheet */}
-      {panels.map(({ key, label, side }) => (
+      {panels.map(({ key, label, description, side }) => (
         <Sheet
           key={key}
           open={activePanel === key}
@@ -182,24 +162,30 @@ export function MobileEditorLayout() {
         >
           <SheetContent
             side={side}
-            className="w-[85vw] max-w-sm p-0 flex flex-col"
+            className="w-[85vw] max-w-sm p-0 flex flex-col border-border/50 bg-background/95 backdrop-blur-xl"
           >
-            <div className="px-4 py-3 border-b border-border shrink-0 flex items-center justify-between">
-              <SheetTitle className="text-sm font-medium">
-                {label}
-              </SheetTitle>
-              {/* Show image search button in props panel */}
-              {key === 'props' && (
-                <button
-                  onClick={() => setImagePickerOpen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  Görsel Ara
-                </button>
-              )}
+            {/* Modern panel header with accent bar */}
+            <div className="relative px-5 py-4 border-b border-border/30 shrink-0">
+              <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <SheetTitle className="text-base font-semibold tracking-tight">
+                    {label}
+                  </SheetTitle>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
+                </div>
+                {key === 'props' && (
+                  <button
+                    onClick={() => setImagePickerOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-all active:scale-95"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    Görsel Ara
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto p-3" data-panel={key}>
+            <div className="flex-1 overflow-y-auto p-4 chai-panel-scroll" data-panel={key}>
               {key === 'outline' && <ChaiOutline />}
               {key === 'add' && (
                 <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />
@@ -218,22 +204,41 @@ export function MobileEditorLayout() {
         onSelect={handleImageSelect}
       />
 
-      {/* Bottom navigation bar */}
-      <div className="flex items-center justify-around px-2 py-2 border-t border-border bg-background/95 backdrop-blur-sm shrink-0 safe-area-bottom">
-        {panels.map(({ key, icon: Icon, label }) => (
-          <button
-            key={key}
-            onClick={() => handlePanelToggle(key)}
-            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-colors min-w-[56px] ${
-              activePanel === key
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-            }`}
-          >
-            <Icon className="w-5 h-5" />
-            <span className="text-[10px] font-medium leading-tight">{label}</span>
-          </button>
-        ))}
+      {/* Floating bottom navigation bar */}
+      <div className="px-4 pb-2 pt-1 shrink-0 safe-area-bottom">
+        <div className="flex items-center justify-around px-2 py-1.5 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5">
+          {panels.map(({ key, icon: Icon, label }) => {
+            const isActive = activePanel === key;
+            return (
+              <button
+                key={key}
+                onClick={() => handlePanelToggle(key)}
+                className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[60px] min-h-[52px] active:scale-95"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-primary/10 rounded-xl"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <Icon className={`w-5 h-5 relative z-10 transition-colors ${
+                  isActive ? 'text-primary' : 'text-muted-foreground'
+                }`} />
+                <span className={`text-[10px] font-medium leading-tight relative z-10 transition-colors ${
+                  isActive ? 'text-primary' : 'text-muted-foreground'
+                }`}>{label}</span>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="absolute -bottom-0.5 w-5 h-[2px] rounded-full bg-primary"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

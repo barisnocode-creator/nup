@@ -152,12 +152,12 @@ export function ChaiBuilderWrapper({
 
   return (
     <div className="h-screen w-screen overflow-hidden relative">
-      {/* Back to Dashboard + Image Search - only on desktop (mobile has its own) */}
+      {/* Back to Dashboard + Image Search - desktop glassmorphism toolbar */}
       {!isMobileView && (
-        <div className="absolute top-2 left-2 z-[9999] flex items-center gap-2">
+        <div className="absolute top-3 left-3 z-[9999] flex items-center gap-2">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background/90 backdrop-blur-sm border border-border shadow-sm hover:bg-accent transition-colors text-sm text-foreground"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-background/70 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5 hover:bg-accent/80 transition-all text-sm text-foreground active:scale-95"
             title="Dashboard'a dön"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -165,7 +165,7 @@ export function ChaiBuilderWrapper({
           </button>
           <button
             onClick={() => setImagePickerOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background/90 backdrop-blur-sm border border-border shadow-sm hover:bg-accent transition-colors text-sm text-foreground"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-background/70 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5 hover:bg-accent/80 transition-all text-sm text-foreground active:scale-95"
             title="Görsel Ara"
           >
             <ImageIcon className="w-4 h-4" />
