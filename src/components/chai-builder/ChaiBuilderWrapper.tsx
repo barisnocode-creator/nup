@@ -22,7 +22,7 @@ loadWebBlocks();
 // Import theme presets from centralized file
 import { themePresets, defaultTheme } from './themes';
 
-const MIN_EDITOR_WIDTH = 1280;
+const MIN_EDITOR_WIDTH = 768;
 
 interface ChaiBuilderWrapperProps {
   projectId: string;
