@@ -264,10 +264,11 @@ section.fixed.inset-0[class*="z-[99999]"] {
 .floating-edit-card::after {
   content: '';
   position: absolute;
-  inset: 3px;
-  border-radius: 18px;
+  inset: 2px;
+  border-radius: 19px;
   background: hsl(var(--background));
   z-index: 1;
+  box-shadow: 0 8px 32px hsl(var(--foreground) / 0.08), 0 2px 8px hsl(var(--foreground) / 0.04);
 }
 
 /* Card inner content needs z-index above ::after */
