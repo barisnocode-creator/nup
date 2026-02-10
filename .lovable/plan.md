@@ -1,51 +1,66 @@
 
 
-# Editör Panellerini Tamamen Düzeltme
+# Durable Tarzı Üst Toolbar Ekleme
 
-## Sorunun Kökeni
+## Mevcut Durum
 
-CSS'deki `.chai-canvas-area ~ div:not(...)` kuralı hala sorun yaratıyor. Bu kural "canvas'tan sonra gelen tüm div'leri gizle (bazıları hariç)" mantığında çalışıyor ama AnimatePresence bileşeni DOM'da dinamik olarak div ekleyip çıkardığı için, `not()` seçicileri her durumda doğru çalışmıyor. Ayrıca SDK kendi internal panellerini de bu bölgede render edebiliyor.
+Şu anda ChaiBuilder editöründe üst toolbar yok. Sadece sol üstte floating "Geri" ve "Görsel Ara" butonları var. Referans görseldeki Durable editöründe ise tam genişlikte bir üst bar bulunuyor:
 
-## Çözüm
-
-### 1. CSS Kuralını Tamamen Değiştir (`src/styles/chaibuilder.tailwind.css`)
-
-Mevcut "hepsini gizle, bazılarını hariç tut" yaklaşımı yerine, tam tersi bir yaklaşım kullanılacak: Bizim panellerimize özel class'lar verip, SDK'nın kendi panellerini spesifik bir seçiciyle hedeflemek.
-
-Mevcut kural (satır 255-259) silinip yerine:
-- SDK'nın varsayılan sağ sidebar'ını `data-` attribute veya yapısal seçiciyle hedefleyen daha dar bir kural
-- Bizim panellerimize dokunmayan izole bir gizleme kuralı
-
-### 2. Panel Yapısını Güçlendir (`src/components/chai-builder/DesktopEditorLayout.tsx`)
-
-- Sağ ve sol panellerin `motion.div` elementlerine daha yüksek `z-index` (z-30) verilecek
-- Panellere `data-editor-panel` attribute'u eklenecek (CSS izolasyonu için)
-- Sol panelin (Katmanlar/Ekle) ve sağ panelin (Özellikler/Stiller) açılma/kapanma mantığı korunacak
-- Sağ panel varsayılan olarak açık başlayacak (`showRight: true` - mevcut durum)
-
-### 3. CSS Gizleme Stratejisi Değişikliği
-
-Eski yaklaşım (sorunlu):
 ```text
-.chai-canvas-area ~ div:not(.right-edit-panel):not(.editor-left-panel)... {
-  display: none !important;
-}
+[🏠] | [🔗 Customize] [📄 Pages] [+ Add] [? Help]     Home ⚙     [▶ Preview] | [🌐 Publish]
 ```
 
-Yeni yaklaşım (güvenli):
+## Yapılacak Değişiklikler
+
+### 1. DesktopEditorLayout.tsx - Üst Toolbar Ekleme
+
+Layout yapısını değiştirerek üstte 56px yüksekliğinde sabit bir toolbar eklenecek:
+
 ```text
-/* Sadece data-editor-panel attribute'u OLMAYAN, 
-   canvas'ın kardeşi olan div'leri gizle */
-.chai-canvas-area ~ div:not([data-editor-panel]) {
-  display: none !important;
-}
++----------------------------------------------------------+
+| 🏠 | Customize  Pages  + Add  ? Help | Home ⚙ | Preview | Publish |
++----+-----------------------------------+--------+--------+
+| L  |                                   | Panel  |
+| e  |         Canvas                    | 320px  |
+| f  |                                   |        |
+| t  |                                   |        |
++----+-----------------------------------+--------+
 ```
 
-Bu sayede bizim panellerimize `data-editor-panel="right"` ve `data-editor-panel="left"` ekleyerek CSS'den tamamen korunmuş olacaklar.
+Toolbar içeriği:
+- **Sol**: Home (dashboard'a dön), ayırıcı, Customize (tema paneli açar), Pages (dropdown), + Add (blok ekle paneli açar), Help
+- **Orta**: Proje adı + ayarlar ikonu
+- **Sağ**: Preview butonu, ayırıcı, Publish butonu
+
+### 2. ChaiBuilderWrapper.tsx - Floating Butonları Kaldırma
+
+Mevcut floating "Geri" ve "Görsel Ara" butonları (satır 156-176) kaldırılacak çünkü artık üst toolbar'a taşınacaklar.
+
+### 3. DesktopEditorLayout Props Güncelleme
+
+DesktopEditorLayout'a aşağıdaki prop'lar eklenecek (ChaiBuilderWrapper'dan geçirilecek):
+- `onDashboard` - Dashboard'a yönlendirme
+- `onPublish` - Yayınlama
+- `onPreview` - Önizleme
+- `onImageSearch` - Pixabay açma
+- `projectName` - Proje adı gösterimi
+
+### 4. Sol Sidebar Butonlarının Toolbar'a Taşınması
+
+Mevcut sol dikey sidebar'daki Layers ve Add butonları toolbar'a taşınacak. Sol sidebar (w-12 dikey bar) kaldırılacak, yerine toolbar üzerinden kontrol edilecek.
 
 ## Teknik Detaylar
 
 **Değiştirilecek dosyalar:**
-1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Panellere `data-editor-panel` attribute'u ve z-30 eklenmesi
-2. `src/styles/chaibuilder.tailwind.css` - CSS gizleme kuralının `data-editor-panel` tabanlı olarak yeniden yazılması
+1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Üst toolbar ekleme, sol sidebar kaldırma, layout yeniden düzenleme
+2. `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Floating butonları kaldırma, DesktopEditorLayout'a prop geçirme
+
+**Toolbar buton eşlemeleri:**
+- Home butonu -> `navigate('/dashboard')`
+- Customize -> sağ panelde tema/stil sekmesini açar
+- Pages -> dropdown menü (sayfa listesi)
+- + Add -> sol paneli "add" modunda açar
+- Help -> yardım sayfasına yönlendirme
+- Preview -> yeni sekmede önizleme
+- Publish -> yayınlama modal'ı
 
