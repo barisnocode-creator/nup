@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -8,7 +8,7 @@ import {
   ChaiScreenSizes,
   ChaiUndoRedo,
 } from '@chaibuilder/sdk';
-import { Layers, Plus, Settings2, Paintbrush, X } from 'lucide-react';
+import { Layers, Plus, Settings2, Paintbrush, X, PanelRightClose } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -18,50 +18,11 @@ type RightTab = 'props' | 'styles';
 export function DesktopEditorLayout() {
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
-  const [showRight, setShowRight] = useState(false);
-  const [manualHide, setManualHide] = useState(false);
-  const propsContainerRef = useRef<HTMLDivElement>(null);
-
-  // MutationObserver: detect when SDK populates props editor (block selected)
-  useEffect(() => {
-    const container = propsContainerRef.current;
-    if (!container) return;
-
-    const checkContent = () => {
-      const hasContent = container.querySelector('[data-panel] *')?.children?.length 
-        ? true 
-        : (container.textContent?.trim().length ?? 0) > 0;
-      
-      if (hasContent && !manualHide) {
-        setShowRight(true);
-      } else if (!hasContent) {
-        setShowRight(false);
-        setManualHide(false);
-      }
-    };
-
-    const observer = new MutationObserver(checkContent);
-    observer.observe(container, { childList: true, subtree: true, characterData: true });
-
-    // Initial check
-    checkContent();
-
-    return () => observer.disconnect();
-  }, [manualHide]);
-
-  const handleManualClose = useCallback(() => {
-    setShowRight(false);
-    setManualHide(true);
-  }, []);
+  const [showRight, setShowRight] = useState(true);
 
   const handleToggleRight = useCallback(() => {
-    if (showRight) {
-      handleManualClose();
-    } else {
-      setManualHide(false);
-      setShowRight(true);
-    }
-  }, [showRight, handleManualClose]);
+    setShowRight((prev) => !prev);
+  }, []);
 
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background relative">
@@ -126,7 +87,7 @@ export function DesktopEditorLayout() {
         )}
       </AnimatePresence>
 
-      {/* Canvas - full width center */}
+      {/* Canvas */}
       <div className="flex-1 relative overflow-hidden chai-canvas-area">
         {/* Screen sizes toolbar */}
         <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
@@ -146,75 +107,69 @@ export function DesktopEditorLayout() {
             }`}
             title="Düzenleme Paneli"
           >
-            <Settings2 className="w-4 h-4" />
+            <PanelRightClose className="w-4 h-4" />
           </button>
         </div>
 
         <ChaiBuilderCanvas />
-
-        {/* Hidden container to observe SDK props editor content */}
-        <div ref={propsContainerRef} className="hidden">
-          <div data-panel="observer">
-            <ChaiBlockPropsEditor />
-          </div>
-        </div>
-
-        {/* Floating edit card */}
-        <AnimatePresence>
-          {showRight && (
-            <motion.div
-              initial={{ x: 30, opacity: 0, scale: 0.95 }}
-              animate={{ x: 0, opacity: 1, scale: 1 }}
-              exit={{ x: 30, opacity: 0, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              className="absolute right-3 top-14 z-40 w-[280px]"
-            >
-              <div className="floating-edit-card flex flex-col max-h-[420px]">
-                {/* Tab switcher */}
-                <div className="relative z-10 flex items-center gap-1 p-1.5 border-b border-border/20">
-                  <button
-                    onClick={() => setRightTab('props')}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                      rightTab === 'props'
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/50'
-                    }`}
-                  >
-                    <Settings2 className="w-3 h-3" />
-                    Özellikler
-                  </button>
-                  <button
-                    onClick={() => setRightTab('styles')}
-                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
-                      rightTab === 'styles'
-                        ? 'bg-primary/15 text-primary'
-                        : 'text-muted-foreground hover:bg-accent/50'
-                    }`}
-                  >
-                    <Paintbrush className="w-3 h-3" />
-                    Stiller
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    onClick={handleManualClose}
-                    className="p-1 rounded-md hover:bg-accent/50 text-muted-foreground transition-all"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-
-                {/* Panel content */}
-                <ScrollArea className="flex-1 relative z-10 max-h-[360px]">
-                  <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
-                    {rightTab === 'props' && <ChaiBlockPropsEditor />}
-                    {rightTab === 'styles' && <ChaiBlockStyleEditor />}
-                  </div>
-                </ScrollArea>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
+
+      {/* Right edit panel - fixed sidebar */}
+      <AnimatePresence>
+        {showRight && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 320, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-10 right-edit-panel"
+          >
+            <div className="w-[320px] h-full flex flex-col">
+              {/* Tab header */}
+              <div className="flex items-center gap-1 px-3 py-2.5 border-b border-border/30">
+                <button
+                  onClick={() => setRightTab('props')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    rightTab === 'props'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent/50'
+                  }`}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  Özellikler
+                </button>
+                <button
+                  onClick={() => setRightTab('styles')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    rightTab === 'styles'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-accent/50'
+                  }`}
+                >
+                  <Paintbrush className="w-3.5 h-3.5" />
+                  Stiller
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={handleToggleRight}
+                  className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
+                  title="Paneli Kapat"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Panel content */}
+              <ScrollArea className="flex-1">
+                <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
+                  {rightTab === 'props' && <ChaiBlockPropsEditor />}
+                  {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+                </div>
+              </ScrollArea>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
