@@ -8,14 +8,21 @@ import {
   ChaiScreenSizes,
   ChaiUndoRedo,
 } from '@chaibuilder/sdk';
-import { Layers, Plus, Settings2, Paintbrush, X, PanelRightClose } from 'lucide-react';
+import {
+  Home, Paintbrush, FileText, Plus, HelpCircle,
+  Settings2, X, PanelRightClose, Eye, Globe,
+  Layers, ImageIcon,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useEditorContext } from './EditorContext';
 
 type LeftPanel = 'outline' | 'add' | null;
 type RightTab = 'props' | 'styles';
 
 export function DesktopEditorLayout() {
+  const { projectName, onDashboard, onPublish, onPreview, onImageSearch } = useEditorContext();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(true);
@@ -25,153 +32,199 @@ export function DesktopEditorLayout() {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background relative">
-      {/* Left sidebar buttons */}
-      <div className="editor-left-sidebar w-12 shrink-0 flex flex-col items-center gap-1 py-3 border-r border-border/30 bg-background/80 backdrop-blur-xl z-20">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
+      {/* ===== TOP TOOLBAR ===== */}
+      <div className="h-14 shrink-0 flex items-center border-b border-border/40 bg-background/95 backdrop-blur-xl z-50 px-2 gap-1">
+        {/* Left group */}
+        <button
+          onClick={onDashboard}
+          className="p-2.5 rounded-xl text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all active:scale-95"
+          title="Dashboard'a dön"
+        >
+          <Home className="w-4 h-4" />
+        </button>
+
+        <Separator orientation="vertical" className="h-6 mx-1" />
+
+        <button
+          onClick={() => { setShowRight(true); setRightTab('styles'); }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+            showRight && rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
+          }`}
+        >
+          <Paintbrush className="w-3.5 h-3.5" />
+          Özelleştir
+        </button>
+
         <button
           onClick={() => setLeftPanel(leftPanel === 'outline' ? null : 'outline')}
-          className={`p-2.5 rounded-xl transition-all active:scale-95 ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             leftPanel === 'outline' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
           }`}
-          title="Katmanlar"
         >
-          <Layers className="w-4 h-4" />
+          <Layers className="w-3.5 h-3.5" />
+          Sayfalar
         </button>
+
         <button
           onClick={() => setLeftPanel(leftPanel === 'add' ? null : 'add')}
-          className={`p-2.5 rounded-xl transition-all active:scale-95 ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
             leftPanel === 'add' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
           }`}
-          title="Blok Ekle"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
+          Ekle
         </button>
 
-        <div className="flex-1" />
+        <button
+          onClick={onImageSearch}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/80 transition-all"
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          Görsel
+        </button>
 
-        <div className="flex flex-col gap-1">
-          <ChaiUndoRedo />
+        {/* Center: project name */}
+        <div className="flex-1 flex items-center justify-center">
+          <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+            {projectName}
+          </span>
         </div>
-      </div>
 
-      {/* Left panel content */}
-      <AnimatePresence>
-        {leftPanel && (
-          <motion.div
-            data-editor-panel="left"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="editor-left-panel shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30"
-          >
-            <div className="w-[260px] h-full flex flex-col">
-              <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
-                <span className="text-sm font-semibold">
-                  {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
-                </span>
-                <button
-                  onClick={() => setLeftPanel(null)}
-                  className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <ScrollArea className="flex-1">
-                <div className="p-3 chai-panel-scroll" data-panel={leftPanel === 'outline' ? 'outline' : 'add'}>
-                  {leftPanel === 'outline' && <ChaiOutline />}
-                  {leftPanel === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
-                </div>
-              </ScrollArea>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Right group */}
+        <div className="flex items-center gap-1">
+          <ChaiUndoRedo />
 
-      {/* Canvas */}
-      <div className="flex-1 relative overflow-hidden chai-canvas-area">
-        {/* Screen sizes toolbar */}
-        <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
           <ChaiScreenSizes
             openDelay={0}
             canvas={false}
             tooltip={true}
-            buttonClass="p-2 rounded-xl bg-background/70 backdrop-blur-xl border border-border/40 shadow-sm hover:bg-accent/80 transition-all text-muted-foreground"
-            activeButtonClass="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20"
+            buttonClass="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all"
+            activeButtonClass="p-2 rounded-lg bg-primary/10 text-primary"
           />
+
           <button
             onClick={handleToggleRight}
-            className={`p-2 rounded-xl backdrop-blur-xl border shadow-sm transition-all ${
-              showRight
-                ? 'bg-primary/10 text-primary border-primary/20'
-                : 'bg-background/70 text-muted-foreground border-border/40 hover:bg-accent/80'
+            className={`p-2 rounded-lg transition-all ${
+              showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
             }`}
             title="Düzenleme Paneli"
           >
             <PanelRightClose className="w-4 h-4" />
           </button>
-        </div>
 
-        <ChaiBuilderCanvas />
+          <Separator orientation="vertical" className="h-6 mx-1" />
+
+          <button
+            onClick={onPreview}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/80 transition-all"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            Önizle
+          </button>
+
+          <button
+            onClick={onPublish}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            Yayınla
+          </button>
+        </div>
       </div>
 
-      {/* Right edit panel - fixed sidebar */}
-      <AnimatePresence>
-        {showRight && (
-          <motion.div
-            data-editor-panel="right"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel"
-          >
-            <div className="w-[320px] h-full flex flex-col">
-              {/* Tab header */}
-              <div className="flex items-center gap-1 px-3 py-2.5 border-b border-border/30">
-                <button
-                  onClick={() => setRightTab('props')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    rightTab === 'props'
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50'
-                  }`}
-                >
-                  <Settings2 className="w-3.5 h-3.5" />
-                  Özellikler
-                </button>
-                <button
-                  onClick={() => setRightTab('styles')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    rightTab === 'styles'
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50'
-                  }`}
-                >
-                  <Paintbrush className="w-3.5 h-3.5" />
-                  Stiller
-                </button>
-                <div className="flex-1" />
-                <button
-                  onClick={handleToggleRight}
-                  className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
-                  title="Paneli Kapat"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Panel content */}
-              <ScrollArea className="flex-1">
-                <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
-                  {rightTab === 'props' && <ChaiBlockPropsEditor />}
-                  {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+      {/* ===== MAIN AREA (below toolbar) ===== */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left panel content */}
+        <AnimatePresence>
+          {leftPanel && (
+            <motion.div
+              data-editor-panel="left"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 260, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30"
+            >
+              <div className="w-[260px] h-full flex flex-col">
+                <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
+                  </span>
+                  <button
+                    onClick={() => setLeftPanel(null)}
+                    className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </ScrollArea>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <ScrollArea className="flex-1">
+                  <div className="p-3 chai-panel-scroll" data-panel={leftPanel === 'outline' ? 'outline' : 'add'}>
+                    {leftPanel === 'outline' && <ChaiOutline />}
+                    {leftPanel === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
+                  </div>
+                </ScrollArea>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Canvas */}
+        <div className="flex-1 relative overflow-hidden chai-canvas-area">
+          <ChaiBuilderCanvas />
+        </div>
+
+        {/* Right edit panel */}
+        <AnimatePresence>
+          {showRight && (
+            <motion.div
+              data-editor-panel="right"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel"
+            >
+              <div className="w-[320px] h-full flex flex-col">
+                <div className="flex items-center gap-1 px-3 py-2.5 border-b border-border/30">
+                  <button
+                    onClick={() => setRightTab('props')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      rightTab === 'props' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    <Settings2 className="w-3.5 h-3.5" />
+                    Özellikler
+                  </button>
+                  <button
+                    onClick={() => setRightTab('styles')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    <Paintbrush className="w-3.5 h-3.5" />
+                    Stiller
+                  </button>
+                  <div className="flex-1" />
+                  <button
+                    onClick={handleToggleRight}
+                    className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
+                    title="Paneli Kapat"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <ScrollArea className="flex-1">
+                  <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
+                    {rightTab === 'props' && <ChaiBlockPropsEditor />}
+                    {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+                  </div>
+                </ScrollArea>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
