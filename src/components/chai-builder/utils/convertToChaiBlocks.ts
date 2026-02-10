@@ -138,6 +138,7 @@ export function convertGeneratedContentToChaiBlocks(
       sectionDescription: pages?.services?.intro?.content || 'Size en iyi hizmeti sunmak için buradayız.',
       services: servicesList.slice(0, 6).map(service => ({
         icon: service.icon || '⭐',
+        image: (service as any).image || '',
         title: service.title,
         description: service.description,
       })),

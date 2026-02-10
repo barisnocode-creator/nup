@@ -256,7 +256,7 @@ Return ONLY valid JSON in this exact format:
         "content": "string (2-3 paragraph detailed welcome message)"
       },
       "highlights": [
-        { "title": "string", "description": "string (2-3 detailed sentences)", "icon": "heart|shield|clock|star|users|award" }
+        { "title": "string", "description": "string (2-3 detailed sentences)", "imageSearchTerm": "string (2-3 specific English keywords for Pixabay image search relevant to this highlight, e.g. 'quality coffee beans roasting')" }
       ],
       "statistics": [
         { "value": "string (e.g., '15+')", "label": "string (e.g., 'Years Experience')" }
@@ -295,7 +295,7 @@ Return ONLY valid JSON in this exact format:
         "content": "string (detailed overview of services and approach)"
       },
       "servicesList": [
-        { "title": "string", "description": "string (3-4 sentences describing the service)", "icon": "stethoscope|pill|smile|activity|microscope|syringe|heart|brain|eye" }
+        { "title": "string", "description": "string (3-4 sentences describing the service)", "imageSearchTerm": "string (2-3 specific English keywords for Pixabay image search relevant to this service, e.g. 'espresso machine coffee')" }
       ],
       "process": [
         { "step": 1, "title": "string", "description": "string" }
@@ -861,6 +861,34 @@ serve(async (req) => {
       console.log("AI generated image search terms:", JSON.stringify(aiSearchTerms));
       // Remove imageSearchTerms from final content (not needed in DB)
       delete generatedContent.imageSearchTerms;
+    }
+
+    // Fetch per-service and per-highlight images from Pixabay
+    if (PIXABAY_API_KEY) {
+      const servicesList = generatedContent.pages?.services?.servicesList || [];
+      const highlights = generatedContent.pages?.home?.highlights || [];
+
+      const serviceImagePromises = servicesList.map(async (svc: any) => {
+        if (svc.imageSearchTerm) {
+          const img = await fetchPixabayImage(svc.imageSearchTerm, PIXABAY_API_KEY, 640);
+          svc.image = img || '';
+        }
+        delete svc.imageSearchTerm;
+        // Remove old icon field if present
+        delete svc.icon;
+      });
+
+      const highlightImagePromises = highlights.map(async (h: any) => {
+        if (h.imageSearchTerm) {
+          const img = await fetchPixabayImage(h.imageSearchTerm, PIXABAY_API_KEY, 640);
+          h.image = img || '';
+        }
+        delete h.imageSearchTerm;
+        delete h.icon;
+      });
+
+      await Promise.all([...serviceImagePromises, ...highlightImagePromises]);
+      console.log(`Fetched ${servicesList.length} service images and ${highlights.length} highlight images`);
     }
 
     // Fetch images from Pixabay (if API key is configured)
