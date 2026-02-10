@@ -290,3 +290,15 @@ div[style*="background-color: rgba(0, 0, 0"] {
 iframe[title] + div[class*="absolute"][class*="inset-0"] {
   background: transparent !important;
 }
+
+/* ===== Hide SDK's internal right sidebar panel ===== */
+/* SDK may render its own sidebar - force hide it so only our floating card shows */
+.chai-canvas-area ~ div:not(.floating-edit-card):not([class*="z-30"]):not([class*="z-40"]) > [data-panel] {
+  display: none !important;
+}
+
+/* Ensure SDK's internal overlays don't block inline editing */
+div[data-radix-portal] > div[data-radix-overlay] {
+  pointer-events: none !important;
+  background: transparent !important;
+}
