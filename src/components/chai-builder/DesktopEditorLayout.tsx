@@ -20,17 +20,22 @@ export function DesktopEditorLayout() {
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(false);
 
-  // Listen for block selection in the canvas to auto-open the floating card
+  // Auto-open floating card on block selection, close on empty click
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      // Check if clicked inside the canvas area (not on sidebar buttons or floating card)
+
+      // Ignore clicks on left sidebar buttons or floating card itself
+      if (target.closest('.editor-left-sidebar') || target.closest('.floating-edit-card')) return;
+
       const isCanvasArea = target.closest('.chai-canvas-area');
       if (!isCanvasArea) return;
 
       const blockEl = target.closest('[data-block-id]');
       if (blockEl) {
         setShowRight(true);
+      } else {
+        setShowRight(false);
       }
     };
 
@@ -39,9 +44,9 @@ export function DesktopEditorLayout() {
   }, []);
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background">
+    <div className="h-screen w-screen flex overflow-hidden bg-background relative">
       {/* Left sidebar buttons */}
-      <div className="w-12 shrink-0 flex flex-col items-center gap-1 py-3 border-r border-border/30 bg-background/80 backdrop-blur-xl z-20">
+      <div className="editor-left-sidebar w-12 shrink-0 flex flex-col items-center gap-1 py-3 border-r border-border/30 bg-background/80 backdrop-blur-xl z-20">
         <button
           onClick={() => setLeftPanel(leftPanel === 'outline' ? null : 'outline')}
           className={`p-2.5 rounded-xl transition-all active:scale-95 ${
@@ -126,64 +131,63 @@ export function DesktopEditorLayout() {
         </div>
 
         <ChaiBuilderCanvas />
-      </div>
 
-      {/* Right floating panel with animated gradient border */}
-      <AnimatePresence>
-        {showRight && (
-          <motion.div
-            initial={{ x: 40, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 40, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="absolute right-4 top-16 z-40 w-[280px]"
-          >
-            {/* Gradient animated card */}
-            <div className="floating-edit-card flex flex-col max-h-[420px]">
-              {/* Tab switcher */}
-              <div className="relative z-10 flex items-center gap-1 p-2 border-b border-border/20">
-                <button
-                  onClick={() => setRightTab('props')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                    rightTab === 'props'
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50'
-                  }`}
-                >
-                  <Settings2 className="w-3.5 h-3.5" />
-                  Özellikler
-                </button>
-                <button
-                  onClick={() => setRightTab('styles')}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all ${
-                    rightTab === 'styles'
-                      ? 'bg-primary/15 text-primary'
-                      : 'text-muted-foreground hover:bg-accent/50'
-                  }`}
-                >
-                  <Paintbrush className="w-3.5 h-3.5" />
-                  Stiller
-                </button>
-                <div className="flex-1" />
-                <button
-                  onClick={() => setShowRight(false)}
-                  className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Panel content */}
-              <ScrollArea className="flex-1 relative z-10 max-h-[340px]">
-                <div className="p-4 chai-panel-scroll" data-panel={rightTab}>
-                  {rightTab === 'props' && <ChaiBlockPropsEditor />}
-                  {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+        {/* Floating edit card - INSIDE canvas area, absolute positioned */}
+        <AnimatePresence>
+          {showRight && (
+            <motion.div
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 20, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="absolute right-3 top-14 z-40 w-[260px]"
+            >
+              <div className="floating-edit-card flex flex-col max-h-[380px]">
+                {/* Tab switcher */}
+                <div className="relative z-10 flex items-center gap-1 p-1.5 border-b border-border/20">
+                  <button
+                    onClick={() => setRightTab('props')}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      rightTab === 'props'
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    <Settings2 className="w-3 h-3" />
+                    Özellikler
+                  </button>
+                  <button
+                    onClick={() => setRightTab('styles')}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
+                      rightTab === 'styles'
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-muted-foreground hover:bg-accent/50'
+                    }`}
+                  >
+                    <Paintbrush className="w-3 h-3" />
+                    Stiller
+                  </button>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => setShowRight(false)}
+                    className="p-1 rounded-md hover:bg-accent/50 text-muted-foreground transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
-              </ScrollArea>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+                {/* Panel content */}
+                <ScrollArea className="flex-1 relative z-10 max-h-[320px]">
+                  <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
+                    {rightTab === 'props' && <ChaiBlockPropsEditor />}
+                    {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+                  </div>
+                </ScrollArea>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
