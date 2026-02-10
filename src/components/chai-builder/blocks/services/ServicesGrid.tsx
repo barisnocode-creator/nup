@@ -7,7 +7,8 @@ import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "..
 import { builderProp } from "@chaibuilder/sdk/runtime";
 
 interface ServiceItem {
-  icon: string;
+  icon?: string;
+  image?: string;
   title: string;
   description: string;
 }
@@ -66,9 +67,20 @@ const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) =>
               key={index}
               className="group p-8 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow-xl transition-all duration-300"
             >
-              <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-2xl mb-6 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
-                {service.icon}
-              </div>
+              {service.image ? (
+                <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-6">
+                  <img 
+                    src={service.image} 
+                    alt={service.title} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center text-2xl mb-6 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                  {service.icon || '⭐'}
+                </div>
+              )}
               <h3 className="text-xl font-semibold text-foreground mb-3">
                 {service.title}
               </h3>
