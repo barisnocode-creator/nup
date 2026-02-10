@@ -85,12 +85,12 @@ section.fixed.inset-0[class*="z-[99999]"] {
 /* Labels */
 [data-panel] label,
 .rjsf label {
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.03em !important;
-  text-transform: uppercase !important;
-  color: hsl(var(--muted-foreground)) !important;
-  margin-bottom: 4px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  color: hsl(var(--foreground) / 0.7) !important;
+  margin-bottom: 6px !important;
   display: block !important;
 }
 
