@@ -1,106 +1,59 @@
 
-# Editoru Modern ve Sikliga Kavusturmak (Mobil + Masaustu)
+# Hizmet Kartlarinda Ikon Yerine Gorsel Kullanma
 
-## Mevcut Durum
+## Mevcut Sorun
 
-Editordeki sidebarlar (Katmanlar, Ekle, Ozellikler, Stiller) ve alt gezinti cubugu basit, duz bir gorunume sahip. SDK'nin varsayilan form kontrolleri (input, label, select) stillenmemis, eski gorunumlu. Mobilde sheet panelleri sade border-b ile ayrilmis basliklar, standart scrollbar ve derinlik hissi olmayan bir arayuz sunuyor.
+Hizmet kartlarinda "heart", "activity", "smile" gibi ikon isimleri duz metin olarak gorunuyor. Bunun iki nedeni var:
 
-## Yapilacak Degisiklikler
+1. AI prompt, tum sektorler icin tip/saglik ikonlari (stethoscope, pill, syringe vb.) oneriyor - kahve dukkanina bile
+2. ChaiBuilder ServicesGrid blogu bu isimleri emoji olarak gostermeye calisiyor ama dogru eslestirme yapamiyor, sonuc: duz metin
 
-### 1. Mobil Editör Layout Modernizasyonu (`MobileEditorLayout.tsx`)
+## Cozum
 
-**Ust toolbar:**
-- Glassmorphism efekti (backdrop-blur-xl, bg-background/80)
-- Daha belirgin buton stilleri, rounded-xl
-- Logo/proje ismi gosterimi
+Ikon alanini tamamen kaldirip, her hizmet icin **Pixabay'den otomatik gorsel** cekilecek. Boylece kahve dukkanina kahve gorseli, restoranta yemek gorseli gelecek.
 
-**Alt gezinti cubugu:**
-- Daha buyuk ikonlar (w-6 h-6)
-- Aktif durum icin alt cizgi (underline indicator) animasyonu
-- Pill seklinde aktif gosterge (rounded-2xl, scale efekti)
-- Hafif gradient arka plan
+### 1. AI Prompt Guncelleme (`supabase/functions/generate-website/index.ts`)
 
-**Sheet panelleri:**
-- Baslik bolumunde gradient accent cizgisi (top border gradient)
-- Panel icerik alanlari icin daha iyi bosluklar (padding)
-- Ozel scrollbar stilleri (ince, rounded, tema renklerinde)
-- Baslik fontunu daha buyuk ve bold yapma
+- `servicesList` ve `highlights` icin `icon` alani yerine `imageSearchTerm` alani eklenecek
+- AI, her hizmet icin Ingilizce arama terimi uretecek (ornegin: "filter coffee brewing", "espresso machine", "cheesecake dessert")
+- Highlights icin de ayni mantik: `"icon": "heart|shield|..."` yerine `"imageSearchTerm": "string (English search term for Pixabay)"`
 
-### 2. ChaiBuilder SDK Form Stillerini Override Etme (`chaibuilder.tailwind.css`)
+### 2. Gorsel Alma Mantigi (`supabase/functions/generate-website/index.ts`)
 
-SDK icerisindeki RJSF (React JSON Schema Form) elementleri icin modern CSS override'lar:
+- Icerik uretildikten sonra, her hizmetin `imageSearchTerm` degeri ile Pixabay API'den kucuk boyutlu gorsel URL'leri cekilecek
+- Bu URL'ler `servicesList[i].image` alanina yazilacak
+- Mevcut `fetch-images` veya `search-pixabay` Edge Function'lari kullanilabilir ya da ayni fonksiyon icinde dogrudan Pixabay API cagrisi yapilabilir
 
-**Input alanlari:**
-- Rounded-lg, focus ring, transition efektleri
-- Placeholder rengi ve boyutu
-- Input group gorunumu (label + input birlikte)
+### 3. ChaiBuilder ServicesGrid Blogu Guncelleme (`src/components/chai-builder/blocks/services/ServicesGrid.tsx`)
 
-**Label'lar:**
-- Uppercase tracking-wide, kucuk font, muted renk
-- Daha iyi bosluklandirma
+- `ServiceItem` arayuzune `image?: string` alani eklenecek
+- Ikon/emoji gosterimi yerine, gorsel varsa `<img>` etiketi gosterilecek
+- Gorsel yoksa fallback olarak emoji veya varsayilan bir ikon gosterilecek
+- Kart tasarimi: Ust kisimda yuvarlak veya kare gorsel, altinda baslik ve aciklama
 
-**Select/Dropdown:**
-- Ozel ok ikonu
-- Hover ve focus durumlari
+### 4. Donusturucu Guncelleme (`src/components/chai-builder/utils/convertToChaiBlocks.ts`)
 
-**Checkbox/Radio:**
-- Primary renginde, rounded
-- Animasyonlu check isareti
-
-**Butonlar:**
-- SDK icerisindeki butonlar icin modern stiller
-- Ghost variant icin hover efektleri
-
-**Genel panel alani:**
-- Bolum ayiricilari icin gradient veya subtle border
-- Kart bazli gruplama (her ozellik grubu icin hafif bg)
-- Accordion basliklari icin modern gorunum
-
-### 3. Bottom Nav Bar Yeniden Tasarimi
-
-Mevcut duz buton gorunumu yerine:
-- Floating bar stili (mx-4, rounded-2xl, shadow-lg)
-- Aktif sekme icin pill indicator
-- Framer-motion ile smooth gecis animasyonu
-- Daha genis dokunma alani (min-h-[52px])
-
-### 4. Sheet Panel Header Modernizasyonu
-
-Her panelin baslik bolumu:
-- Sol kenarda 3px kalinliginda primary renkli accent bar
-- Baslik yani sira kisa aciklama metni (ornegin "Blok ozelliklerini duzenleyin")
-- Kapatma butonu icin modern X ikonu
+- `services` mapping'inde `icon` yerine `image` alani da aktarilacak
+- `service.image || service.icon || '...'` seklinde fallback zinciri
 
 ## Teknik Detaylar
 
 ### Degistirilecek Dosyalar
 
-**1. `src/components/chai-builder/MobileEditorLayout.tsx`**
-- Top toolbar: glassmorphism + proje ismi
-- Bottom navbar: floating pill tasarimi, rounded-2xl, shadow-lg, daha buyuk ikonlar
-- Sheet panel header: accent bar, daha buyuk baslik, kisa aciklama metni
-- Panel icerik wrapperlarina modern class ekleme
-- Aktif tab icin scale ve spring animasyonu (framer-motion zaten yuklu)
+**1. `supabase/functions/generate-website/index.ts`**
+- Satir 259: highlights icon listesini `imageSearchTerm` ile degistir
+- Satir 298: servicesList icon listesini `imageSearchTerm` ile degistir
+- Icerik uretildikten sonra, her hizmet icin Pixabay API'den gorsel URL'si cek (PIXABAY_API_KEY mevcut secret'lardan kullanilacak)
+- Gorselleri `servicesList[i].image` ve `highlights[i].image` alanlarina yaz
 
-**2. `src/styles/chaibuilder.tailwind.css`**
-- SDK form elementleri icin kapsamli CSS override:
-  - `input, select, textarea` icin modern stiller
-  - `.rjsf` form wrapper icin kart stili
-  - Label'lar icin tipografi iyilestirmeleri
-  - Scrollbar ozellestirmeleri (webkit + Firefox)
-  - Accordion/collapsible basliklari icin modern gorunum
-  - Color picker icin rounded stiller
-  - SDK panel arka planlarini koyu/acik tema uyumlu yapma
-  - Blok kartlari icin hover efektleri (SDK add blocks paneli)
+**2. `src/components/chai-builder/blocks/services/ServicesGrid.tsx`**
+- `ServiceItem` arayuzune `image?: string` ekle
+- Render kisminida emoji yerine: gorsel varsa `<img>` goster, yoksa emoji fallback
+- Gorsel alani icin `aspect-square rounded-xl object-cover` stili
+- Default services listesine ornek gorsel URL'leri ekle
 
-**3. `src/components/chai-builder/ChaiBuilderWrapper.tsx`**
-- Masaustu gorunum icin de ust toolbar stilini guncelleme (glassmorphism)
-- Geri butonu ve gorsel ara butonunu pill seklinde yapma
+**3. `src/components/chai-builder/utils/convertToChaiBlocks.ts`**
+- Satir 139-143: services mapping'inde `image: service.image || ''` ekle
 
-### Tasarim Referanslari
-
-Hedeflenen modern gorunum:
-- Figma, Framer, Webflow editoru benzeri temiz sidebar'lar
-- iOS tarzinda alt gezinti cubugu (floating, rounded)
-- Notion/Linear tarzinda form kontrolleri (ince border, buyuk radius, net tipografi)
-- Glassmorphism toolbar (bulanik arka plan, yari saydam)
+**4. `src/types/generated-website.ts`** (gerekirse)
+- ServicesList tipine `image?: string` ve `imageSearchTerm?: string` ekle
