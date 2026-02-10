@@ -242,7 +242,7 @@ section.fixed.inset-0[class*="z-[99999]"] {
 .floating-edit-card::before {
   content: '';
   position: absolute;
-  width: 120px;
+  width: 100px;
   height: 140%;
   top: -20%;
   left: 50%;
@@ -264,7 +264,7 @@ section.fixed.inset-0[class*="z-[99999]"] {
 .floating-edit-card::after {
   content: '';
   position: absolute;
-  inset: 2px;
+  inset: 3px;
   border-radius: 18px;
   background: hsl(var(--background));
   z-index: 1;
