@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { CreateWebsiteWizard } from '@/components/wizard/CreateWebsiteWizard';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -61,6 +62,17 @@ export default function Dashboard() {
   // Get the most recent project for sidebar navigation
   const activeProject = projects[0];
 
+  const handleDeleteProject = async (projectId: string) => {
+    const { error } = await supabase.from('projects').delete().eq('id', projectId);
+    if (error) {
+      toast.error('Site silinirken hata oluştu');
+      console.error(error);
+    } else {
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      toast.success('Site silindi');
+    }
+  };
+
   // Right panel content
   const rightPanelContent = (
     <div className="space-y-6">
@@ -103,7 +115,7 @@ export default function Dashboard() {
           
           <div className="grid md:grid-cols-2 gap-6">
             {projects.map((project) => (
-              <WebsitePreviewCard key={project.id} project={project} />
+              <WebsitePreviewCard key={project.id} project={project} onDelete={handleDeleteProject} />
             ))}
           </div>
         </div>

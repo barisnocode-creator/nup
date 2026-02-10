@@ -1,8 +1,19 @@
-import { Globe, ExternalLink, Edit3 } from 'lucide-react';
+import { Globe, ExternalLink, Edit3, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface Project {
   id: string;
@@ -16,9 +27,10 @@ interface Project {
 
 interface WebsitePreviewCardProps {
   project: Project;
+  onDelete?: (projectId: string) => void;
 }
 
-export function WebsitePreviewCard({ project }: WebsitePreviewCardProps) {
+export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProps) {
   const navigate = useNavigate();
 
   const getStatusBadge = () => {
@@ -81,9 +93,40 @@ export function WebsitePreviewCard({ project }: WebsitePreviewCardProps) {
           <p className="text-xs text-muted-foreground">{getProfessionLabel(project.profession)}</p>
         </div>
         
-        {/* Status Badge */}
-        <div className="absolute top-3 left-3">
+        {/* Status Badge + Delete */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
           {getStatusBadge()}
+          {onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 bg-background/60 backdrop-blur hover:bg-destructive/90 hover:text-destructive-foreground"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Siteyi sil</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    <strong>{project.name}</strong> sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>İptal</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => onDelete(project.id)}
+                  >
+                    Sil
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 
