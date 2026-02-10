@@ -1,61 +1,51 @@
 
 
-# Editör Panellerini Düzeltme - Durable Tarzı Sağ Panel
+# Editör Panellerini Tamamen Düzeltme
 
-## Sorun
+## Sorunun Kökeni
 
-CSS'deki bu kural sağ paneli (ve muhtemelen sol paneli de) gizliyor:
+CSS'deki `.chai-canvas-area ~ div:not(...)` kuralı hala sorun yaratıyor. Bu kural "canvas'tan sonra gelen tüm div'leri gizle (bazıları hariç)" mantığında çalışıyor ama AnimatePresence bileşeni DOM'da dinamik olarak div ekleyip çıkardığı için, `not()` seçicileri her durumda doğru çalışmıyor. Ayrıca SDK kendi internal panellerini de bu bölgede render edebiliyor.
 
+## Çözüm
+
+### 1. CSS Kuralını Tamamen Değiştir (`src/styles/chaibuilder.tailwind.css`)
+
+Mevcut "hepsini gizle, bazılarını hariç tut" yaklaşımı yerine, tam tersi bir yaklaşım kullanılacak: Bizim panellerimize özel class'lar verip, SDK'nın kendi panellerini spesifik bir seçiciyle hedeflemek.
+
+Mevcut kural (satır 255-259) silinip yerine:
+- SDK'nın varsayılan sağ sidebar'ını `data-` attribute veya yapısal seçiciyle hedefleyen daha dar bir kural
+- Bizim panellerimize dokunmayan izole bir gizleme kuralı
+
+### 2. Panel Yapısını Güçlendir (`src/components/chai-builder/DesktopEditorLayout.tsx`)
+
+- Sağ ve sol panellerin `motion.div` elementlerine daha yüksek `z-index` (z-30) verilecek
+- Panellere `data-editor-panel` attribute'u eklenecek (CSS izolasyonu için)
+- Sol panelin (Katmanlar/Ekle) ve sağ panelin (Özellikler/Stiller) açılma/kapanma mantığı korunacak
+- Sağ panel varsayılan olarak açık başlayacak (`showRight: true` - mevcut durum)
+
+### 3. CSS Gizleme Stratejisi Değişikliği
+
+Eski yaklaşım (sorunlu):
 ```text
-.chai-canvas-area ~ div:not([class*="z-30"]):not([class*="z-40"]) {
+.chai-canvas-area ~ div:not(.right-edit-panel):not(.editor-left-panel)... {
   display: none !important;
 }
 ```
 
-Bu kural SDK'nın kendi sidebar'ını gizlemek için yazılmıştı ama bizim özel panellerimizi de yok ediyor. Sonuç: Katmanlar, Ekle, Özellikler ve Stiller panellerinin hiçbiri açılmıyor.
+Yeni yaklaşım (güvenli):
+```text
+/* Sadece data-editor-panel attribute'u OLMAYAN, 
+   canvas'ın kardeşi olan div'leri gizle */
+.chai-canvas-area ~ div:not([data-editor-panel]) {
+  display: none !important;
+}
+```
 
-## Çözüm
-
-### 1. CSS Düzeltmesi (chaibuilder.tailwind.css)
-
-Mevcut "herşeyi gizle" kuralını, sadece SDK'nın kendi internal panel'ini hedefleyen daha spesifik bir kuralla değiştir:
-
-- `.chai-canvas-area ~ div` yerine, SDK'nın oluşturduğu belirli paneli hedefle
-- Bizim `.right-edit-panel` ve sol panel divlerimize `display: none` uygulanmasını engelle
-
-### 2. DesktopEditorLayout.tsx Güncellemesi
-
-Referans görseldeki Durable editörüne benzer şekilde:
-
-- Sağ panel 320px genişliğinde sabit sidebar olarak kalacak (zaten mevcut yapı)
-- Sol panel (Katmanlar/Ekle) animasyonlu açılıp kapanacak (zaten mevcut yapı)
-- Üst toolbar'da referanstaki gibi Customize, Pages, Add, Help menü yapısı yerine mevcut ikon butonları korunacak
-- Sağ paneldeki Özellikler tab'ı SDK'nın `ChaiBlockPropsEditor`'ünü gösterecek - bu zaten bağlam duyarlı (seçilen bloğa göre otomatik olarak metin, görsel veya section alanlarını gösterir)
-
-### 3. Panel İçerik Yapısı
-
-Referans görselde görülen "Image" paneli gibi:
-- SDK'nın `ChaiBlockPropsEditor` bileşeni zaten bu işlevselliği sağlıyor
-- Görsel bloğu seçildiğinde: URL alanı, alt text alanı otomatik gösterilir
-- Ek olarak sağ panel başlığına "Görsel Ara" (Pixabay) butonu eklenecek
+Bu sayede bizim panellerimize `data-editor-panel="right"` ve `data-editor-panel="left"` ekleyerek CSS'den tamamen korunmuş olacaklar.
 
 ## Teknik Detaylar
 
 **Değiştirilecek dosyalar:**
-1. `src/styles/chaibuilder.tailwind.css` - Satır 255-259 arasındaki CSS kuralını düzelt
-2. `src/components/chai-builder/DesktopEditorLayout.tsx` - Sağ panele z-index class ekle, Pixabay butonu ekle
-
-**CSS değişikliği:**
-Mevcut kural:
-```text
-.chai-canvas-area ~ div:not([class*="z-30"]):not([class*="z-40"]) {
-  display: none !important;
-}
-```
-
-Yeni kural: `.right-edit-panel` ve sol panel animasyonlarını koruyan, sadece SDK'nın internal sidebar'ını gizleyen daha spesifik seçici.
-
-**DesktopEditorLayout değişikliği:**
-- AnimatePresence ile sarılmış sağ panele `.right-edit-panel` class'ı zaten var
-- Panel header'a Pixabay "Görsel Ara" butonu eklenmesi (referans görseldeki "Change" butonuna benzer)
+1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Panellere `data-editor-panel` attribute'u ve z-30 eklenmesi
+2. `src/styles/chaibuilder.tailwind.css` - CSS gizleme kuralının `data-editor-panel` tabanlı olarak yeniden yazılması
 
