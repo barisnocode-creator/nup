@@ -1,42 +1,85 @@
 
 
-# Floating Edit Kartinin Duzeltilmesi ve Inline Duzenleme
+# Durable Tarzi Editor - Floating Kart ve Section Hover Sistemi
 
-## Sorunlar
-1. Sag taraftaki floating kart hala cok buyuk ve sidebar gibi gorunuyor
-2. Blok secildiginde kart otomatik acilmiyor (her zaman acik)
-3. Yazi dogrudan canvas uzerinden degistirilemiyor (inlineEditProps tanimli ama SDK overlay'i engelliyor olabilir)
+## Temel Sorun
 
-## Cozum
+Floating edit karti "absolute" pozisyonlama kullaniyor ama ust container'da `relative` sinifi yok. Bu yuzden kart dogru konumda gorunmuyor ve buyuk bir sidebar gibi davranıyor.
 
-### 1. DesktopEditorLayout.tsx - Kart Davranisini Iyilestir
+## Cozum Plani
 
-- `showRight` varsayilan degeri `false` olsun (kart kapali baslasın)
-- Canvas tiklamalarini dinle: bir bloga tiklandiginda floating karti otomatik ac
-- Canvas'a `onClick` handler ekle, `[data-block-id]` elementi aranarak blok secimini algila
-- Bos alana tiklandiginda karti kapat
+### 1. DesktopEditorLayout.tsx - Tam Yeniden Yapilandirma
 
-### 2. CSS ile SDK Ic Overlay/Sidebar Gizleme
+Durable benzeri bir editor deneyimi olusturulacak:
 
-SDK'nin kendi ic mekanizmasinda acilan overlay/dark-backdrop'u CSS ile tamamen gizle:
-- `div[data-radix-overlay]`, `.chai-overlay` zaten override ediliyor ama yeterli degil
-- SDK'nin iframe disinda render ettigi koyu arkaplan overlay elementlerini hedefle
-- `iframe + div` gibi secicilerle secim karanligini kaldir
+**Layout Duzeltmesi:**
+- Ana container'a `relative` sinifi ekle (floating kart icin referans noktasi)
+- Floating kart gercekten canvas ustunde yuzecek sekilde konumlandirilacak
+- Sag tarafta sabit sidebar OLMAYACAK - sadece kucuk yüzen kart
 
-### 3. Inline Duzenleme Akisini Iyilestir
+**Section Hover Sistemi (Durable tarzi):**
+- Sectionlara hover'da ince mavi outline gosterilecek
+- Secilen section'da kalin mavi kenarlik + kose isaretleri
+- Hover'da sag ust kosede floating action box (tasi, duzenle, kopyala, sil ikonlari)
+- Action box fade-in/fade-out animasyonlu
+- Tek seferde sadece bir section secilebilir
+- Bos alana tiklandiginda secim temizlenir
 
-Bloklar zaten `inlineEditProps` ile yapilandirilmis. SDK, canvas iframe'i icinde contentEditable desteği saglıyor. Sorun, tıklandığında panel odağı alması. Panel'in iframe'i kaplamaması ve inline edit'i engellemesi icin:
-- Floating kartı canvas'ın `div` elemanından ayır, sayfanın en üst seviyesine (portal-like) taşı
-- Canvas alanına `pointer-events` müdahalesi yapma
+**Floating Edit Kart:**
+- Canvas'in sag ust kösesinde yuzecek (absolute, right-4, top-16)
+- Uiverse.io tarzi donen gradient kenarlik
+- Kompakt boyut: max-width 280px, max-height 420px
+- Blok secildiginde otomatik acilir
+- Bos alana tiklandiginda kapanir
 
-### Degistirilecek Dosyalar
+### 2. CSS Guncellemeleri (chaibuilder.tailwind.css)
 
-**`src/components/chai-builder/DesktopEditorLayout.tsx`**:
-- `showRight` varsayilan: `true` -> `false`
-- Canvas div'ine `onClick` handler ekle: bloğa tıklandığında `setShowRight(true)`, boş alana tıklandığında `setShowRight(false)`
-- Floating kart konumunu canvas div'in içinden çıkarıp ana container'a taşı (absolute positioning düzgün çalışsın)
+**Section hover efektleri:**
+- `.section-hover-outline`: Ince mavi outline (2px solid, yarim seffaf)
+- `.section-selected-outline`: Kalin mavi outline (3px solid) + kose isaretleri
+- `.section-action-box`: Floating action box stilleri (fade-in animasyon)
 
-**`src/styles/chaibuilder.tailwind.css`**:
-- SDK'nın iç panellerinin yarattığı koyu overlay/backdrop'u CSS override ile tamamen şeffaf yap
-- `iframe` yanında çıkan seçim overlay elementlerini hedefle
-- Sağ panel sidebar olarak açılıyorsa CSS ile gizle (SDK'nın kendi sidebar'ını)
+**Floating kart CSS duzeltmesi:**
+- Mevcut gradient animasyonu korunacak
+- Kartin gercekten yuzecegi garanti edilecek
+
+### 3. ChaiBuilderWrapper.tsx - Minimal Degisiklik
+
+- Mevcut `layout` prop'u zaten `DesktopEditorLayout`'u kullaniyor, degisiklik gerekmez
+
+## Teknik Detaylar
+
+**DesktopEditorLayout yapisi:**
+
+```text
++--------------------------------------------------+
+| [<-] [Undo/Redo]          [Screen] [Settings]    |
++----+---------------------------------------------+
+| L  |                                         [F] |
+| a  |   Canvas (Website Preview)              [l] |
+| y  |                                         [o] |
+| e  |   +--Section--+                         [a] |
+| r  |   | Hover:    |  <- mavi outline        [t] |
+| s  |   | [actions] |  <- sag ust action box  [i] |
+|    |   +----------+                          [n] |
+| +  |                                         [g] |
+|    |                                             |
++----+---------------------------------------------+
+
+[F] = Floating Edit Card (280x420 max, gradient border)
+     +--gradient-border--+
+     | Ozellikler|Stiller|
+     | -----------       |
+     | Baslik: [___]     |
+     | Aciklama: [___]   |
+     +-------------------+
+```
+
+**Section hover davranisi:**
+- Mouse hover -> gecici UI (outline + action box)
+- Click -> kalici UI (selected outline)
+- Baska yere tikla -> secim kalkar
+
+**Degistirilecek dosyalar:**
+1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Ana container'a `relative`, floating kart duzeltmesi
+2. `src/styles/chaibuilder.tailwind.css` - Section hover/selection stilleri, action box animasyonlari
