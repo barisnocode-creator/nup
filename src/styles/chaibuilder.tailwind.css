@@ -253,8 +253,8 @@ iframe[title] + div[class*="absolute"][class*="inset-0"] {
 }
 
 /* ===== Hide SDK's internal right sidebar panel ===== */
-/* SDK renders its own sidebar — force hide so only our floating card shows */
-.chai-canvas-area ~ div:not([class*="z-30"]):not([class*="z-40"]) {
+/* Only hide SDK's own panels, not our custom .right-edit-panel or left panels */
+.chai-canvas-area ~ div:not(.right-edit-panel):not(.editor-left-panel):not(.editor-left-sidebar):not([class*="z-"]) {
   display: none !important;
 }
 

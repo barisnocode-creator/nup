@@ -62,7 +62,7 @@ export function DesktopEditorLayout() {
             animate={{ width: 260, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-10"
+            className="editor-left-panel shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-10"
           >
             <div className="w-[260px] h-full flex flex-col">
               <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
