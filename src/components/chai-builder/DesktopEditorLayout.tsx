@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -18,7 +18,25 @@ type RightTab = 'props' | 'styles';
 export function DesktopEditorLayout() {
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
-  const [showRight, setShowRight] = useState(true);
+  const [showRight, setShowRight] = useState(false);
+
+  // Listen for block selection in the canvas to auto-open the floating card
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if clicked inside the canvas area (not on sidebar buttons or floating card)
+      const isCanvasArea = target.closest('.chai-canvas-area');
+      if (!isCanvasArea) return;
+
+      const blockEl = target.closest('[data-block-id]');
+      if (blockEl) {
+        setShowRight(true);
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, []);
 
   return (
     <div className="h-screen w-screen flex overflow-hidden bg-background">
@@ -84,7 +102,7 @@ export function DesktopEditorLayout() {
       </AnimatePresence>
 
       {/* Canvas - full width center */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden chai-canvas-area">
         {/* Screen sizes toolbar */}
         <div className="absolute top-3 right-3 z-30 flex items-center gap-2">
           <ChaiScreenSizes
