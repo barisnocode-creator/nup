@@ -1,70 +1,26 @@
 
+# Floating Edit Kartini Kompakt Hale Getirme
 
-# Floating Edit Paneli - Animasyonlu Gradient Kenarlikli Kart
-
-## Mevcut Durum
-Bir blok secildiginde sag tarafta sabit bir "Ozellikler" paneli aciliyor ve canvas arka plani karariyor. Bu gorunum sert ve eski.
+## Sorun
+Sag taraftaki duzenleme paneli hala ekranin tamamini kaplayan buyuk bir sidebar gibi gorunuyor. Kullanici, Uiverse.io ornegindeki gibi kucuk, kompakt bir yüzen kart istiyor - web sitesini rahatlıkla gorebilecegi sekilde.
 
 ## Cozum
-Sag sidebar yerine, secilen blogun yakininda (veya sabit konumda sag tarafta) yüzen, dönen gradient kenarlikli modern bir kart paneli olusturulacak.
 
-### 1. Ozel Masaustu Layout Bileseni Olustur
-**Yeni dosya: `src/components/chai-builder/DesktopEditorLayout.tsx`**
+### 1. DesktopEditorLayout.tsx - Kompakt Floating Kart
 
-- ChaiBuilder SDK'nin `layout` prop'u ile ozel bir masaustu layout bileseni kullanilacak
-- `ChaiBuilderCanvas`, `ChaiBlockPropsEditor`, `ChaiBlockStyleEditor`, `ChaiOutline`, `ChaiAddBlocksPanel` bilesenlerini kullanan ozel bir duzenleme
-- Sag sidebar yerine **floating card** icinde `ChaiBlockPropsEditor` gosterilecek
-- Kart, ekranin sag tarafinda sabit konumda yuzecek (absolute/fixed positioning)
+Mevcut floating panel `top-16 bottom-4` ile neredeyse tam ekran yuksekliginde. Bunu kompakt bir karta donusturecegiz:
 
-### 2. Animasyonlu Gradient Kenarlik CSS
-**Dosya: `src/styles/chaibuilder.tailwind.css`**
+- **Genislik**: 320px -> 280px (daha dar)
+- **Yukseklik**: Tam ekran yerine `max-height: 420px` ile sinirli (icerige gore uzar ama siniri var)
+- **Konum**: `top-16 bottom-4` yerine `top-16 right-4` sabit, `bottom` olmadan - sadece icerik kadar yer kaplar
+- **h-full kaldirilacak**: Kart icerige gore boyutlanacak, tam yuksekligi doldurmayacak
+- ScrollArea'ya `max-h-[340px]` siniri konacak
 
-Uiverse.io orneginden esinlenerek:
-- Kart disinda donen gradient `::before` pseudo-elementi
-- Ic kisimda koyu arka plan `::after` pseudo-elementi
-- `@keyframes rotBGimg` animasyonu ile surekli donen kenarlik efekti
-- Gradient renkleri: `rgb(0, 183, 255)` -> `rgb(255, 48, 255)` (mavi-mor)
+### 2. CSS Ince Ayar - chaibuilder.tailwind.css
 
-### 3. Canvas Kararma Efektini Azaltma
-**Dosya: `src/styles/chaibuilder.tailwind.css`**
+- Floating kart `::before` gradient genisligi biraz daraltilacak (120px -> 100px) daha ince kenarlik icin
+- `inset: 2px` -> `inset: 3px` daha belirgin gradient kenarlık
 
-SDK'nin secim sirasinda uygulayabilecegi overlay/backdrop stillerini CSS ile override ederek kararmayi azaltma veya kaldirma.
-
-### 4. ChaiBuilderWrapper Guncelleme
-**Dosya: `src/components/chai-builder/ChaiBuilderWrapper.tsx`**
-
-- Masaustunde de ozel layout bilesenini kullan (`layout={DesktopEditorLayout}`)
-- Mevcut `isMobileView ? MobileEditorLayout : undefined` yerine her iki durumda da ozel layout
-
-### Teknik Detaylar
-
-**DesktopEditorLayout bileseni yapisi:**
-- Sol: Outline + Add Blocks paneli (mevcut SDK sidebar yerine ozel)
-- Orta: ChaiBuilderCanvas (tam genislik)
-- Sag: Floating card (absolute positioned, z-index yuksek)
-  - Iceride: ChaiBlockPropsEditor + ChaiBlockStyleEditor (tab'li)
-  - Kart gorunumu: Donen gradient kenarlik animasyonu
-  - Icerik alani: Koyu/acik tema uyumlu arka plan
-  - Scroll destegi: Icerik uzun oldugunda kaydirma
-
-**CSS animasyonu:**
-```text
-+---------------------------+
-|  ::before (gradient bar)  |  <-- donen gradient
-|  +---------------------+  |
-|  |                     |  |
-|  |  Ozellikler         |  |  <-- ::after (ic arka plan)
-|  |  ---------------    |  |
-|  |  Baslik: [input]    |  |
-|  |  Aciklama: [input]  |  |
-|  |  ...                |  |
-|  |                     |  |
-|  +---------------------+  |
-+---------------------------+
-```
-
-**Degistirilecek dosyalar:**
-1. `src/components/chai-builder/DesktopEditorLayout.tsx` (yeni)
-2. `src/styles/chaibuilder.tailwind.css` (CSS animasyonu + overlay azaltma)
-3. `src/components/chai-builder/ChaiBuilderWrapper.tsx` (layout prop guncelleme)
-
+### Degistirilecek Dosyalar
+1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Floating panel boyutlarini kucult
+2. `src/styles/chaibuilder.tailwind.css` - Gradient ince ayar
