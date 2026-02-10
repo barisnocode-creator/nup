@@ -1,66 +1,26 @@
 
 
-# Durable Tarzı Üst Toolbar Ekleme
+# Toolbar Görünmüyor - Genişlik Eşiği Sorunu
 
-## Mevcut Durum
+## Sorun
 
-Şu anda ChaiBuilder editöründe üst toolbar yok. Sadece sol üstte floating "Geri" ve "Görsel Ara" butonları var. Referans görseldeki Durable editöründe ise tam genişlikte bir üst bar bulunuyor:
+`ChaiBuilderWrapper.tsx` satir 25'te `MIN_EDITOR_WIDTH = 1280` tanımlı. Lovable preview iframe'i bu genişlikten dar olduğu icin `isMobileView` her zaman `true` oluyor ve `MobileEditorLayout` (alt cubuktaki Katmanlar/Ekle/Ozellikler/Stiller) gosteriliyor. Durable tarzi ust toolbar hic gorunmuyor.
 
-```text
-[🏠] | [🔗 Customize] [📄 Pages] [+ Add] [? Help]     Home ⚙     [▶ Preview] | [🌐 Publish]
-```
+## Cozum
 
-## Yapılacak Değişiklikler
+### 1. MIN_EDITOR_WIDTH degerini dusur (`ChaiBuilderWrapper.tsx`)
 
-### 1. DesktopEditorLayout.tsx - Üst Toolbar Ekleme
+`MIN_EDITOR_WIDTH` degerini `1280`'den `768`'e dusur. Bu sayede Lovable preview penceresinde de desktop toolbar gorunecek.
 
-Layout yapısını değiştirerek üstte 56px yüksekliğinde sabit bir toolbar eklenecek:
+### 2. Alternatif: Sadece desktop layout kullan
 
-```text
-+----------------------------------------------------------+
-| 🏠 | Customize  Pages  + Add  ? Help | Home ⚙ | Preview | Publish |
-+----+-----------------------------------+--------+--------+
-| L  |                                   | Panel  |
-| e  |         Canvas                    | 320px  |
-| f  |                                   |        |
-| t  |                                   |        |
-+----+-----------------------------------+--------+
-```
+`isMobileView` kontrolunu tamamen kaldirup her zaman `DesktopEditorLayout` kullan. Mobil cihazlarda da ust toolbar calisacak sekilde responsive yapilacak.
 
-Toolbar içeriği:
-- **Sol**: Home (dashboard'a dön), ayırıcı, Customize (tema paneli açar), Pages (dropdown), + Add (blok ekle paneli açar), Help
-- **Orta**: Proje adı + ayarlar ikonu
-- **Sağ**: Preview butonu, ayırıcı, Publish butonu
-
-### 2. ChaiBuilderWrapper.tsx - Floating Butonları Kaldırma
-
-Mevcut floating "Geri" ve "Görsel Ara" butonları (satır 156-176) kaldırılacak çünkü artık üst toolbar'a taşınacaklar.
-
-### 3. DesktopEditorLayout Props Güncelleme
-
-DesktopEditorLayout'a aşağıdaki prop'lar eklenecek (ChaiBuilderWrapper'dan geçirilecek):
-- `onDashboard` - Dashboard'a yönlendirme
-- `onPublish` - Yayınlama
-- `onPreview` - Önizleme
-- `onImageSearch` - Pixabay açma
-- `projectName` - Proje adı gösterimi
-
-### 4. Sol Sidebar Butonlarının Toolbar'a Taşınması
-
-Mevcut sol dikey sidebar'daki Layers ve Add butonları toolbar'a taşınacak. Sol sidebar (w-12 dikey bar) kaldırılacak, yerine toolbar üzerinden kontrol edilecek.
+**Tercih edilen yaklasim**: `MIN_EDITOR_WIDTH = 768` olarak degistirmek - boylece tablet ve ustu tum ekranlarda ust toolbar gorunur, sadece telefon ekranlarinda mobil layout calisir.
 
 ## Teknik Detaylar
 
-**Değiştirilecek dosyalar:**
-1. `src/components/chai-builder/DesktopEditorLayout.tsx` - Üst toolbar ekleme, sol sidebar kaldırma, layout yeniden düzenleme
-2. `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Floating butonları kaldırma, DesktopEditorLayout'a prop geçirme
+**Degistirilecek dosya:**
+- `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Satir 25: `const MIN_EDITOR_WIDTH = 1280;` -> `const MIN_EDITOR_WIDTH = 768;`
 
-**Toolbar buton eşlemeleri:**
-- Home butonu -> `navigate('/dashboard')`
-- Customize -> sağ panelde tema/stil sekmesini açar
-- Pages -> dropdown menü (sayfa listesi)
-- + Add -> sol paneli "add" modunda açar
-- Help -> yardım sayfasına yönlendirme
-- Preview -> yeni sekmede önizleme
-- Publish -> yayınlama modal'ı
-
+Bu tek satirlik degisiklik, Lovable preview penceresinde desktop toolbar'in gorunmesini saglayacak.
