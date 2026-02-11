@@ -254,7 +254,7 @@ function renderBlock(block: ChaiBlock): string {
   }
 }
 
-function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string): string {
+function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string, projectId?: string): string {
   const primaryColor = (theme?.primaryColor as string) || "#4f46e5";
   const fontFamily = (theme?.fontFamily as string) || "'Inter', sans-serif";
   const bodyBg = (theme?.bodyBg as string) || "#ffffff";
@@ -265,6 +265,9 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   if (!sectionsHtml.trim()) {
     sectionsHtml = `<section class="min-h-screen flex items-center justify-center"><div class="text-center"><h1 class="text-4xl font-bold">${escapeHtml(projectName)}</h1><p class="mt-4 text-gray-600">Website coming soon</p></div></section>`;
   }
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const trackingScript = projectId ? `<script>(function(){var p="${projectId}",u="${supabaseUrl}/functions/v1/track-analytics",a=navigator.userAgent,d=/android|iphone|ipad|mobile/i.test(a)?"mobile":"desktop",v=localStorage.getItem("ol_vid");if(!v){v="v_"+Date.now()+"_"+Math.random().toString(36).substr(2,9);localStorage.setItem("ol_vid",v)}fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({project_id:p,event_type:"page_view",page_path:location.pathname,user_agent:a,device_type:d,visitor_id:v})}).catch(function(){})})()<\/script>` : "";
 
   return `<!DOCTYPE html>
 <html lang="tr">
@@ -286,6 +289,7 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
 </head>
 <body>
 ${sectionsHtml}
+${trackingScript}
 </body>
 </html>`;
 }
@@ -359,7 +363,7 @@ Deno.serve(async (req) => {
     const chaiBlocks = (project.chai_blocks as ChaiBlock[]) || [];
     const chaiTheme = (project.chai_theme as Record<string, unknown>) || {};
 
-    const html = blocksToHtml(chaiBlocks, chaiTheme, project.name);
+    const html = blocksToHtml(chaiBlocks, chaiTheme, project.name, projectId);
     const { sha1, content } = await createDeployPayload(html);
 
     let netlifySiteId = project.netlify_site_id;
