@@ -30,7 +30,7 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Header Bar */}
-          <header className="h-14 border-b bg-background flex items-center justify-between px-4 shrink-0">
+          <header className="h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4 shrink-0 shadow-sm">
             <SidebarTrigger className="lg:hidden">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>

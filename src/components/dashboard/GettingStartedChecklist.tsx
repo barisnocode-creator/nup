@@ -57,7 +57,7 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
         id: 'analytics',
         title: 'Check analytics',
         description: 'See how your website is performing',
-        completed: false, // Will be true when user has viewed analytics
+        completed: false,
         action: () => project && navigate(`/project/${project.id}/analytics`),
       },
     ];
@@ -68,7 +68,7 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
   const progress = (completedCount / items.length) * 100;
 
   return (
-    <Card>
+    <Card className="border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
           Get Started
@@ -76,11 +76,14 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
             {completedCount}/{items.length}
           </span>
         </CardTitle>
-        {/* Progress Bar */}
+        {/* Progress Bar with gradient */}
         <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
           <div 
-            className="h-full bg-primary transition-all duration-300 ease-out"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{ 
+              width: `${progress}%`,
+              background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))`,
+            }}
           />
         </div>
       </CardHeader>
@@ -91,21 +94,21 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
             onClick={item.action}
             disabled={item.completed}
             className={cn(
-              "w-full flex items-center gap-3 p-3 rounded-lg text-left transition-colors",
+              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group/item",
               item.completed 
                 ? "opacity-60" 
-                : "hover:bg-muted cursor-pointer"
+                : "hover:bg-primary/5 cursor-pointer"
             )}
           >
             {/* Check Circle */}
             <div className={cn(
-              "w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors",
+              "w-6 h-6 rounded-full flex items-center justify-center shrink-0 border-2 transition-all duration-300",
               item.completed 
-                ? "bg-primary border-primary" 
+                ? "bg-primary border-primary scale-100" 
                 : "border-muted-foreground/30"
             )}>
               {item.completed ? (
-                <Check className="w-4 h-4 text-primary-foreground" />
+                <Check className="w-4 h-4 text-primary-foreground animate-scale-in" />
               ) : (
                 <Circle className="w-3 h-3 text-muted-foreground/30" />
               )}
@@ -124,9 +127,9 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
               </p>
             </div>
 
-            {/* Arrow */}
+            {/* Arrow with hover animation */}
             {!item.completed && (
-              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200 group-hover/item:translate-x-1" />
             )}
           </button>
         ))}

@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { Loader2, Send, Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { ExtractedBusinessData } from '@/types/wizard';
 import { mapSectorToProfession } from '@/types/wizard';
 
@@ -18,10 +18,8 @@ interface AIChatStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-// Total number of questions in the wizard
 const TOTAL_QUESTIONS = 3 as const;
 
-// Hardcoded first message for instant display
 const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 3 kısa soru sorarak hızlıca harika bir web sitesi oluşturacağım.
 
 İşletmenizin adı nedir ve ne iş yapıyorsunuz? 🏢`;
@@ -39,7 +37,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom
   useEffect(() => {
     if (scrollRef.current) {
       const viewport = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -49,7 +46,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     }
   }, [messages, isLoading, streamingContent]);
 
-  // Focus input after AI responds
   useEffect(() => {
     if (!isLoading && inputRef.current && !isComplete) {
       inputRef.current.focus();
@@ -74,7 +70,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
 
       buffer += decoder.decode(value, { stream: true });
 
-      // Process complete lines
       let newlineIndex: number;
       while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
         let line = buffer.slice(0, newlineIndex);
@@ -98,14 +93,12 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             onDelta(content);
           }
         } catch {
-          // Incomplete JSON, put back and wait
           buffer = line + '\n' + buffer;
           break;
         }
       }
     }
 
-    // Final flush
     onDone(fullContent);
   }, []);
 
@@ -120,7 +113,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     let parseError = false;
 
     if (isCompleteResponse) {
-      // Try multiple JSON extraction patterns
       let jsonMatch = content.match(/CHAT_COMPLETE\s*```json\s*(\{[\s\S]*?\})\s*```/);
       if (!jsonMatch) {
         jsonMatch = content.match(/CHAT_COMPLETE\s*(\{[\s\S]*\})/);
@@ -129,7 +121,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[1]);
-          // Map sector to valid profession
           extractedData = {
             businessName: parsed.businessName || 'Yeni İşletme',
             sector: mapSectorToProfession(parsed.sector) || 'other',
@@ -163,7 +154,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       
       cleanResponse = content.split('CHAT_COMPLETE')[0].trim();
       
-      // Create fallback if parse error or no data
       if (parseError || !extractedData) {
         extractedData = {
           businessName: 'Yeni İşletme',
@@ -205,7 +195,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     setError(null);
     setStreamingContent('');
 
-    // Add user message immediately
     const updatedMessages: ChatMessage[] = [
       ...messages,
       { role: 'user', content: userMessage },
@@ -235,11 +224,9 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
         throw new Error(errorData.error || 'Failed to send message');
       }
 
-      // Check if streaming response
       const contentType = response.headers.get('content-type');
       
       if (contentType?.includes('text/event-stream')) {
-        // Handle streaming response
         let accumulatedContent = '';
         
         await parseSSEStream(
@@ -270,10 +257,8 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
           }
         );
       } else {
-        // Handle non-streaming response (fallback)
         const data = await response.json();
         
-        // Process extracted data with sector mapping
         let processedData = data.extractedData;
         if (processedData?.sector) {
           processedData = {
@@ -313,7 +298,6 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
 
   const progressPercentage = Math.min((questionNumber / TOTAL_QUESTIONS) * 100, 100);
 
-  // Display content: either streaming or final messages
   const displayMessages = streamingContent 
     ? [...messages, { role: 'assistant' as const, content: streamingContent }]
     : messages;
@@ -321,63 +305,84 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
   return (
     <div className="flex flex-col h-[400px]">
       {/* Header */}
-      <div className="space-y-2 pb-4 border-b">
+      <div className="space-y-3 pb-4 border-b border-border/50">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">AI Asistan</h2>
-          <span className="text-sm text-muted-foreground">
+          <h2 className="text-xl font-semibold text-foreground">AI Asistan</h2>
+          <span className="text-sm text-muted-foreground font-medium">
             Soru {Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
           </span>
         </div>
-        <Progress value={progressPercentage} className="h-2" />
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div 
+            className="h-full rounded-full transition-all duration-500 ease-out"
+            style={{ 
+              width: `${progressPercentage}%`,
+              background: `linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))`,
+            }}
+          />
+        </div>
       </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1 py-4" ref={scrollRef}>
         <div className="space-y-4 pr-4">
-          {displayMessages.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex gap-3',
-                message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-              )}
-            >
-              <div
+          <AnimatePresence mode="popLayout">
+            {displayMessages.map((message, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
                 className={cn(
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                  'flex gap-3',
+                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 )}
               >
-                {message.role === 'user' ? (
-                  <User className="h-4 w-4" />
-                ) : (
-                  <Bot className="h-4 w-4" />
-                )}
-              </div>
-              <div
-                className={cn(
-                  'rounded-lg px-4 py-2 max-w-[80%]',
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                )}
-              >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-              </div>
-            </div>
-          ))}
+                <div
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm',
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-gradient-to-br from-primary/20 to-primary/10 text-primary'
+                  )}
+                >
+                  {message.role === 'user' ? (
+                    <User className="h-4 w-4" />
+                  ) : (
+                    <Bot className="h-4 w-4" />
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    'rounded-2xl px-4 py-2.5 max-w-[80%] shadow-sm',
+                    message.role === 'user'
+                      ? 'bg-primary text-primary-foreground rounded-tr-md'
+                      : 'bg-muted/80 border border-border/30 rounded-tl-md'
+                  )}
+                >
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
 
           {isLoading && !streamingContent && (
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex gap-3"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-sm">
                 <Bot className="h-4 w-4" />
               </div>
-              <div className="rounded-lg px-4 py-2 bg-muted">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="rounded-2xl rounded-tl-md px-4 py-3 bg-muted/80 border border-border/30 shadow-sm">
+                <div className="flex gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </ScrollArea>
@@ -390,7 +395,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       )}
 
       {/* Input */}
-      <div className="pt-4 border-t">
+      <div className="pt-4 border-t border-border/50">
         <div className="flex gap-2">
           <Input
             ref={inputRef}
@@ -399,12 +404,13 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             onKeyDown={handleKeyDown}
             placeholder={isComplete ? 'Sohbet tamamlandı' : 'Cevabınızı yazın...'}
             disabled={isLoading || isComplete}
-            className="flex-1"
+            className="flex-1 h-11 rounded-xl border-border/50 shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/50"
           />
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading || isComplete}
             size="icon"
+            className="h-11 w-11 rounded-xl shadow-sm"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -414,9 +420,13 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
           </Button>
         </div>
         {isComplete && (
-          <p className="text-sm text-muted-foreground mt-2 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-sm text-muted-foreground mt-2 text-center"
+          >
             ✨ Bilgiler toplandı! "Web Sitesi Oluştur" butonuna tıklayın.
-          </p>
+          </motion.p>
         )}
       </div>
     </div>
