@@ -49,6 +49,7 @@ export function PublishModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
   const [domainModalOpen, setDomainModalOpen] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<string | undefined>();
   const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
 
   // Fetch project data for domain suggestions
@@ -336,6 +337,10 @@ export function PublishModal({
             <DomainSuggestionCard
               suggestions={domainSuggestions}
               onConnectDomain={() => setDomainModalOpen(true)}
+              onSelectDomain={(domain) => {
+                setSelectedDomain(domain);
+                setDomainModalOpen(true);
+              }}
             />
           )}
 
@@ -370,8 +375,12 @@ export function PublishModal({
         {/* Domain Settings Modal */}
         <DomainSettingsModal
           isOpen={domainModalOpen}
-          onClose={() => setDomainModalOpen(false)}
+          onClose={() => {
+            setDomainModalOpen(false);
+            setSelectedDomain(undefined);
+          }}
           projectId={projectId}
+          initialDomain={selectedDomain}
         />
       </Dialog>
     );
