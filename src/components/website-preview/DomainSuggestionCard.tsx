@@ -1,5 +1,7 @@
-import { Globe, ExternalLink, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Globe, ExternalLink, ArrowRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 interface DomainSuggestion {
   domain: string;
@@ -13,6 +15,8 @@ interface DomainSuggestionCardProps {
 }
 
 export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDomain }: DomainSuggestionCardProps) {
+  const [open, setOpen] = useState(false);
+
   const handleDomainClick = (domain: string) => {
     if (onSelectDomain) {
       onSelectDomain(domain);
@@ -23,38 +27,47 @@ export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDom
   };
 
   return (
-    <div className="p-4 rounded-lg border border-orange-200 bg-white space-y-3">
-      <div className="flex items-center gap-2">
-        <Globe className="w-4 h-4 text-orange-500" />
-        <p className="font-medium text-sm text-gray-800">Sizin İçin Domain Önerileri</p>
-      </div>
-
-      <div className="space-y-2">
-        {suggestions.map((s) => (
-          <button
-            key={s.domain}
-            onClick={() => handleDomainClick(s.domain)}
-            className="w-full flex items-center justify-between p-3 rounded-md border border-orange-100 bg-orange-50 hover:bg-orange-100 transition-colors group"
-          >
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="p-3 rounded-lg border border-orange-200 bg-white">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm text-gray-800">{s.domain}</span>
-              <span className="text-xs text-gray-500 bg-orange-100 px-2 py-0.5 rounded-full">{s.price}</span>
+              <Globe className="w-4 h-4 text-orange-500" />
+              <p className="font-medium text-sm text-gray-800">Sizin İçin Domain Önerileri</p>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
           </button>
-        ))}
-      </div>
+        </CollapsibleTrigger>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-full text-orange-600 hover:text-orange-700"
-        onClick={onConnectDomain}
-      >
-        <ArrowRight className="w-3.5 h-3.5 mr-1" />
-        Kendi domaininizi bağlayın
-      </Button>
-    </div>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+          <div className="space-y-2 pt-3">
+            {suggestions.map((s) => (
+              <button
+                key={s.domain}
+                onClick={() => handleDomainClick(s.domain)}
+                className="w-full flex items-center justify-between p-2.5 rounded-md border border-orange-100 bg-orange-50 hover:bg-orange-100 transition-colors group"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm text-gray-800">{s.domain}</span>
+                  <span className="text-xs text-gray-500 bg-orange-100 px-2 py-0.5 rounded-full">{s.price}</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+              </button>
+            ))}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-orange-600 hover:text-orange-700"
+              onClick={onConnectDomain}
+            >
+              <ArrowRight className="w-3.5 h-3.5 mr-1" />
+              Kendi domaininizi bağlayın
+            </Button>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }
 

@@ -3,11 +3,48 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings } from 'lucide-react';
+import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { DomainSettingsModal } from './DomainSettingsModal';
 import { DomainSuggestionCard, generateDomainSuggestions } from './DomainSuggestionCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+function CustomDomainCollapsible({ onOpenDomainModal }: { onOpenDomainModal: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between cursor-pointer">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <Settings className="w-3.5 h-3.5 text-orange-600" />
+              </div>
+              <p className="font-medium text-sm text-gray-800">Özel Domain Bağla</p>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+          <div className="pt-2 pl-9">
+            <p className="text-xs text-gray-500">
+              Kendi alan adınızı bağlayarak profesyonel görünüm elde edin
+            </p>
+            <Button 
+              variant="link" 
+              className="h-auto p-0 mt-1.5 text-orange-600"
+              onClick={onOpenDomainModal}
+            >
+              <Globe className="w-3 h-3 mr-1" />
+              Domain Ayarları
+            </Button>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
 
 interface PublishModalProps {
   isOpen: boolean;
@@ -338,28 +375,8 @@ export function PublishModal({
             />
           )}
 
-          {/* Custom Domain Link */}
-          <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                <Settings className="w-4 h-4 text-orange-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-sm text-gray-800">Özel Domain Bağla</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Kendi alan adınızı bağlayarak profesyonel görünüm elde edin
-                </p>
-                <Button 
-                  variant="link" 
-                  className="h-auto p-0 mt-2 text-orange-600"
-                  onClick={() => setDomainModalOpen(true)}
-                >
-                  <Globe className="w-3 h-3 mr-1" />
-                  Domain Ayarları
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* Custom Domain Link - Collapsible */}
+          <CustomDomainCollapsible onOpenDomainModal={() => setDomainModalOpen(true)} />
 
           <Button variant="outline" onClick={handleClose} className="mt-2 border-gray-300 text-gray-700">
             Kapat
