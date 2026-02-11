@@ -1,32 +1,25 @@
 
 
-# Yayınla Modalı Renk ve Kontrast İyileştirmesi
+# Domain Kartlarını Daraltılabilir (Collapsible) Yapma
 
-## Sorun
-Yayınla (Publish) başarı ekranındaki modal, arka plandaki site içeriğiyle karışıyor. Renkler yeterince belirgin değil ve okunması zor.
+## Yapılacaklar
 
-## Çözüm
-Modal arka planını beyaz, aksanları turuncu tonlarında yaparak sitenin genel tasarım diline uygun, okunabilir bir görünüm sağlanacak.
+### 1. "Sizin İçin Domain Önerileri" kartı (`DomainSuggestionCard.tsx`)
+- Kart varsayılan olarak kapalı (collapsed) olacak
+- Sadece baslik satirini gosterecek: Globe ikonu + "Sizin Icin Domain Onerileri" + chevron ikonu
+- Tiklayinca Radix Collapsible ile asagi dogru kayarak acilacak
+- Kart boyutu kucultulecek (daha kompakt padding)
 
-## Yapılacak Değişiklikler
+### 2. "Ozel Domain Bagla" karti (`PublishModal.tsx` icerisinde inline)
+- Ayni sekilde collapsible yapilacak
+- Varsayilan kapali, tiklaninca acilacak
+- Icerik: aciklama metni + "Domain Ayarlari" butonu asagi kayarak gorunecek
 
-### `src/components/website-preview/PublishModal.tsx`
+## Teknik Detaylar
 
-**Başarı (Success) Ekranı:**
-- `DialogContent`'e `bg-white text-gray-900` sınıfları eklenerek arka plan beyaz, metin koyu yapılacak
-- Başarı ikonu yeşilden turuncuya (`from-orange-400 to-amber-500`) değiştirilecek
-- URL kutusu arka planı `bg-orange-50 border-orange-200` yapılacak, metin rengi koyu tutulacak
-- "Copy Link" ve "Open Website" butonları turuncu tonlarında stillenecek
-- "Özel Domain Bağla" kartı `bg-orange-50 border-orange-200` yapılacak
-- Overlay (arka plan karartma) daha belirgin hale getirilecek
+- `@radix-ui/react-collapsible` zaten projede yuklu, `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` bilesenlerini kullanacagiz
+- `CollapsibleContent` icin Tailwind `data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up` animasyonlari kullanilacak (tailwindcss-animate paketi zaten projede var)
+- `ChevronDown` ikonu eklenerek acik/kapali durumu gorsel olarak belirtilecek, acikken 180 derece donecek
+- Her iki kart icin `useState` ile `open` durumu yonetilecek, varsayilan `false`
+- Padding degerleri `p-4`'ten `p-3`'e dusurulerek kartlar daha kompakt yapilacak
 
-### `src/components/website-preview/DomainSuggestionCard.tsx`
-
-- Kart arka planı `bg-white border-orange-200` yapılacak
-- Domain önerileri `bg-orange-50 hover:bg-orange-100` tonlarında stillenecek
-- İkon renkleri turuncu yapılacak
-- Tüm metinler koyu renkte tutularak okunabilirlik artırılacak
-
-## Teknik Detay
-- Tailwind sınıfları doğrudan bileşenlere uygulanacak (CSS değişkenleri yerine sabit renkler kullanılacak ki modal her temada tutarlı görünsün)
-- `DialogContent` overlay'ine `bg-black/60` eklenerek arka planın daha belirgin karartılması sağlanacak
