@@ -1,68 +1,66 @@
 
-# Netlify Entegrasyonu - Publish Akışı
+# Netlify Custom Domain Baglama Ozelligi
 
-## Genel Bakış
+## Mevcut Durum
 
-Kullanıcı "Yayınla" dediğinde ChaiBuilder bloklarından statik HTML üretilip Netlify API üzerinden deploy edilecek. GitHub repo'ya gerek olmadan doğrudan Netlify Deploy API kullanılacak.
+Netlify deploy basariyla calisiyor. Test deploy sonucu:
+- Site ID: `1dca021b-82a4-4161-872d-c55a42853fa9`  
+- URL: `https://openlucius-bar-yakut-hukuk-brosu.netlify.app`
 
-## Adımlar
+Mevcut custom domain sistemi kendi DNS dogrulama mekanizmasini kullaniyor (TXT kaydi + A kaydi 185.158.133.1). Bu sistemi Netlify altyapisina gecirmemiz gerekiyor.
 
-### 1. Netlify API Token Ekleme
-- Netlify hesabından bir Personal Access Token oluşturulacak (https://app.netlify.com/user/applications#personal-access-tokens)
-- Bu token, proje secret'larına `NETLIFY_API_TOKEN` olarak eklenecek
+## Plan
 
-### 2. Edge Function: `deploy-to-netlify` Oluşturma
-Yeni bir edge function oluşturulacak. Gorevi:
-- Proje ID'sine gore veritabanindan `chai_blocks` ve `chai_theme` verisini cekme
-- ChaiBuilder bloklarini statik HTML sayfasina donusturme (inline CSS + HTML)
-- Netlify Deploy API'sine (`POST https://api.netlify.com/api/v1/sites/{site_id}/deploys`) ile deploy etme
-- Eger site henuz Netlify'da yoksa once `POST /api/v1/sites` ile olusturma
-- Netlify site ID'sini veritabaninda saklama
+### 1. verify-domain Edge Function Guncelleme
 
-### 3. Veritabani Guncellemesi
-`projects` tablosuna yeni sutunlar eklenmesi:
-- `netlify_site_id` (text, nullable) - Netlify'daki site ID'si
-- `netlify_url` (text, nullable) - Netlify'dan alinan canli URL
-- `netlify_custom_domain` (text, nullable) - Netlify uzerinden baglanan ozel domain
+Mevcut `verify-domain` fonksiyonuna Netlify entegrasyonu eklenecek:
+- Domain dogrulandiktan sonra, projenin `netlify_site_id` degeri varsa Netlify API uzerinden custom domain ayarlanacak
+- `PUT https://api.netlify.com/api/v1/sites/{site_id}` ile `custom_domain` alani set edilecek
 
-### 4. PublishModal Guncelleme
-Publish butonuna basildiginda:
-1. Mevcut subdomain kaydi yapilir (geriye uyumluluk)
-2. Ardindan `deploy-to-netlify` edge function cagirilir
-3. Basarili deploy sonrasi Netlify URL'si gosterilir
-4. Kullaniciya hem `/site/subdomain` hem de `xxx.netlify.app` URL'leri sunulur
+### 2. DNS Talimatlari Guncelleme
 
-### 5. Statik HTML Uretimi
-Edge function icinde ChaiBuilder bloklari su sekilde HTML'e cevrilecek:
-- Blok verileri JSON olarak parse edilir
-- Her blok tipi icin HTML sablonu uretilir
-- Tailwind CSS, CDN uzerinden eklenir (`<link>` tag)
-- Tek bir `index.html` dosyasi olusturulur
-- Bu dosya Netlify'a zip olarak gonderilir
+Netlify custom domain icin DNS kayitlari degisecek:
+- Mevcut: A kaydi -> `185.158.133.1`
+- Yeni: Netlify load balancer IP'si -> `75.2.60.5` (Netlify'in standart IP'si)
+- TXT dogrulama kaydi ayni kalacak (`_lovable` prefix)
 
-### 6. Custom Domain (Opsiyonel Sonraki Adim)
-Netlify API uzerinden custom domain baglama:
-- `PUT /api/v1/sites/{site_id}` ile `custom_domain` alani ayarlanir
-- DNS kayitlari Netlify'in IP'lerine yonlendirilir (mevcut 185.158.133.1 yerine Netlify'inkiler)
+`get_domain_dns_instructions` RPC fonksiyonu guncellenerek Netlify IP'leri gosterilecek.
+
+### 3. DomainSettingsModal ve DomainTab UI Guncelleme
+
+- Dogrulama basarili oldugunda Netlify uzerinden SSL otomatik olarak saglanacagina dair bilgi mesaji eklenecek
+- DNS talimatlari bolumunde Netlify IP'leri gosterilecek
+
+### 4. Deploy Sonrasi Custom Domain Senkronizasyonu
+
+`deploy-to-netlify` fonksiyonunda, eger projede dogrulanmis bir custom domain varsa, deploy sirasinda otomatik olarak Netlify'a set edilecek.
 
 ## Teknik Detaylar
 
-**Yeni dosyalar:**
-- `supabase/functions/deploy-to-netlify/index.ts` - Ana deploy edge function'i
-
 **Degistirilecek dosyalar:**
-- `src/components/website-preview/PublishModal.tsx` - Netlify deploy cagrisinin eklenmesi
-- `src/components/chai-builder/DesktopEditorLayout.tsx` - Toolbar'daki Publish butonunun guncellenmesi
 
-**Gerekli secret:**
-- `NETLIFY_API_TOKEN` - Netlify Personal Access Token
+1. `supabase/functions/verify-domain/index.ts`
+   - Dogrulama basarili oldugunda Netlify API'ye custom domain ekleme
+   - `PUT /api/v1/sites/{site_id}` cagrisi
+
+2. `supabase/functions/deploy-to-netlify/index.ts`
+   - Deploy sonrasi, projede dogrulanmis custom domain varsa Netlify'a baglama
+
+3. `get_domain_dns_instructions` RPC fonksiyonu (SQL migration)
+   - A kaydi IP'sini `185.158.133.1` -> `75.2.60.5` olarak degistirme
+
+4. `src/components/website-preview/DomainSettingsModal.tsx`
+   - DNS talimatlarinda Netlify IP'lerini gosterme
+
+5. `src/components/website-dashboard/DomainTab.tsx`
+   - DNS talimatlarinda Netlify IP'lerini gosterme
+   - Netlify SSL durumunu gosterme
 
 **Netlify API Endpointleri:**
-- `POST /api/v1/sites` - Yeni site olusturma
-- `POST /api/v1/sites/{site_id}/deploys` - Deploy gonderme (zip dosyasi)
-- `PUT /api/v1/sites/{site_id}` - Site ayarlari (custom domain vb.)
+- `PUT /api/v1/sites/{site_id}` - Site'a custom domain atama (`custom_domain` alani)
+- Netlify, custom domain eklendiginde otomatik olarak Let's Encrypt SSL sertifikasi saglıyor
 
-## Onemli Notlar
-- Netlify Free plan'da 100 site/hesap limiti var, cok kullanicili bir platformda bu limit hizla dolabilir. Netlify Pro veya Team plan gerekebilir.
-- Statik HTML export'u ChaiBuilder bloklarinin tam gorsel karsiligidir; interaktif ozellikler (form gonderme vb.) ayrica handle edilmelidir.
-- Mevcut `/site/:subdomain` rotasi geriye uyumluluk icin korunacak.
+**Onemli Not:**
+- Netlify free plan'da site basina 1 custom domain destekleniyor
+- SSL sertifikasi Netlify tarafindan otomatik saglanir (Let's Encrypt)
+- DNS propagasyonu 24-72 saat surebilir
