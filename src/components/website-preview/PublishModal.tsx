@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings } from 'lucide-react';
 import { DomainSettingsModal } from './DomainSettingsModal';
+import { DomainSuggestionCard, generateDomainSuggestions } from './DomainSuggestionCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,6 +49,31 @@ export function PublishModal({
   const [showSuccess, setShowSuccess] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState('');
   const [domainModalOpen, setDomainModalOpen] = useState(false);
+  const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
+
+  // Fetch project data for domain suggestions
+  const fetchProjectData = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('projects')
+        .select('profession, form_data, netlify_url, netlify_custom_domain')
+        .eq('id', projectId)
+        .single();
+
+      if (data) {
+        const formData = data.form_data as any;
+        const businessName = formData?.businessName || formData?.extractedData?.businessName || projectName;
+        const profession = data.profession || '';
+        setDomainSuggestions(generateDomainSuggestions(businessName, profession));
+
+        if (data.netlify_url) setNetlifyUrl(data.netlify_url);
+        return data;
+      }
+    } catch (err) {
+      console.error('Error fetching project data:', err);
+    }
+    return null;
+  }, [projectId, projectName]);
 
   // Initialize subdomain from current or generate from name
   useEffect(() => {
@@ -65,22 +91,19 @@ export function PublishModal({
       
       if (isPublished && currentSubdomain) {
         setShowSuccess(true);
-        // Fetch the netlify URL from the project
-        supabase
-          .from('projects')
-          .select('netlify_url, netlify_custom_domain')
-          .eq('subdomain', currentSubdomain)
-          .single()
-          .then(({ data }) => {
-            const url = data?.netlify_custom_domain 
+        fetchProjectData().then((data) => {
+          if (data) {
+            const url = data.netlify_custom_domain 
               ? `https://${data.netlify_custom_domain}`
-              : data?.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
+              : data.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
             setPublishedUrl(url);
-            if (data?.netlify_url) setNetlifyUrl(data.netlify_url);
-          });
+          }
+        });
+      } else {
+        fetchProjectData();
       }
     }
-  }, [isOpen, projectName, currentSubdomain, isPublished]);
+  }, [isOpen, projectName, currentSubdomain, isPublished, fetchProjectData]);
 
   // Debounced availability check
   const checkAvailability = useCallback(
@@ -307,6 +330,14 @@ export function PublishModal({
               </Button>
             </div>
           </div>
+
+          {/* Domain Suggestions */}
+          {domainSuggestions.length > 0 && (
+            <DomainSuggestionCard
+              suggestions={domainSuggestions}
+              onConnectDomain={() => setDomainModalOpen(true)}
+            />
+          )}
 
           {/* Custom Domain Link */}
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
