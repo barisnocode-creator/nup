@@ -12,7 +12,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart, BarChart, Bar } from 'recharts';
+import { Globe } from 'lucide-react';
 
 export default function Analytics() {
   const { id } = useParams<{ id: string }>();
@@ -136,46 +137,54 @@ export default function Analytics() {
           {/* Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {/* Total Views */}
-            <Card>
+            <Card className="bg-primary/5 border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Views</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Toplam Görüntüleme</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Eye className="h-4 w-4 text-primary" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics?.totalViews || 0}</div>
-                <p className="text-xs text-muted-foreground">All time page views</p>
+                <p className="text-xs text-muted-foreground">Tüm zamanlar</p>
               </CardContent>
             </Card>
 
             {/* Views Last 7 Days */}
-            <Card>
+            <Card className="bg-accent/30 border-accent/40">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Last 7 Days</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Son 7 Gün</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-accent/50 flex items-center justify-center">
+                  <TrendingUp className="h-4 w-4 text-accent-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics?.viewsLast7Days || 0}</div>
-                <p className="text-xs text-muted-foreground">Views this week</p>
+                <p className="text-xs text-muted-foreground">Bu haftaki görüntüleme</p>
               </CardContent>
             </Card>
 
             {/* Unique Visitors */}
-            <Card>
+            <Card className="bg-secondary/50 border-secondary/60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Unique Visitors</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Tekil Ziyaretçi</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-secondary/80 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-secondary-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{analytics?.uniqueVisitors || 0}</div>
-                <p className="text-xs text-muted-foreground">Individual browsers</p>
+                <p className="text-xs text-muted-foreground">Farklı tarayıcılar</p>
               </CardContent>
             </Card>
 
             {/* Device Split */}
-            <Card>
+            <Card className="bg-muted/50 border-muted-foreground/10">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Devices</CardTitle>
-                <Smartphone className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Cihazlar</CardTitle>
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                  <Smartphone className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-4">
@@ -188,7 +197,7 @@ export default function Analytics() {
                     <span className="text-sm font-medium">{desktopPercent}%</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Mobile vs Desktop</p>
+                <p className="text-xs text-muted-foreground mt-1">Mobil vs Masaüstü</p>
               </CardContent>
             </Card>
           </div>
@@ -196,8 +205,8 @@ export default function Analytics() {
           {/* Views Over Time Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>Views Over Time</CardTitle>
-              <CardDescription>Page views in the last 30 days</CardDescription>
+              <CardTitle>Zaman İçinde Görüntüleme</CardTitle>
+              <CardDescription>Son 30 günlük sayfa görüntülemeleri</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -234,15 +243,80 @@ export default function Analytics() {
             </CardContent>
           </Card>
 
-          {/* Device Breakdown */}
+          {/* Page Views & Hourly Distribution */}
           <div className="grid gap-4 md:grid-cols-2">
+            {/* Top Pages */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="h-5 w-5" />
-                  Mobile
+                  <Globe className="h-5 w-5" />
+                  Popüler Sayfalar
                 </CardTitle>
-                <CardDescription>Views from mobile devices</CardDescription>
+                <CardDescription>En çok ziyaret edilen sayfalar</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {analytics?.pageViews && analytics.pageViews.length > 0 ? (
+                  <div className="space-y-3">
+                    {analytics.pageViews.slice(0, 5).map((page, i) => (
+                      <div key={page.path} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-5">{i + 1}.</span>
+                          <span className="text-sm font-medium truncate max-w-[180px]">{page.path}</span>
+                        </div>
+                        <Badge variant="secondary">{page.views} görüntüleme</Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Henüz veri yok</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Hourly Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Saatlik Dağılım</CardTitle>
+                <CardDescription>Gün içinde ziyaret yoğunluğu</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                  <BarChart data={analytics?.hourlyViews || []}>
+                    <XAxis 
+                      dataKey="hour" 
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(h) => `${h}:00`}
+                      interval={3}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      allowDecimals={false}
+                    />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar
+                      dataKey="views"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Device Breakdown */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smartphone className="h-5 w-5 text-primary" />
+                  Mobil
+                </CardTitle>
+                <CardDescription>Mobil cihazlardan görüntüleme</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{analytics?.deviceBreakdown.mobile || 0}</div>
@@ -255,13 +329,13 @@ export default function Analytics() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-secondary/30 border-secondary/40">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Monitor className="h-5 w-5" />
-                  Desktop
+                  Masaüstü
                 </CardTitle>
-                <CardDescription>Views from desktop browsers</CardDescription>
+                <CardDescription>Masaüstü tarayıcılardan görüntüleme</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">{analytics?.deviceBreakdown.desktop || 0}</div>
