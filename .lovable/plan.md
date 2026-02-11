@@ -1,66 +1,67 @@
 
-# Netlify Custom Domain Baglama Ozelligi
 
-## Mevcut Durum
+# Domain Onerisi Ozelligi - Yayinla Modalinda
 
-Netlify deploy basariyla calisiyor. Test deploy sonucu:
-- Site ID: `1dca021b-82a4-4161-872d-c55a42853fa9`  
-- URL: `https://openlucius-bar-yakut-hukuk-brosu.netlify.app`
+## Ozet
+Kullanici "Yayinla" butonuna basip site basariyla yayinlandiginda, success ekraninda isletme adina ve meslege gore 3 adet domain onerisi gosterilecek. Ornekler: `drahmetkaya.com`, `ahmetkaya-hukuk.com`, `ahmetkayaklinik.com` gibi.
 
-Mevcut custom domain sistemi kendi DNS dogrulama mekanizmasini kullaniyor (TXT kaydi + A kaydi 185.158.133.1). Bu sistemi Netlify altyapisina gecirmemiz gerekiyor.
+## Nasil Calisacak
 
-## Plan
+1. Kullanici yayinla butonuna basar ve site Netlify'a deploy edilir
+2. Success ekraninda mevcut bilgilerin altina yeni bir "Domain Onerileri" karti eklenir
+3. Bu kart, projenin `name`, `profession` ve `form_data.businessName` bilgilerinden otomatik olarak 3 domain onerisi uretir
+4. Her oneri yaninda ".com" ve tahmini fiyat bilgisi (ornegin "~$10/yil") gosterilir
+5. Kullanici bir oneriye tiklarsa, domain satin alma icin Namecheap/GoDaddy arama sayfasina yonlendirilir veya dogrudan "Domain Ayarlari" modalini acar
 
-### 1. verify-domain Edge Function Guncelleme
+## Domain Onerisi Mantigi
 
-Mevcut `verify-domain` fonksiyonuna Netlify entegrasyonu eklenecek:
-- Domain dogrulandiktan sonra, projenin `netlify_site_id` degeri varsa Netlify API uzerinden custom domain ayarlanacak
-- `PUT https://api.netlify.com/api/v1/sites/{site_id}` ile `custom_domain` alani set edilecek
+Isletme adi ve meslek bilgisinden su formatlarda oneriler uretilecek:
 
-### 2. DNS Talimatlari Guncelleme
+| Meslek | Ornek Isletme | Oneriler |
+|--------|--------------|----------|
+| Doktor | Ahmet Kaya | drahmetkaya.com, ahmetkayaklinik.com, drkaya.com |
+| Avukat | Yakut Hukuk | yakuthukuk.com, avyakut.com, yakut-hukuk.com |
+| Restoran | Lezzet Cafe | lezzetcafe.com, lezzet-cafe.com.tr, cafelezzet.com |
+| Genel | Dijital Ajans | dijitalajans.com, dijitalajans.com.tr, dijital-ajans.com |
 
-Netlify custom domain icin DNS kayitlari degisecek:
-- Mevcut: A kaydi -> `185.158.133.1`
-- Yeni: Netlify load balancer IP'si -> `75.2.60.5` (Netlify'in standart IP'si)
-- TXT dogrulama kaydi ayni kalacak (`_lovable` prefix)
-
-`get_domain_dns_instructions` RPC fonksiyonu guncellenerek Netlify IP'leri gosterilecek.
-
-### 3. DomainSettingsModal ve DomainTab UI Guncelleme
-
-- Dogrulama basarili oldugunda Netlify uzerinden SSL otomatik olarak saglanacagina dair bilgi mesaji eklenecek
-- DNS talimatlari bolumunde Netlify IP'leri gosterilecek
-
-### 4. Deploy Sonrasi Custom Domain Senkronizasyonu
-
-`deploy-to-netlify` fonksiyonunda, eger projede dogrulanmis bir custom domain varsa, deploy sirasinda otomatik olarak Netlify'a set edilecek.
+Meslek bazli on ekler (prefix):
+- Doktor: `dr`
+- Dis Hekimi: `dt`, `dis`
+- Avukat: `av`
+- Eczane: `eczane`
+- Diger: on ek yok
 
 ## Teknik Detaylar
 
-**Degistirilecek dosyalar:**
+### Degistirilecek Dosyalar
 
-1. `supabase/functions/verify-domain/index.ts`
-   - Dogrulama basarili oldugunda Netlify API'ye custom domain ekleme
-   - `PUT /api/v1/sites/{site_id}` cagrisi
+**1. `src/components/website-preview/PublishModal.tsx`**
+- Success ekranina "Domain Onerileri" karti eklenmesi
+- Proje bilgilerinden (name, profession, form_data) domain onerileri ureten bir `generateDomainSuggestions` fonksiyonu
+- Her oneri icin tiklanabilir kart: domain adi, uzanti (.com, .com.tr), tahmini fiyat
+- "Domain Ayarlari" modaline yonlendirme butonu
 
-2. `supabase/functions/deploy-to-netlify/index.ts`
-   - Deploy sonrasi, projede dogrulanmis custom domain varsa Netlify'a baglama
+**2. Yeni bilesen: `src/components/website-preview/DomainSuggestionCard.tsx`**
+- Domain onerilerini gosteren kucuk kart bileseni
+- Her oneri icin: domain adi, fiyat etiketi, tiklanabilir link
+- "Kendi domaininizi baglayın" butonu ile DomainSettingsModal'a gecis
 
-3. `get_domain_dns_instructions` RPC fonksiyonu (SQL migration)
-   - A kaydi IP'sini `185.158.133.1` -> `75.2.60.5` olarak degistirme
+### Domain Onerisi Uretme Algoritmasi (Frontend)
+```text
+Girdi: businessName = "Ahmet Kaya", profession = "doctor"
 
-4. `src/components/website-preview/DomainSettingsModal.tsx`
-   - DNS talimatlarinda Netlify IP'lerini gosterme
+1. Ismi slug'a cevir: "ahmetkaya"
+2. Meslek prefix'i belirle: "dr"
+3. Oneriler:
+   - dr + slug + .com -> "drahmetkaya.com"
+   - slug + meslek_suffix + .com -> "ahmetkayaklinik.com" 
+   - prefix + soyisim + .com -> "drkaya.com"
+```
 
-5. `src/components/website-dashboard/DomainTab.tsx`
-   - DNS talimatlarinda Netlify IP'lerini gosterme
-   - Netlify SSL durumunu gosterme
+### Veri Kaynaklari
+- `projectName` (zaten PublishModal'a prop olarak geliyor)
+- `profession` (projects tablosundan cekilecek, projectId ile)
+- `form_data.businessName` (projects tablosundan cekilecek)
 
-**Netlify API Endpointleri:**
-- `PUT /api/v1/sites/{site_id}` - Site'a custom domain atama (`custom_domain` alani)
-- Netlify, custom domain eklendiginde otomatik olarak Let's Encrypt SSL sertifikasi saglıyor
+Bu ozellik tamamen frontend'de calisacak, ek bir API veya edge function gerektirmeyecek. Domain uygunluk kontrolu yapilmayacak - sadece oneri olarak sunulacak.
 
-**Onemli Not:**
-- Netlify free plan'da site basina 1 custom domain destekleniyor
-- SSL sertifikasi Netlify tarafindan otomatik saglanir (Let's Encrypt)
-- DNS propagasyonu 24-72 saat surebilir
