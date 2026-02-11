@@ -313,11 +313,48 @@ Deno.serve(async (req) => {
     const siteInfo = await siteRes.json();
     const netlifyUrl = siteInfo.ssl_url || siteInfo.url;
 
+    // Check if project has a verified custom domain and set it on Netlify
+    const { data: verifiedDomain } = await supabaseAdmin
+      .from("custom_domains")
+      .select("domain")
+      .eq("project_id", projectId)
+      .eq("status", "verified")
+      .limit(1)
+      .single();
+
+    let netlifyCustomDomain = project.netlify_custom_domain;
+
+    if (verifiedDomain?.domain && !netlifyCustomDomain) {
+      try {
+        const domainRes = await fetch(
+          `https://api.netlify.com/api/v1/sites/${netlifySiteId}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${NETLIFY_API_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ custom_domain: verifiedDomain.domain }),
+          }
+        );
+
+        if (domainRes.ok) {
+          netlifyCustomDomain = verifiedDomain.domain;
+          console.log(`Custom domain set on Netlify: ${verifiedDomain.domain}`);
+        } else {
+          console.error("Failed to set custom domain on Netlify:", await domainRes.text());
+        }
+      } catch (domainErr) {
+        console.error("Error setting custom domain:", domainErr);
+      }
+    }
+
     // Update project with netlify URL
     await supabaseAdmin
       .from("projects")
       .update({
         netlify_url: netlifyUrl,
+        netlify_custom_domain: netlifyCustomDomain,
         is_published: true,
         published_at: new Date().toISOString(),
       })
@@ -327,6 +364,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         netlifyUrl,
+        netlifyCustomDomain,
         siteId: netlifySiteId,
         deployId,
       }),
