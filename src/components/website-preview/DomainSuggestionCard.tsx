@@ -23,10 +23,10 @@ export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDom
   };
 
   return (
-    <div className="p-4 rounded-lg border bg-muted/30 space-y-3">
+    <div className="p-4 rounded-lg border border-orange-200 bg-white space-y-3">
       <div className="flex items-center gap-2">
-        <Globe className="w-4 h-4 text-primary" />
-        <p className="font-medium text-sm">Sizin İçin Domain Önerileri</p>
+        <Globe className="w-4 h-4 text-orange-500" />
+        <p className="font-medium text-sm text-gray-800">Sizin İçin Domain Önerileri</p>
       </div>
 
       <div className="space-y-2">
@@ -34,13 +34,13 @@ export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDom
           <button
             key={s.domain}
             onClick={() => handleDomainClick(s.domain)}
-            className="w-full flex items-center justify-between p-3 rounded-md border bg-background hover:bg-accent/50 transition-colors group"
+            className="w-full flex items-center justify-between p-3 rounded-md border border-orange-100 bg-orange-50 hover:bg-orange-100 transition-colors group"
           >
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">{s.domain}</span>
-              <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{s.price}</span>
+              <span className="font-medium text-sm text-gray-800">{s.domain}</span>
+              <span className="text-xs text-gray-500 bg-orange-100 px-2 py-0.5 rounded-full">{s.price}</span>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
+            <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-orange-500 transition-colors" />
           </button>
         ))}
       </div>
@@ -48,7 +48,7 @@ export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDom
       <Button
         variant="ghost"
         size="sm"
-        className="w-full text-primary"
+        className="w-full text-orange-600 hover:text-orange-700"
         onClick={onConnectDomain}
       >
         <ArrowRight className="w-3.5 h-3.5 mr-1" />

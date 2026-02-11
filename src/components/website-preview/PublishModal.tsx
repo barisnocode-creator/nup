@@ -25,10 +25,10 @@ type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
-    .replace(/\s+/g, '-') // Replace spaces with dashes
-    .replace(/-+/g, '-') // Replace multiple dashes with single
-    .replace(/^-|-$/g, '') // Remove leading/trailing dashes
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
     .substring(0, 50);
 }
 
@@ -51,6 +51,7 @@ export function PublishModal({
   const [domainModalOpen, setDomainModalOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | undefined>();
   const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
+  const [netlifyUrl, setNetlifyUrl] = useState('');
 
   // Fetch project data for domain suggestions
   const fetchProjectData = useCallback(async () => {
@@ -76,7 +77,6 @@ export function PublishModal({
     return null;
   }, [projectId, projectName]);
 
-  // Initialize subdomain from current or generate from name
   useEffect(() => {
     if (isOpen) {
       if (currentSubdomain) {
@@ -106,14 +106,12 @@ export function PublishModal({
     }
   }, [isOpen, projectName, currentSubdomain, isPublished, fetchProjectData]);
 
-  // Debounced availability check
   const checkAvailability = useCallback(
     (() => {
       let timeoutId: NodeJS.Timeout;
       return (value: string) => {
         clearTimeout(timeoutId);
         
-        // Validate format first
         if (value.length < 3) {
           setStatus('invalid');
           setSuggestion('Subdomain must be at least 3 characters');
@@ -178,14 +176,11 @@ export function PublishModal({
     }
   };
 
-  const [netlifyUrl, setNetlifyUrl] = useState('');
-
   const handlePublish = async () => {
     if (status !== 'available' || !subdomain) return;
 
     setIsPublishing(true);
     try {
-      // Step 1: Save subdomain
       const { error } = await supabase
         .from('projects')
         .update({
@@ -197,7 +192,6 @@ export function PublishModal({
 
       if (error) throw error;
 
-      // Step 2: Deploy to Netlify
       let deployedNetlifyUrl = '';
       try {
         const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
@@ -256,12 +250,12 @@ export function PublishModal({
   const getStatusIcon = () => {
     switch (status) {
       case 'checking':
-        return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+        return <Loader2 className="w-4 h-4 animate-spin text-gray-400" />;
       case 'available':
         return <Check className="w-4 h-4 text-emerald-500" />;
       case 'taken':
       case 'invalid':
-        return <X className="w-4 h-4 text-destructive" />;
+        return <X className="w-4 h-4 text-red-500" />;
       default:
         return null;
     }
@@ -286,44 +280,44 @@ export function PublishModal({
   if (showSuccess) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
           <DialogHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
               <Check className="w-8 h-8 text-white" />
             </div>
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl font-bold text-gray-900">
               Your website is live! 🎉
             </DialogTitle>
-            <DialogDescription className="text-base">
+            <DialogDescription className="text-base text-gray-500">
               Share your new website with the world
             </DialogDescription>
           </DialogHeader>
 
           {/* URL Display */}
           <div className="py-4 space-y-4">
-            <div className="p-4 rounded-lg bg-muted/50 border">
-              <p className="text-sm text-muted-foreground mb-2">Your website address:</p>
-              <p className="font-medium text-primary break-all">{publishedUrl}</p>
+            <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+              <p className="text-sm text-gray-500 mb-2">Your website address:</p>
+              <p className="font-medium text-orange-600 break-all">{publishedUrl}</p>
             </div>
 
             {netlifyUrl && netlifyUrl !== publishedUrl && (
-              <div className="p-4 rounded-lg bg-muted/50 border">
-                <p className="text-sm text-muted-foreground mb-2">Netlify URL:</p>
-                <p className="font-medium text-primary break-all">{netlifyUrl}</p>
+              <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
+                <p className="text-sm text-gray-500 mb-2">Netlify URL:</p>
+                <p className="font-medium text-orange-600 break-all">{netlifyUrl}</p>
               </div>
             )}
 
             <div className="flex gap-3">
               <Button 
                 variant="outline" 
-                className="flex-1" 
+                className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50" 
                 onClick={handleCopyUrl}
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy Link
               </Button>
               <Button 
-                className="flex-1"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
                 onClick={() => window.open(publishedUrl, '_blank')}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
@@ -345,19 +339,19 @@ export function PublishModal({
           )}
 
           {/* Custom Domain Link */}
-          <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Settings className="w-4 h-4 text-primary" />
+              <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
+                <Settings className="w-4 h-4 text-orange-600" />
               </div>
               <div className="flex-1">
-                <p className="font-medium text-sm">Özel Domain Bağla</p>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="font-medium text-sm text-gray-800">Özel Domain Bağla</p>
+                <p className="text-xs text-gray-500 mt-1">
                   Kendi alan adınızı bağlayarak profesyonel görünüm elde edin
                 </p>
                 <Button 
                   variant="link" 
-                  className="h-auto p-0 mt-2 text-primary"
+                  className="h-auto p-0 mt-2 text-orange-600"
                   onClick={() => setDomainModalOpen(true)}
                 >
                   <Globe className="w-3 h-3 mr-1" />
@@ -367,7 +361,7 @@ export function PublishModal({
             </div>
           </div>
 
-          <Button variant="outline" onClick={handleClose} className="mt-2">
+          <Button variant="outline" onClick={handleClose} className="mt-2 border-gray-300 text-gray-700">
             Kapat
           </Button>
         </DialogContent>
@@ -388,15 +382,15 @@ export function PublishModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
         <DialogHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl gradient-hero flex items-center justify-center">
-            <Globe className="w-8 h-8 text-primary-foreground" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+            <Globe className="w-8 h-8 text-white" />
           </div>
-          <DialogTitle className="text-2xl font-bold">
+          <DialogTitle className="text-2xl font-bold text-gray-900">
             Publish Your Website
           </DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-base text-gray-500">
             Choose a unique address for your website
           </DialogDescription>
         </DialogHeader>
@@ -404,7 +398,7 @@ export function PublishModal({
         {/* Subdomain Input */}
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="subdomain">Website Address</Label>
+            <Label htmlFor="subdomain" className="text-gray-700">Website Address</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <Input
@@ -412,21 +406,21 @@ export function PublishModal({
                   value={subdomain}
                   onChange={handleSubdomainChange}
                   placeholder="your-clinic-name"
-                  className="pr-10"
+                  className="pr-10 bg-white border-gray-300 text-gray-900"
                   maxLength={50}
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {getStatusIcon()}
                 </div>
               </div>
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
+              <span className="text-sm text-gray-500 whitespace-nowrap">
                 .openlucius.app
               </span>
             </div>
             
             {/* Status message */}
             {status !== 'idle' && (
-              <p className={`text-sm ${status === 'available' ? 'text-emerald-600' : status === 'checking' ? 'text-muted-foreground' : 'text-destructive'}`}>
+              <p className={`text-sm ${status === 'available' ? 'text-emerald-600' : status === 'checking' ? 'text-gray-400' : 'text-red-500'}`}>
                 {getStatusText()}
               </p>
             )}
@@ -434,7 +428,7 @@ export function PublishModal({
             {/* Suggestion */}
             {suggestion && status === 'taken' && (
               <button
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-orange-600 hover:underline"
                 onClick={() => {
                   setSubdomain(suggestion);
                   checkAvailability(suggestion);
@@ -447,9 +441,9 @@ export function PublishModal({
 
           {/* Preview URL */}
           {subdomain.length >= 3 && status === 'available' && (
-            <div className="p-3 rounded-lg bg-muted/50 border">
-              <p className="text-xs text-muted-foreground mb-1">Your website will be live at:</p>
-              <p className="text-sm font-medium text-primary">
+            <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
+              <p className="text-xs text-gray-500 mb-1">Your website will be live at:</p>
+              <p className="text-sm font-medium text-orange-600">
                 Netlify üzerinden yayınlanacak
               </p>
             </div>
@@ -459,7 +453,7 @@ export function PublishModal({
         {/* Publish Button */}
         <Button 
           size="lg" 
-          className="w-full h-12 text-base gap-2"
+          className="w-full h-12 text-base gap-2 bg-orange-500 hover:bg-orange-600 text-white"
           onClick={handlePublish}
           disabled={status !== 'available' || isPublishing}
         >
@@ -476,7 +470,7 @@ export function PublishModal({
           )}
         </Button>
 
-        <p className="text-xs text-center text-muted-foreground">
+        <p className="text-xs text-center text-gray-400">
           Your website will be publicly accessible after publishing
         </p>
       </DialogContent>
