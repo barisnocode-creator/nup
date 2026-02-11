@@ -1,5 +1,6 @@
 import { Sparkles, FileText, Layout, Zap } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 
 export function Features() {
   return (
@@ -15,7 +16,8 @@ export function Features() {
         {/* Two Column Feature Cards */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* AI Websites Card */}
-          <Card className="overflow-hidden border-border">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
+          <Card className="overflow-hidden border-border/60 card-hover h-full">
             <div className="p-8">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <Layout className="w-6 h-6 text-primary" />
@@ -46,9 +48,11 @@ export function Features() {
               </div>
             </div>
           </Card>
+          </motion.div>
 
           {/* AI Content Card */}
-          <Card className="overflow-hidden border-border">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.15 }}>
+          <Card className="overflow-hidden border-border/60 card-hover h-full">
             <div className="p-8">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <FileText className="w-6 h-6 text-primary" />
@@ -77,6 +81,7 @@ export function Features() {
               </div>
             </div>
           </Card>
+          </motion.div>
         </div>
       </div>
     </section>

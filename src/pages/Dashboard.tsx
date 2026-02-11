@@ -87,7 +87,7 @@ export default function Dashboard() {
     <DashboardLayout rightPanel={rightPanelContent} activeProjectId={activeProject?.id}>
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2">
+        <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground">
           {getGreeting()}, {displayName}! 👋
         </h1>
         <p className="text-muted-foreground text-lg">
@@ -123,18 +123,18 @@ export default function Dashboard() {
 
       {/* Empty State */}
       {!loadingProjects && projects.length === 0 && (
-        <Card className="max-w-2xl border-dashed border-2">
+        <Card className="max-w-2xl gradient-border border-dashed border-2">
           <CardHeader className="text-center pb-2">
-            <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg hover:scale-105 transition-transform duration-300">
               <Plus className="w-8 h-8 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl">Create Your First Website</CardTitle>
+            <CardTitle className="text-2xl text-foreground">Create Your First Website</CardTitle>
             <CardDescription className="text-base">
               Get started by creating your professional website. Our AI will help you build a stunning site in minutes.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center pt-4">
-            <Button size="lg" className="h-12 px-8" onClick={() => setWizardOpen(true)}>
+            <Button size="lg" className="h-12 px-8 shadow-md hover:shadow-lg transition-shadow" onClick={() => setWizardOpen(true)}>
               <Plus className="w-5 h-5 mr-2" />
               Create New Website
             </Button>
