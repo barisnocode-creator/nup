@@ -1,57 +1,32 @@
 
 
-# Domain Onerisi Secme Ozelligi
+# Yayınla Modalı Renk ve Kontrast İyileştirmesi
 
-## Ozet
-Kullanicilara sunulan 3 ucretsiz domain onerisinden birini sectiklerinde, o domain otomatik olarak "Domain Ekle" formuna yazilacak ve baglama sureci baslatilacak.
+## Sorun
+Yayınla (Publish) başarı ekranındaki modal, arka plandaki site içeriğiyle karışıyor. Renkler yeterince belirgin değil ve okunması zor.
 
-## Nasil Calisacak
+## Çözüm
+Modal arka planını beyaz, aksanları turuncu tonlarında yaparak sitenin genel tasarım diline uygun, okunabilir bir görünüm sağlanacak.
 
-1. Kullanici yayinla sonrasi success ekraninda 3 domain onerisi gorur
-2. Bir oneriye tiklarsa (su an Namecheap'e yonlendiriyor), bunun yerine DomainSettingsModal acilacak ve secilen domain otomatik olarak "Yeni Domain Ekle" formuna yazilacak
-3. Kullanici DNS ayarlarini yapip dogrulamayi tamamlar
+## Yapılacak Değişiklikler
 
-## Teknik Detaylar
+### `src/components/website-preview/PublishModal.tsx`
 
-### 1. `DomainSuggestionCard.tsx` Guncelleme
-- `onSelectDomain(domain: string)` callback'i eklenecek
-- Domain'e tiklandiginda Namecheap yerine bu callback cagirilacak
-- Namecheap linki kucuk bir "Satin Al" ikonu olarak kalabilir (opsiyonel)
+**Başarı (Success) Ekranı:**
+- `DialogContent`'e `bg-white text-gray-900` sınıfları eklenerek arka plan beyaz, metin koyu yapılacak
+- Başarı ikonu yeşilden turuncuya (`from-orange-400 to-amber-500`) değiştirilecek
+- URL kutusu arka planı `bg-orange-50 border-orange-200` yapılacak, metin rengi koyu tutulacak
+- "Copy Link" ve "Open Website" butonları turuncu tonlarında stillenecek
+- "Özel Domain Bağla" kartı `bg-orange-50 border-orange-200` yapılacak
+- Overlay (arka plan karartma) daha belirgin hale getirilecek
 
-### 2. `DomainSettingsModal.tsx` Guncelleme
-- `initialDomain?: string` prop'u eklenecek
-- Modal acildiginda `initialDomain` varsa, otomatik olarak "Yeni Domain Ekle" formu acilacak ve domain alani onceden doldurulacak
+### `src/components/website-preview/DomainSuggestionCard.tsx`
 
-### 3. `AddDomainForm.tsx` Guncelleme
-- `initialValue?: string` prop'u eklenecek
-- Input alani bu deger ile onceden doldurulacak
+- Kart arka planı `bg-white border-orange-200` yapılacak
+- Domain önerileri `bg-orange-50 hover:bg-orange-100` tonlarında stillenecek
+- İkon renkleri turuncu yapılacak
+- Tüm metinler koyu renkte tutularak okunabilirlik artırılacak
 
-### 4. `PublishModal.tsx` Guncelleme
-- `DomainSuggestionCard`'a `onSelectDomain` handler eklenecek
-- Secilen domain state'e kaydedilecek
-- `DomainSettingsModal`'a `initialDomain` olarak aktarilacak
-- Modal acildiginda secilen domain ile form otomatik doldurulacak
-
-## Kullanici Akisi
-
-```text
-Yayinla Success Ekrani
-  |
-  v
-3 Domain Onerisi (ornek: drahmetkaya.com)
-  |
-  [Kullanici birine tiklar]
-  |
-  v
-DomainSettingsModal acilir
-  -> "Yeni Domain Ekle" formu otomatik acik
-  -> Secilen domain (drahmetkaya.com) onceden yazili
-  |
-  [Kullanici "Ekle" butonuna basar]
-  |
-  v
-DNS talimatlari gosterilir
-  -> Kullanici DNS'i yapilandirir
-  -> "Dogrula" butonuna basar
-```
-
+## Teknik Detay
+- Tailwind sınıfları doğrudan bileşenlere uygulanacak (CSS değişkenleri yerine sabit renkler kullanılacak ki modal her temada tutarlı görünsün)
+- `DialogContent` overlay'ine `bg-black/60` eklenerek arka planın daha belirgin karartılması sağlanacak
