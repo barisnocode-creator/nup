@@ -65,7 +65,19 @@ export function PublishModal({
       
       if (isPublished && currentSubdomain) {
         setShowSuccess(true);
-        setPublishedUrl(`${window.location.origin}/site/${currentSubdomain}`);
+        // Fetch the netlify URL from the project
+        supabase
+          .from('projects')
+          .select('netlify_url, netlify_custom_domain')
+          .eq('subdomain', currentSubdomain)
+          .single()
+          .then(({ data }) => {
+            const url = data?.netlify_custom_domain 
+              ? `https://${data.netlify_custom_domain}`
+              : data?.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
+            setPublishedUrl(url);
+            if (data?.netlify_url) setNetlifyUrl(data.netlify_url);
+          });
       }
     }
   }, [isOpen, projectName, currentSubdomain, isPublished]);
@@ -178,7 +190,7 @@ export function PublishModal({
         console.warn('Netlify deploy failed, site still published on platform:', netlifyErr);
       }
 
-      const url = deployedNetlifyUrl || `${window.location.origin}/site/${subdomain}`;
+      const url = deployedNetlifyUrl;
       setPublishedUrl(url);
       setShowSuccess(true);
       
@@ -398,7 +410,7 @@ export function PublishModal({
             <div className="p-3 rounded-lg bg-muted/50 border">
               <p className="text-xs text-muted-foreground mb-1">Your website will be live at:</p>
               <p className="text-sm font-medium text-primary">
-                {window.location.origin}/site/{subdomain}
+                Netlify üzerinden yayınlanacak
               </p>
             </div>
           )}
