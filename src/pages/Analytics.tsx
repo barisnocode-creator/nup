@@ -5,7 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, ArrowLeft, Loader2, Eye, Users, Smartphone, Monitor, TrendingUp } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, Eye, Users, Smartphone, Monitor, TrendingUp, RefreshCw } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   ChartContainer,
   ChartTooltip,
@@ -17,7 +18,7 @@ export default function Analytics() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: analytics, loading, error } = useAnalytics(id);
+  const { data: analytics, loading, error, refetch } = useAnalytics(id);
   const [projectName, setProjectName] = useState<string>('');
 
   // Fetch project name
@@ -105,6 +106,16 @@ export default function Analytics() {
             <span className="text-sm text-muted-foreground">Analytics</span>
           </div>
           <div className="flex items-center gap-3">
+            <Badge variant="outline" className="flex items-center gap-1.5 text-xs font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              Canlı
+            </Badge>
+            <Button variant="outline" size="icon" onClick={() => refetch()} title="Yenile">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
             <Button variant="outline" onClick={() => navigate(`/project/${id}`)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Editor
