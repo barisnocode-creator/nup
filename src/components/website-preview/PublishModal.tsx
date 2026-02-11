@@ -142,11 +142,14 @@ export function PublishModal({
     }
   };
 
+  const [netlifyUrl, setNetlifyUrl] = useState('');
+
   const handlePublish = async () => {
     if (status !== 'available' || !subdomain) return;
 
     setIsPublishing(true);
     try {
+      // Step 1: Save subdomain
       const { error } = await supabase
         .from('projects')
         .update({
@@ -158,13 +161,32 @@ export function PublishModal({
 
       if (error) throw error;
 
-      const url = `${window.location.origin}/site/${subdomain}`;
+      // Step 2: Deploy to Netlify
+      let deployedNetlifyUrl = '';
+      try {
+        const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+          body: { projectId },
+        });
+
+        if (!deployError && deployData?.netlifyUrl) {
+          deployedNetlifyUrl = deployData.netlifyUrl;
+          setNetlifyUrl(deployedNetlifyUrl);
+        } else {
+          console.warn('Netlify deploy warning:', deployError || deployData?.error);
+        }
+      } catch (netlifyErr) {
+        console.warn('Netlify deploy failed, site still published on platform:', netlifyErr);
+      }
+
+      const url = deployedNetlifyUrl || `${window.location.origin}/site/${subdomain}`;
       setPublishedUrl(url);
       setShowSuccess(true);
       
       toast({
         title: 'Website published!',
-        description: 'Your website is now live and accessible to everyone.',
+        description: deployedNetlifyUrl 
+          ? 'Your website is now live on Netlify!' 
+          : 'Your website is now live and accessible to everyone.',
       });
 
       onPublished?.(subdomain);
@@ -247,6 +269,13 @@ export function PublishModal({
               <p className="text-sm text-muted-foreground mb-2">Your website address:</p>
               <p className="font-medium text-primary break-all">{publishedUrl}</p>
             </div>
+
+            {netlifyUrl && netlifyUrl !== publishedUrl && (
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <p className="text-sm text-muted-foreground mb-2">Netlify URL:</p>
+                <p className="font-medium text-primary break-all">{netlifyUrl}</p>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <Button 

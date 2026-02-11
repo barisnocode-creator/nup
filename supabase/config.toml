@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.chai-ai-assistant]
 verify_jwt = false
+
+[functions.deploy-to-netlify]
+verify_jwt = false

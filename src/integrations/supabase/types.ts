@@ -152,6 +152,9 @@ export type Database = {
           id: string
           is_published: boolean | null
           name: string
+          netlify_custom_domain: string | null
+          netlify_site_id: string | null
+          netlify_url: string | null
           profession: string
           published_at: string | null
           status: string
@@ -171,6 +174,9 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name?: string
+          netlify_custom_domain?: string | null
+          netlify_site_id?: string | null
+          netlify_url?: string | null
           profession: string
           published_at?: string | null
           status?: string
@@ -190,6 +196,9 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name?: string
+          netlify_custom_domain?: string | null
+          netlify_site_id?: string | null
+          netlify_url?: string | null
           profession?: string
           published_at?: string | null
           status?: string
