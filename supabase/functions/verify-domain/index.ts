@@ -10,7 +10,6 @@ async function queryDnsTxt(hostname: string): Promise<string[]> {
   try {
     console.log(`Querying DNS TXT records for: ${hostname}`);
     const records = await Deno.resolveDns(hostname, 'TXT');
-    // Flatten and join the records (TXT records can be arrays of strings)
     const flatRecords = records.map(record => 
       Array.isArray(record) ? record.join('') : record
     );
@@ -23,46 +22,70 @@ async function queryDnsTxt(hostname: string): Promise<string[]> {
   }
 }
 
+// Set custom domain on Netlify site
+async function setNetlifyCustomDomain(siteId: string, domain: string): Promise<boolean> {
+  const NETLIFY_API_TOKEN = Deno.env.get('NETLIFY_API_TOKEN');
+  if (!NETLIFY_API_TOKEN) {
+    console.error('NETLIFY_API_TOKEN not configured');
+    return false;
+  }
+
+  try {
+    console.log(`Setting Netlify custom domain: ${domain} on site ${siteId}`);
+    const res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${NETLIFY_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ custom_domain: domain }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Netlify custom domain error:', errText);
+      return false;
+    }
+
+    console.log(`Netlify custom domain set successfully: ${domain}`);
+    return true;
+  } catch (err) {
+    console.error('Netlify custom domain request failed:', err);
+    return false;
+  }
+}
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Validate authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
-      console.log('Missing or invalid authorization header');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Create Supabase client with user's token
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } }
     });
 
-    // Verify JWT and get user
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    
-    if (claimsError || !claimsData?.claims) {
-      console.log('JWT verification failed:', claimsError);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
     console.log('User authenticated:', userId);
 
-    // Parse request body
     const { domainId } = await req.json();
 
     if (!domainId) {
@@ -80,7 +103,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (domainError || !domainRecord) {
-      console.log('Domain not found or access denied:', domainError);
       return new Response(
         JSON.stringify({ error: 'Domain not found or you do not have access' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -95,14 +117,13 @@ Deno.serve(async (req) => {
       .update({ status: 'verifying' })
       .eq('id', domainId);
 
-    // Query DNS TXT record at _lovable.domain.com
+    // Query DNS TXT record
     const txtHostname = `_lovable.${domainRecord.domain}`;
     const expectedValue = `lovable_verify=${domainRecord.verification_token}`;
     
     const txtRecords = await queryDnsTxt(txtHostname);
     const isVerified = txtRecords.some(record => record.trim() === expectedValue);
 
-    // Use service role to update status (bypass RLS for status update)
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
@@ -110,7 +131,7 @@ Deno.serve(async (req) => {
       console.log(`Domain ${domainRecord.domain} verified successfully`);
       
       // Update domain status to verified
-      const { error: updateError } = await adminClient
+      await adminClient
         .from('custom_domains')
         .update({ 
           status: 'verified',
@@ -118,28 +139,48 @@ Deno.serve(async (req) => {
         })
         .eq('id', domainId);
 
-      if (updateError) {
-        console.error('Failed to update domain status:', updateError);
-      }
-
-      // Also update the project's custom_domain field
+      // Update project's custom_domain field
       await adminClient
         .from('projects')
         .update({ custom_domain: domainRecord.domain })
         .eq('id', domainRecord.project_id);
 
+      // If project has a Netlify site, set custom domain on Netlify
+      const { data: project } = await adminClient
+        .from('projects')
+        .select('netlify_site_id')
+        .eq('id', domainRecord.project_id)
+        .single();
+
+      let netlifyDomainSet = false;
+      if (project?.netlify_site_id) {
+        netlifyDomainSet = await setNetlifyCustomDomain(
+          project.netlify_site_id, 
+          domainRecord.domain
+        );
+
+        if (netlifyDomainSet) {
+          await adminClient
+            .from('projects')
+            .update({ netlify_custom_domain: domainRecord.domain })
+            .eq('id', domainRecord.project_id);
+        }
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
           status: 'verified',
-          message: 'Domain verified successfully! Your custom domain is now active.'
+          netlifyDomainSet,
+          message: netlifyDomainSet 
+            ? 'Domain doğrulandı ve Netlify\'a bağlandı! SSL sertifikası otomatik olarak sağlanacak.'
+            : 'Domain doğrulandı! Sitenizi yayınladığınızda custom domain otomatik olarak bağlanacak.'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else {
       console.log(`Domain ${domainRecord.domain} verification failed`);
       
-      // Update domain status to failed
       await adminClient
         .from('custom_domains')
         .update({ status: 'failed' })
@@ -149,7 +190,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: false,
           status: 'failed',
-          message: 'DNS verification failed. Please ensure you have added the TXT record correctly and wait for DNS propagation (can take up to 48 hours).',
+          message: 'DNS doğrulama başarısız. Lütfen DNS kayıtlarınızı kontrol edin ve tekrar deneyin (propagasyon 48 saate kadar sürebilir).',
           expectedRecord: {
             host: txtHostname,
             value: expectedValue

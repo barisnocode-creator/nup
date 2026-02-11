@@ -247,11 +247,23 @@ export function DomainTab({ projectId, subdomain, customDomain }: DomainTabProps
           <p className="text-sm text-muted-foreground mb-3">
             To connect your custom domain, add these DNS records:
           </p>
-          <div className="space-y-2 text-sm font-mono bg-background p-3 rounded">
-            <p><strong>Type:</strong> A</p>
-            <p><strong>Name:</strong> @ (or your subdomain)</p>
-            <p><strong>Value:</strong> 185.158.133.1</p>
+          <div className="space-y-3 text-sm font-mono bg-background p-3 rounded">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">A Kaydı (Root Domain)</p>
+              <p><strong>Type:</strong> A | <strong>Name:</strong> @ | <strong>Value:</strong> 75.2.60.5</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">A Kaydı (WWW)</p>
+              <p><strong>Type:</strong> A | <strong>Name:</strong> www | <strong>Value:</strong> 75.2.60.5</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">TXT Kaydı (Doğrulama)</p>
+              <p><strong>Type:</strong> TXT | <strong>Name:</strong> _lovable | <strong>Value:</strong> Doğrulama ekranında gösterilir</p>
+            </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            🔒 SSL sertifikası Netlify tarafından otomatik olarak sağlanır (Let's Encrypt).
+          </p>
         </CardContent>
       </Card>
     </div>
