@@ -9,12 +9,17 @@ interface DomainSuggestion {
 interface DomainSuggestionCardProps {
   suggestions: DomainSuggestion[];
   onConnectDomain: () => void;
+  onSelectDomain?: (domain: string) => void;
 }
 
-export function DomainSuggestionCard({ suggestions, onConnectDomain }: DomainSuggestionCardProps) {
-  const handleSearchDomain = (domain: string) => {
-    const searchUrl = `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`;
-    window.open(searchUrl, '_blank');
+export function DomainSuggestionCard({ suggestions, onConnectDomain, onSelectDomain }: DomainSuggestionCardProps) {
+  const handleDomainClick = (domain: string) => {
+    if (onSelectDomain) {
+      onSelectDomain(domain);
+    } else {
+      const searchUrl = `https://www.namecheap.com/domains/registration/results/?domain=${encodeURIComponent(domain)}`;
+      window.open(searchUrl, '_blank');
+    }
   };
 
   return (
@@ -28,7 +33,7 @@ export function DomainSuggestionCard({ suggestions, onConnectDomain }: DomainSug
         {suggestions.map((s) => (
           <button
             key={s.domain}
-            onClick={() => handleSearchDomain(s.domain)}
+            onClick={() => handleDomainClick(s.domain)}
             className="w-full flex items-center justify-between p-3 rounded-md border bg-background hover:bg-accent/50 transition-colors group"
           >
             <div className="flex items-center gap-2">

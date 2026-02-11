@@ -11,9 +11,10 @@ interface DomainSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
+  initialDomain?: string;
 }
 
-export function DomainSettingsModal({ isOpen, onClose, projectId }: DomainSettingsModalProps) {
+export function DomainSettingsModal({ isOpen, onClose, projectId, initialDomain }: DomainSettingsModalProps) {
   const { toast } = useToast();
   const [domains, setDomains] = useState<CustomDomain[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,9 +52,13 @@ export function DomainSettingsModal({ isOpen, onClose, projectId }: DomainSettin
   useEffect(() => {
     if (isOpen) {
       fetchDomains();
-      setShowAddForm(false);
+      if (initialDomain) {
+        setShowAddForm(true);
+      } else {
+        setShowAddForm(false);
+      }
     }
-  }, [isOpen, fetchDomains]);
+  }, [isOpen, fetchDomains, initialDomain]);
 
   // Add domain
   const handleAddDomain = async (domain: string) => {
@@ -198,6 +203,7 @@ export function DomainSettingsModal({ isOpen, onClose, projectId }: DomainSettin
                   onAdd={handleAddDomain}
                   onCancel={() => setShowAddForm(false)}
                   isLoading={isAdding}
+                  initialValue={initialDomain}
                 />
               ) : (
                 <Button

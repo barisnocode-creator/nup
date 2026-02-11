@@ -8,10 +8,11 @@ interface AddDomainFormProps {
   onAdd: (domain: string) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  initialValue?: string;
 }
 
-export function AddDomainForm({ onAdd, onCancel, isLoading = false }: AddDomainFormProps) {
-  const [domain, setDomain] = useState('');
+export function AddDomainForm({ onAdd, onCancel, isLoading = false, initialValue = '' }: AddDomainFormProps) {
+  const [domain, setDomain] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
 
   const validateDomain = (value: string): string | null => {
