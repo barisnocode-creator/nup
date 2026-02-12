@@ -1,113 +1,87 @@
 
-# Mobil ve Tablet Yerlesim Duzeltmesi
+
+# Mobil ve Tablet Responsive Duzenleme
 
 ## Sorun
-Mobil (375-414px) ve tablet (768-1024px) gorunumlerinde icerik ortalanma, bosluk ve olculer GitHub gibi platformlardaki standartlara uygun degil. Kartlar, header, sidebar ve icerik alanlari icin ideal responsive olculer uygulanmali.
-
-## Referans Olculer (GitHub/Modern Platform Standartlari)
-
-```text
-Mobil (< 768px):
-  - Container padding: 16px (px-4)
-  - Kart grid: tek sutun (grid-cols-1)
-  - Baslik: 24-28px (text-2xl)
-  - Icerik genisligi: %100 ekran - 32px padding
-  - Header yuksekligi: 48-56px
-  - Alt bosluk: 16-24px
-
-Tablet (768-1024px):
-  - Container padding: 24-32px (px-6 / px-8)
-  - Kart grid: 2 sutun (md:grid-cols-2)
-  - Baslik: 28-32px (md:text-3xl)
-  - Icerik genisligi: max-w-3xl (ortalanmis)
-  - Sidebar: gizli, Sheet ile acilir
-  - Header yuksekligi: 56px
-
-Masaustu (> 1024px):
-  - Container padding: 32-48px
-  - max-w-6xl ortalanmis icerik
-  - Sidebar: gorunur, 256px
-```
+Mobil ekranlarda "Yayinla" (Publish) butonu ve diger UI elemanlari duzgun gorunmuyor. Tum uygulama genelinde mobil (375-414px) ve tablet (768-1024px) icin GitHub/modern platform standartlarinda responsive duzenleme yapilacak.
 
 ## Yapilacak Degisiklikler
 
-### 1. DashboardLayout.tsx - Ana Yerlesim
-- Mobilde main padding'i `p-4` (simdi p-6), tablette `md:p-6`, masaustunde `lg:p-8`
-- Header yuksekligi mobilde `h-12`, tablette `h-14`
-- Right panel tablet eşigini `xl:block` olarak koru (zaten oyle)
-- Header icindeki butonlara `text-xs sm:text-sm` responsive metin boyutu
+### 1. EditorToolbar.tsx - Mobil Toolbar Duzeltmesi (EN KRITIK)
+- Toolbar yuksekligini mobilde `h-12` (simdi h-14) yaparak yer kazandir
+- Sol taraftaki butonlari mobilde daha kompakt yap (`gap-0.5` yerine `gap-1`)
+- "Publish" butonundaki metni mobilde kisalt veya sadece ikon goster
+- Preview butonunu mobilde sadece ikon olarak goster (zaten `hidden sm:inline` var ama Publish icin yok)
+- Toolbar icerigini `overflow-x-auto` ile tasma durumunda kaydirabilir yap
 
-### 2. DashboardSidebar.tsx - Yan Menu
-- Mobilde Sheet ile aciliyor (sidebar.tsx bunu zaten hallediyor)
-- Sidebar genisligi mobilede 18rem (standart, iyi)
-- Logo alani ve nav item'lara mobil icin daha kompakt padding
-- Upgrade kartinda mobil icin daha kucuk font ve padding
+### 2. PublishModal.tsx - Mobil Dialog Duzeltmesi
+- Dialog genisligini mobilde `max-w-[95vw] sm:max-w-md` yap
+- Ikon boyutunu mobilde `w-12 h-12` (simdi w-16 h-16)
+- Baslik boyutunu `text-xl sm:text-2xl`
+- Butonlari mobilde dikey yigila (`flex-col sm:flex-row`)
+- URL gosterim alaninda `break-all` ve daha kucuk font
+- `.openlucius.app` etiketini mobilde alt satira al
 
-### 3. Dashboard.tsx - Ana Sayfa
-- Karsilama basligini `text-2xl sm:text-3xl md:text-4xl` yap
-- Kart grid'i `grid-cols-1 sm:grid-cols-2` yap (mobilde tek sutun)
-- Empty state kartini `max-w-full sm:max-w-2xl mx-auto` ortalanmis yap
-- Mobil checklist bolumune ust bosluk ayari
-- Projects section basligini ve butonunu mobilde daha kompakt
+### 3. CreateWebsiteWizard.tsx - Wizard Mobil
+- Dialog genisligini `max-w-[95vw] sm:max-w-lg`
+- Chat alanini mobilde `h-[300px] sm:h-[400px]`
+- Alt buton alanini mobilde daha kompakt padding
 
-### 4. WebsitePreviewCard.tsx - Proje Kartlari
-- Onizleme alanini mobilde `h-36` (simdi h-48), tablette `sm:h-48`
-- Globe ikonunu mobilde `w-12 h-12` (simdi w-16 h-16)
-- Kart footer'da butonlari mobilde `size="sm"`
+### 4. DashboardLayout.tsx - Ana Yerlesim
+- Main padding: `p-4 sm:p-6 lg:p-8` (simdi `p-6 lg:p-8`)
+- Header yuksekligi: `h-12 sm:h-14`
+- Sign Out butonunda mobilde sadece ikon
 
-### 5. Hero.tsx (Landing) - Mobil Optimizasyon
-- Baslik boyutunu `text-3xl sm:text-4xl md:text-5xl lg:text-6xl` yap
-- Alt metin `text-base sm:text-lg md:text-xl`
-- Input CTA alanini mobilde tam genislik, dikey yigilan
-- Trust badges'i mobilde `gap-3` (simdi gap-6)
+### 5. Dashboard.tsx - Ana Sayfa
+- Baslik: `text-2xl sm:text-3xl md:text-4xl` (simdi `text-3xl md:text-4xl`)
+- Kart grid: `grid-cols-1 sm:grid-cols-2` (simdi `md:grid-cols-2`)
+- New Website butonu mobilde `size="sm"`
+- Empty state kartini `max-w-full sm:max-w-2xl mx-auto`
 
-### 6. Header.tsx (Landing) - Mobil Header
-- Header yuksekligi `h-14 sm:h-16`
-- Logo font boyutu `text-lg sm:text-xl`
-- Auth butonlarinda mobilde `size="sm"`
+### 6. Hero.tsx - Landing Hero
+- Baslik: `text-3xl sm:text-4xl md:text-5xl lg:text-6xl` (simdi `text-4xl md:text-5xl lg:text-6xl`)
+- Alt baslik: `text-base sm:text-lg md:text-xl`
+- CTA input alani mobilde dikey (`flex-col`)
+- Trust badges: `gap-3 sm:gap-6`
 
-### 7. Features.tsx - Ozellik Kartlari
-- Grid'i `grid-cols-1 md:grid-cols-2` (mobilde tek sutun - zaten oyle)
-- Kart ici padding'i `p-4 sm:p-6 md:p-8`
-- Alt text boyutlari responsive
+### 7. Header.tsx - Landing Header
+- Header yuksekligi: `h-14` (zaten 16, mobilde biraz fazla)
+- Logo font: `text-lg sm:text-xl`
+- Butonlari mobilde `size="sm"`
 
-### 8. HowItWorks.tsx - Adimlar
-- Grid'i `grid-cols-1 sm:grid-cols-3` yap
-- Adim ikonunu mobilde biraz kucult
-- Section basligini responsive
+### 8. CTASection.tsx - CTA Bolumu
+- Baslik: `text-2xl sm:text-3xl md:text-4xl lg:text-5xl`
+- Input alani mobilde dikey yigilma
 
 ### 9. Analytics.tsx - Analitik Sayfasi
-- Header'daki butonlari mobilde `flex-wrap` ve `gap-2`
-- Stats grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
-- Chart yuksekligini mobilde `h-[200px] sm:h-[300px]`
-- Alt grid'leri `grid-cols-1 sm:grid-cols-2`
+- Header butonlarini mobilde `flex-wrap gap-2`
+- "Back to Editor" butonunda mobilde sadece ikon
+- Stats grid: `grid-cols-2 sm:grid-cols-2 lg:grid-cols-4` (mobilde 2x2)
+- Chart yuksekligi: `h-[200px] sm:h-[300px]`
+- Baslik: `text-2xl sm:text-3xl`
 
 ### 10. Settings.tsx - Ayarlar Sayfasi
-- Container padding `p-4 sm:p-6`
-- Tab trigger'lari mobilde sadece ikon goster (zaten hidden sm:inline var, iyi)
+- Container padding: `p-4 sm:p-6`
+- Baslik: `text-2xl sm:text-3xl`
 
-### 11. CreateWebsiteWizard.tsx - Wizard Modali
-- Dialog genisligini mobilde `max-w-[95vw] sm:max-w-lg` yap
-- Chat alani yuksekligini mobilde `h-[350px] sm:h-[400px]`
-- Input alani mobilde daha kompakt
+### 11. HowItWorks.tsx - Adimlar
+- Grid: `grid-cols-1 sm:grid-cols-3` (simdi `md:grid-cols-3`)
+- Ikon boyutu mobilde biraz kucuk
 
 ### 12. Footer.tsx - Alt Bilgi
-- Mobilde flex-col ortalama (zaten oyle)
-- Padding'i `py-8 sm:py-12`
+- Padding: `py-8 sm:py-12`
+- Mobilde `flex-col` ortalama (zaten var)
 
-### 13. CTASection.tsx - CTA Bolumu
-- Baslik boyutunu `text-2xl sm:text-3xl md:text-4xl lg:text-5xl`
-- Input CTA alanini mobilde tek sutun
+### 13. GettingStartedChecklist.tsx - Checklist
+- Item padding: `p-2 sm:p-3`
 
-### 14. GettingStartedChecklist.tsx
-- Item padding'i `p-2 sm:p-3`
-- Metin boyutlarini mobile uyumlu tut
+### 14. WebsitePreviewCard.tsx - Kart
+- Onizleme yuksekligi: `h-36 sm:h-48`
+- Globe ikon boyutu: `w-12 h-12 sm:w-16 sm:h-16`
 
-## Teknik Detaylar
+## Teknik Yaklasim
+- Sadece Tailwind responsive prefix'leri (`sm:`, `md:`, `lg:`) kullanilacak
+- Hicbir yeni bagimlili eklenmeyecek
+- Mevcut `useIsMobile()` hook'u (768px esik) ile uyumlu
+- Tum degisiklikler mevcut stil yapisini bozmadan uygulanacak
 
-- Tum degisiklikler Tailwind responsive prefix'leri (`sm:`, `md:`, `lg:`, `xl:`) ile yapilacak
-- `useIsMobile()` hook'u 768px esigini kullaniyor, bu GitHub standartlariyla uyumlu
-- Sidebar zaten mobilde Sheet olarak aciliyor (sidebar.tsx icinde)
-- Container genislikleri `container mx-auto` ile GitHub tarzinda ortalanacak
-- Kartlarda `max-w` ve `mx-auto` ile ortalama saglanacak
-- Tum font boyutlari mobilde bir kademe kucuk olacak
