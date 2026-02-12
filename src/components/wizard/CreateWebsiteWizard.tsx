@@ -133,30 +133,32 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto border-border/50 shadow-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[85dvh] sm:max-h-[90vh] overflow-hidden border-border/50 shadow-2xl p-0">
         <DialogTitle className="sr-only">Web Sitenizi Oluşturun</DialogTitle>
         <DialogDescription className="sr-only">
           AI asistanla sohbet ederek web sitenizi oluşturun
         </DialogDescription>
 
-        <div className="min-h-[300px]">
-          <AIChatStep
-            onComplete={handleAIChatComplete}
-            onValidityChange={handleAIChatValidityChange}
-          />
-        </div>
+        <div className="flex flex-col h-full max-h-[85dvh] sm:max-h-[90vh]">
+          <div className="flex-1 overflow-hidden px-4 sm:px-6 pt-4 sm:pt-6">
+            <AIChatStep
+              onComplete={handleAIChatComplete}
+              onValidityChange={handleAIChatValidityChange}
+            />
+          </div>
 
-        <div className="flex justify-end pt-4 border-t">
-          <Button onClick={handleSubmit} disabled={!isValid || isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Oluşturuluyor...
-              </>
-            ) : (
-              '🚀 Web Sitesi Oluştur'
-            )}
-          </Button>
+          <div className="shrink-0 flex justify-end px-4 sm:px-6 py-3 sm:py-4 border-t bg-background sticky bottom-0">
+            <Button onClick={handleSubmit} disabled={!isValid || isSubmitting} className="w-full sm:w-auto">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Oluşturuluyor...
+                </>
+              ) : (
+                '🚀 Web Sitesi Oluştur'
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
