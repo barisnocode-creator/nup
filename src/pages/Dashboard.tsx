@@ -87,7 +87,7 @@ export default function Dashboard() {
     <DashboardLayout rightPanel={rightPanelContent} activeProjectId={activeProject?.id}>
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold mb-2 text-foreground">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-foreground">
           {getGreeting()}, {displayName}! 👋
         </h1>
         <p className="text-muted-foreground text-lg">
@@ -107,13 +107,13 @@ export default function Dashboard() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Your Websites</h2>
-            <Button onClick={() => setWizardOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Website
+            <Button size="sm" className="sm:size-default" onClick={() => setWizardOpen(true)}>
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Website</span>
             </Button>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {projects.map((project) => (
               <WebsitePreviewCard key={project.id} project={project} onDelete={handleDeleteProject} />
             ))}
@@ -123,7 +123,7 @@ export default function Dashboard() {
 
       {/* Empty State */}
       {!loadingProjects && projects.length === 0 && (
-        <Card className="max-w-2xl gradient-border border-dashed border-2">
+        <Card className="max-w-full sm:max-w-2xl mx-auto gradient-border border-dashed border-2">
           <CardHeader className="text-center pb-2">
             <div className="w-16 h-16 gradient-hero rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg hover:scale-105 transition-transform duration-300">
               <Plus className="w-8 h-8 text-primary-foreground" />

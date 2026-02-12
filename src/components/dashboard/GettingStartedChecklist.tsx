@@ -94,7 +94,7 @@ export function GettingStartedChecklist({ project, onCreateWebsite }: GettingSta
             onClick={item.action}
             disabled={item.completed}
             className={cn(
-              "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-200 group/item",
+              "w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl text-left transition-all duration-200 group/item",
               item.completed 
                 ? "opacity-60" 
                 : "hover:bg-primary/5 cursor-pointer"

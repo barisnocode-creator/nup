@@ -95,31 +95,31 @@ export default function Analytics() {
     <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <header className="bg-background border-b">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="w-9 h-9 gradient-hero rounded-lg flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 gradient-hero rounded-lg flex items-center justify-center">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">Open Lucius</span>
+              <span className="hidden sm:inline text-xl font-bold">Open Lucius</span>
             </Link>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-sm text-muted-foreground">Analytics</span>
+            <span className="hidden sm:inline text-muted-foreground">•</span>
+            <span className="text-xs sm:text-sm text-muted-foreground">Analytics</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="flex items-center gap-1.5 text-xs font-medium">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-wrap justify-end">
+            <Badge variant="outline" className="hidden sm:flex items-center gap-1.5 text-xs font-medium">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
               </span>
               Canlı
             </Badge>
-            <Button variant="outline" size="icon" onClick={() => refetch()} title="Yenile">
+            <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => refetch()} title="Yenile">
               <RefreshCw className="w-4 h-4" />
             </Button>
-            <Button variant="outline" onClick={() => navigate(`/project/${id}`)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Editor
+            <Button variant="outline" size="sm" onClick={() => navigate(`/project/${id}`)}>
+              <ArrowLeft className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Editor</span>
             </Button>
           </div>
         </div>
@@ -130,12 +130,12 @@ export default function Analytics() {
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Page Title */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Analytics</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Analytics</h1>
             <p className="text-muted-foreground">{projectName}</p>
           </div>
 
           {/* Stats Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {/* Total Views */}
             <Card className="bg-primary/5 border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -209,7 +209,7 @@ export default function Analytics() {
               <CardDescription>Son 30 günlük sayfa görüntülemeleri</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <ChartContainer config={chartConfig} className="h-[200px] sm:h-[300px] w-full">
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
@@ -244,7 +244,7 @@ export default function Analytics() {
           </Card>
 
           {/* Page Views & Hourly Distribution */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
             {/* Top Pages */}
             <Card>
               <CardHeader>
@@ -309,7 +309,7 @@ export default function Analytics() {
           </div>
 
           {/* Device Breakdown */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
             <Card className="bg-primary/5 border-primary/20">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

@@ -30,21 +30,21 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0">
           {/* Top Header Bar */}
-          <header className="h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-4 shrink-0 shadow-sm">
+          <header className="h-12 sm:h-14 border-b bg-background/95 backdrop-blur-sm flex items-center justify-between px-3 sm:px-4 shrink-0 shadow-sm">
             <SidebarTrigger className="lg:hidden">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <div className="flex-1" />
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </header>
 
           {/* Content + Right Panel */}
           <div className="flex-1 flex overflow-hidden">
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
               {children}
             </main>
 
