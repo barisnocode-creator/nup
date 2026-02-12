@@ -303,16 +303,16 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
     : messages;
 
   return (
-    <div className="flex flex-col h-[400px]">
+    <div className="flex flex-col h-[60dvh] sm:h-[400px] max-h-[500px]">
       {/* Header */}
-      <div className="space-y-3 pb-4 border-b border-border/50">
+      <div className="space-y-2 sm:space-y-3 pb-3 sm:pb-4 border-b border-border/50 shrink-0">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">AI Asistan</h2>
-          <span className="text-sm text-muted-foreground font-medium">
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">AI Asistan</h2>
+          <span className="text-xs sm:text-sm text-muted-foreground font-medium">
             Soru {Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
           </span>
         </div>
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+        <div className="w-full h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
           <div 
             className="h-full rounded-full transition-all duration-500 ease-out"
             style={{ 
@@ -324,8 +324,8 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 py-4" ref={scrollRef}>
-        <div className="space-y-4 pr-4">
+      <ScrollArea className="flex-1 min-h-0 py-3 sm:py-4" ref={scrollRef}>
+        <div className="space-y-3 sm:space-y-4 pr-2 sm:pr-4">
           <AnimatePresence mode="popLayout">
             {displayMessages.map((message, index) => (
               <motion.div
@@ -334,33 +334,33 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
                 className={cn(
-                  'flex gap-3',
+                  'flex gap-2 sm:gap-3',
                   message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                 )}
               >
                 <div
                   className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm',
+                    'flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full shadow-sm',
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-gradient-to-br from-primary/20 to-primary/10 text-primary'
                   )}
                 >
                   {message.role === 'user' ? (
-                    <User className="h-4 w-4" />
+                    <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   ) : (
-                    <Bot className="h-4 w-4" />
+                    <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
                 </div>
                 <div
                   className={cn(
-                    'rounded-2xl px-4 py-2.5 max-w-[80%] shadow-sm',
+                    'rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 max-w-[85%] sm:max-w-[80%] shadow-sm',
                     message.role === 'user'
                       ? 'bg-primary text-primary-foreground rounded-tr-md'
                       : 'bg-muted/80 border border-border/30 rounded-tl-md'
                   )}
                 >
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                  <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                 </div>
               </motion.div>
             ))}
@@ -370,16 +370,16 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex gap-3"
+              className="flex gap-2 sm:gap-3"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-sm">
-                <Bot className="h-4 w-4" />
+              <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary shadow-sm">
+                <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </div>
-              <div className="rounded-2xl rounded-tl-md px-4 py-3 bg-muted/80 border border-border/30 shadow-sm">
+              <div className="rounded-2xl rounded-tl-md px-3 sm:px-4 py-2.5 sm:py-3 bg-muted/80 border border-border/30 shadow-sm">
                 <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-muted-foreground/40 animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             </motion.div>
@@ -389,13 +389,13 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
 
       {/* Error */}
       {error && (
-        <div className="py-2">
-          <p className="text-sm text-destructive">{error}</p>
+        <div className="py-1.5 sm:py-2 shrink-0">
+          <p className="text-xs sm:text-sm text-destructive">{error}</p>
         </div>
       )}
 
-      {/* Input */}
-      <div className="pt-4 border-t border-border/50">
+      {/* Input - sticky at bottom, above mobile keyboard */}
+      <div className="pt-3 sm:pt-4 border-t border-border/50 shrink-0 pb-[env(safe-area-inset-bottom)]">
         <div className="flex gap-2">
           <Input
             ref={inputRef}
@@ -404,13 +404,15 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
             onKeyDown={handleKeyDown}
             placeholder={isComplete ? 'Sohbet tamamlandı' : 'Cevabınızı yazın...'}
             disabled={isLoading || isComplete}
-            className="flex-1 h-11 rounded-xl border-border/50 shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/50"
+            autoComplete="off"
+            enterKeyHint="send"
+            className="flex-1 h-10 sm:h-11 rounded-xl border-border/50 shadow-sm focus-visible:ring-primary/30 focus-visible:border-primary/50 text-base sm:text-sm"
           />
           <Button
             onClick={sendMessage}
             disabled={!inputValue.trim() || isLoading || isComplete}
             size="icon"
-            className="h-11 w-11 rounded-xl shadow-sm"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl shadow-sm shrink-0"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -423,7 +425,7 @@ export function AIChatStep({ onComplete, onValidityChange }: AIChatStepProps) {
           <motion.p
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-sm text-muted-foreground mt-2 text-center"
+            className="text-xs sm:text-sm text-muted-foreground mt-2 text-center"
           >
             ✨ Bilgiler toplandı! "Web Sitesi Oluştur" butonuna tıklayın.
           </motion.p>
