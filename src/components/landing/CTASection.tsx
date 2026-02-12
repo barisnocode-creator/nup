@@ -26,7 +26,7 @@ export function CTASection() {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             {/* Headline */}
-            <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-medium mb-6">
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium mb-6">
               Bugün profesyonel web sitenizi oluşturun
             </h2>
             <p className="text-lg text-background/70 mb-10">
@@ -55,7 +55,7 @@ export function CTASection() {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
               <div className="flex items-center gap-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-primary text-primary" />

@@ -9,10 +9,10 @@ import { User, Shield, Settings as SettingsIcon, AlertTriangle } from 'lucide-re
 export default function Settings() {
   return (
     <DashboardLayout>
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Ayarlar</h1>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold">Ayarlar</h1>
           <p className="text-muted-foreground mt-1">
             Hesap bilgilerinizi ve tercihlerinizi yönetin.
           </p>

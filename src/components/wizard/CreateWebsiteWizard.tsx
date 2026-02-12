@@ -133,7 +133,7 @@ export function CreateWebsiteWizard({ open, onOpenChange }: CreateWebsiteWizardP
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto border-border/50 shadow-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto border-border/50 shadow-2xl">
         <DialogTitle className="sr-only">Web Sitenizi Oluşturun</DialogTitle>
         <DialogDescription className="sr-only">
           AI asistanla sohbet ederek web sitenizi oluşturun

@@ -27,7 +27,7 @@ export function HowItWorks() {
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-3xl md:text-4xl font-medium mb-4 text-foreground">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-medium mb-4 text-foreground">
             Nasıl Çalışır?
           </h2>
           <p className="text-muted-foreground text-lg">
@@ -36,7 +36,7 @@ export function HowItWorks() {
         </div>
 
         {/* Steps */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {steps.map((step, index) => (
             <div 
               key={step.step}

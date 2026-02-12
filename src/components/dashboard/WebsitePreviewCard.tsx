@@ -89,12 +89,12 @@ export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProp
     >
       <Card className="overflow-hidden card-hover group border-border/60">
         {/* Preview Area */}
-        <div className="relative h-48 bg-gradient-to-br from-primary/15 via-primary/5 to-secondary overflow-hidden">
+        <div className="relative h-36 sm:h-48 bg-gradient-to-br from-primary/15 via-primary/5 to-secondary overflow-hidden">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:24px_24px]" />
           <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
           <div className="relative z-10 flex flex-col items-center justify-center h-full">
-            <div className="w-16 h-16 rounded-2xl bg-background/90 backdrop-blur-sm shadow-lg flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform duration-300">
-              <Globe className="w-7 h-7 text-primary" />
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-background/90 backdrop-blur-sm shadow-lg flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:scale-105 transition-transform duration-300">
+              <Globe className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
             </div>
             <p className="text-sm font-semibold text-foreground">{project.name}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{getProfessionLabel(project.profession)}</p>

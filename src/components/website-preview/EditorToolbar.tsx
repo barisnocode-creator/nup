@@ -61,9 +61,9 @@ export function EditorToolbar({
 }: EditorToolbarProps) {
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm">
-      <div className="flex items-center justify-between h-14 px-4">
+      <div className="flex items-center justify-between h-12 sm:h-14 px-2 sm:px-4 overflow-x-auto">
         {/* Left Section */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {/* Home Button */}
           <Button
             variant="ghost"
@@ -164,10 +164,10 @@ export function EditorToolbar({
           <Button
             size="sm"
             onClick={onPublish}
-            className="gap-2"
+            className="gap-1.5 sm:gap-2"
           >
             <Globe className="w-4 h-4" />
-            <span>{isPublished ? 'Published' : 'Publish'}</span>
+            <span className="hidden sm:inline">{isPublished ? 'Published' : 'Publish'}</span>
           </Button>
         </div>
       </div>

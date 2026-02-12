@@ -12,24 +12,24 @@ export function Header() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-border">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <span className="text-xl font-serif font-semibold text-foreground">Open Lucius</span>
+            <span className="text-lg sm:text-xl font-serif font-semibold text-foreground">Open Lucius</span>
           </div>
 
           {/* Auth Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
               <Button onClick={() => navigate('/dashboard')}>
                 Dashboard
               </Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => setShowAuth(true)} className="text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" onClick={() => setShowAuth(true)} className="text-muted-foreground hover:text-foreground">
                   Giriş Yap
                 </Button>
-                <Button onClick={() => setShowAuth(true)} className="bg-primary hover:bg-primary/90">
+                <Button size="sm" onClick={() => setShowAuth(true)} className="bg-primary hover:bg-primary/90">
                   Ücretsiz Başla
                 </Button>
               </>

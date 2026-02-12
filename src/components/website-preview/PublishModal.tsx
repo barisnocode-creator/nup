@@ -317,12 +317,12 @@ export function PublishModal({
   if (showSuccess) {
     return (
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
-          <DialogHeader className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-              <Check className="w-8 h-8 text-white" />
+        <DialogContent className="max-w-[95vw] sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
+          <DialogHeader className="text-center space-y-3 sm:space-y-4">
+            <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+              <Check className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
-            <DialogTitle className="text-2xl font-bold text-gray-900">
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
               Your website is live! 🎉
             </DialogTitle>
             <DialogDescription className="text-base text-gray-500">
@@ -344,7 +344,7 @@ export function PublishModal({
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button 
                 variant="outline" 
                 className="flex-1 border-orange-300 text-orange-700 hover:bg-orange-50" 
@@ -399,12 +399,12 @@ export function PublishModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
-        <DialogHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
-            <Globe className="w-8 h-8 text-white" />
+      <DialogContent className="max-w-[95vw] sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
+        <DialogHeader className="text-center space-y-3 sm:space-y-4">
+          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center">
+            <Globe className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <DialogTitle className="text-2xl font-bold text-gray-900">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
             Publish Your Website
           </DialogTitle>
           <DialogDescription className="text-base text-gray-500">
@@ -430,7 +430,7 @@ export function PublishModal({
                   {getStatusIcon()}
                 </div>
               </div>
-              <span className="text-sm text-gray-500 whitespace-nowrap">
+              <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
                 .openlucius.app
               </span>
             </div>
