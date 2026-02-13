@@ -38,6 +38,7 @@ export function HeroOverlay({
   editorSelection,
   onEditorSelect,
   sectionStyle,
+  onImageRegenerate,
   selectedImage,
   onImageSelect,
 }: HeroProps) {

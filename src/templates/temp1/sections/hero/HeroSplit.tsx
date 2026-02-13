@@ -36,6 +36,7 @@ export function HeroSplit({
   editorSelection,
   onEditorSelect,
   sectionStyle,
+  onImageRegenerate,
   selectedImage,
   onImageSelect,
 }: HeroProps) {
@@ -179,6 +180,14 @@ export function HeroSplit({
                 isEditable={isEditable}
                 isSelected={isImageSelected}
                 onSelect={handleImageSelect}
+                onRegenerate={onImageRegenerate ? () => onImageRegenerate({
+                  type: 'hero',
+                  imagePath: 'images.heroHome',
+                  currentUrl: heroImage || '',
+                  altText: 'Hero',
+                  positionX: 50,
+                  positionY: 50,
+                }) : undefined}
                 fallback={
                   <div className={cn(
                     'w-full h-full flex items-center justify-center',

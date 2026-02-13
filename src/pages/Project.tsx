@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,10 @@ import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePrev
 import { PageSettingsSidebar } from '@/components/website-preview/PageSettingsSidebar';
 import { AddContentSidebar } from '@/components/website-preview/AddContentSidebar';
 import { HomeEditorSidebar } from '@/components/website-preview/HomeEditorSidebar';
+import { PixabayImagePicker } from '@/components/chai-builder/PixabayImagePicker';
 import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
@@ -181,6 +183,15 @@ export default function Project() {
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [originalTemplateId, setOriginalTemplateId] = useState<string | null>(null);
   const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
+
+  // Pixabay Regenerate State
+  const [pixabayForRegenerate, setPixabayForRegenerate] = useState<{
+    open: boolean;
+    defaultQuery: string;
+    targetImagePath: string;
+    previousUrl: string;
+  }>({ open: false, defaultQuery: '', targetImagePath: '', previousUrl: '' });
+  const undoRef = useRef<{ imagePath: string; previousUrl: string } | null>(null);
 
   // Track page view for analytics
   usePageView(id, '/preview');
@@ -897,6 +908,87 @@ export default function Project() {
     setCustomizeSidebarOpen(false);
   }, [project, handleEditorSelect]);
 
+  // Build auto-search query for Pixabay regeneration
+  const buildImageSearchQuery = useCallback((imageData: ImageData, content: GeneratedContent): string => {
+    const genericAlts = ['hero', 'about', 'about us', 'gallery', 'cta', 'service', 'image', ''];
+    const alt = (imageData.altText || '').trim();
+    
+    // Priority 1: Use alt text if it's descriptive
+    if (alt && !genericAlts.includes(alt.toLowerCase())) {
+      return alt;
+    }
+    
+    // Priority 2: Section type mapping
+    const profession = project?.profession || content.metadata?.siteName || '';
+    const sectionKeywords: Record<string, string> = {
+      hero: `${profession} professional business`.trim(),
+      about: `team office ${profession}`.trim(),
+      gallery: `${profession} workspace`.trim(),
+      cta: `${profession} professional`.trim(),
+      service: `${profession} service`.trim(),
+    };
+    
+    const type = imageData.type || 'hero';
+    return sectionKeywords[type] || 'professional business';
+  }, []);
+
+  // Handle image regenerate from action box (opens Pixabay picker)
+  const handleImageRegenerateFromActionBox = useCallback((imageData: ImageData) => {
+    if (!project?.generated_content) return;
+    
+    const query = buildImageSearchQuery(imageData, project.generated_content);
+    setPixabayForRegenerate({
+      open: true,
+      defaultQuery: query,
+      targetImagePath: imageData.imagePath,
+      previousUrl: imageData.currentUrl || '',
+    });
+  }, [project, buildImageSearchQuery]);
+
+  // Handle Pixabay image selection for regeneration
+  const handlePixabayRegenerateSelect = useCallback((newImageUrl: string) => {
+    if (!project?.generated_content || !pixabayForRegenerate.targetImagePath) return;
+    
+    const { targetImagePath, previousUrl } = pixabayForRegenerate;
+    
+    // Store for undo
+    undoRef.current = { imagePath: targetImagePath, previousUrl };
+    
+    // Update content
+    const updatedContent = updateNestedValue(project.generated_content, targetImagePath, newImageUrl);
+    
+    setProject(prev => prev ? { ...prev, generated_content: updatedContent } : null);
+    setHasUnsavedChanges(true);
+    debouncedSave(updatedContent);
+    
+    // Show toast with undo action
+    toast({
+      title: 'Görsel değiştirildi',
+      description: 'Yeni görsel uygulandı.',
+      action: (
+        <ToastAction
+          altText="Geri Al"
+          onClick={() => {
+            if (undoRef.current && project?.generated_content) {
+              const restoredContent = updateNestedValue(
+                project.generated_content,
+                undoRef.current.imagePath,
+                undoRef.current.previousUrl,
+              );
+              setProject(prev => prev ? { ...prev, generated_content: restoredContent } : null);
+              setHasUnsavedChanges(true);
+              debouncedSave(restoredContent);
+              undoRef.current = null;
+              toast({ title: 'Geri alındı', description: 'Önceki görsel geri yüklendi.' });
+            }
+          }}
+        >
+          Geri Al
+        </ToastAction>
+      ),
+    });
+  }, [project, pixabayForRegenerate, debouncedSave, toast, updateNestedValue]);
+
   // Handle regenerate page title
   const handleRegeneratePageTitle = useCallback(() => {
     toast({
@@ -1309,6 +1401,7 @@ export default function Project() {
             onMoveSection={handleMoveSection}
             onDeleteSection={handleDeleteSection}
             sectionStyles={project.generated_content?.sectionStyles}
+            onImageRegenerate={handleImageRegenerateFromActionBox}
           />
         )}
       </div>
@@ -1470,6 +1563,15 @@ export default function Project() {
           onReorderSections={handleReorderSections}
         />
       )}
+
+      {/* Pixabay Image Picker for Regeneration */}
+      <PixabayImagePicker
+        open={pixabayForRegenerate.open}
+        onOpenChange={(open) => setPixabayForRegenerate(prev => ({ ...prev, open }))}
+        onSelect={handlePixabayRegenerateSelect}
+        defaultQuery={pixabayForRegenerate.defaultQuery}
+        autoSearch
+      />
     </div>
   );
 }

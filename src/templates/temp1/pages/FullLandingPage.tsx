@@ -27,6 +27,8 @@ interface FullLandingPageProps {
   onDeleteSection?: (sectionId: string) => void;
   // Section style overrides
   sectionStyles?: { [sectionId: string]: SectionStyle };
+  // Image regeneration from action box
+  onImageRegenerate?: (imageData: ImageData) => void;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -50,6 +52,7 @@ export function FullLandingPage({
   onMoveSection,
   onDeleteSection,
   sectionStyles,
+  onImageRegenerate,
   selectedImage,
   onImageSelect,
 }: FullLandingPageProps) {
@@ -119,6 +122,7 @@ export function FullLandingPage({
               editorSelection={editorSelection}
               onEditorSelect={onEditorSelect}
               sectionStyle={sectionStyles?.hero}
+              onImageRegenerate={onImageRegenerate}
               selectedImage={selectedImage}
               onImageSelect={onImageSelect}
             />

@@ -17,6 +17,8 @@ export interface HeroProps {
   onEditorSelect?: (selection: EditorSelection) => void;
   // Section style overrides
   sectionStyle?: SectionStyle;
+  // Image regeneration from action box
+  onImageRegenerate?: (imageData: ImageData) => void;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;

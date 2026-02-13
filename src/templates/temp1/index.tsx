@@ -17,6 +17,7 @@ export function HealthcareModernTemplate({
   onMoveSection,
   onDeleteSection,
   sectionStyles,
+  onImageRegenerate,
   selectedImage,
   onImageSelect,
 }: TemplateProps) {
@@ -122,6 +123,7 @@ export function HealthcareModernTemplate({
           onMoveSection={onMoveSection}
           onDeleteSection={onDeleteSection}
           sectionStyles={sectionStyles}
+          onImageRegenerate={onImageRegenerate}
           selectedImage={selectedImage}
           onImageSelect={onImageSelect}
         />
