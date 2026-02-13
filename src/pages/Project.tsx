@@ -25,6 +25,8 @@ import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
 import { convertGeneratedContentToChaiBlocks, getThemeForTemplate, getThemeFromColorPreferences, blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/convertToChaiBlocks';
+import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
+import { convertTemplateToBlocks } from '@/components/chai-builder/utils/templateToBlocks';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -289,12 +291,35 @@ export default function Project() {
     setIsConvertingBlocks(true);
     
     try {
-      const blocks = convertGeneratedContentToChaiBlocks(
-        projectData.generated_content,
-        projectData.template_id
-      );
+      // Catalog-aware block conversion with fallback chain
+      let blocks: any[];
+      const catalogDef = getCatalogTemplate(projectData.template_id || '');
       
-      // Determine theme: prefer color preferences from form_data, fallback to template
+      if (catalogDef) {
+        // Use catalog template's section order with AI content overlay
+        try {
+          blocks = convertTemplateToBlocks(catalogDef, projectData.generated_content as any);
+        } catch (catalogErr) {
+          console.warn('[Project] Catalog conversion failed, using defaults:', catalogErr);
+          blocks = convertTemplateToBlocks(catalogDef); // Template defaults only
+        }
+      } else {
+        // Legacy path for pilates1 and non-catalog templates
+        blocks = convertGeneratedContentToChaiBlocks(
+          projectData.generated_content,
+          projectData.template_id
+        );
+      }
+      
+      if (!blocks || blocks.length === 0) {
+        // Ultimate fallback
+        blocks = convertGeneratedContentToChaiBlocks(
+          projectData.generated_content,
+          projectData.template_id
+        );
+      }
+      
+      // Determine theme: prefer color preferences, then catalog theme, then legacy
       const colorTone = projectData.form_data?.extractedData?.colorTone 
         || projectData.form_data?.websitePreferences?.colorTone;
       const colorMode = projectData.form_data?.extractedData?.colorMode 
@@ -302,7 +327,7 @@ export default function Project() {
       
       const theme = (colorTone || colorMode)
         ? getThemeFromColorPreferences(colorTone, colorMode)
-        : getThemeForTemplate(projectData.template_id);
+        : (catalogDef ? getCatalogTheme(catalogDef.id) || getThemeForTemplate(projectData.template_id) : getThemeForTemplate(projectData.template_id));
       
       // Save to database
       const { error } = await supabase

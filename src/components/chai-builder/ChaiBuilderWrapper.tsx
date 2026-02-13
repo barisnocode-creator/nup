@@ -18,6 +18,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { getTemplateConfig } from '@/templates';
 import { convertGeneratedContentToChaiBlocks, getThemeForTemplate } from './utils/convertToChaiBlocks';
+import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
+import { convertTemplateToBlocks } from './utils/templateToBlocks';
 
 // Register custom blocks
 import './blocks';
@@ -167,15 +169,26 @@ export function ChaiBuilderWrapper({
 
       const content = error ? null : (data?.generated_content as any);
       
-      // Generate new blocks from content (or fallback empty blocks)
-      const newBlocks = content
-        ? convertGeneratedContentToChaiBlocks(content, selectedTemplateId)
-        : [
-            { _id: `preview_hero_${Date.now()}`, _type: 'HeroCentered', title: 'Hoş Geldiniz', subtitle: '', description: '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
-            { _id: `preview_cta_${Date.now()}`, _type: 'CTABanner', title: 'Hemen Başlayalım', description: 'Sizinle çalışmak için sabırsızlanıyoruz.', buttonText: 'İletişime Geç', buttonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
-          ];
+      // Generate new blocks: catalog-aware with fallback chain
+      let newBlocks: ChaiBlock[];
+      const catalogDef = getCatalogTemplate(selectedTemplateId);
+      
+      if (catalogDef && content) {
+        try {
+          newBlocks = convertTemplateToBlocks(catalogDef, content) as ChaiBlock[];
+        } catch {
+          newBlocks = convertTemplateToBlocks(catalogDef) as ChaiBlock[];
+        }
+      } else if (content) {
+        newBlocks = convertGeneratedContentToChaiBlocks(content, selectedTemplateId);
+      } else {
+        newBlocks = [
+          { _id: `preview_hero_${Date.now()}`, _type: 'HeroCentered', title: 'Hoş Geldiniz', subtitle: '', description: '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
+          { _id: `preview_cta_${Date.now()}`, _type: 'CTABanner', title: 'Hemen Başlayalım', description: 'Sizinle çalışmak için sabırsızlanıyoruz.', buttonText: 'İletişime Geç', buttonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
+        ];
+      }
 
-      const newTheme = getThemeForTemplate(selectedTemplateId);
+      const newTheme = (catalogDef ? getCatalogTheme(selectedTemplateId) : null) || getThemeForTemplate(selectedTemplateId);
 
       setPreviewBlocks(newBlocks);
       setPreviewTheme(newTheme);

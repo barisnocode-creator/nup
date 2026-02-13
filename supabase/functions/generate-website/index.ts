@@ -52,8 +52,66 @@ interface FormData {
   extractedData?: ExtractedBusinessData;
 }
 
-// Template selection logic - automatically picks the best template
-function selectTemplate(_profession: string, _tone?: string): string {
+// Sector-to-catalog template mapping for smart template selection
+const sectorTemplateMap: Record<string, string> = {
+  wellness: 'wellness-studio',
+  pilates: 'wellness-studio',
+  yoga: 'wellness-studio',
+  fitness: 'wellness-studio',
+  spa: 'wellness-studio',
+  lawyer: 'corporate-services',
+  finance: 'corporate-services',
+  consulting: 'corporate-services',
+  corporate: 'corporate-services',
+  insurance: 'corporate-services',
+  accounting: 'corporate-services',
+  doctor: 'medical-clinic',
+  dentist: 'medical-clinic',
+  pharmacist: 'medical-clinic',
+  clinic: 'medical-clinic',
+  health: 'medical-clinic',
+  hospital: 'medical-clinic',
+  veterinary: 'medical-clinic',
+  creative: 'creative-agency',
+  design: 'creative-agency',
+  marketing: 'creative-agency',
+  agency: 'creative-agency',
+  photography: 'creative-agency',
+  food: 'restaurant-cafe',
+  restaurant: 'restaurant-cafe',
+  cafe: 'restaurant-cafe',
+  bakery: 'restaurant-cafe',
+  catering: 'restaurant-cafe',
+  video: 'video-production',
+  film: 'video-production',
+  media: 'video-production',
+  production: 'video-production',
+  software: 'saas-platform',
+  saas: 'saas-platform',
+  startup: 'saas-platform',
+  app: 'saas-platform',
+  technology: 'saas-platform',
+  retail: 'retail-boutique',
+  shop: 'retail-boutique',
+  store: 'retail-boutique',
+  ecommerce: 'retail-boutique',
+  boutique: 'retail-boutique',
+};
+
+// Template selection logic - sector-aware catalog mapping with backward compatibility
+function selectTemplate(profession: string, tone?: string, sector?: string): string {
+  const keys = [sector, profession].filter(Boolean).map(k => k!.toLowerCase());
+  
+  for (const key of keys) {
+    // Direct match
+    if (sectorTemplateMap[key]) return sectorTemplateMap[key];
+    // Partial match - check if any mapping key is contained in the input
+    for (const [mapKey, templateId] of Object.entries(sectorTemplateMap)) {
+      if (key.includes(mapKey) || mapKey.includes(key)) return templateId;
+    }
+  }
+  
+  // Backward compatible fallback
   return 'pilates1';
 }
 
@@ -926,10 +984,11 @@ serve(async (req) => {
       console.log("Pixabay API key not configured, skipping image fetching");
     }
 
-    // Select template automatically based on profession and tone
+    // Select template automatically based on profession, tone, and sector
     const templateId = selectTemplate(
       profession,
-      formData.websitePreferences?.tone
+      formData.websitePreferences?.tone,
+      extractedSector
     );
     console.log("Selected template:", templateId);
 

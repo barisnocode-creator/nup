@@ -73,11 +73,27 @@ export function getTemplate(templateId: string): TemplateComponent {
   return template.component;
 }
 
-// Automatically select the best template
+// Automatically select the best template (frontend version, mirrors edge function logic)
 export function selectTemplate(
-  _profession: string,
+  profession: string,
   _tone?: string
 ): string {
+  const key = profession.toLowerCase();
+  const mapping: Record<string, string> = {
+    wellness: 'wellness-studio', pilates: 'wellness-studio', yoga: 'wellness-studio', fitness: 'wellness-studio', spa: 'wellness-studio',
+    lawyer: 'corporate-services', finance: 'corporate-services', consulting: 'corporate-services', corporate: 'corporate-services',
+    doctor: 'medical-clinic', dentist: 'medical-clinic', pharmacist: 'medical-clinic', clinic: 'medical-clinic', health: 'medical-clinic',
+    creative: 'creative-agency', design: 'creative-agency', marketing: 'creative-agency', agency: 'creative-agency',
+    food: 'restaurant-cafe', restaurant: 'restaurant-cafe', cafe: 'restaurant-cafe', bakery: 'restaurant-cafe',
+    video: 'video-production', film: 'video-production', media: 'video-production',
+    software: 'saas-platform', saas: 'saas-platform', startup: 'saas-platform', technology: 'saas-platform',
+    retail: 'retail-boutique', shop: 'retail-boutique', store: 'retail-boutique', boutique: 'retail-boutique',
+  };
+  
+  if (mapping[key]) return mapping[key];
+  for (const [mapKey, templateId] of Object.entries(mapping)) {
+    if (key.includes(mapKey) || mapKey.includes(key)) return templateId;
+  }
   return 'pilates1';
 }
 
