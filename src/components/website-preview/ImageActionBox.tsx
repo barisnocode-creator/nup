@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import {
@@ -23,8 +23,8 @@ export interface ImageAction {
   group?: ImageActionGroup;
 }
 
-const ACTION_BTN =
-  'p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700';
+const ICON_BTN =
+  'p-1.5 rounded hover:bg-black/10 active:scale-95 transition-all text-foreground/70 hover:text-foreground';
 
 interface ImageActionBoxProps {
   actions: ImageAction[];
@@ -45,13 +45,12 @@ export function ImageActionBox({
   const overflow = visibleActions.filter((a) => a.group === 'overflow');
 
   const hasOverflow = overflow.length > 0;
-  const hasSeparator = (primary.length > 0 || secondary.length > 0) && hasOverflow;
 
   const positionClass = {
-    'top-right': 'top-2 right-2',
-    'top-left': 'top-2 left-2',
-    'bottom-right': 'bottom-2 right-2',
-    'bottom-left': 'bottom-2 left-2',
+    'top-right': 'top-3 right-3',
+    'top-left': 'top-3 left-3',
+    'bottom-right': 'bottom-3 right-3',
+    'bottom-left': 'bottom-3 left-3',
   }[position];
 
   const handleClick = (e: React.MouseEvent, action: () => void) => {
@@ -60,54 +59,72 @@ export function ImageActionBox({
     action();
   };
 
-  const renderButton = (action: ImageAction) => {
-    const Icon = action.icon;
-    return (
-      <Tooltip key={action.id}>
-        <TooltipTrigger asChild>
-          <button
-            className={cn(
-              ACTION_BTN,
-              action.disabled && 'opacity-40 pointer-events-none',
-            )}
-            onClick={(e) => handleClick(e, action.onClick)}
-            disabled={action.disabled}
-          >
-            <Icon className="w-3.5 h-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">{action.label}</TooltipContent>
-      </Tooltip>
-    );
-  };
-
   return (
     <div
       className={cn(
         'absolute z-30 transition-all duration-200 pointer-events-auto',
         positionClass,
         isVisible
-          ? 'opacity-100 scale-100'
-          : 'opacity-0 scale-95 pointer-events-none',
+          ? 'opacity-100 translate-y-0'
+          : 'opacity-0 -translate-y-1 pointer-events-none',
       )}
     >
-      <div className="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1 border border-gray-200">
+      <div className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-lg border border-black/10 overflow-hidden">
         <TooltipProvider delayDuration={300}>
-          {primary.map(renderButton)}
-          {secondary.map(renderButton)}
+          {/* Primary actions as text buttons (Durable style) */}
+          {primary.map((action, i) => (
+            <button
+              key={action.id}
+              className={cn(
+                'px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-black/5 hover:text-foreground active:scale-[0.98] transition-all whitespace-nowrap',
+                i > 0 && 'border-l border-black/10',
+                action.disabled && 'opacity-40 pointer-events-none',
+              )}
+              onClick={(e) => handleClick(e, action.onClick)}
+              disabled={action.disabled}
+            >
+              {action.label}
+            </button>
+          ))}
 
-          {hasSeparator && <div className="w-px h-4 bg-gray-300 mx-0.5" />}
+          {/* Separator between primary and secondary/overflow */}
+          {primary.length > 0 && (secondary.length > 0 || hasOverflow) && (
+            <div className="w-px h-5 bg-black/10" />
+          )}
 
+          {/* Secondary actions as icon buttons */}
+          {secondary.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Tooltip key={action.id}>
+                <TooltipTrigger asChild>
+                  <button
+                    className={cn(
+                      ICON_BTN,
+                      action.disabled && 'opacity-40 pointer-events-none',
+                    )}
+                    onClick={(e) => handleClick(e, action.onClick)}
+                    disabled={action.disabled}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">{action.label}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+
+          {/* Overflow dropdown */}
           {hasOverflow && (
             <DropdownMenu>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={ACTION_BTN}
+                      className={ICON_BTN}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <MoreHorizontal className="w-3.5 h-3.5" />
+                      <MoreVertical className="w-4 h-4" />
                     </button>
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
