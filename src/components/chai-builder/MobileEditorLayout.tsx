@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { CustomizePanel } from './CustomizePanel';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useEditorContext } from './EditorContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -126,6 +127,7 @@ export function MobileEditorLayout() {
   }, []);
 
   return (
+    <TooltipProvider>
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
       {/* Top toolbar - clean & minimal */}
       <div className="h-12 flex items-center justify-between px-3 border-b border-border/30 bg-background/95 backdrop-blur-xl z-10 shrink-0 shadow-sm">
@@ -248,5 +250,6 @@ export function MobileEditorLayout() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
