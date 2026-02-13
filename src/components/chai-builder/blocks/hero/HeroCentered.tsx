@@ -40,7 +40,7 @@ const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) =>
   const innerContent = (
     <>
       {backgroundImage && (
-        <div className="absolute inset-0 bg-background/60" />
+        <div className="absolute inset-0 bg-background/0" />
       )}
 
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
