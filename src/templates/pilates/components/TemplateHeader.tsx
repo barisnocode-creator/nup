@@ -25,11 +25,11 @@ export function PilatesHeader({
   }, []);
 
   const navItems = [
-    { label: 'Why Pilates', id: 'features' },
-    { label: 'Our Studio', id: 'tour' },
-    { label: 'Teachers', id: 'teachers' },
-    { label: 'Testimonials', id: 'testimonials' },
-    { label: 'Contact', id: 'contact' },
+    { label: 'Hizmetler', id: 'features' },
+    { label: 'Stüdyomuz', id: 'tour' },
+    { label: 'Ekibimiz', id: 'teachers' },
+    { label: 'Yorumlar', id: 'testimonials' },
+    { label: 'İletişim', id: 'contact' },
   ];
 
   const handleNavClick = (id: string) => {
@@ -45,7 +45,7 @@ export function PilatesHeader({
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? 'bg-[#f5ebe0]/95 backdrop-blur-md shadow-sm'
+          ? 'bg-background/95 backdrop-blur-md shadow-sm'
           : 'bg-transparent'
       }`}
     >
@@ -56,7 +56,7 @@ export function PilatesHeader({
             <div className="w-3 h-3 rounded-full bg-current" />
           </div>
           <span className={`font-serif text-lg tracking-wide ${
-            scrolled ? 'text-[#2d2420]' : 'text-white'
+            scrolled ? 'text-foreground' : 'text-white'
           }`}>
             {siteName}
           </span>
@@ -69,7 +69,7 @@ export function PilatesHeader({
               key={item.id}
               onClick={() => handleNavClick(item.id)}
               className={`text-sm tracking-wide hover:opacity-70 transition-opacity ${
-                scrolled ? 'text-[#2d2420]' : 'text-white/90'
+                scrolled ? 'text-foreground' : 'text-white/90'
               }`}
             >
               {item.label}
@@ -80,7 +80,7 @@ export function PilatesHeader({
         {/* Mobile Menu Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className={`md:hidden ${scrolled ? 'text-[#2d2420]' : 'text-white'}`}
+          className={`md:hidden ${scrolled ? 'text-foreground' : 'text-white'}`}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {mobileMenuOpen ? (
@@ -94,13 +94,13 @@ export function PilatesHeader({
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-[#f5ebe0]/95 backdrop-blur-md border-t border-[#e8ddd0]">
+        <div className="md:hidden bg-background/95 backdrop-blur-md border-t border-border">
           <div className="px-6 py-4 space-y-3">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className="block w-full text-left text-[#2d2420] py-2 text-sm tracking-wide hover:text-[#c4775a] transition-colors"
+                className="block w-full text-left text-foreground py-2 text-sm tracking-wide hover:text-primary transition-colors"
               >
                 {item.label}
               </button>

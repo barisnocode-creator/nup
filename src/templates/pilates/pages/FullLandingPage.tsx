@@ -70,6 +70,7 @@ export function PilatesFullLandingPage({
           <TourGallery
             key="tour"
             galleryImages={content.images?.galleryImages}
+            serviceNames={servicesContent.servicesList.map(s => s.title)}
             isEditable={isEditable}
             onFieldEdit={onFieldEdit}
           />
@@ -80,6 +81,8 @@ export function PilatesFullLandingPage({
             key="teachers"
             teamTitle={aboutContent.team.title}
             teamDescription={aboutContent.team.description}
+            teamMembers={aboutContent.values}
+            teamImages={content.images?.servicesImages}
             isEditable={isEditable}
             onFieldEdit={onFieldEdit}
           />
