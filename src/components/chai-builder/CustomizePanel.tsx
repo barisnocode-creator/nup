@@ -320,7 +320,7 @@ export function CustomizePanel({ onClose }: CustomizePanelProps) {
 
   // Main menu
   const renderMainMenu = () =>
-  <div className="flex flex-col h-full bg-background">
+  <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 shrink-0 bg-primary-foreground">
         <span className="text-xs font-semibold">Özelleştir</span>
@@ -368,7 +368,7 @@ export function CustomizePanel({ onClose }: CustomizePanelProps) {
 
 
   return (
-    <div className="w-full h-full flex flex-col bg-background">
+    <div className="w-full h-full flex flex-col bg-white">
       <AnimatePresence mode="wait">
         {subPanel ?
         <motion.div
