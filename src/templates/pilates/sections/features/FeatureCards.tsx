@@ -36,10 +36,10 @@ export function FeatureCards({
   const displayServices = services.slice(0, 3);
 
   return (
-    <section ref={sectionRef} id="features" className="py-24 bg-[#f5ebe0]">
+    <section ref={sectionRef} id="features" className="py-24 bg-background">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <h2
-          className={`font-serif text-3xl md:text-5xl text-center text-[#2d2420] mb-16 transition-all duration-1000 ${
+          className={`font-serif text-3xl md:text-5xl text-center text-foreground mb-16 transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
@@ -63,8 +63,8 @@ export function FeatureCards({
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
-              <h3 className="font-serif text-xl md:text-2xl text-[#2d2420] mb-2">{service.title}</h3>
-              <p className="text-[#6b5e54] text-sm">{service.description}</p>
+              <h3 className="font-serif text-xl md:text-2xl text-foreground mb-2">{service.title}</h3>
+              <p className="text-muted-foreground text-sm">{service.description}</p>
             </div>
           ))}
         </div>

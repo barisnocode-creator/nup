@@ -5,29 +5,29 @@ interface PilatesFooterProps {
 
 export function PilatesFooter({ siteName, tagline }: PilatesFooterProps) {
   return (
-    <footer className="bg-[#2d2420] py-16 border-t border-white/10">
+    <footer className="bg-foreground py-16 border-t border-background/10">
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="grid md:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full border-2 border-[#c4775a] flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-[#c4775a]" />
+              <div className="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center">
+                <div className="w-3 h-3 rounded-full bg-primary" />
               </div>
-              <span className="font-serif text-xl text-[#f5ebe0]">{siteName}</span>
+              <span className="font-serif text-xl text-background">{siteName}</span>
             </div>
-            <p className="text-[#f5ebe0]/50 text-sm max-w-sm leading-relaxed">
-              {tagline || 'Experience movement in its most authentic form at our one-of-a-kind studio.'}
+            <p className="text-background/50 text-sm max-w-sm leading-relaxed">
+              {tagline || 'Benzersiz stüdyomuzda hareketin en otantik halini deneyimleyin.'}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-[#f5ebe0] font-semibold text-sm uppercase tracking-wider mb-4">Quick Links</h4>
+            <h4 className="text-background font-semibold text-sm uppercase tracking-wider mb-4">Hızlı Linkler</h4>
             <ul className="space-y-2">
-              {['Why Pilates', 'Our Studio', 'Teachers', 'Contact'].map((link) => (
+              {['Hizmetler', 'Stüdyomuz', 'Ekibimiz', 'İletişim'].map((link) => (
                 <li key={link}>
-                  <a href="#" className="text-[#f5ebe0]/50 text-sm hover:text-[#c4775a] transition-colors">
+                  <a href="#" className="text-background/50 text-sm hover:text-primary transition-colors">
                     {link}
                   </a>
                 </li>
@@ -37,13 +37,13 @@ export function PilatesFooter({ siteName, tagline }: PilatesFooterProps) {
 
           {/* Social */}
           <div>
-            <h4 className="text-[#f5ebe0] font-semibold text-sm uppercase tracking-wider mb-4">Follow Us</h4>
+            <h4 className="text-background font-semibold text-sm uppercase tracking-wider mb-4">Bizi Takip Edin</h4>
             <div className="flex gap-3">
               {['Instagram', 'Facebook', 'YouTube'].map((social) => (
                 <a
                   key={social}
                   href="#"
-                  className="w-10 h-10 rounded-full border border-[#f5ebe0]/20 flex items-center justify-center text-[#f5ebe0]/50 hover:border-[#c4775a] hover:text-[#c4775a] transition-all text-xs"
+                  className="w-10 h-10 rounded-full border border-background/20 flex items-center justify-center text-background/50 hover:border-primary hover:text-primary transition-all text-xs"
                 >
                   {social[0]}
                 </a>
@@ -52,13 +52,13 @@ export function PilatesFooter({ siteName, tagline }: PilatesFooterProps) {
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[#f5ebe0]/30 text-xs">
-            © {new Date().getFullYear()} {siteName}. All rights reserved.
+        <div className="border-t border-background/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="text-background/30 text-xs">
+            © {new Date().getFullYear()} {siteName}. Tüm hakları saklıdır.
           </p>
           <div className="flex gap-6">
-            <a href="#" className="text-[#f5ebe0]/30 text-xs hover:text-[#f5ebe0]/60 transition-colors">Privacy Policy</a>
-            <a href="#" className="text-[#f5ebe0]/30 text-xs hover:text-[#f5ebe0]/60 transition-colors">Terms of Service</a>
+            <a href="#" className="text-background/30 text-xs hover:text-background/60 transition-colors">Gizlilik Politikası</a>
+            <a href="#" className="text-background/30 text-xs hover:text-background/60 transition-colors">Kullanım Şartları</a>
           </div>
         </div>
       </div>

@@ -46,12 +46,12 @@ export function PilatesTemplate({
   };
 
   return (
-    <div className="min-h-screen bg-[#f5ebe0] text-[#2d2420]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen bg-background text-foreground">
       {/* Editing Indicator */}
       {isEditable && (
-        <div className="sticky top-14 z-20 py-2 px-4 border-b bg-[#f5ebe0]/95 border-[#e8ddd0] backdrop-blur-sm">
+        <div className="sticky top-14 z-20 py-2 px-4 border-b bg-background/95 border-border backdrop-blur-sm">
           <div className="container mx-auto flex items-center justify-between">
-            <span className="text-xs font-medium text-[#6b5e54]">
+            <span className="text-xs font-medium text-muted-foreground">
               ✏️ Click on any text or image to edit
             </span>
           </div>
