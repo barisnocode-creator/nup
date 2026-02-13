@@ -57,7 +57,7 @@ interface MenuItemDef {
 }
 
 const menuItems: MenuItemDef[] = [
-  { id: 'template', icon: LayoutGrid, label: 'Şablon Değiştir', isAction: true },
+  { id: 'template', icon: LayoutGrid, label: 'Template Değiştir', isAction: true },
   { id: 'colors', icon: Palette, label: 'Renkler', separator: true },
   { id: 'fonts', icon: Type, label: 'Yazı Tipleri' },
   { id: 'background', icon: Image, label: 'Arka Plan Görseli', isAction: true },
