@@ -242,55 +242,59 @@ export function DesktopEditorLayout() {
           <ChaiBuilderCanvas />
         </div>
 
-        {/* Right edit panel */}
+        {/* Floating right edit panel */}
         <AnimatePresence>
           {showRight && (
             <motion.div
               data-editor-panel="right"
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 20, opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              className="absolute right-3 top-3 bottom-3 w-[360px] bg-white rounded-xl shadow-2xl border border-border/40 z-40 flex flex-col overflow-hidden right-edit-panel"
             >
-              <div className="w-[320px] h-full flex flex-col">
-                <div className="flex items-center gap-1 px-3 py-2.5 border-b border-border/30">
-                  <button
-                    onClick={() => setRightTab('props')}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
-                      rightTab === 'props' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
-                    )}
-                  >
-                    <Settings2 className="w-3.5 h-3.5" />
-                    Özellikler
-                  </button>
-                  <button
-                    onClick={() => setRightTab('styles')}
-                    className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
-                      rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
-                    )}
-                  >
-                    <Paintbrush className="w-3.5 h-3.5" />
-                    Stiller
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    onClick={handleToggleRight}
-                    className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
-                    title="Paneli Kapat"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <ScrollArea className="flex-1">
-                  <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
-                    {rightTab === 'props' && <ChaiBlockPropsEditor />}
-                    {rightTab === 'styles' && <ChaiBlockStyleEditor />}
-                  </div>
-                </ScrollArea>
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+                <span className="text-sm font-semibold text-foreground">Bölüm Düzenle</span>
+                <button
+                  onClick={handleToggleRight}
+                  className="px-3 py-1 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 transition-all duration-200"
+                >
+                  Tamam
+                </button>
               </div>
+
+              {/* Tabs */}
+              <div className="flex items-center gap-1 px-3 py-2 border-b border-border/20">
+                <button
+                  onClick={() => setRightTab('props')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+                    rightTab === 'props' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                  )}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                  İçerik
+                </button>
+                <button
+                  onClick={() => setRightTab('styles')}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+                    rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                  )}
+                >
+                  <Paintbrush className="w-3.5 h-3.5" />
+                  Stil
+                </button>
+              </div>
+
+              {/* Content */}
+              <ScrollArea className="flex-1">
+                <div className="p-3 chai-panel-scroll" data-panel={rightTab}>
+                  {rightTab === 'props' && <ChaiBlockPropsEditor />}
+                  {rightTab === 'styles' && <ChaiBlockStyleEditor />}
+                </div>
+              </ScrollArea>
             </motion.div>
           )}
         </AnimatePresence>
