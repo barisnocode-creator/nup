@@ -1,48 +1,42 @@
 
 
-# Fix: Image Action Box Crashing in Chai Builder Editor
+# Fix: Editör Sayfasından Landing Sayfasına Geri Dönme Sorunu
 
 ## Problem
 
-When hovering over images in the Chai Builder editor, the app crashes with:
-```
-Error: `Tooltip` must be used within `TooltipProvider`
-```
+Auth context'te bir race condition var. `onAuthStateChange` callback'i ve `getSession()` promise'i ayni anda calisiyor. `onAuthStateChange` ilk tetiklendiginde henuz session bilgisi gelmemis olabiliyor, `user=null` ve `loading=false` set ediliyor. Bu durumda `ProtectedRoute` kullaniciyi aninda `"/"` sayfasina yonlendiriyor.
 
-The Chai Builder SDK renders blocks inside its own React tree/iframe where Radix UI portals (Tooltip, DropdownMenu) don't connect properly to the provider context. Even though `ImageActionBox` has its own `TooltipProvider`, the Chai Builder's rendering pipeline breaks the React context chain.
+## Cozum
 
-## Solution
+`AuthContext.tsx` dosyasindaki state yonetimini duzeltmek:
 
-Create a simplified version of the action box specifically for Chai Builder blocks that avoids Radix UI portals entirely. The Chai Builder blocks only need a single "Gorsel Degistir" button -- no tooltips, dropdowns, or secondary actions are needed.
+1. Bir `initialized` ref kullanarak ilk session kontrolunun tamamlanmasini bekle
+2. `onAuthStateChange` callback'inde, ilk session kontrolu tamamlanmadan `loading=false` yapma
+3. Sadece `getSession()` tamamlandiktan sonra `loading=false` yap
 
-## File Changes
+## Dosya Degisiklikleri
 
-### 1. MODIFY: `src/components/chai-builder/blocks/shared/EditableChaiImage.tsx`
+### 1. MODIFY: `src/contexts/AuthContext.tsx`
 
-Replace the imported `ImageActionBox` with a simple inline button overlay that doesn't use any Radix UI components:
+`useEffect` icindeki auth state yonetimini guncelle:
 
-- Remove import of `ImageActionBox` from `@/components/website-preview/ImageActionBox`
-- Add a lightweight `ChaiImageOverlay` inline component that renders a plain styled button (no Tooltip, no DropdownMenu)
-- The button shows "Gorsel Degistir" text on hover, matching the Durable-style design
-- Keep the same positioning (`absolute top-3 right-3`) and animations (`opacity`, `translate-y`)
-- Apply to both `EditableChaiImage` and `EditableChaiBackground`
+- Bir `initializedRef` ekle (`useRef(false)`)
+- `onAuthStateChange` callback'inde: sadece `initializedRef.current === true` ise state'i guncelle
+- `getSession()` tamamlandiginda: `initializedRef.current = true` yap ve state'i set et
+- Bu sayede ilk yukleme sirasinda yanlis yonlendirme onlenir
 
-### Technical Details
-
-The simplified overlay will be:
 ```text
-<div> (absolute positioned, fade in/out)
-  <div> (white/95 backdrop-blur container)
-    <button> "Gorsel Degistir" </button>
-  </div>
-</div>
+Onceki akis:
+  onAuthStateChange fires (user=null, loading=false) --> ProtectedRoute redirects to "/"
+  getSession resolves (user=X, loading=false) --> Too late, already redirected
+
+Yeni akis:
+  onAuthStateChange fires --> initialized=false, skip state update
+  getSession resolves --> initialized=true, set user & loading=false
+  onAuthStateChange fires again --> initialized=true, update state normally
 ```
 
-No Radix Tooltip, no DropdownMenu, no portals -- just a plain HTML button with Tailwind classes. This completely eliminates the context chain issue while maintaining the same visual appearance for the single action that Chai Builder blocks need.
-
-The `ImageActionBox` component in `website-preview/` remains unchanged for use by the template system.
-
-| File | Change |
-|------|--------|
-| `EditableChaiImage.tsx` | Replace `ImageActionBox` import with inline portal-free overlay |
+| Dosya | Degisiklik |
+|-------|-----------|
+| `src/contexts/AuthContext.tsx` | useEffect icinde race condition duzeltmesi |
 
