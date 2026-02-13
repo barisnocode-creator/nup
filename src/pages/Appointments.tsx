@@ -1,16 +1,10 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { AppointmentsPanel } from '@/components/dashboard/appointments/AppointmentsPanel';
 import { CalendarCheck } from 'lucide-react';
 
 export default function Appointments() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-
-  if (!id) {
-    navigate('/dashboard');
-    return null;
-  }
 
   return (
     <DashboardLayout activeProjectId={id}>
@@ -21,7 +15,15 @@ export default function Appointments() {
           </div>
           <h1 className="text-2xl font-bold">Randevular</h1>
         </div>
-        <AppointmentsPanel projectId={id} />
+        {id ? (
+          <AppointmentsPanel projectId={id} />
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            <CalendarCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">Henüz bir web siteniz yok</p>
+            <p className="text-sm mt-1">Randevuları yönetmek için önce bir web sitesi oluşturun.</p>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

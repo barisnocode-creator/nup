@@ -31,20 +31,17 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
       title: 'Website', 
       url: activeProjectId ? `/project/${activeProjectId}/website` : '/dashboard', 
       icon: Globe,
-      disabled: !activeProjectId 
     },
     { 
       title: 'Randevular', 
-      url: activeProjectId ? `/project/${activeProjectId}/appointments` : '/dashboard', 
+      url: activeProjectId ? `/project/${activeProjectId}/appointments` : '/appointments', 
       icon: CalendarCheck,
-      disabled: !activeProjectId 
     },
     { title: 'Studio', url: '/studio', icon: Wand2 },
     { 
       title: 'Analytics', 
       url: activeProjectId ? `/project/${activeProjectId}/analytics` : '/dashboard', 
       icon: BarChart3,
-      disabled: !activeProjectId 
     },
     { title: 'Settings', url: '/settings', icon: Settings },
     { title: 'Help', url: '/help', icon: HelpCircle },
@@ -75,25 +72,15 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
                     asChild 
                     tooltip={item.title}
                   >
-                    {item.disabled ? (
-                      <button
-                        onClick={() => toast.info('Öncelikle bir web sitesi oluşturun')}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 cursor-not-allowed opacity-50"
-                      >
-                        <item.icon className="h-5 w-5 shrink-0" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </button>
-                    ) : (
-                      <NavLink 
-                        to={item.url} 
-                        end={item.url === '/dashboard'}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                        activeClassName="bg-primary/10 text-primary font-medium"
-                      >
-                        <item.icon className="h-5 w-5 shrink-0" />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    )}
+                    <NavLink 
+                      to={item.url} 
+                      end={item.url === '/dashboard'}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      activeClassName="bg-primary/10 text-primary font-medium"
+                    >
+                      <item.icon className="h-5 w-5 shrink-0" />
+                      {!isCollapsed && <span>{item.title}</span>}
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
