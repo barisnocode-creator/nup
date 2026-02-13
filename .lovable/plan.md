@@ -1,182 +1,123 @@
 
-# Scalable Template Architecture - Non-Destructive Extension Plan
 
-## Current Architecture Summary
+# AI Layout Generation Engine - Non-Destructive Integration
 
-The system uses a dual-layer approach:
-- **Editor layer**: ChaiBuilder SDK with registered custom blocks (Hero, About, Services, etc.) stored as `chai_blocks` JSON in the database
-- **Publish layer**: `deploy-to-netlify` edge function with mirrored HTML renderers for each block type
-- **Theme layer**: `ChaiThemeValues` presets mapped via `templateToPreset` record, stored as `chai_theme` in DB
-- **Content generation**: `generate-website` edge function produces `GeneratedContent`, then `convertGeneratedContentToChaiBlocks()` transforms it into block arrays
+## Current State Analysis
 
-Templates today are NOT layout blueprints -- they are just theme presets (fonts + colors). The actual layout is determined by the block sequence in `chai_blocks`.
+The system has two disconnected pipelines:
 
-## Proposed Schema-Driven Template System
+1. **AI Content Pipeline**: `generate-website` edge function generates `GeneratedContent` JSON (text + images), saves to `generated_content` column, always sets `template_id = 'pilates1'`
+2. **Template Catalog Pipeline**: `definitions.ts` has 8 schema-driven templates, `convertTemplateToBlocks()` can transform them into `ChaiBlock[]` with AI content overlay -- but this function is never called
 
-### 1. Template Definition Schema
+The gap: AI generation ignores the catalog system. Template selection is hardcoded. The `convertTemplateToBlocks` bridge exists but is unused.
 
-A new file `src/templates/catalog/definitions.ts` will hold template definitions as pure data (no components):
+## Implementation Plan
 
-```typescript
-interface TemplateDefinition {
-  id: string;
-  name: string;
-  industry: string;
-  category: string;
-  description: string;
-  preview: string;               // static image path
-  themePresetKey: string;         // maps to existing presets
-  sections: TemplateSectionDef[];
-  supportedIndustries: string[];
-}
+### Step 1: Smart Template Selection in Edge Function
 
-interface TemplateSectionDef {
-  type: string;        // existing block _type: 'HeroCentered', 'ServicesGrid', etc.
-  variant?: string;    // future: 'split' | 'centered' | 'overlay' for hero
-  defaultProps: Record<string, any>;  // default content/config
-  required?: boolean;  // e.g. hero cannot be removed
-}
-```
+**File**: `supabase/functions/generate-website/index.ts`
 
-This maps directly to the output format requested:
-```json
-{
-  "template_id": "wellness-studio",
-  "industry": "wellness",
-  "sections": [
-    { "type": "HeroCentered", "variant": "centered", "component_id": "HeroCentered", "style_tokens": {} }
-  ]
-}
-```
-
-### 2. Template Resolution Flow
+Replace the hardcoded `selectTemplate()` (line 56-58, always returns `'pilates1'`) with logic that:
+- Reads the sector/profession from extracted data
+- Maps it to the best catalog template ID using a server-side mapping table
+- Falls back to `'pilates1'` for backward compatibility
 
 ```text
-User selects template
-        |
-        v
-TemplateDefinition (pure data)
-        |
-        +---> themePresetKey --> existing ChaiThemeValues preset
-        |
-        +---> sections[] --> map to ChaiBlock[] using defaultProps
-        |
-        v
-  Save to DB: chai_blocks + chai_theme
-        |
-        v
-  Editor loads normally (no changes needed)
+Mapping:
+  wellness/pilates/yoga/fitness/spa -> 'wellness-studio'
+  lawyer/finance/consulting/corporate -> 'corporate-services'
+  doctor/dentist/pharmacist/clinic -> 'medical-clinic'
+  creative/design/marketing/agency -> 'creative-agency'
+  food/restaurant/cafe/bakery -> 'restaurant-cafe'
+  video/film/media/production -> 'video-production'
+  software/saas/startup/app -> 'saas-platform'
+  retail/shop/store/ecommerce -> 'retail-boutique'
+  default -> 'pilates1' (backward compatible)
 ```
 
-### 3. Conversion Function (extends existing `convertToChaiBlocks.ts`)
+### Step 2: Wire convertTemplateToBlocks into Project Loading
 
-A new function `convertTemplateToBlocks()`:
+**File**: `src/pages/Project.tsx`
 
-```typescript
-function convertTemplateToBlocks(
-  definition: TemplateDefinition,
-  content?: GeneratedContent
-): ChaiBlock[] {
-  return definition.sections.map(section => ({
-    _id: generateBlockId(),
-    _type: section.type,
-    ...section.defaultProps,
-    // Override with AI-generated content if available
-    ...extractContentForBlockType(section.type, content),
-  }));
-}
+Currently (line 292), when a project has `generated_content` but no `chai_blocks`, it calls `convertGeneratedContentToChaiBlocks()` -- this is the old monolithic converter that always produces the same section order.
+
+Add a check: if the project's `template_id` matches a catalog template, use `convertTemplateToBlocks(definition, content)` instead. This respects the template's section order and default props while overlaying AI content.
+
+```text
+Logic flow:
+  1. Check if template_id exists in catalog (getCatalogTemplate)
+  2. If yes: use convertTemplateToBlocks(definition, generatedContent)
+  3. If no: fall back to convertGeneratedContentToChaiBlocks() (existing behavior)
 ```
 
-This reuses the existing block type system -- no new component types needed.
+**File**: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
 
-### 4. Variant Mapping (Future-Safe)
+Same pattern for the template preview flow (line 170-173): when previewing a catalog template, use `convertTemplateToBlocks` instead of `convertGeneratedContentToChaiBlocks`.
 
-For blocks with multiple variants (e.g., Hero has Split/Centered/Overlay), the variant is simply the `_type` field:
+### Step 3: Layout Validation Rules
 
-| Variant | _type | Already Registered |
-|---------|-------|--------------------|
-| Hero Centered | HeroCentered | Yes |
-| Hero Split | HeroSplit | Yes |
-| Hero Overlay | HeroOverlay | Yes |
+**File**: `src/components/chai-builder/utils/templateToBlocks.ts` (extend)
 
-No new renderer logic needed. Variants map 1:1 to existing registered blocks.
+Add a `validateLayoutSchema()` function that checks the output before saving:
 
-### 5. File Changes
+- Every block must have a valid `_type` matching a registered block
+- Every block must have a unique `_id`
+- Required sections (marked `required: true`) must be present
+- No unknown block types allowed
+- Maximum 12 sections per layout
+- Props must not exceed 50KB total (prevent DB bloat)
+
+This runs after `convertTemplateToBlocks` and before saving to DB.
+
+### Step 4: Failure Fallback Logic
+
+If AI content generation fails or returns invalid JSON, the system must still produce a usable layout:
+
+**In edge function**: Already handles parse errors (returns 500). No change needed.
+
+**In Project.tsx**: If `convertTemplateToBlocks` throws or returns empty, fall back to the catalog template's `defaultProps` only (no AI content overlay). This guarantees a valid layout even without AI content.
+
+```text
+Fallback chain:
+  1. convertTemplateToBlocks(definition, aiContent)  -- full AI + template
+  2. convertTemplateToBlocks(definition)              -- template defaults only
+  3. convertGeneratedContentToChaiBlocks(content)     -- legacy converter
+  4. Single HeroCentered block                        -- ultimate fallback
+```
+
+### Step 5: Theme Auto-Resolution
+
+**File**: `src/pages/Project.tsx`
+
+When the template is from the catalog, also resolve the theme using `getCatalogTheme(templateId)` instead of `getThemeForTemplate(templateId)`. This ensures the correct theme preset is applied for catalog templates.
+
+## File Changes Summary
 
 | File | Change | Risk |
 |------|--------|------|
-| `src/templates/catalog/definitions.ts` | NEW - Template definitions as data | None (additive) |
-| `src/templates/catalog/index.ts` | NEW - Registry + lookup functions | None (additive) |
-| `src/components/chai-builder/utils/convertToChaiBlocks.ts` | ADD `convertTemplateToBlocks()` function | Low (additive, no existing code changed) |
-| `src/components/chai-builder/TemplateGalleryOverlay.tsx` | UPDATE to read from new catalog | Low (gallery reads template list) |
-| `src/templates/index.ts` | UPDATE `getAllTemplates()` to merge catalog definitions | Low |
-| `src/components/chai-builder/themes/presets.ts` | No change -- new templates reference existing presets | None |
+| `supabase/functions/generate-website/index.ts` | Replace `selectTemplate()` with sector-aware catalog mapping | Low - additive, backward compatible |
+| `src/pages/Project.tsx` | Add catalog template check before block conversion | Low - fallback to existing logic |
+| `src/components/chai-builder/ChaiBuilderWrapper.tsx` | Use catalog resolution in template preview | Low - preview only |
+| `src/components/chai-builder/utils/templateToBlocks.ts` | Add `validateLayoutSchema()` function | None - additive |
 
-### 6. Editor Compatibility Safeguards
+## Safety Assessment
 
-- Templates resolve to standard `ChaiBlock[]` arrays -- the editor sees blocks, not templates
-- No editor UI changes; gallery overlay already exists and works
-- Drag/drop unaffected because blocks are standard registered types
-- Inline editing works because blocks use `inlineEditProps` (already configured)
-- Theme switching uses existing `themePresets` array passed to `ChaiBuilderEditor`
-- Auto-save writes to same `chai_blocks` / `chai_theme` columns
+- **Editor impact**: Zero. Blocks arrive as standard `ChaiBlock[]` arrays regardless of which converter produced them.
+- **Publish parity**: Guaranteed. No new block types. Same `chai_blocks` / `chai_theme` DB columns.
+- **Backward compatibility**: Projects with `template_id = 'pilates1'` continue using the old `convertGeneratedContentToChaiBlocks` path unchanged.
+- **Performance**: Template resolution is instant (dictionary lookup). No additional AI calls. Validation adds ~1ms.
+- **Rollback**: Revert `selectTemplate()` to return `'pilates1'` and remove the catalog check in Project.tsx.
 
-### 7. Publish Pipeline Compatibility
+## Parity Testing Checklist
 
-- `deploy-to-netlify` already renders by `_type` switch -- any block sequence works
-- No new block types means no new HTML renderers needed
-- Theme CSS variables are already extracted from `chai_theme`
+1. Create a new project in each sector (wellness, corporate, healthcare, creative, food, video, saas, retail)
+2. Verify correct template is auto-selected (check `template_id` in DB)
+3. Verify blocks load in editor with correct section order matching the template definition
+4. Verify AI content (titles, descriptions, images) populates correctly into template sections
+5. Verify inline editing works on all populated blocks
+6. Verify drag-and-drop reordering works
+7. Verify publish produces identical output to editor preview
+8. Verify legacy projects (template_id = 'pilates1') still load correctly
+9. Verify template switching via gallery still works
+10. Verify fallback chain works when AI content is missing/invalid
 
-### 8. AI Generation Alignment
-
-Update `generate-website` edge function to:
-1. Accept optional `template_id` parameter
-2. Look up `TemplateDefinition` for section order
-3. Generate content that fills the template's section structure
-4. Return blocks matching the template layout
-
-This is a content-only change in the edge function -- no layout restructuring.
-
-### 9. Scaling to 20 Templates
-
-Each new template is just a data object (~30 lines):
-- Pick a theme preset (8 available)
-- Define section order from existing 11 block types
-- Set default prop values
-- Add a preview image
-
-No new components, no renderer changes, no editor modifications.
-
-### 10. Migration Avoidance
-
-- No database schema changes needed
-- Existing projects keep their `chai_blocks` and `chai_theme` unchanged
-- Template definitions are purely additive metadata
-- Old template IDs in DB (`pilates1`, `temp1`, etc.) continue to resolve via backward-compatible lookup
-
-### 11. Performance Impact
-
-- Template definitions are lightweight JSON (~2KB each, 20 templates = ~40KB)
-- No runtime rendering overhead -- templates resolve at creation time only
-- Gallery overlay already uses lazy loading and error boundaries
-- Static preview images for mobile already implemented
-
-### Safety Assessment
-
-```text
-safe_changes:
-  - New catalog files (purely additive)
-  - convertTemplateToBlocks function (new, non-breaking)
-  - Gallery reads from expanded template list
-
-requires_migration: []
-
-parity_risk_points: []
-
-editor_impact_assessment:
-  Zero editor changes. Templates become blocks before touching the editor.
-
-rollback_plan:
-  Delete catalog files, revert getAllTemplates() to current implementation.
-  No data migration needed.
-```
