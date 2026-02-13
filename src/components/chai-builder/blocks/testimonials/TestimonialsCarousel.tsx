@@ -40,48 +40,43 @@ const TestimonialsCarouselBlock = (props: ChaiBlockComponentProps<TestimonialsCa
   const s = resolveStyles(styleProps);
 
   return (
-    <section {...blockProps} className={`${s.sectionPadding} bg-foreground text-background`}>
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
-        {/* Section header */}
-        <div className="max-w-3xl mx-auto mb-16 text-center">
+        <div className={`text-${s.textAlign} max-w-3xl mx-auto mb-16`}>
           {sectionSubtitle && (
-            <span className="inline-block px-4 py-2 bg-background/10 text-background/70 rounded-full text-sm font-medium mb-4 tracking-widest uppercase">
+            <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>
               {sectionSubtitle}
             </span>
           )}
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-background font-serif">
+          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor}`}>
             {sectionTitle}
           </h2>
         </div>
 
-        {/* Testimonials */}
-        <div className="space-y-0 divide-y divide-background/10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <div key={index} className="py-12 first:pt-0 last:pb-0">
-              <div className="max-w-4xl mx-auto">
-                {/* Large quote */}
-                <p className="text-2xl md:text-3xl lg:text-4xl font-light text-background/90 leading-relaxed mb-8 font-serif italic">
-                  "{testimonial.content}"
-                </p>
-                {/* Author */}
-                <div className="flex items-center gap-4">
-                  {testimonial.avatar ? (
-                    <EditableChaiImage
-                      src={testimonial.avatar}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                      containerClassName="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
-                      inBuilder={inBuilder}
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-background/10 flex items-center justify-center text-background font-bold flex-shrink-0">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="font-semibold text-background">{testimonial.name}</div>
-                    <div className="text-sm text-background/50">{testimonial.role}</div>
+            <div key={index} className="p-8 rounded-2xl bg-card border border-border">
+              <div className="text-4xl text-primary/20 mb-4">"</div>
+              <p className="text-muted-foreground leading-relaxed mb-6">
+                {testimonial.content}
+              </p>
+              <div className="flex items-center gap-4">
+                {testimonial.avatar ? (
+                  <EditableChaiImage
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                    containerClassName="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
+                    inBuilder={inBuilder}
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
+                    {testimonial.name.charAt(0)}
                   </div>
+                )}
+                <div>
+                  <div className="font-semibold text-foreground">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
                 </div>
               </div>
             </div>

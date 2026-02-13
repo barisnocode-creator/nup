@@ -32,17 +32,13 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
   const s = resolveStyles(styleProps);
 
   return (
-    <section {...blockProps} className={`${s.sectionPadding} bg-gradient-to-br from-primary via-primary/90 to-accent relative overflow-hidden`}>
-      {/* Decorative blur circles */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent/20 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/3" />
-
-      <div className="relative container mx-auto px-6">
+    <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
+      <div className="container mx-auto px-6">
         <div className={`max-w-4xl mx-auto text-${s.textAlign}`}>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 font-serif">
+          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} mb-6`}>
             {title}
           </h2>
-          <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
+          <p className={`${s.descSize} ${s.descColor} mb-10 max-w-2xl mx-auto`}>
             {description}
           </p>
           
@@ -50,7 +46,7 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
             {buttonText && (
               <a 
                 href={inBuilder ? "#" : buttonLink}
-                className="inline-flex items-center px-8 py-4 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors text-lg shadow-xl"
+                className="inline-flex items-center px-8 py-4 bg-white text-primary rounded-lg font-medium hover:bg-white/90 transition-colors text-lg"
               >
                 {buttonText}
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +58,7 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
             {secondaryButtonText && (
               <a 
                 href={inBuilder ? "#" : secondaryButtonLink}
-                className="inline-flex items-center px-8 py-4 backdrop-blur-md bg-white/10 border border-white/20 text-white rounded-lg font-medium hover:bg-white/20 transition-colors text-lg"
+                className="inline-flex items-center px-8 py-4 border-2 border-white/30 text-primary-foreground rounded-lg font-medium hover:bg-white/10 transition-colors text-lg"
               >
                 {secondaryButtonText}
               </a>

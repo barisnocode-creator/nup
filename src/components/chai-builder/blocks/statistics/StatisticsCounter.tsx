@@ -44,33 +44,25 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor} text-primary-foreground`}>
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
-          <div className={`text-${s.textAlign} mb-16`}>
+          <div className={`text-${s.textAlign} mb-12`}>
             {subtitle && (
-              <span className="inline-block px-4 py-2 bg-primary-foreground/10 rounded-full text-sm font-medium mb-4 tracking-widest uppercase">
+              <span className={`inline-block px-4 py-2 bg-primary-foreground/10 rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
             {title && (
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif">
+              <h2 className={`${s.titleSize()} ${s.titleWeight}`}>
                 {title}
               </h2>
             )}
           </div>
         )}
 
-        {/* Decorative top line */}
-        <div className="w-20 h-px bg-primary-foreground/30 mx-auto mb-12" />
-
-        <div className="flex flex-wrap justify-center">
+        <div className={`grid grid-cols-2 md:grid-cols-${stats.length} gap-8 text-center`}>
           {stats.map((stat, index) => (
-            <div 
-              key={index} 
-              className={`text-center px-8 md:px-12 py-4 ${
-                index < stats.length - 1 ? 'border-r border-primary-foreground/20' : ''
-              }`}
-            >
-              <div className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">{stat.value}</div>
-              <div className="text-primary-foreground/60 text-xs md:text-sm tracking-widest uppercase mt-3">{stat.label}</div>
+            <div key={index} className="space-y-2">
+              <div className="text-4xl md:text-5xl lg:text-6xl font-bold">{stat.value}</div>
+              <div className="text-primary-foreground/80 text-sm md:text-base">{stat.label}</div>
             </div>
           ))}
         </div>
