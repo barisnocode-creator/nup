@@ -1,3 +1,5 @@
+import React from 'react';
+import { Paintbrush } from 'lucide-react';
 import { 
   registerChaiBlock,
   StylesProp,
@@ -5,6 +7,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { heroCenteredTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { ImageActionBox } from "@/components/website-preview/ImageActionBox";
 
 export type HeroCenteredProps = {
   styles: ChaiStyles;
@@ -34,6 +37,7 @@ const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) =>
   } = props;
 
   const s = resolveStyles(styleProps);
+  const [bgHovered, setBgHovered] = React.useState(false);
 
   return (
     <section 
@@ -44,9 +48,24 @@ const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) =>
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
+      onMouseEnter={inBuilder ? () => setBgHovered(true) : undefined}
+      onMouseLeave={inBuilder ? () => setBgHovered(false) : undefined}
     >
       {backgroundImage && (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      )}
+      {inBuilder && backgroundImage && (
+        <ImageActionBox
+          actions={[{
+            id: 'change-bg',
+            icon: Paintbrush,
+            label: 'Arka Plan Değiştir',
+            onClick: () => window.dispatchEvent(new CustomEvent('chai-open-image-picker')),
+            group: 'primary',
+          }]}
+          isVisible={bgHovered}
+          position="top-left"
+        />
       )}
 
       <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />

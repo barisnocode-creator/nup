@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { heroTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiImage } from "../shared/EditableChaiImage";
 
 export type HeroSplitProps = {
   styles: ChaiStyles;
@@ -65,10 +66,11 @@ const HeroSplitBlock = (props: ChaiBlockComponentProps<HeroSplitProps>) => {
 
           <div className="relative">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-50" />
-            <img 
+            <EditableChaiImage 
               src={image || "/placeholder.svg"} 
               alt={title}
               className="relative rounded-2xl shadow-2xl w-full object-cover aspect-[4/3]"
+              inBuilder={inBuilder}
             />
           </div>
         </div>

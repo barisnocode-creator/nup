@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiImage } from "../shared/EditableChaiImage";
 
 interface ServiceItem {
   icon?: string;
@@ -69,11 +70,12 @@ const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) =>
             >
               {service.image ? (
                 <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-6">
-                  <img 
+                  <EditableChaiImage 
                     src={service.image} 
                     alt={service.title} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
+                    containerClassName="w-full h-full"
+                    inBuilder={props.inBuilder}
                   />
                 </div>
               ) : (

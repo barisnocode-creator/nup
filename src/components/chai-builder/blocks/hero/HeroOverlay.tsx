@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { heroTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiBackground } from "../shared/EditableChaiImage";
 
 export type HeroOverlayProps = {
   styles: ChaiStyles;
@@ -38,13 +39,15 @@ const HeroOverlayBlock = (props: ChaiBlockComponentProps<HeroOverlayProps>) => {
       {...blockProps} 
       className={`relative min-h-[600px] flex items-center`}
     >
-      <div 
+      <EditableChaiBackground
+        backgroundImage={backgroundImage}
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: backgroundImage 
-            ? `url(${backgroundImage})` 
-            : 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)',
+          backgroundImage: !backgroundImage 
+            ? 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%)' 
+            : undefined,
         }}
+        inBuilder={inBuilder}
       />
       
       <div 
