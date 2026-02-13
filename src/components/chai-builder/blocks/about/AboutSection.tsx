@@ -6,6 +6,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { EditableChaiImage } from "../shared/EditableChaiImage";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type AboutSectionProps = {
   styles: ChaiStyles;
@@ -33,6 +34,7 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
   const featureList = features ? features.split('\n').filter(f => f.trim()) : [];
 
   return (
+    <TooltipProvider>
     <section 
       {...blockProps} 
       className={`${s.sectionPadding} ${s.bgColor}`}
@@ -78,6 +80,7 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 

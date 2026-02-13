@@ -6,6 +6,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { EditableChaiImage } from "../shared/EditableChaiImage";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface ServiceItem {
   icon?: string;
@@ -44,6 +45,7 @@ const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) =>
   const s = resolveStyles(styleProps);
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className={`text-${s.textAlign} max-w-3xl mx-auto mb-16`}>
@@ -94,6 +96,7 @@ const ServicesGridBlock = (props: ChaiBlockComponentProps<ServicesGridProps>) =>
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 
