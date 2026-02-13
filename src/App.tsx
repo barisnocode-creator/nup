@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
 import Analytics from "./pages/Analytics";
+import Appointments from "./pages/Appointments";
 import Studio from "./pages/Studio";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
@@ -56,6 +57,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <WebsiteDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/project/:id/appointments"
+              element={
+                <ProtectedRoute>
+                  <Appointments />
                 </ProtectedRoute>
               }
             />
