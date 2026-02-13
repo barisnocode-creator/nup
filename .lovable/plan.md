@@ -1,77 +1,141 @@
 
-# Image Hover Action Box System
+# Image Action Box - Expanded Controls
 
 ## Overview
 
-Replace the current full-overlay pencil icon on image hover with a compact contextual action box positioned in the top-right corner. This action box appears only in editor mode and provides quick access to image editing actions.
+Expand the current single-button action box in `EditableImage.tsx` to include 5 controls matching the section action box pattern already used in `EditableSection.tsx`. Add a "More Options" dropdown using Radix DropdownMenu.
 
-## Current Behavior
+## Control Layout (left to right)
 
-- Hovering an image shows a dark overlay (`bg-black/40`) covering the entire image
-- A centered pencil icon appears inside a white circle
-- Clicking opens the image editor sidebar
+```text
++-------------------------------------------------------+
+| [Restyle] [Regenerate] [Move Up] [Move Down] [More ⋯] |
++-------------------------------------------------------+
+```
 
-## New Behavior
+1. **Restyle** (Paintbrush icon) -- opens image editor sidebar (existing `onSelect` callback)
+2. **Regenerate** (Wand2 icon) -- triggers image regeneration
+3. **Move Up** (ChevronUp icon) -- moves parent section up
+4. **Move Down** (ChevronDown icon) -- moves parent section down
+5. **More Options** (MoreHorizontal icon) -- opens dropdown menu
 
-- Hovering an image shows a subtle border highlight (no dark overlay blocking the image)
-- A compact action box fades in at the top-right corner with 8px padding from edges
-- The action box contains: **Edit** (pencil icon) button that opens the image editor sidebar
-- The box disappears when the cursor leaves the image container
-- Not visible in preview or published mode (controlled by existing `isEditable` prop)
+### More Options Dropdown
+
+- **Edit Section** (Edit3 icon) -- opens section editor
+- **Duplicate** (Copy icon) -- duplicates section
+- **Delete** (Trash2 icon, red text) -- deletes section
 
 ## Technical Details
 
-### File: `src/components/website-preview/EditableImage.tsx`
+### 1. Props Extension (`EditableImage.tsx`)
 
-This is the single global image component used by all templates (temp1 hero, about, gallery, CTA, temp2 hero, etc. -- 7+ template files). Modifying this one file applies the change everywhere.
-
-**Changes:**
-
-1. Remove the full-screen dark overlay (`bg-black/40`) on hover
-2. Remove the centered pencil icon layout
-3. Add a top-right positioned action box:
+Add new optional callback props to support the expanded actions:
 
 ```text
-Structure:
-<div class="absolute top-2 right-2 z-20">  -- action box container
-  <div class="flex gap-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1 border">
-    <button title="Edit Image">
-      <Pencil icon 14px />
-    </button>
+New props:
+  onRegenerate?: () => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
+  onEdit?: () => void
+  onDuplicate?: () => void
+  onDelete?: () => void
+  isFirst?: boolean
+  isLast?: boolean
+```
+
+These are optional so existing usages without the new props continue to work (only the edit/restyle button shows if callbacks aren't provided).
+
+### 2. Action Box Structure
+
+Replace the current single-button box with:
+
+```text
+<div class="absolute top-2 right-2 z-20 ...">
+  <div class="flex items-center gap-0.5 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1 border">
+    <!-- Tooltip-wrapped icon buttons -->
+    <TooltipProvider>
+      <Tooltip><TooltipTrigger><button>Paintbrush</button></TooltipTrigger>
+        <TooltipContent>Restyle</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger><button>Wand2</button></TooltipTrigger>
+        <TooltipContent>Regenerate</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger><button>ChevronUp</button></TooltipTrigger>
+        <TooltipContent>Move Up</TooltipContent></Tooltip>
+      <Tooltip><TooltipTrigger><button>ChevronDown</button></TooltipTrigger>
+        <TooltipContent>Move Down</TooltipContent></Tooltip>
+
+      <!-- Separator -->
+      <div class="w-px h-4 bg-gray-300 mx-0.5" />
+
+      <!-- Dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <button>MoreHorizontal</button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>Edit Section</DropdownMenuItem>
+          <DropdownMenuItem>Duplicate</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem class="text-red-600">Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TooltipProvider>
   </div>
 </div>
 ```
 
-4. Keep the subtle border highlight on hover (`border-2 border-primary`) -- already exists
-5. Animation: `opacity-0 scale-95` to `opacity-100 scale-100` with `transition-all duration-200`
-6. The action box uses `pointer-events-auto` while the overlay border uses `pointer-events-none`
+### 3. Individual Button Styling
 
-### Hover Detection Model
+Each icon button:
+- Size: `p-1.5` (28px touch target)
+- Icon size: `w-3.5 h-3.5` (14px)
+- Hover: `hover:bg-gray-100` (light), transitions via `transition-colors`
+- Disabled: `opacity-40 pointer-events-none` (for first/last move buttons)
+- Border radius: `rounded-md`
+- Color: `text-gray-700`
 
-- Uses the existing `onMouseEnter` / `onMouseLeave` on the container `div` -- no change needed
-- The `isHovered` state already tracks hover correctly
-- Detection area matches the container boundaries which wrap the image exactly
+### 4. Dropdown Behavior
 
-### Editor-Only Visibility
+- Uses existing `DropdownMenu` from `@radix-ui/react-dropdown-menu` (already in project)
+- Opens on click, closes on outside click or item selection
+- `align="end"` to anchor to the right edge
+- Each item has an icon (16px) + label
+- Delete item styled with `text-red-600` for destructive emphasis
+- `onClick` on items calls `e.stopPropagation()` to prevent image click handler
 
-- The entire overlay system is already gated behind `{isEditable && (...)}` -- no change needed
-- When `isEditable` is false (preview/published mode), no hover effects render
-- The `cursor-pointer` class is also already conditional on `isEditable`
+### 5. Tooltip Labels
 
-### Responsive Editor Scaling
+- Uses existing `Tooltip` from `@radix-ui/react-tooltip` (already in project)
+- `delayDuration={300}` for a quick but non-intrusive reveal
+- Side: `bottom` to avoid clipping at top edge
+- Labels in Turkish: "Stili Degistir", "Yeniden Olustur", "Yukari Tasi", "Asagi Tasi", "Diger"
 
-- Using `top-2 right-2` (8px) Tailwind spacing ensures consistent padding at any scale
-- The action box uses small, fixed-size icons (14px) that remain legible at all viewport widths
-- No absolute pixel values that would break with CSS transforms
+### 6. Micro-Interaction Feedback
 
-### Selected State
+- Action box entrance: `opacity-0 scale-95` to `opacity-100 scale-100` (200ms) -- already exists
+- Button hover: `bg-gray-100` with `transition-colors` (150ms)
+- Dropdown open: Radix built-in `animate-in fade-in-0 zoom-in-95` -- already configured in project's DropdownMenuContent
+- Disabled buttons: reduced opacity, no pointer events
+- Delete hover: `hover:bg-red-50` for destructive emphasis
 
-- When an image is selected (`isSelected`), the action box remains visible (same as current behavior where overlay stays visible)
-- The primary-color border ring on selection is preserved
+### 7. Conditional Rendering
 
-## Impact
+Controls only render if their callback is provided:
+- Restyle always shows (uses existing `onSelect`)
+- Regenerate only if `onRegenerate` is provided
+- Move Up/Down only if `onMoveUp`/`onMoveDown` are provided
+- More Options only if any of `onEdit`/`onDuplicate`/`onDelete` are provided
+- Separator only renders if both primary actions and dropdown exist
 
-- All image blocks across all templates get the new interaction automatically (EditableImage is used in 7+ template files)
-- No changes needed in any template file
-- ImageEditorSidebar continues to open via the existing `onSelect` callback
-- No changes to the hover detection model or editor-only gating logic
+### 8. Imports to Add
+
+```text
+From lucide-react: Paintbrush, Wand2, ChevronUp, ChevronDown, MoreHorizontal, Edit3, Copy, Trash2
+From @/components/ui/tooltip: Tooltip, TooltipTrigger, TooltipContent, TooltipProvider
+From @/components/ui/dropdown-menu: DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator
+```
+
+### 9. Files Changed
+
+Only **one file**: `src/components/website-preview/EditableImage.tsx`
+
+No template files need updating -- the new props are all optional, so existing usages continue working with just the restyle button visible. Templates can opt in to the expanded toolbar by passing the new callbacks.
