@@ -1,91 +1,71 @@
 
+# Randevu Formunun Yayinlanan Sitede Calismasi - Netlify Renderer Guncelleme
 
-# Randevu Formu: Loading Skeleton ve Musait Olmayan Gunler
+## Sorun Tespiti
 
-## Ozet
+Backend (book-appointment edge function) sorunsuz calisiyor - test randevusu basariyla olusturuldu. Sorun **yayinlanan Netlify sitesindeki HTML renderer**'da:
 
-Randevu formuna iki iyilestirme eklenecek:
-1. Tarih secildiginde slot'lar yuklenirken animasyonlu skeleton gosterilecek
-2. Musait olmayan gunler (tatil, kapali gunler) tarih seridinde gri ve tiklanamaz gorunecek
+1. **Eski tasarim**: `deploy-to-netlify/index.ts` icindeki `renderAppointmentBooking` fonksiyonu hala eski basit buton tasarimini kullaniyor (duz flex-wrap butonlar)
+2. **Editordeki yeni tasarim**: React bileseni (AppointmentBooking.tsx) Cal.com ilhamli modern tasarima sahip - step indicator, yatay tarih seridi, scrollable saat listesi
+3. **Uyumsuzluk**: Editorde gordugun ile yayinlanan site birbiriyle uyusmuyor
 
-## Degisiklik 1: Loading Skeleton
+## Cozum
 
-Tarih secildikten sonra saat slotlari yuklenirken su an hicbir gorsel geri bildirim yok. Skeleton eklenecek:
+`renderAppointmentBooking` fonksiyonunu tamamen yeniden yazarak editordeki modern tasarima eslemek:
 
-- 3 sutunlu grid icinde 6 adet pill seklinde skeleton kutu
-- `animate-pulse` animasyonu ile nabiz efekti
-- Skeleton yuksekligi gercek slot butonlariyla ayni (py-2.5, rounded-full)
-- `fetchSlots` fonksiyonunda `loading` state'i zaten var ama kullanilmiyor - saat secimi alaninda kullanilacak
+### Yeni HTML Yapisi
 
-## Degisiklik 2: Musait Olmayan Gunleri Gri Gosterme
+**Step Indicator**: Ust kisimda 3 adimli gosterge (Tarih - Saat - Bilgiler)
+- SVG ikonlar ile Calendar, Clock, User
+- Aktif adim: `var(--primary)` dolgu
+- Cizgi baglantilari adimlar arasi
 
-Su an tarih seridi 28 gunu gosteriyor ama hangi gunlerin musait oldugunu bilmiyor. Cozum:
+**Tarih Secimi (Date Strip)**:
+- 7 gunluk yatay grid (grid-cols-7)
+- Her gun: gun adi (kisa) + gun numarasi
+- Secili gun: `var(--primary)` arka plan, beyaz yazi
+- Sol/sag ok butonlari ile hafta degistirme
+- Ay ve yil basligini ustunde gosterme
 
-- Yeni bir state: `unavailableDates: Set<string>` - musait olmayan tarihleri tutar
-- Goruntulenen hafta degistiginde (weekOffset degisince veya ilk yuklenmede), o haftanin 7 gunu icin toplu olarak `/book-appointment?project_id=...&date=...` cagrilari yapilacak
-- Slot sayisi 0 olan veya hata donen gunler `unavailableDates` set'ine eklenecek
-- `DateStrip` bileseninde `unavailableDates` prop'u alinacak
-- Musait olmayan gunler:
-  - `opacity-40 cursor-not-allowed` ile soluk gorunecek
-  - Ustune kucuk bir cizgi (line-through) efekti
-  - `onClick` devre disi
-  - `pointer-events-none` ile tiklanamaz
+**Saat Secimi (Scrollable List)**:
+- Dikey liste, her slot bir satir (start - end time)
+- `max-height: 220px` ile scroll
+- Secili slot: `var(--primary)` arka plan
+- Sure bilgisi her satin saginda
 
-### Performans Notu
+**Form Alanlari**:
+- Saat secildikten sonra gorunur (animasyonlu acilma JavaScript ile)
+- Ad + E-posta yan yana (2 sutunlu grid)
+- Telefon ve Mesaj alanlari alt alta
+- Rounded-xl, havadar input'lar
 
-- 7 paralel istek yerine `Promise.allSettled` ile toplu gonderim
-- Sonuclar cache'lenecek: `checkedWeeks: Set<number>` ile ayni hafta tekrar sorgulanmayacak
-- Sadece goruntulenen hafta kontrol edilecek (lazy loading)
+**Consent + Submit**:
+- Checkbox + gizlilik metni
+- `var(--primary)` arka planli genis buton
+- Disabled state: `opacity: 0.4`
+
+### JavaScript Degisiklikleri
+
+Mevcut JS mantigi korunacak (tarih sec -> saat getir -> form goster -> gonder) ama DOM manipulasyonlari yeni HTML yapisina uyarlanacak:
+
+- `renderDates()`: 7'li grid render, hafta offset yonetimi
+- `selectDate()`: Grid item'inin stilini degistir, slot'lari getir
+- `renderSlots()`: Dikey liste render
+- `selectSlot()`: Form alanlarini ac, step indicator guncelle
+- `submit()`: Mevcut POST mantigi ayni
+
+### Unavailable Date Kontrolu (Bonus)
+
+Hafta goruntulediginde 7 paralel fetch ile musait olmayan gunleri belirle ve `opacity:0.4; pointer-events:none` ile devre disi birak.
 
 ## Dosya Degisiklikleri
 
 | Dosya | Islem |
 |-------|-------|
-| `src/components/chai-builder/blocks/appointment/AppointmentBooking.tsx` | Skeleton eklenmesi, DateStrip'e unavailable prop'u, haftalik musaitlik kontrolu |
+| `supabase/functions/deploy-to-netlify/index.ts` | `renderAppointmentBooking` fonksiyonunu Cal.com ilhamli yeni HTML/CSS/JS ile yeniden yaz |
 
-## Teknik Detaylar
+## Beklenen Sonuc
 
-### Yeni State'ler
-
-```text
-const [slotsLoading, setSlotsLoading] = useState(false);          // slot fetch sirasinda skeleton gostermek icin
-const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
-const [checkedWeeks, setCheckedWeeks] = useState<Set<number>>(new Set());
-```
-
-### Skeleton Komponenti (inline)
-
-Saat secim alaninda `slotsLoading` true iken gosterilecek:
-- 6 adet `div` ile `animate-pulse bg-muted rounded-full h-10` seklinde
-- 3 sutunlu grid icinde
-
-### DateStrip Degisiklikleri
-
-- Yeni prop: `unavailableDates: Set<string>`
-- Her tarih butonu icin: eger `unavailableDates.has(d)` ise:
-  - `opacity-40 pointer-events-none` sinifi
-  - Gun numarasinin ustune hafif cizgi (line-through)
-  - `disabled` attribute
-
-### Haftalik Musaitlik Kontrolu
-
-- `useEffect` icinde `weekOffset` degistiginde tetiklenir
-- O haftanin 7 gunu icin `Promise.allSettled` ile paralel fetch
-- Her gun icin dondurulen `slots` dizisi bos ise o gun unavailable olarak isaretlenir
-- Sonuclar `unavailableDates` state'ine merge edilir
-- `checkedWeeks` set'ine hafta eklenir (tekrar sorgulanmaz)
-
-### fetchSlots Guncelleme
-
-```text
-Mevcut:
-  setAvailableSlots([]);
-  ... fetch ...
-
-Yeni:
-  setSlotsLoading(true);
-  setAvailableSlots([]);
-  ... fetch ...
-  setSlotsLoading(false);
-```
-
+- Yayinlanan sitedeki randevu formu editordekiyle birebir ayni gorunecek
+- Tarih seridi, saat listesi, step indicator, form alanlari tam eslesecek
+- Randevu olusturma calisan backend ile sorunsuz calisacak
