@@ -1,109 +1,144 @@
 
 
-# Pilates Template Kalite Yukseltmesi - Referans Siteye Uyum
+# ChaiBuilder Bloklarini Premium Kaliteye Yukseltme
 
-## Sorun Analizi
+## Sorun
 
-Mevcut template ile referans site (pilates-circles-by-cult.lovable.app) arasinda ciddi farklar var:
+Sistemde iki ayri render katmani var:
 
-1. **Sabit kodlanmis renkler**: Tum sectionlarda `#c4775a`, `#2d2420`, `#f5ebe0` dogrudan yazilmis. Tema degistiginde hicbir sey degismiyor
-2. **Statik icerik**: Ogretmenler, testimonial'lar, nav linkleri, galeri basliklari hep ayni sabit degerlerle geliyor - AI'nin urettigi icerik kullanilmiyor
-3. **Eksik ozellikler**: Referans sitedeki sonsuz yatay galeri kaydirmasi, daha rafine glassmorphism efektleri, daha akici animasyonlar yok
-4. **Esneklik yok**: Farkli bir meslek/sektor secildiginde bile site ayni gorunuyor cunku icerik baglantisi yok
+1. **Template React bilesenleri** (src/templates/pilates/): Glassmorphism, sonsuz galeri kaydirma, tam ekran hero + form overlay gibi premium gorsellerle dolu. Ancak bunlar **sadece galeri onizleme kartlarinda** kullaniliyor.
 
-## Cozum: Tum Sectionlari Yeniden Yazmak
+2. **ChaiBuilder bloklari** (src/components/chai-builder/blocks/): Editor tuvali VE yayinlanan site bu bloklari kullaniyor. Ancak bunlar basit, jenerik ve gorsel olarak zayif.
 
-### Degisiklik 1: CSS Degiskenleri Kullanimi (Tum Sectionlar)
+Sonuc: Template ne olursa olsun, editor ve yayinlanan site hep ayni jenerik gorunumde kaliyor. Renk degisiklikleri yansisa da, **tasarim kalitesi** degismiyor.
 
-Sabit hex kodlari yerine tema degiskenlerine gecis:
+## Cozum Stratejisi
 
-```text
-Onceki:  bg-[#f5ebe0]  text-[#2d2420]  text-[#c4775a]  bg-[#2d2420]
-Sonraki: bg-background  text-foreground  text-primary    bg-card (koyu varyant)
-```
+ChaiBuilder bloklarini, Pilates template'indeki gorsel kaliteye yukseltmek. Boylece editor tuvali ve yayinlanan site ayni premium gorunume sahip olacak.
 
-Her section icin renk esleme:
-- `#f5ebe0` (krem arka plan) -> `bg-background`
-- `#2d2420` (koyu metin) -> `text-foreground`
-- `#c4775a` (terracotta vurgu) -> `text-primary`
-- `#6b5e54` (soluk metin) -> `text-muted-foreground`
-- `#e8ddd0` (border) -> `border-border`
-- `#2d2420` (koyu arka plan) -> `bg-secondary` veya ozel koyu section icin gradient
+## Degisiklik Detaylari
 
-### Degisiklik 2: HeroFullscreen.tsx - Referans Siteye Uyum
+### 1. HeroCentered.tsx - Tam Ekran Premium Hero
 
-- Gradient overlay'i tema renklerine bagla: `from-primary/60 via-primary/30 to-primary/20` yerine sabit hex
-- Form alanlarini tema renklerine bagla
-- "Discover More" metnini Turkce yap ve generated content'ten al
-- Buton rengini `bg-primary text-primary-foreground` yap
+Mevcut: Ortalanmis baslik + butonlar, basit arka plan
+Hedef: Pilates'teki gibi tam ekran hero + glassmorphism form overlay
 
-### Degisiklik 3: FeatureCards.tsx - Dinamik Icerik
+Degisiklikler:
+- `min-h-screen` tam ekran yaklasimi
+- `items-end` ile icerigi alta yasla (Pilates'teki gibi)
+- Gradient overlay'ler: `from-primary/60 via-primary/30` + `from-black/40 via-transparent`
+- Sag tarafta glassmorphism form kutusu: `backdrop-blur-xl bg-white/10 border border-white/20`
+- Grid layout: sol taraf baslik+aciklama, sag taraf form
+- Alt ortada "Kesfet" butonu + bounce animasyonu
+- `font-serif` baslik ve `tracking-tight leading-[0.95]`
 
-- Arka plan rengini `bg-background` yap
-- Baslik rengini `text-foreground`, aciklama `text-muted-foreground`
-- Servis gorselleri icin `servicesImages` dizisini duzgun kullan
-- Kart hover animasyonlarini iyilestir
+### 2. ServicesGrid.tsx - Gorsel Oncelikli Kartlar
 
-### Degisiklik 4: TourGallery.tsx - Sonsuz Kaydirma
+Mevcut: Ikon + baslik + aciklama kartlari
+Hedef: Referans sitedeki gibi gorsel ustune overlay metin
 
-- Referans sitedeki gibi galeri gorsellerini ciftleyerek sonsuz yatay kaydirma efekti ekle (CSS animation ile)
-- Koyu arka plan icin `bg-foreground text-background` seklinde ters tema kullan
-- Galeri basliklarini `generated_content`'teki servis adlarindan al
-- `scrollbar-hide` CSS sinifini ekle
+Degisiklikler:
+- Kart yaklasimi: gorsel tam arka plan, alt kisimda gradient overlay uzerine baslik
+- `aspect-[3/4]` dikdortgen kart orani
+- Hover efekti: gorsel `scale-110`, overlay koyulasma
+- IntersectionObserver ile stagger animasyonlari (her kart sirayla fade-in)
+- Gorseli olmayan kartlar icin mevcut ikon yaklasimi korunacak (fallback)
 
-### Degisiklik 5: TeacherGrid.tsx - Dinamik Ekip Verisi
+### 3. ImageGallery.tsx - Sonsuz Yatay Kaydirma
 
-Su an 4 sabit ogretmen var. Bunun yerine:
-- `generated_content.pages.about.values` verisinden ekip uyeleri olustur
-- Gorselleri `servicesImages` dizisinden cek
-- Isimleri ve rolleri AI icerigi olan `values` dizisinden map'le
-- Renkleri tema degiskenlerine bagla
+Mevcut: Statik grid layout
+Hedef: Pilates'teki gibi sonsuz yatay kaydirma (infinite marquee)
 
-### Degisiklik 6: Testimonials.tsx - Generated Content Kullanimi
+Degisiklikler:
+- Grid yerine `overflow-hidden` + `flex` + CSS animation
+- Gorselleri ciftleyerek sonsuz dongu efekti
+- `@keyframes marquee` animasyonu: `translateX(0) -> translateX(-50%)`
+- Koyu arka plan (bg-foreground text-background) ile kontrast
+- Gorseller arasi boslukta baslik overlay'leri
+- Hover'da animasyonu durdurma: `hover:[animation-play-state:paused]`
+- Scrollbar gizleme
 
-Su an `highlights` prop'u alinip kullanilmiyor. Duzeltme:
-- `highlights` dizisini gercekten testimonial olarak render et
-- Her highlight'in `title`'ini musteri adi, `description`'ini yorum olarak goster
-- Renkleri tema degiskenlerine bagla
-- Koyu section icin ters tema kullan
+### 4. TestimonialsCarousel.tsx - Koyu Tema + Buyuk Alinti
 
-### Degisiklik 7: ContactSection.tsx - Tema Uyumu
+Mevcut: Kart grid'i, basit gorunum
+Hedef: Koyu arka plan, buyuk alinti metni, minimal tasarim
 
-- Form alanlarinin renklerini tema degiskenlerine bagla
-- Buton rengini `bg-primary text-primary-foreground` yap
-- Ikon renklerini `text-primary` yap
-- Border renklerini `border-border` yap
+Degisiklikler:
+- Koyu section arka plani: `bg-foreground text-background`
+- Buyuk tirnak isareti dekoratif eleman
+- Grid yerine tek buyuk testimonial + yanlarda kucuk preview
+- Veya referans siteye uygun olarak buyuk fontlu alinti + isim altta
+- Border-top ile ayirici cizgi
 
-### Degisiklik 8: TemplateHeader.tsx ve TemplateFooter.tsx
+### 5. CTABanner.tsx - Gradient Arka Plan + Gorsel
 
-- Sabit renkleri tema degiskenlerine cevir
-- Nav item'lari Turkce yap (generated content'ten)
-- Logo rengini tema'ya bagla
-- Footer link renklerini tema'ya bagla
+Mevcut: Duz renkli arka plan
+Hedef: Gradient + blur dekoratif elemanlar
 
-### Degisiklik 9: index.tsx (PilatesTemplate)
+Degisiklikler:
+- `bg-gradient-to-br from-primary via-primary/90 to-accent` gradient
+- Dekoratif blur daireler (pilates'teki gibi)
+- Daha buyuk tipografi
+- Buton stillerini iyilestir: `backdrop-blur bg-white/20`
 
-- Wrapper `div`'deki sabit `bg-[#f5ebe0] text-[#2d2420]` -> `bg-background text-foreground`
-- `fontFamily` stil override'ini kaldir (tema zaten hallediyor)
+### 6. StatisticsCounter.tsx - Minimal Cizgi Ayiricilar
+
+Mevcut: Basit sayilar
+Hedef: Sayilar arasi ince border ayiricilar, daha sofistike layout
+
+Degisiklikler:
+- Her istatistik arasina `border-r border-primary-foreground/20` dikey cizgi
+- Ustune decorative ince cizgi
+- Font boyutunu buyut: `text-6xl md:text-7xl`
+- Label icin `tracking-widest uppercase text-xs`
+
+### 7. AboutSection.tsx - Daha Buyuk Gorsel + Paralaks Hissi
+
+Mevcut: Basit grid + gorsel
+Hedef: Daha buyuk, kenarliksiz gorsel alani
+
+Degisiklikler:
+- Gorsele `rounded-3xl` ve golge ekle
+- Dekoratif arka plan elemani: renk splatteri veya gradient blob
+- Feature listesi icin daha sofistike ikon (checkmark yerine nokta + cizgi)
+- Typography: serif baslik
+
+### 8. ContactForm.tsx - Glassmorphism Form
+
+Mevcut: Standart kart icinde form
+Hedef: Pilates'teki hero form tarzinda glassmorphism
+
+Degisiklikler:
+- Form container: `backdrop-blur-sm bg-card/80` veya `bg-muted/50`
+- Input stili: `bg-background/50 border-border/50` daha yumusak
+- Buton: `bg-primary hover:bg-primary/90` gradient efekti
+- Iletisim bilgileri bolumune dekoratif arka plan
 
 ## Dosya Degisiklikleri Ozeti
 
 | Dosya | Islem | Aciklama |
 |-------|-------|----------|
-| `src/templates/pilates/index.tsx` | Guncelle | Sabit renkleri tema degiskenlerine cevir |
-| `src/templates/pilates/sections/hero/HeroFullscreen.tsx` | Yeniden yaz | Tema renkleri, Turkce metinler, referans site uyumu |
-| `src/templates/pilates/sections/features/FeatureCards.tsx` | Guncelle | Tema renkleri, dinamik gorsel kullanimi |
-| `src/templates/pilates/sections/tour/TourGallery.tsx` | Yeniden yaz | Sonsuz kaydirma, tema renkleri, dinamik basliklar |
-| `src/templates/pilates/sections/teachers/TeacherGrid.tsx` | Yeniden yaz | Dinamik ekip verisi, tema renkleri |
-| `src/templates/pilates/sections/testimonials/Testimonials.tsx` | Yeniden yaz | Generated content kullanimi, tema renkleri |
-| `src/templates/pilates/sections/contact/ContactSection.tsx` | Guncelle | Tema renkleri |
-| `src/templates/pilates/components/TemplateHeader.tsx` | Guncelle | Tema renkleri, Turkce nav |
-| `src/templates/pilates/components/TemplateFooter.tsx` | Guncelle | Tema renkleri |
+| `src/components/chai-builder/blocks/hero/HeroCentered.tsx` | Yeniden yaz | Tam ekran + glassmorphism form |
+| `src/components/chai-builder/blocks/services/ServicesGrid.tsx` | Yeniden yaz | Gorsel-oncelikli kartlar + stagger animasyonu |
+| `src/components/chai-builder/blocks/gallery/ImageGallery.tsx` | Yeniden yaz | Sonsuz yatay kaydirma marquee |
+| `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` | Yeniden yaz | Koyu tema + buyuk alinti |
+| `src/components/chai-builder/blocks/cta/CTABanner.tsx` | Guncelle | Gradient + dekoratif blur |
+| `src/components/chai-builder/blocks/statistics/StatisticsCounter.tsx` | Guncelle | Cizgi ayiricilar + buyuk font |
+| `src/components/chai-builder/blocks/about/AboutSection.tsx` | Guncelle | Serif baslik + dekoratif blob |
+| `src/components/chai-builder/blocks/contact/ContactForm.tsx` | Guncelle | Glassmorphism form stili |
 
 ## Beklenen Sonuc
 
-- Tema preset degistirildiginde tum renkler aninda degisecek
-- Farkli meslek/sektor icin farkli AI icerigi uretildiginde, template o icerigi dogru gosterecek
-- Galeri sonsuz kaydirma ile referans siteye yakin gorunecek
-- Her section dinamik olacak, sabit veri kalmayacak
+- Editor tuvalinde bloklar premium gorunecek (glassmorphism, animasyonlar, buyuk tipografi)
+- Yayinlanan sitede (`RenderChaiBlocks`) ayni premium gorunum yansiyacak
+- Tema degistirildiginde renkler degisecek AMA tasarim kalitesi her zaman yuksek kalacak
+- Farkli sektorler icin AI farkli icerik urettiginde, bloklar o icerigi premium sekilde gosterecek
+
+## Dikkat Edilecekler
+
+- Tum bloklar `inBuilder` prop'unu kullanarak editor icinde form submit/link tiklamalarini engelliyor - bu korunacak
+- `registerChaiBlock` schema'lari degismeyecek (kullanici ayni prop panelinden duzenlemeye devam edecek)
+- `inlineEditProps` korunacak (tuval uzerinde metin duzenleme)
+- CSS animasyonlari `@keyframes` icin Tailwind config'e ekleme gerekebilir (marquee icin)
+- Mevcut `resolveStyles` ve `commonStyleSchemaProps` sistemi korunacak
 
