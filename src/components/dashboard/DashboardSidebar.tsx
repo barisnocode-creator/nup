@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 interface DashboardSidebarProps {
   activeProjectId?: string;
@@ -73,17 +74,26 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
                   <SidebarMenuButton 
                     asChild 
                     tooltip={item.title}
-                    disabled={item.disabled}
                   >
-                    <NavLink 
-                      to={item.url} 
-                      end={item.url === '/dashboard'}
-                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      activeClassName="bg-primary/10 text-primary font-medium"
-                    >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
-                    </NavLink>
+                    {item.disabled ? (
+                      <button
+                        onClick={() => toast.info('Öncelikle bir web sitesi oluşturun')}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground/50 cursor-not-allowed opacity-50"
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </button>
+                    ) : (
+                      <NavLink 
+                        to={item.url} 
+                        end={item.url === '/dashboard'}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        activeClassName="bg-primary/10 text-primary font-medium"
+                      >
+                        <item.icon className="h-5 w-5 shrink-0" />
+                        {!isCollapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
