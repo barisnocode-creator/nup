@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { ChaiImageActionOverlay } from './ChaiImageActionOverlay';
 
 // Global callback store for image updates
 declare global {
@@ -19,11 +20,9 @@ interface EditableChaiImageProps {
   inBuilder?: boolean;
 }
 
-/**
- * Wrapper for <img> elements in Chai Builder blocks.
- * Shows an ImageActionBox overlay on hover when in the editor.
- * Manages local override state so image changes are always visually reflected.
- */
+const HOVER_DEBOUNCE = 120;
+const LEAVE_BUFFER = 200;
+
 export function EditableChaiImage({
   src,
   alt = '',
@@ -33,8 +32,9 @@ export function EditableChaiImage({
 }: EditableChaiImageProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
+  const leaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
-  // Reset override when src prop changes (e.g. from undo/redo or prop panel)
   useEffect(() => {
     setOverrideSrc(null);
   }, [src]);
@@ -42,20 +42,37 @@ export function EditableChaiImage({
   const displaySrc = overrideSrc || src || '/placeholder.svg';
 
   const handleChangeImage = useCallback(() => {
-    // Store the setter on window so ChaiBuilderWrapper can call it
     window.__chaiImageCallback = {
-      setter: (url: string) => {
-        setOverrideSrc(url);
-      },
+      setter: (url: string) => { setOverrideSrc(url); },
       currentSrc: displaySrc,
     };
-    // Dispatch event to open the inline image switcher
     window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
       detail: { currentSrc: displaySrc },
     }));
   }, [displaySrc]);
 
-  // Outside builder → plain img
+  const handleRegenerate = useCallback(() => {
+    // Same flow as change image but could use different search terms
+    handleChangeImage();
+  }, [handleChangeImage]);
+
+  const handleMouseEnter = useCallback(() => {
+    clearTimeout(leaveTimer.current);
+    hoverTimer.current = setTimeout(() => setIsHovered(true), HOVER_DEBOUNCE);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    clearTimeout(hoverTimer.current);
+    leaveTimer.current = setTimeout(() => setIsHovered(false), LEAVE_BUFFER);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(hoverTimer.current);
+      clearTimeout(leaveTimer.current);
+    };
+  }, []);
+
   if (!inBuilder) {
     return <img src={src || '/placeholder.svg'} alt={alt} className={className} />;
   }
@@ -63,8 +80,8 @@ export function EditableChaiImage({
   return (
     <div
       className={cn('relative', containerClassName)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <img
         src={displaySrc}
@@ -72,26 +89,29 @@ export function EditableChaiImage({
         className={cn(className, 'transition-opacity duration-500')}
         key={displaySrc}
       />
+      {/* Highlight border */}
       <div
         className={cn(
           'absolute inset-0 border-2 rounded-[inherit] pointer-events-none transition-colors duration-200',
           isHovered ? 'border-primary' : 'border-transparent',
         )}
       />
+      {/* Action overlay */}
       <div
         className={cn(
-          'absolute top-3 right-3 z-30 transition-all duration-200 pointer-events-auto',
-          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+          'absolute top-3 right-3 z-30 transition-all duration-[160ms] ease-out pointer-events-auto',
+          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1.5 pointer-events-none',
         )}
       >
-        <div className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-lg border border-black/10 overflow-hidden">
-          <button
-            className="px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-black/5 hover:text-foreground active:scale-[0.98] transition-all whitespace-nowrap"
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleChangeImage(); }}
-          >
-            Görsel Değiştir
-          </button>
-        </div>
+        <ChaiImageActionOverlay
+          onChangeImage={handleChangeImage}
+          onRegenerate={handleRegenerate}
+          onMoveUp={() => window.dispatchEvent(new CustomEvent('chai-move-block-up'))}
+          onMoveDown={() => window.dispatchEvent(new CustomEvent('chai-move-block-down'))}
+          onEditSection={() => window.dispatchEvent(new CustomEvent('chai-edit-section'))}
+          onDuplicate={() => window.dispatchEvent(new CustomEvent('chai-duplicate-block'))}
+          onDelete={() => window.dispatchEvent(new CustomEvent('chai-delete-block'))}
+        />
       </div>
     </div>
   );
@@ -105,10 +125,6 @@ interface EditableChaiBackgroundProps {
   children?: React.ReactNode;
 }
 
-/**
- * Wrapper for CSS background-image containers in Chai Builder blocks.
- * Shows an ImageActionBox overlay on hover when in the editor.
- */
 export function EditableChaiBackground({
   backgroundImage,
   className,
@@ -118,6 +134,8 @@ export function EditableChaiBackground({
 }: EditableChaiBackgroundProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [overrideBg, setOverrideBg] = useState<string | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
+  const leaveTimer = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     setOverrideBg(null);
@@ -142,9 +160,7 @@ export function EditableChaiBackground({
 
   const handleChangeBg = () => {
     window.__chaiImageCallback = {
-      setter: (url: string) => {
-        setOverrideBg(url);
-      },
+      setter: (url: string) => { setOverrideBg(url); },
       currentSrc: displayBg || '',
     };
     window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
@@ -152,12 +168,22 @@ export function EditableChaiBackground({
     }));
   };
 
+  const handleMouseEnter = () => {
+    clearTimeout(leaveTimer.current);
+    hoverTimer.current = setTimeout(() => setIsHovered(true), HOVER_DEBOUNCE);
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(hoverTimer.current);
+    leaveTimer.current = setTimeout(() => setIsHovered(false), LEAVE_BUFFER);
+  };
+
   return (
     <div
       className={cn(className, 'relative')}
       style={bgStyle}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {children}
       <div
@@ -168,18 +194,14 @@ export function EditableChaiBackground({
       />
       <div
         className={cn(
-          'absolute top-3 right-3 z-30 transition-all duration-200 pointer-events-auto',
-          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+          'absolute top-3 right-3 z-30 transition-all duration-[160ms] ease-out pointer-events-auto',
+          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1.5 pointer-events-none',
         )}
       >
-        <div className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-lg border border-black/10 overflow-hidden">
-          <button
-            className="px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-black/5 hover:text-foreground active:scale-[0.98] transition-all whitespace-nowrap"
-            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleChangeBg(); }}
-          >
-            Arka Plan Değiştir
-          </button>
-        </div>
+        <ChaiImageActionOverlay
+          onChangeImage={handleChangeBg}
+          onRegenerate={handleChangeBg}
+        />
       </div>
     </div>
   );
