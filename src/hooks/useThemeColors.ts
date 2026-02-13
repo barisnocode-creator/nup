@@ -141,10 +141,15 @@ export function useThemeColors(settings?: ThemeSettings) {
       }
     }
     
-    // Cleanup function to reset styles when component unmounts or settings change
+    // Cleanup: reset CSS variables so SaaS UI reverts to orange theme
     return () => {
-      // Optionally reset to defaults on cleanup
-      // This is left empty to persist settings across navigation
+      const props = [
+        '--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
+        '--color-secondary-custom', '--color-accent-custom',
+        '--font-heading', '--font-body', '--radius',
+      ];
+      props.forEach((p) => root.style.removeProperty(p));
+      root.classList.remove('reduce-motion');
     };
   }, [settings]);
 }
