@@ -17,13 +17,23 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  // Safety reset: clear any leftover theme CSS variables from editor
+  // Safety reset: force SaaS orange theme by overriding any leftover editor/SDK styles
   useLayoutEffect(() => {
     const root = document.documentElement;
-    ['--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
-     '--color-secondary-custom', '--color-accent-custom',
+    // Force orange theme values (matching index.css :root)
+    root.style.setProperty('--primary', '24 95% 53%');
+    root.style.setProperty('--ring', '24 95% 53%');
+    root.style.setProperty('--accent', '24 95% 53%');
+    root.style.setProperty('--sidebar-primary', '24 95% 53%');
+    root.style.setProperty('--sidebar-ring', '24 95% 53%');
+    root.style.setProperty('--accent-foreground', '0 0% 100%');
+    root.style.setProperty('--primary-foreground', '0 0% 100%');
+    // Remove project-specific custom properties
+    ['--color-secondary-custom', '--color-accent-custom',
      '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
     root.classList.remove('reduce-motion');
+    // Also remove any SDK-injected style tags
+    document.querySelectorAll('style[data-chai], style[data-chaibuilder]').forEach(el => el.remove());
   }, []);
 
   const handleSignOut = async () => {
