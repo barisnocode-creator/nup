@@ -126,7 +126,8 @@ Deno.serve(async (req) => {
       const allowedFields = [
         "is_enabled", "timezone", "slot_duration_minutes", "buffer_minutes",
         "working_days", "working_hours_start", "working_hours_end",
-        "lunch_break_start", "lunch_break_end", "max_advance_days"
+        "lunch_break_start", "lunch_break_end", "max_advance_days",
+        "day_schedules"
       ];
 
       const updates: Record<string, unknown> = {};
@@ -153,23 +154,33 @@ Deno.serve(async (req) => {
     // POST: Tarih blokla
     if (req.method === "POST") {
       const body = await req.json();
-      const { blocked_date, reason } = body;
+      const { blocked_date, reason, block_type, block_start_time, block_end_time } = body;
 
       if (!blocked_date) return json({ error: "blocked_date required" }, 400);
 
+      const insertData: Record<string, unknown> = {
+        project_id: projectId,
+        user_id: userId,
+        blocked_date,
+        reason: reason || null,
+        block_type: block_type || "full_day",
+      };
+
+      if (block_type === "time_range") {
+        if (!block_start_time || !block_end_time) {
+          return json({ error: "block_start_time and block_end_time required for time_range" }, 400);
+        }
+        insertData.block_start_time = block_start_time;
+        insertData.block_end_time = block_end_time;
+      }
+
       const { data, error } = await supabase
         .from("blocked_slots")
-        .insert({
-          project_id: projectId,
-          user_id: userId,
-          blocked_date,
-          reason: reason || null,
-        })
+        .insert(insertData)
         .select()
         .single();
 
       if (error) {
-        if (error.code === "23505") return json({ error: "Date already blocked" }, 409);
         return json({ error: "Failed to block date" }, 500);
       }
       return json({ blocked_slot: data }, 201);
