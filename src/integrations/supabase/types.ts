@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      agenda_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          note_date: string
+          project_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          note_date: string
+          project_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          note_date?: string
+          project_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agenda_notes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -155,6 +200,7 @@ export type Database = {
           end_time: string
           form_data: Json | null
           id: string
+          internal_note: string | null
           project_id: string
           start_time: string
           status: string
@@ -171,6 +217,7 @@ export type Database = {
           end_time: string
           form_data?: Json | null
           id?: string
+          internal_note?: string | null
           project_id: string
           start_time: string
           status?: string
@@ -187,6 +234,7 @@ export type Database = {
           end_time?: string
           form_data?: Json | null
           id?: string
+          internal_note?: string | null
           project_id?: string
           start_time?: string
           status?: string

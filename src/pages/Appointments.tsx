@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { AppointmentsPanel } from '@/components/dashboard/AppointmentsPanel';
+import { AppointmentsPanel } from '@/components/dashboard/appointments/AppointmentsPanel';
 import { CalendarCheck } from 'lucide-react';
 
 export default function Appointments() {

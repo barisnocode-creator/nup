@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
   if (!project) return json({ error: "Not authorized for this project" }, 403);
 
   try {
-    // GET: Randevuları ve ayarları getir
+    // GET
     if (req.method === "GET") {
       const type = url.searchParams.get("type") || "appointments";
 
@@ -80,8 +80,25 @@ Deno.serve(async (req) => {
         return json({ blocked_slots: data || [] });
       }
 
-      // Randevuları getir
+      if (type === "notes") {
+        const dateFrom = url.searchParams.get("date_from");
+        const dateTo = url.searchParams.get("date_to");
+        let query = supabase
+          .from("agenda_notes")
+          .select("*")
+          .eq("project_id", projectId)
+          .eq("user_id", userId)
+          .order("note_date", { ascending: true });
+        if (dateFrom) query = query.gte("note_date", dateFrom);
+        if (dateTo) query = query.lte("note_date", dateTo);
+        const { data } = await query;
+        return json({ notes: data || [] });
+      }
+
+      // Randevuları getir (with optional date range)
       const status = url.searchParams.get("status");
+      const dateFrom = url.searchParams.get("date_from");
+      const dateTo = url.searchParams.get("date_to");
       let query = supabase
         .from("appointments")
         .select("*")
@@ -90,27 +107,40 @@ Deno.serve(async (req) => {
         .order("start_time", { ascending: true });
 
       if (status) query = query.eq("status", status);
+      if (dateFrom) query = query.gte("appointment_date", dateFrom);
+      if (dateTo) query = query.lte("appointment_date", dateTo);
 
       const { data } = await query;
       return json({ appointments: data || [] });
     }
 
-    // PATCH: Randevu durumunu güncelle
+    // PATCH: Update appointment
     if (req.method === "PATCH") {
       const body = await req.json();
-      const { appointment_id, status } = body;
+      const { appointment_id, status, internal_note } = body;
 
-      if (!appointment_id || !status) {
-        return json({ error: "appointment_id and status required" }, 400);
+      if (!appointment_id) {
+        return json({ error: "appointment_id required" }, 400);
       }
 
-      if (!["confirmed", "cancelled", "pending"].includes(status)) {
-        return json({ error: "Invalid status" }, 400);
+      const updates: Record<string, unknown> = {};
+      if (status) {
+        if (!["confirmed", "cancelled", "pending"].includes(status)) {
+          return json({ error: "Invalid status" }, 400);
+        }
+        updates.status = status;
+      }
+      if (internal_note !== undefined) {
+        updates.internal_note = internal_note;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return json({ error: "No valid fields to update" }, 400);
       }
 
       const { data, error } = await supabase
         .from("appointments")
-        .update({ status })
+        .update(updates)
         .eq("id", appointment_id)
         .eq("project_id", projectId)
         .select()
@@ -120,7 +150,7 @@ Deno.serve(async (req) => {
       return json({ appointment: data });
     }
 
-    // PUT: Ayarları güncelle
+    // PUT: Update settings
     if (req.method === "PUT") {
       const body = await req.json();
       const allowedFields = [
@@ -151,11 +181,82 @@ Deno.serve(async (req) => {
       return json({ settings: data });
     }
 
-    // POST: Tarih blokla
+    // POST: Action-based
     if (req.method === "POST") {
       const body = await req.json();
-      const { blocked_date, reason, block_type, block_start_time, block_end_time } = body;
+      const action = body.action || "block_date";
 
+      // Create appointment manually
+      if (action === "create_appointment") {
+        const { appointment_date, start_time, end_time, client_name, client_email, client_phone, client_note, status: apptStatus, internal_note } = body;
+        if (!appointment_date || !start_time || !end_time || !client_name || !client_email) {
+          return json({ error: "Missing required fields" }, 400);
+        }
+
+        const { data, error } = await supabase
+          .from("appointments")
+          .insert({
+            project_id: projectId,
+            appointment_date,
+            start_time,
+            end_time,
+            client_name,
+            client_email,
+            client_phone: client_phone || null,
+            client_note: client_note || null,
+            internal_note: internal_note || null,
+            status: apptStatus || "confirmed",
+            consent_given: true,
+          })
+          .select()
+          .single();
+
+        if (error) return json({ error: "Failed to create appointment" }, 500);
+        return json({ appointment: data }, 201);
+      }
+
+      // Agenda notes CRUD
+      if (action === "create_note") {
+        const { note_date, content } = body;
+        if (!note_date || !content) return json({ error: "note_date and content required" }, 400);
+        const { data, error } = await supabase
+          .from("agenda_notes")
+          .insert({ project_id: projectId, user_id: userId, note_date, content })
+          .select()
+          .single();
+        if (error) return json({ error: "Failed to create note" }, 500);
+        return json({ note: data }, 201);
+      }
+
+      if (action === "update_note") {
+        const { note_id, content } = body;
+        if (!note_id || !content) return json({ error: "note_id and content required" }, 400);
+        const { data, error } = await supabase
+          .from("agenda_notes")
+          .update({ content })
+          .eq("id", note_id)
+          .eq("project_id", projectId)
+          .eq("user_id", userId)
+          .select()
+          .single();
+        if (error) return json({ error: "Failed to update note" }, 500);
+        return json({ note: data });
+      }
+
+      if (action === "delete_note") {
+        const { note_id } = body;
+        if (!note_id) return json({ error: "note_id required" }, 400);
+        await supabase
+          .from("agenda_notes")
+          .delete()
+          .eq("id", note_id)
+          .eq("project_id", projectId)
+          .eq("user_id", userId);
+        return json({ success: true });
+      }
+
+      // Block date (default action, backward compatible)
+      const { blocked_date, reason, block_type, block_start_time, block_end_time } = body;
       if (!blocked_date) return json({ error: "blocked_date required" }, 400);
 
       const insertData: Record<string, unknown> = {
@@ -166,7 +267,7 @@ Deno.serve(async (req) => {
         block_type: block_type || "full_day",
       };
 
-      if (block_type === "time_range") {
+      if ((block_type || "full_day") === "time_range") {
         if (!block_start_time || !block_end_time) {
           return json({ error: "block_start_time and block_end_time required for time_range" }, 400);
         }
@@ -180,13 +281,11 @@ Deno.serve(async (req) => {
         .select()
         .single();
 
-      if (error) {
-        return json({ error: "Failed to block date" }, 500);
-      }
+      if (error) return json({ error: "Failed to block date" }, 500);
       return json({ blocked_slot: data }, 201);
     }
 
-    // DELETE: Bloklu tarihi kaldır
+    // DELETE
     if (req.method === "DELETE") {
       const blockId = url.searchParams.get("block_id");
       if (!blockId) return json({ error: "block_id required" }, 400);

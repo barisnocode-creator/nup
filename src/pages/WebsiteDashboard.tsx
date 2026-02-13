@@ -10,7 +10,7 @@ import { WebsiteDashboardTab } from '@/components/website-dashboard/WebsiteDashb
 import { BlogTab } from '@/components/website-dashboard/BlogTab';
 import { DomainTab } from '@/components/website-dashboard/DomainTab';
 import { SettingsTab } from '@/components/website-dashboard/SettingsTab';
-import { AppointmentsPanel } from '@/components/dashboard/AppointmentsPanel';
+import { AppointmentsPanel } from '@/components/dashboard/appointments/AppointmentsPanel';
 
 interface Project {
   id: string;
