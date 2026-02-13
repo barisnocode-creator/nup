@@ -1,25 +1,16 @@
-import { useState, useContext, createContext } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Paintbrush } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ImageActionBox, type ImageAction } from '@/components/website-preview/ImageActionBox';
 
-// Re-import the context directly to avoid hook violations
-import { createContext as _cc, useContext as _uc } from 'react';
-
-// We need a safe way to access EditorContext without throwing
-// Import the context value type
-interface EditorContextValue {
-  onImageSearch: () => void;
-}
-
-// We'll use a local context reference that mirrors EditorContext
-// This avoids the throw in useEditorContext
-const EditorCtx = createContext<EditorContextValue | null>(null);
-
-function useEditorContextSafe(): EditorContextValue | null {
-  // This is a workaround: we try to import and use the real context
-  // But since we can't conditionally call hooks, we use the context directly
-  return useContext(EditorCtx);
+// Global callback store for image updates
+declare global {
+  interface Window {
+    __chaiImageCallback?: {
+      setter: (url: string) => void;
+      currentSrc: string;
+    };
+  }
 }
 
 interface EditableChaiImageProps {
@@ -34,6 +25,7 @@ interface EditableChaiImageProps {
 /**
  * Wrapper for <img> elements in Chai Builder blocks.
  * Shows an ImageActionBox overlay on hover when in the editor.
+ * Manages local override state so image changes are always visually reflected.
  */
 export function EditableChaiImage({
   src,
@@ -44,6 +36,28 @@ export function EditableChaiImage({
   extraActions = [],
 }: EditableChaiImageProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
+
+  // Reset override when src prop changes (e.g. from undo/redo or prop panel)
+  useEffect(() => {
+    setOverrideSrc(null);
+  }, [src]);
+
+  const displaySrc = overrideSrc || src || '/placeholder.svg';
+
+  const handleChangeImage = useCallback(() => {
+    // Store the setter on window so ChaiBuilderWrapper can call it
+    window.__chaiImageCallback = {
+      setter: (url: string) => {
+        setOverrideSrc(url);
+      },
+      currentSrc: displaySrc,
+    };
+    // Dispatch event to open the inline image switcher
+    window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
+      detail: { currentSrc: displaySrc },
+    }));
+  }, [displaySrc]);
 
   // Outside builder → plain img
   if (!inBuilder) {
@@ -55,12 +69,7 @@ export function EditableChaiImage({
       id: 'change-image',
       icon: Paintbrush,
       label: 'Görsel Değiştir',
-      onClick: () => {
-        // Dispatch event with current src for context
-        window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
-          detail: { currentSrc: src },
-        }));
-      },
+      onClick: handleChangeImage,
       group: 'primary' as const,
     },
     ...extraActions,
@@ -73,9 +82,10 @@ export function EditableChaiImage({
       onMouseLeave={() => setIsHovered(false)}
     >
       <img
-        src={src || '/placeholder.svg'}
+        src={displaySrc}
         alt={alt}
-        className={className}
+        className={cn(className, 'transition-opacity duration-500')}
+        key={displaySrc}
       />
       <div
         className={cn(
@@ -108,10 +118,17 @@ export function EditableChaiBackground({
   children,
 }: EditableChaiBackgroundProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [overrideBg, setOverrideBg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOverrideBg(null);
+  }, [backgroundImage]);
+
+  const displayBg = overrideBg || backgroundImage;
 
   const bgStyle: React.CSSProperties = {
     ...style,
-    backgroundImage: backgroundImage ? `url(${backgroundImage})` : style?.backgroundImage,
+    backgroundImage: displayBg ? `url(${displayBg})` : style?.backgroundImage,
     backgroundSize: style?.backgroundSize || 'cover',
     backgroundPosition: style?.backgroundPosition || 'center',
   };
@@ -124,15 +141,23 @@ export function EditableChaiBackground({
     );
   }
 
+  const handleChangeBg = () => {
+    window.__chaiImageCallback = {
+      setter: (url: string) => {
+        setOverrideBg(url);
+      },
+      currentSrc: displayBg || '',
+    };
+    window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
+      detail: { currentSrc: displayBg },
+    }));
+  };
+
   const actions: ImageAction[] = [{
     id: 'change-bg',
     icon: Paintbrush,
     label: 'Arka Plan Değiştir',
-    onClick: () => {
-      window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
-        detail: { currentSrc: backgroundImage },
-      }));
-    },
+    onClick: handleChangeBg,
     group: 'primary' as const,
   }];
 
