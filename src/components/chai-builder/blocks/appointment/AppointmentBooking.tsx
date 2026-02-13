@@ -5,7 +5,18 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+
+interface FormField {
+  id: string;
+  type: string;
+  label: string;
+  required: boolean;
+  system: boolean;
+  order: number;
+  placeholder?: string;
+  options?: string[];
+}
 
 export type AppointmentBookingProps = {
   styles: ChaiStyles;
@@ -36,8 +47,12 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [formFields, setFormFields] = useState<FormField[] | null>(null);
+  const [consentRequired, setConsentRequired] = useState(true);
+  const [consentText, setConsentText] = useState<string | null>(null);
+  const [consentChecked, setConsentChecked] = useState(false);
+  const formLoadedAt = useRef<string>("");
 
-  // Bugünden itibaren 30 gün için tarih listesi
   const dates = React.useMemo(() => {
     const result: string[] = [];
     const today = new Date();
@@ -49,7 +64,13 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
     return result;
   }, []);
 
-  // In builder mode, show demo UI
+  // Record form load time when slot is selected
+  useEffect(() => {
+    if (selectedSlot) {
+      formLoadedAt.current = new Date().toISOString();
+    }
+  }, [selectedSlot]);
+
   if (inBuilder) {
     return (
       <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
@@ -69,7 +90,6 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
               </p>
             )}
           </div>
-
           <div className="max-w-2xl mx-auto p-8 rounded-2xl bg-card border border-border">
             <div className="grid gap-6">
               <div>
@@ -85,7 +105,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">🕐 Saat Seçin</label>
                 <div className="flex gap-2 flex-wrap">
-                  {["09:00", "09:30", "10:00", "10:30", "11:00"].map(t => (
+                  {["09:00", "09:30", "10:00"].map(t => (
                     <button key={t} className="px-3 py-2 rounded-lg border border-border text-sm text-foreground bg-background hover:bg-primary/10">
                       {t}
                     </button>
@@ -94,13 +114,17 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Adınız</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Adınız *</label>
                   <input disabled className="w-full px-4 py-3 rounded-lg border border-input bg-background" placeholder="Adınızı girin" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">E-posta</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">E-posta *</label>
                   <input disabled className="w-full px-4 py-3 rounded-lg border border-input bg-background" placeholder="E-posta adresiniz" />
                 </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <input type="checkbox" disabled className="mt-1" />
+                <span className="text-sm text-muted-foreground">Kişisel verilerimin işlenmesini kabul ediyorum.</span>
               </div>
               <button disabled className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium">
                 {submitButtonText}
@@ -111,6 +135,149 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
       </section>
     );
   }
+
+  const fetchSlots = async (d: string) => {
+    setSelectedDate(d);
+    setSelectedSlot("");
+    setAvailableSlots([]);
+    setFormFields(null);
+    const projectId = (window as any).__PROJECT_ID__;
+    const supabaseUrl = (window as any).__SUPABASE_URL__;
+    if (!projectId || !supabaseUrl) return;
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/book-appointment?project_id=${projectId}&date=${d}`);
+      const data = await res.json();
+      setAvailableSlots(data.slots || []);
+      setSlotDuration(data.duration || 30);
+      if (data.form_fields) setFormFields(data.form_fields);
+      setConsentRequired(data.consent_required ?? true);
+      setConsentText(data.consent_text || null);
+    } catch { setAvailableSlots([]); }
+  };
+
+  const renderFormField = (field: FormField) => {
+    const inputClass = "w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary";
+    
+    switch (field.type) {
+      case "textarea":
+        return (
+          <div key={field.id}>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {field.label} {field.required && "*"}
+            </label>
+            <textarea
+              name={field.id}
+              required={field.required}
+              rows={3}
+              className={`${inputClass} resize-none`}
+              placeholder={field.placeholder || ""}
+            />
+          </div>
+        );
+      case "select":
+        return (
+          <div key={field.id}>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {field.label} {field.required && "*"}
+            </label>
+            <select name={field.id} required={field.required} className={inputClass}>
+              <option value="">Seçin...</option>
+              {(field.options || []).map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        );
+      default:
+        return (
+          <div key={field.id}>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              {field.label} {field.required && "*"}
+            </label>
+            <input
+              name={field.id}
+              type={field.type || "text"}
+              required={field.required}
+              className={inputClass}
+              placeholder={field.placeholder || ""}
+            />
+          </div>
+        );
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+
+    if (!selectedDate || !selectedSlot) {
+      setError("Lütfen tarih ve saat seçin");
+      return;
+    }
+
+    if (consentRequired && !consentChecked) {
+      setError("Gizlilik onayını kabul etmelisiniz");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const projectId = (window as any).__PROJECT_ID__;
+      if (!projectId) { setError("Randevu sistemi yapılandırılmamış"); setLoading(false); return; }
+
+      const supabaseUrl = (window as any).__SUPABASE_URL__;
+
+      // Build form_data from custom fields
+      const customData: Record<string, string> = {};
+      const systemIds = new Set(["client_name", "client_email", "client_phone", "client_note"]);
+      if (formFields) {
+        for (const field of formFields) {
+          if (!systemIds.has(field.id)) {
+            const val = formData.get(field.id);
+            if (val) customData[field.id] = String(val);
+          }
+        }
+      }
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/book-appointment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_id: projectId,
+          date: selectedDate,
+          start_time: selectedSlot,
+          client_name: formData.get("client_name"),
+          client_email: formData.get("client_email"),
+          client_phone: formData.get("client_phone"),
+          client_note: formData.get("client_note"),
+          form_data: Object.keys(customData).length > 0 ? customData : undefined,
+          consent_given: consentChecked,
+          honeypot: formData.get("_hp_field") || "",
+          form_loaded_at: formLoadedAt.current,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Bir hata oluştu");
+      } else {
+        setSubmitted(true);
+      }
+    } catch {
+      setError("Bağlantı hatası, lütfen tekrar deneyin");
+    }
+    setLoading(false);
+  };
+
+  // Separate system fields and custom fields
+  const sortedFields = formFields
+    ? [...formFields].sort((a, b) => a.order - b.order)
+    : null;
+
+  const systemFields = sortedFields?.filter(f => f.system) || [];
+  const customFields = sortedFields?.filter(f => !f.system) || [];
 
   return (
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`} id="appointment">
@@ -138,61 +305,20 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
               <h3 className="text-xl font-semibold text-foreground mb-2">{successMessage}</h3>
               <p className="text-muted-foreground">En kısa sürede sizinle iletişime geçeceğiz.</p>
               <button 
-                onClick={() => { setSubmitted(false); setSelectedDate(""); setSelectedSlot(""); }}
+                onClick={() => { setSubmitted(false); setSelectedDate(""); setSelectedSlot(""); setConsentChecked(false); }}
                 className="mt-6 px-6 py-2 border border-border rounded-lg text-foreground hover:bg-muted transition"
               >
                 Yeni Randevu
               </button>
             </div>
           ) : (
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              setError("");
-              const form = e.target as HTMLFormElement;
-              const formData = new FormData(form);
+            <form onSubmit={handleSubmit} className="grid gap-6">
+              {/* Honeypot - hidden from users */}
+              <div style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
+                <input type="text" name="_hp_field" tabIndex={-1} autoComplete="off" />
+              </div>
 
-              if (!selectedDate || !selectedSlot) {
-                setError("Lütfen tarih ve saat seçin");
-                return;
-              }
-
-              setLoading(true);
-              try {
-                // Get projectId from URL or page context  
-                const projectId = (window as any).__PROJECT_ID__;
-                if (!projectId) {
-                  setError("Randevu sistemi yapılandırılmamış");
-                  setLoading(false);
-                  return;
-                }
-
-                const supabaseUrl = (window as any).__SUPABASE_URL__;
-                const res = await fetch(`${supabaseUrl}/functions/v1/book-appointment`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    project_id: projectId,
-                    date: selectedDate,
-                    start_time: selectedSlot,
-                    client_name: formData.get("client_name"),
-                    client_email: formData.get("client_email"),
-                    client_phone: formData.get("client_phone"),
-                    client_note: formData.get("client_note"),
-                  }),
-                });
-
-                const data = await res.json();
-                if (!res.ok) {
-                  setError(data.error || "Bir hata oluştu");
-                } else {
-                  setSubmitted(true);
-                }
-              } catch {
-                setError("Bağlantı hatası, lütfen tekrar deneyin");
-              }
-              setLoading(false);
-            }} className="grid gap-6">
-              {/* Tarih seçimi */}
+              {/* Date selection */}
               <div>
                 <label className="block text-sm font-medium text-foreground mb-3">📅 Tarih Seçin</label>
                 <div className="flex gap-2 flex-wrap max-h-32 overflow-y-auto">
@@ -201,22 +327,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                     const label = dateObj.toLocaleDateString("tr-TR", { day: "numeric", month: "short", weekday: "short" });
                     return (
                       <button
-                        key={d}
-                        type="button"
-                        onClick={async () => {
-                          setSelectedDate(d);
-                          setSelectedSlot("");
-                          setAvailableSlots([]);
-                          const projectId = (window as any).__PROJECT_ID__;
-                          const supabaseUrl = (window as any).__SUPABASE_URL__;
-                          if (!projectId || !supabaseUrl) return;
-                          try {
-                            const res = await fetch(`${supabaseUrl}/functions/v1/book-appointment?project_id=${projectId}&date=${d}`);
-                            const data = await res.json();
-                            setAvailableSlots(data.slots || []);
-                            setSlotDuration(data.duration || 30);
-                          } catch { setAvailableSlots([]); }
-                        }}
+                        key={d} type="button" onClick={() => fetchSlots(d)}
                         className={`px-3 py-2 rounded-lg border text-sm transition ${
                           selectedDate === d 
                             ? "bg-primary text-primary-foreground border-primary" 
@@ -230,7 +341,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                 </div>
               </div>
 
-              {/* Saat seçimi */}
+              {/* Time selection */}
               {selectedDate && (
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-3">🕐 Saat Seçin ({slotDuration} dakika)</label>
@@ -239,10 +350,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                   ) : (
                     <div className="flex gap-2 flex-wrap">
                       {availableSlots.map(t => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setSelectedSlot(t)}
+                        <button key={t} type="button" onClick={() => setSelectedSlot(t)}
                           className={`px-4 py-2 rounded-lg border text-sm transition ${
                             selectedSlot === t
                               ? "bg-primary text-primary-foreground border-primary"
@@ -257,27 +365,59 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                 </div>
               )}
 
-              {/* İletişim bilgileri */}
+              {/* Dynamic form fields */}
               {selectedSlot && (
                 <>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">Adınız *</label>
-                      <input name="client_name" required className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Adınızı girin" />
+                  {sortedFields ? (
+                    <>
+                      {/* System fields in grid */}
+                      {systemFields.length > 0 && (
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          {systemFields.map(renderFormField)}
+                        </div>
+                      )}
+                      {/* Custom fields */}
+                      {customFields.map(renderFormField)}
+                    </>
+                  ) : (
+                    /* Fallback: static fields */
+                    <>
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">Adınız *</label>
+                          <input name="client_name" required className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Adınızı girin" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-2">E-posta *</label>
+                          <input name="client_email" type="email" required className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="E-posta adresiniz" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Telefon</label>
+                        <input name="client_phone" type="tel" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Telefon numaranız" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Not</label>
+                        <textarea name="client_note" rows={3} className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Eklemek istediğiniz not..." />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Consent checkbox */}
+                  {consentRequired && consentText && (
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="consent"
+                        checked={consentChecked}
+                        onChange={(e) => setConsentChecked(e.target.checked)}
+                        className="mt-1 h-4 w-4 rounded border-input"
+                      />
+                      <label htmlFor="consent" className="text-sm text-muted-foreground cursor-pointer">
+                        {consentText}
+                      </label>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">E-posta *</label>
-                      <input name="client_email" type="email" required className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="E-posta adresiniz" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Telefon</label>
-                    <input name="client_phone" type="tel" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Telefon numaranız" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Not</label>
-                    <textarea name="client_note" rows={3} className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Eklemek istediğiniz not..." />
-                  </div>
+                  )}
                 </>
               )}
 
@@ -289,7 +429,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
 
               <button 
                 type="submit" 
-                disabled={!selectedDate || !selectedSlot || loading}
+                disabled={!selectedDate || !selectedSlot || loading || (consentRequired && !consentChecked)}
                 className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Gönderiliyor..." : submitButtonText}

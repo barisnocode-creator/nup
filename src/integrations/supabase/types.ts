@@ -65,8 +65,11 @@ export type Database = {
       appointment_settings: {
         Row: {
           buffer_minutes: number
+          consent_required: boolean
+          consent_text: string | null
           created_at: string
           day_schedules: Json | null
+          form_fields: Json | null
           id: string
           is_enabled: boolean
           lunch_break_end: string | null
@@ -83,8 +86,11 @@ export type Database = {
         }
         Insert: {
           buffer_minutes?: number
+          consent_required?: boolean
+          consent_text?: string | null
           created_at?: string
           day_schedules?: Json | null
+          form_fields?: Json | null
           id?: string
           is_enabled?: boolean
           lunch_break_end?: string | null
@@ -101,8 +107,11 @@ export type Database = {
         }
         Update: {
           buffer_minutes?: number
+          consent_required?: boolean
+          consent_text?: string | null
           created_at?: string
           day_schedules?: Json | null
+          form_fields?: Json | null
           id?: string
           is_enabled?: boolean
           lunch_break_end?: string | null
@@ -141,8 +150,10 @@ export type Database = {
           client_name: string
           client_note: string | null
           client_phone: string | null
+          consent_given: boolean | null
           created_at: string
           end_time: string
+          form_data: Json | null
           id: string
           project_id: string
           start_time: string
@@ -155,8 +166,10 @@ export type Database = {
           client_name: string
           client_note?: string | null
           client_phone?: string | null
+          consent_given?: boolean | null
           created_at?: string
           end_time: string
+          form_data?: Json | null
           id?: string
           project_id: string
           start_time: string
@@ -169,8 +182,10 @@ export type Database = {
           client_name?: string
           client_note?: string | null
           client_phone?: string | null
+          consent_given?: boolean | null
           created_at?: string
           end_time?: string
+          form_data?: Json | null
           id?: string
           project_id?: string
           start_time?: string
