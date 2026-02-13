@@ -283,25 +283,71 @@ function renderAppointmentBooking(b: ChaiBlock): string {
       ${desc}
     </div>
     <div class="p-8 rounded-2xl" style="background:var(--card);border:1px solid var(--border)">
-      <div id="appt-form-container">
-        <div class="space-y-6">
-          <div>
-            <label class="block text-sm font-medium mb-3" style="color:var(--foreground)">📅 Tarih Seçin</label>
-            <div id="appt-dates" class="flex gap-2 flex-wrap max-h-32 overflow-y-auto"></div>
+      <!-- Step Indicator -->
+      <div id="appt-steps" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:32px">
+        <div class="appt-step active" data-step="1" style="display:flex;align-items:center;gap:6px">
+          <div class="appt-step-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--primary);color:var(--primary-foreground);font-size:14px;transition:all .3s">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           </div>
-          <div id="appt-slots-container" style="display:none">
-            <label class="block text-sm font-medium mb-3" style="color:var(--foreground)">🕐 Saat Seçin</label>
-            <div id="appt-slots" class="flex gap-2 flex-wrap"></div>
-          </div>
-          <!-- Honeypot -->
-          <div style="position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden" aria-hidden="true">
-            <input type="text" id="appt-hp" tabindex="-1" autocomplete="off">
-          </div>
-          <div id="appt-fields" style="display:none"></div>
-          <div id="appt-consent" style="display:none"></div>
-          <div id="appt-error" style="display:none" class="p-3 rounded-lg text-sm" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c"></div>
-          <button id="appt-submit" disabled class="w-full px-6 py-4 rounded-lg font-medium transition opacity-50 cursor-not-allowed" style="background:var(--primary);color:var(--primary-foreground)">${btnText}</button>
+          <span class="appt-step-label" style="font-size:13px;font-weight:600;color:var(--primary)">Tarih</span>
         </div>
+        <div style="width:40px;height:2px;background:var(--border);border-radius:1px"></div>
+        <div class="appt-step" data-step="2" style="display:flex;align-items:center;gap:6px">
+          <div class="appt-step-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--muted);color:var(--muted-foreground);font-size:14px;transition:all .3s">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <span class="appt-step-label" style="font-size:13px;font-weight:500;color:var(--muted-foreground)">Saat</span>
+        </div>
+        <div style="width:40px;height:2px;background:var(--border);border-radius:1px"></div>
+        <div class="appt-step" data-step="3" style="display:flex;align-items:center;gap:6px">
+          <div class="appt-step-icon" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--muted);color:var(--muted-foreground);font-size:14px;transition:all .3s">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span class="appt-step-label" style="font-size:13px;font-weight:500;color:var(--muted-foreground)">Bilgiler</span>
+        </div>
+      </div>
+
+      <div id="appt-form-container">
+        <!-- Date Strip -->
+        <div style="margin-bottom:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <button id="appt-prev-week" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--background);color:var(--foreground);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Önceki hafta">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <span id="appt-month-label" style="font-weight:600;font-size:15px;color:var(--foreground)"></span>
+            <button id="appt-next-week" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--background);color:var(--foreground);display:flex;align-items:center;justify-content:center;cursor:pointer" title="Sonraki hafta">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div id="appt-dates" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px"></div>
+        </div>
+
+        <!-- Slots (scrollable list) -->
+        <div id="appt-slots-container" style="display:none;margin-bottom:24px">
+          <label style="display:block;font-size:14px;font-weight:600;margin-bottom:8px;color:var(--foreground)">Müsait Saatler</label>
+          <div id="appt-slots" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px"></div>
+          <div id="appt-slots-skeleton" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite"></div>
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite;animation-delay:.15s"></div>
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite;animation-delay:.3s"></div>
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite;animation-delay:.1s"></div>
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite;animation-delay:.25s"></div>
+              <div style="height:40px;border-radius:9999px;background:var(--muted);animation:pulse 1.5s ease-in-out infinite;animation-delay:.4s"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Honeypot -->
+        <div style="position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden" aria-hidden="true">
+          <input type="text" id="appt-hp" tabindex="-1" autocomplete="off">
+        </div>
+
+        <!-- Dynamic form fields -->
+        <div id="appt-fields" style="display:none"></div>
+        <div id="appt-consent" style="display:none"></div>
+        <div id="appt-error" style="display:none;padding:12px;border-radius:8px;font-size:14px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;margin-bottom:16px"></div>
+        <button id="appt-submit" disabled class="w-full px-6 py-4 rounded-xl font-medium transition" style="background:var(--primary);color:var(--primary-foreground);opacity:0.4;cursor:not-allowed">${btnText}</button>
       </div>
       <div id="appt-success" style="display:none" class="text-center py-12">
         <div class="text-5xl mb-4">✅</div>
@@ -312,6 +358,12 @@ function renderAppointmentBooking(b: ChaiBlock): string {
     </div>
   </div>
 </section>
+<style>
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#appt-dates button{transition:all .2s}
+#appt-slots>div{transition:all .2s}
+#appt-fields{transition:all .3s ease}
+</style>
 <script>
 (function(){
   var API='${supabaseUrl}/functions/v1/book-appointment';
@@ -319,108 +371,269 @@ function renderAppointmentBooking(b: ChaiBlock): string {
   var selDate='',selSlot='',dur=30;
   var formFields=null,consentRequired=false,consentText='';
   var formLoadedAt='';
-  var dates=[];
-  var today=new Date();
-  for(var i=1;i<=30;i++){var d=new Date(today);d.setDate(today.getDate()+i);dates.push(d.toISOString().split('T')[0])}
-  var dc=document.getElementById('appt-dates');
+  var weekOffset=0;
+  var unavailableDates={};
+  var checkedWeeks={};
+  var dayNames=['Pzr','Pzt','Sal','Çar','Per','Cum','Cmt'];
+  var monthNames=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+  function getWeekDates(offset){
+    var dates=[];
+    var today=new Date();
+    var start=new Date(today);
+    start.setDate(today.getDate()+1+(offset*7));
+    for(var i=0;i<7;i++){
+      var d=new Date(start);
+      d.setDate(start.getDate()+i);
+      dates.push(d);
+    }
+    return dates;
+  }
+
+  function fmtDate(d){return d.toISOString().split('T')[0]}
+
+  function setStep(n){
+    document.querySelectorAll('.appt-step').forEach(function(el){
+      var s=parseInt(el.dataset.step);
+      var icon=el.querySelector('.appt-step-icon');
+      var label=el.querySelector('.appt-step-label');
+      if(s<=n){
+        icon.style.background='var(--primary)';icon.style.color='var(--primary-foreground)';
+        label.style.color='var(--primary)';label.style.fontWeight='600';
+      }else{
+        icon.style.background='var(--muted)';icon.style.color='var(--muted-foreground)';
+        label.style.color='var(--muted-foreground)';label.style.fontWeight='500';
+      }
+    });
+  }
+
+  function renderDates(){
+    var dc=document.getElementById('appt-dates');
+    dc.innerHTML='';
+    var dates=getWeekDates(weekOffset);
+    var ml=document.getElementById('appt-month-label');
+    var first=dates[0],last=dates[6];
+    if(first.getMonth()===last.getMonth()){
+      ml.textContent=monthNames[first.getMonth()]+' '+first.getFullYear();
+    }else{
+      ml.textContent=monthNames[first.getMonth()].substring(0,3)+' - '+monthNames[last.getMonth()].substring(0,3)+' '+last.getFullYear();
+    }
+
+    dates.forEach(function(d){
+      var dt=fmtDate(d);
+      var btn=document.createElement('button');
+      btn.dataset.date=dt;
+      btn.style.cssText='display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:12px;border:1px solid var(--border);background:var(--background);color:var(--foreground);cursor:pointer;font-size:13px;min-width:0';
+      var dayLabel=document.createElement('span');
+      dayLabel.style.cssText='font-size:11px;color:var(--muted-foreground);margin-bottom:4px';
+      dayLabel.textContent=dayNames[d.getDay()];
+      var dayNum=document.createElement('span');
+      dayNum.style.cssText='font-size:16px;font-weight:600';
+      dayNum.textContent=d.getDate();
+      btn.appendChild(dayLabel);btn.appendChild(dayNum);
+
+      if(selDate===dt){
+        btn.style.background='var(--primary)';btn.style.color='var(--primary-foreground)';
+        dayLabel.style.color='var(--primary-foreground)';
+      }
+      if(unavailableDates[dt]){
+        btn.style.opacity='0.35';btn.style.pointerEvents='none';
+        dayNum.style.textDecoration='line-through';
+      }
+
+      btn.onclick=function(){selectDate(dt)};
+      dc.appendChild(btn);
+    });
+
+    // Check availability for this week
+    checkWeekAvailability(weekOffset,dates);
+
+    // Disable prev button if offset is 0
+    document.getElementById('appt-prev-week').style.opacity=weekOffset<=0?'0.3':'1';
+    document.getElementById('appt-prev-week').style.pointerEvents=weekOffset<=0?'none':'auto';
+  }
+
+  function checkWeekAvailability(offset,dates){
+    if(checkedWeeks[offset])return;
+    checkedWeeks[offset]=true;
+    var promises=dates.map(function(d){
+      var dt=fmtDate(d);
+      return fetch(API+'?project_id='+PID+'&date='+dt)
+        .then(function(r){return r.json()})
+        .then(function(data){return{date:dt,available:data.slots&&data.slots.length>0}})
+        .catch(function(){return{date:dt,available:false}});
+    });
+    Promise.all(promises).then(function(results){
+      var changed=false;
+      results.forEach(function(r){
+        if(!r.available){unavailableDates[r.date]=true;changed=true}
+      });
+      if(changed)renderDates();
+    });
+  }
+
+  function selectDate(dt){
+    selDate=dt;selSlot='';
+    setStep(1);
+    document.getElementById('appt-fields').style.display='none';
+    document.getElementById('appt-consent').style.display='none';
+    document.getElementById('appt-submit').disabled=true;
+    document.getElementById('appt-submit').style.opacity='0.4';
+    document.getElementById('appt-submit').style.cursor='not-allowed';
+    // Re-render date buttons to update selection
+    var dc=document.getElementById('appt-dates');
+    dc.querySelectorAll('button').forEach(function(btn){
+      var bdt=btn.dataset.date;
+      if(bdt===dt){
+        btn.style.background='var(--primary)';btn.style.color='var(--primary-foreground)';
+        btn.querySelectorAll('span').forEach(function(s){s.style.color='var(--primary-foreground)'});
+      }else if(!unavailableDates[bdt]){
+        btn.style.background='var(--background)';btn.style.color='var(--foreground)';
+        var spans=btn.querySelectorAll('span');
+        if(spans[0])spans[0].style.color='var(--muted-foreground)';
+        if(spans[1])spans[1].style.color='var(--foreground)';
+      }
+    });
+    // Show skeleton, fetch slots
+    var sc=document.getElementById('appt-slots-container');
+    var sl=document.getElementById('appt-slots');
+    var sk=document.getElementById('appt-slots-skeleton');
+    sc.style.display='block';sl.innerHTML='';sk.style.display='block';
+    fetch(API+'?project_id='+PID+'&date='+dt).then(function(r){return r.json()}).then(function(data){
+      sk.style.display='none';
+      dur=data.duration||30;
+      formFields=data.form_fields||null;
+      consentRequired=data.consent_required||false;
+      consentText=data.consent_text||'';
+      if(!data.slots||data.slots.length===0){
+        sl.innerHTML='<p style="color:var(--muted-foreground);font-size:14px;text-align:center;padding:20px 0">Bu tarihte müsait saat bulunmuyor.</p>';
+        return;
+      }
+      renderSlots(data.slots);
+    }).catch(function(){
+      sk.style.display='none';
+      sl.innerHTML='<p style="color:#b91c1c;font-size:14px;text-align:center;padding:20px 0">Saatler yüklenirken hata oluştu.</p>';
+    });
+  }
+
+  function addMinutes(t,m){
+    var p=t.split(':').map(Number);
+    var total=p[0]*60+p[1]+m;
+    return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+  }
+
+  function renderSlots(slots){
+    var sl=document.getElementById('appt-slots');
+    sl.innerHTML='';
+    slots.forEach(function(t){
+      var endTime=addMinutes(t,dur);
+      var row=document.createElement('div');
+      row.dataset.time=t;
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--background);color:var(--foreground);cursor:pointer;font-size:14px';
+      var timeSpan=document.createElement('span');
+      timeSpan.style.fontWeight='500';
+      timeSpan.textContent=t+' – '+endTime;
+      var durSpan=document.createElement('span');
+      durSpan.style.cssText='font-size:12px;color:var(--muted-foreground)';
+      durSpan.textContent=dur+' dk';
+      row.appendChild(timeSpan);row.appendChild(durSpan);
+      row.onmouseenter=function(){if(selSlot!==t)row.style.background='var(--muted)'};
+      row.onmouseleave=function(){if(selSlot!==t)row.style.background='var(--background)'};
+      row.onclick=function(){selectSlot(t)};
+      sl.appendChild(row);
+    });
+  }
+
+  function selectSlot(t){
+    selSlot=t;formLoadedAt=new Date().toISOString();
+    setStep(3);
+    var sl=document.getElementById('appt-slots');
+    sl.querySelectorAll('div[data-time]').forEach(function(row){
+      if(row.dataset.time===t){
+        row.style.background='var(--primary)';row.style.color='var(--primary-foreground)';
+        row.querySelectorAll('span').forEach(function(s){s.style.color='var(--primary-foreground)'});
+      }else{
+        row.style.background='var(--background)';row.style.color='var(--foreground)';
+        var spans=row.querySelectorAll('span');
+        if(spans[0])spans[0].style.color='var(--foreground)';
+        if(spans[1])spans[1].style.color='var(--muted-foreground)';
+      }
+    });
+    document.getElementById('appt-fields').style.display='block';
+    renderDynamicFields(formFields);
+    renderConsent();
+    document.getElementById('appt-submit').disabled=false;
+    document.getElementById('appt-submit').style.opacity='1';
+    document.getElementById('appt-submit').style.cursor='pointer';
+  }
+
   function renderDynamicFields(fields){
     var fc=document.getElementById('appt-fields');
     fc.innerHTML='';
     if(!fields||!fields.length){
-      fc.innerHTML='<div class="grid sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Adınız *</label><input id="appt-name" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Adınızı girin"></div><div><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">E-posta *</label><input id="appt-email" type="email" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="E-posta adresiniz"></div></div><div class="mb-4"><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Telefon</label><input id="appt-phone" type="tel" class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Telefon numaranız"></div><div class="mb-4"><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Not</label><textarea id="appt-note" rows="3" class="w-full px-4 py-3 rounded-lg resize-none" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Eklemek istediğiniz not..."></textarea></div>';
+      fc.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px"><div><label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--foreground)">Adınız *</label><input id="appt-name" required style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--input);background:var(--background);color:var(--foreground);font-size:14px;outline:none" placeholder="Adınızı girin"></div><div><label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--foreground)">E-posta *</label><input id="appt-email" type="email" required style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--input);background:var(--background);color:var(--foreground);font-size:14px;outline:none" placeholder="E-posta adresiniz"></div></div><div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--foreground)">Telefon</label><input id="appt-phone" type="tel" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--input);background:var(--background);color:var(--foreground);font-size:14px;outline:none" placeholder="Telefon numaranız"></div><div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--foreground)">Mesaj / Not</label><textarea id="appt-note" rows="3" style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--input);background:var(--background);color:var(--foreground);font-size:14px;outline:none;resize:none" placeholder="Eklemek istediğiniz not..."></textarea></div>';
       return;
     }
     var sorted=fields.slice().sort(function(a,b){return a.order-b.order});
     var sysFields=sorted.filter(function(f){return f.system});
     var customFields=sorted.filter(function(f){return !f.system});
     if(sysFields.length>0){
-      var grid=document.createElement('div');grid.className='grid sm:grid-cols-2 gap-4 mb-4';
+      var grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px';
       sysFields.forEach(function(f){grid.appendChild(makeFieldEl(f))});
       fc.appendChild(grid);
     }
-    customFields.forEach(function(f){var w=document.createElement('div');w.className='mb-4';w.appendChild(makeFieldEl(f));fc.appendChild(w)});
+    customFields.forEach(function(f){var w=document.createElement('div');w.style.marginBottom='16px';w.appendChild(makeFieldEl(f));fc.appendChild(w)});
   }
+
   function makeFieldEl(f){
     var wrap=document.createElement('div');
-    var lbl=document.createElement('label');lbl.className='block text-sm font-medium mb-2';lbl.style.color='var(--foreground)';
+    var lbl=document.createElement('label');lbl.style.cssText='display:block;font-size:13px;font-weight:500;margin-bottom:6px;color:var(--foreground)';
     lbl.textContent=f.label+(f.required?' *':'');wrap.appendChild(lbl);
-    var inputStyle='border:1px solid var(--input);background:var(--background);color:var(--foreground)';
+    var inputStyle='width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--input);background:var(--background);color:var(--foreground);font-size:14px;outline:none';
     if(f.type==='textarea'){
       var ta=document.createElement('textarea');ta.id='appt-field-'+f.id;ta.name=f.id;ta.rows=3;
-      ta.className='w-full px-4 py-3 rounded-lg resize-none';ta.style.cssText=inputStyle;
+      ta.style.cssText=inputStyle+';resize:none';
       if(f.placeholder)ta.placeholder=f.placeholder;if(f.required)ta.required=true;wrap.appendChild(ta);
     }else if(f.type==='select'){
       var sel=document.createElement('select');sel.id='appt-field-'+f.id;sel.name=f.id;
-      sel.className='w-full px-4 py-3 rounded-lg';sel.style.cssText=inputStyle;
+      sel.style.cssText=inputStyle;
       if(f.required)sel.required=true;
       var defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='Seçin...';sel.appendChild(defOpt);
       (f.options||[]).forEach(function(o){var opt=document.createElement('option');opt.value=o;opt.textContent=o;sel.appendChild(opt)});
       wrap.appendChild(sel);
     }else{
       var inp=document.createElement('input');inp.id='appt-field-'+f.id;inp.name=f.id;inp.type=f.type||'text';
-      inp.className='w-full px-4 py-3 rounded-lg';inp.style.cssText=inputStyle;
+      inp.style.cssText=inputStyle;
       if(f.placeholder)inp.placeholder=f.placeholder;if(f.required)inp.required=true;wrap.appendChild(inp);
     }
     return wrap;
   }
+
   function renderConsent(){
     var cc=document.getElementById('appt-consent');
     cc.innerHTML='';
     if(!consentRequired||!consentText)return;
-    cc.style.display='block';
-    var wrap=document.createElement('div');wrap.className='flex items-start gap-3';
-    var cb=document.createElement('input');cb.type='checkbox';cb.id='appt-consent-cb';cb.style.marginTop='4px';
-    var lbl=document.createElement('label');lbl.htmlFor='appt-consent-cb';lbl.className='text-sm';
-    lbl.style.color='var(--muted-foreground)';lbl.style.cursor='pointer';lbl.textContent=consentText;
+    cc.style.display='block';cc.style.marginBottom='16px';
+    var wrap=document.createElement('div');wrap.style.cssText='display:flex;align-items:start;gap:10px';
+    var cb=document.createElement('input');cb.type='checkbox';cb.id='appt-consent-cb';cb.style.marginTop='3px';
+    var lbl=document.createElement('label');lbl.htmlFor='appt-consent-cb';
+    lbl.style.cssText='font-size:13px;color:var(--muted-foreground);cursor:pointer';lbl.textContent=consentText;
     wrap.appendChild(cb);wrap.appendChild(lbl);cc.appendChild(wrap);
   }
-  dates.forEach(function(dt){
-    var dd=new Date(dt+'T00:00:00');
-    var label=dd.toLocaleDateString('tr-TR',{day:'numeric',month:'short',weekday:'short'});
-    var btn=document.createElement('button');
-    btn.textContent=label;btn.dataset.date=dt;
-    btn.className='px-3 py-2 rounded-lg text-sm transition';
-    btn.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
-    btn.onclick=function(){
-      selDate=dt;selSlot='';
-      dc.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)';b.style.color='var(--foreground)'});
-      btn.style.background='var(--primary)';btn.style.color='var(--primary-foreground)';
-      document.getElementById('appt-fields').style.display='none';
-      document.getElementById('appt-consent').style.display='none';
-      document.getElementById('appt-submit').disabled=true;
-      document.getElementById('appt-submit').style.opacity='0.5';
-      fetch(API+'?project_id='+PID+'&date='+dt).then(function(r){return r.json()}).then(function(data){
-        var sc=document.getElementById('appt-slots-container');
-        var sl=document.getElementById('appt-slots');
-        sl.innerHTML='';dur=data.duration||30;
-        formFields=data.form_fields||null;
-        consentRequired=data.consent_required||false;
-        consentText=data.consent_text||'';
-        if(!data.slots||data.slots.length===0){sl.innerHTML='<p style="color:var(--muted-foreground)" class="text-sm">Bu tarihte müsait saat yok.</p>';sc.style.display='block';return}
-        data.slots.forEach(function(t){
-          var sb=document.createElement('button');sb.textContent=t;sb.dataset.time=t;
-          sb.className='px-4 py-2 rounded-lg text-sm transition';
-          sb.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
-          sb.onclick=function(){
-            selSlot=t;formLoadedAt=new Date().toISOString();
-            sl.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)';b.style.color='var(--foreground)'});
-            sb.style.background='var(--primary)';sb.style.color='var(--primary-foreground)';
-            document.getElementById('appt-fields').style.display='block';
-            renderDynamicFields(formFields);
-            renderConsent();
-            document.getElementById('appt-submit').disabled=false;
-            document.getElementById('appt-submit').style.opacity='1';
-            document.getElementById('appt-submit').style.cursor='pointer';
-          };
-          sl.appendChild(sb);
-        });
-        sc.style.display='block';
-      });
-    };
-    dc.appendChild(btn);
-  });
+
+  document.getElementById('appt-prev-week').onclick=function(){
+    if(weekOffset>0){weekOffset--;renderDates()}
+  };
+  document.getElementById('appt-next-week').onclick=function(){
+    weekOffset++;renderDates();
+  };
+
+  // Initial render
+  renderDates();
+
   document.getElementById('appt-submit').onclick=function(){
     if(!selDate||!selSlot)return;
+    document.getElementById('appt-error').style.display='none';
     var hp=document.getElementById('appt-hp').value;
     var consentCb=document.getElementById('appt-consent-cb');
     if(consentRequired&&consentText&&(!consentCb||!consentCb.checked)){
@@ -429,25 +642,27 @@ function renderAppointmentBooking(b: ChaiBlock): string {
     }
     var payload={project_id:PID,date:selDate,start_time:selSlot,honeypot:hp||'',form_loaded_at:formLoadedAt,consent_given:consentCb?consentCb.checked:false};
     var formDataExtra={};
-    var systemIds=['client_name','client_email'];
     if(formFields&&formFields.length){
+      var hasError=false;
       formFields.forEach(function(f){
+        if(hasError)return;
         var el=document.getElementById('appt-field-'+f.id);
         if(!el)return;
         var v=el.value||'';
         if(f.system){
           if(f.id==='client_name')payload.client_name=v;
           else if(f.id==='client_email')payload.client_email=v;
-        } else {
+        }else{
           if(f.id==='client_phone')payload.client_phone=v;
           else if(f.id==='client_note')payload.client_note=v;
           else formDataExtra[f.id]=v;
         }
         if(f.required&&!v.trim()){
           document.getElementById('appt-error').textContent=f.label+' alanı zorunludur';
-          document.getElementById('appt-error').style.display='block';payload=null;return;
+          document.getElementById('appt-error').style.display='block';hasError=true;
         }
       });
+      if(hasError)return;
     }else{
       var nEl=document.getElementById('appt-name'),eEl=document.getElementById('appt-email');
       if(nEl)payload.client_name=nEl.value;
@@ -455,14 +670,13 @@ function renderAppointmentBooking(b: ChaiBlock): string {
       var pEl=document.getElementById('appt-phone');if(pEl)payload.client_phone=pEl.value||null;
       var ntEl=document.getElementById('appt-note');if(ntEl)payload.client_note=ntEl.value||null;
     }
-    if(!payload)return;
     if(!payload.client_name||!payload.client_email){document.getElementById('appt-error').textContent='Ad ve e-posta zorunludur';document.getElementById('appt-error').style.display='block';return}
     if(Object.keys(formDataExtra).length>0)payload.form_data=formDataExtra;
-    document.getElementById('appt-submit').disabled=true;document.getElementById('appt-submit').textContent='Gönderiliyor...';
+    document.getElementById('appt-submit').disabled=true;document.getElementById('appt-submit').textContent='Gönderiliyor...';document.getElementById('appt-submit').style.opacity='0.6';
     fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})}).then(function(res){
       if(res.ok){document.getElementById('appt-form-container').style.display='none';document.getElementById('appt-success').style.display='block'}
-      else{document.getElementById('appt-error').textContent=res.data.error||'Bir hata oluştu';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'}
-    }).catch(function(){document.getElementById('appt-error').textContent='Bağlantı hatası';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'});
+      else{document.getElementById('appt-error').textContent=res.data.error||'Bir hata oluştu';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}';document.getElementById('appt-submit').style.opacity='1'}
+    }).catch(function(){document.getElementById('appt-error').textContent='Bağlantı hatası';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}';document.getElementById('appt-submit').style.opacity='1'});
   };
 })();
 <\/script>`;
