@@ -6,6 +6,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import React, { useState, useEffect, useRef } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle2, Phone, MessageSquare } from "lucide-react";
 
@@ -207,6 +208,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
 
   if (inBuilder) {
     return (
+      <TooltipProvider>
       <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
         <div className="container mx-auto px-6">
           <div className="text-center mb-10">
@@ -268,6 +270,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
           </div>
         </div>
       </section>
+      </TooltipProvider>
     );
   }
 
@@ -383,6 +386,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
   const inputClass = "w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all";
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`} id="appointment">
       <div className="container mx-auto px-6">
         <div className="text-center mb-10">
@@ -537,6 +541,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 
