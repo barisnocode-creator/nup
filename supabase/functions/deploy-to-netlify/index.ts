@@ -59,9 +59,20 @@ function buildThemeCssVars(theme: Record<string, unknown>): string {
 
 // ── Block Renderers ──
 
+// Check if a string is base64 image data (should be skipped)
+function isBase64Image(str: string): boolean {
+  if (!str) return false;
+  return str.startsWith("data:image/") || (str.length > 500 && /^[A-Za-z0-9+/=]+$/.test(str.substring(0, 100)));
+}
+
 function renderHeroCentered(b: ChaiBlock): string {
-  const bg = b.backgroundImage as string || "";
-  return `<section class="relative min-h-[80vh] flex items-center justify-center text-center text-white" style="background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('${escapeHtml(bg)}') center/cover no-repeat">
+  const rawBg = b.backgroundImage as string || "";
+  // Skip base64 images - use gradient-only fallback
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg 
+    ? `background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, black), color-mix(in srgb, var(--primary) 40%, black))`;
+  return `<section class="relative min-h-[80vh] flex items-center justify-center text-center text-white" style="${bgStyle}">
   <div class="max-w-3xl mx-auto px-6 py-20">
     <h1 class="text-4xl md:text-5xl font-bold mb-4">${escapeHtml(b.title as string)}</h1>
     ${b.subtitle ? `<p class="text-lg md:text-xl opacity-90 mb-4">${escapeHtml(b.subtitle as string)}</p>` : ""}
@@ -92,7 +103,8 @@ function renderStatisticsCounter(b: ChaiBlock): string {
 }
 
 function renderAboutSection(b: ChaiBlock): string {
-  const img = b.image as string || "";
+  const rawImg = b.image as string || "";
+  const img = isBase64Image(rawImg) ? "" : rawImg;
   const features = (b.features as string || "").split("\n").filter(Boolean);
   const featuresHtml = features.map(f => `<li class="flex items-center gap-2"><span style="color:var(--primary)">✓</span> ${escapeHtml(f)}</li>`).join("");
   const isRight = (b.imagePosition as string) === "right";
@@ -216,8 +228,12 @@ function renderContactForm(b: ChaiBlock): string {
 }
 
 function renderCTABanner(b: ChaiBlock): string {
-  const bg = b.backgroundImage as string || "";
-  return `<section class="relative py-20 text-white text-center" style="background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),url('${escapeHtml(bg)}') center/cover no-repeat">
+  const rawBg = b.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 80%, black), color-mix(in srgb, var(--primary) 35%, black))`;
+  return `<section class="relative py-20 text-white text-center" style="${bgStyle}">
   <div class="max-w-3xl mx-auto px-6">
     <h2 class="text-3xl md:text-4xl font-bold mb-4">${escapeHtml(b.title as string)}</h2>
     ${b.description ? `<p class="text-lg opacity-90 mb-8">${escapeHtml(b.description as string)}</p>` : ""}

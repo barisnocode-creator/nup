@@ -341,12 +341,12 @@ Return ONLY valid JSON in this exact format:
     }
   },
   "imageSearchTerms": {
-    "hero": "string (3-5 specific English keywords for Pixabay search for the hero/banner image, e.g. 'turkish restaurant interior dining ambiance')",
-    "about": "string (3-5 English keywords for the about/team section image)",
-    "services": "string (3-5 English keywords for services section image)",
-    "gallery": ["string (each item is 2-4 English keywords for a gallery photo, provide 6 items)", "..."],
-    "cta": "string (3-5 English keywords for call-to-action background image)",
-    "blog": "string (3-5 English keywords for default blog post featured image)"
+    "hero": "string (4-6 VERY SPECIFIC English keywords for the hero/banner image - MUST directly relate to the business's actual profession/service. Examples: 'psychology therapy counseling session calm office', 'turkish kebab grilled meat restaurant warm', 'law office legal books justice professional'. NEVER use generic terms like 'professional business office' for specialized businesses.)",
+    "about": "string (4-6 English keywords for the about section - show the team/professional in their actual work environment)",
+    "services": "string (4-6 English keywords for services section - show the actual service being performed)",
+    "gallery": ["string (each 3-5 English keywords, provide 6 items showing VARIETY of the actual business: workspace, service delivery, results, team, equipment, atmosphere)", "..."],
+    "cta": "string (4-6 English keywords for call-to-action background - inspiring image related to the business outcome)",
+    "blog": "string (3-5 English keywords for default blog post image related to the business field)"
   },
   "metadata": {
     "siteName": "string",
@@ -355,13 +355,26 @@ Return ONLY valid JSON in this exact format:
   }
 }
 
-IMPORTANT for imageSearchTerms:
+CRITICAL RULES for imageSearchTerms:
 - All search terms MUST be in English (Pixabay works best with English)
-- Make them VERY SPECIFIC to this exact business type and industry
-- For a Turkish restaurant: use "turkish kebab restaurant dining warm" NOT just "restaurant"
-- For a dental clinic: use "modern dental clinic chair equipment" NOT just "dentist"
-- For gallery: provide 6 different specific terms showing variety (e.g. interior, food, chef, ambiance, exterior, details)
-- Think about what real photos would look like for THIS specific business`;
+- imageSearchTerms is THE MOST IMPORTANT part for visual quality - spend extra thought on this
+- Terms MUST be HYPER-SPECIFIC to this exact business's profession/industry
+- NEVER use generic terms like "professional business office" or "modern workspace" for specialized businesses
+- The hero image is the first thing visitors see - it MUST immediately communicate what this business does
+- Examples of GOOD hero terms:
+  * Psychology clinic → "psychology therapy counseling session calm modern"
+  * Kebab restaurant → "turkish kebab grilled meat charcoal restaurant"
+  * Law office → "law office lawyer legal books courtroom justice"
+  * Beauty salon → "beauty salon hairdresser styling mirror modern"
+  * Dental clinic → "dental clinic modern chair equipment whitening"
+  * Photography studio → "photography studio camera lighting portrait"
+  * Auto repair → "auto repair mechanic garage workshop tools"
+- Examples of BAD hero terms (NEVER use these for specialized businesses):
+  * "professional business consulting office" (too generic)
+  * "modern workspace team" (says nothing about the business)
+  * "success handshake professional" (stock photo cliché)
+- For gallery: show 6 DIFFERENT aspects (e.g. for restaurant: interior, chef cooking, food plate, ingredients, dining area, exterior)
+- Think: "If I search this on Pixabay, will the photos CLEARLY show what this business does?"`;
 }
 
 // Sector-based search terms for Pixabay images

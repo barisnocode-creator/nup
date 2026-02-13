@@ -7,6 +7,135 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Turkish profession/business keyword to English Pixabay search term mapping
+const professionKeywordMapping: Record<string, string> = {
+  // Psychology / Therapy
+  "psikoloji": "psychology therapy counseling session calm",
+  "psikolog": "psychology therapist counseling office",
+  "psikolojik": "psychology mental health therapy",
+  "terapi": "therapy counseling session professional",
+  "danışmanlık": "counseling consultation professional office",
+  // Law
+  "hukuk": "law office lawyer legal justice books",
+  "avukat": "lawyer law office legal professional",
+  "avukatlık": "attorney law firm office professional",
+  "hukuki": "legal services law books courtroom",
+  // Food / Restaurant
+  "kebap": "turkish kebab grilled meat restaurant dining",
+  "kebab": "turkish kebab grilled meat restaurant",
+  "restoran": "restaurant dining interior modern",
+  "restaurant": "restaurant dining food interior",
+  "cafe": "coffee cafe barista latte cozy",
+  "kafe": "coffee cafe modern cozy interior",
+  "kahve": "coffee cafe latte art barista",
+  "pastane": "bakery pastry cake dessert shop",
+  "fırın": "bakery bread artisan oven fresh",
+  "yemek": "food dining restaurant cuisine",
+  // Beauty / Health
+  "güzellik": "beauty salon spa treatment skincare",
+  "kuaför": "hairdresser salon hair styling modern",
+  "berber": "barber shop haircut modern grooming",
+  "spa": "spa wellness relaxation massage treatment",
+  "cilt": "skincare dermatology beauty clinic",
+  // Medical
+  "diş": "dental clinic modern teeth whitening",
+  "dişhekimi": "dentist dental chair modern clinic",
+  "eczane": "pharmacy drugstore medicine modern",
+  "doktor": "medical doctor clinic modern healthcare",
+  "klinik": "medical clinic modern healthcare facility",
+  "hastane": "hospital healthcare modern facility",
+  "veteriner": "veterinary clinic animal care pet",
+  "optik": "optician eyewear glasses modern store",
+  "göz": "eye clinic ophthalmology vision care",
+  "fizik tedavi": "physiotherapy rehabilitation exercise clinic",
+  "fizyoterapi": "physiotherapy physical therapy clinic",
+  // Construction / Architecture
+  "inşaat": "construction building modern architecture",
+  "mimarlık": "architecture design blueprint modern building",
+  "mimar": "architect architecture modern design",
+  "dekorasyon": "interior design decoration modern home",
+  "tadilat": "renovation construction home improvement",
+  // Finance / Accounting
+  "muhasebe": "accounting finance office professional",
+  "muhasebeci": "accountant finance calculator office",
+  "mali müşavir": "financial advisor accounting professional",
+  "sigorta": "insurance professional office consultation",
+  // Education
+  "eğitim": "education learning classroom modern",
+  "okul": "school education modern classroom",
+  "kurs": "training course education classroom",
+  "dershane": "tutoring education study classroom",
+  "kreş": "kindergarten nursery children colorful",
+  // Technology
+  "yazılım": "software development coding modern office",
+  "teknoloji": "technology innovation digital modern",
+  "bilişim": "information technology computing modern",
+  "web": "web design development digital modern",
+  // Creative
+  "fotoğraf": "photography studio camera creative",
+  "fotoğrafçı": "photographer studio portrait creative",
+  "tasarım": "design creative studio modern workspace",
+  "grafik": "graphic design creative studio workspace",
+  "video": "video production studio filmmaking",
+  "müzik": "music studio instrument recording",
+  // Automotive
+  "oto": "auto repair garage mechanic professional",
+  "araba": "car automotive dealership showroom",
+  "servis": "auto service repair garage workshop",
+  "oto yıkama": "car wash auto detailing clean",
+  // Retail
+  "mağaza": "retail store modern interior shopping",
+  "market": "supermarket grocery store modern",
+  "butik": "boutique fashion clothing store",
+  "kırtasiye": "stationery office supplies store",
+  "mobilya": "furniture store modern showroom interior",
+  "emlak": "real estate property modern building",
+  // Other Services
+  "nakliyat": "moving transportation logistics truck",
+  "temizlik": "cleaning service professional commercial",
+  "matbaa": "printing press commercial production",
+  "çiçekçi": "florist flower shop colorful arrangement",
+  "organizasyon": "event planning organization celebration",
+  "düğün": "wedding planning ceremony celebration",
+  "spor": "fitness gym sports training modern",
+  "pilates": "pilates yoga fitness studio exercise",
+  "yoga": "yoga meditation fitness studio calm",
+};
+
+// Try to find relevant English search terms from Turkish business name and services
+function buildDynamicSearchTerms(
+  businessName: string,
+  services: string[],
+  sector: string
+): Record<string, string> | null {
+  const allText = [businessName, ...services].join(" ").toLowerCase();
+  
+  // Find matching profession keywords
+  const matchedTerms: string[] = [];
+  for (const [keyword, englishTerm] of Object.entries(professionKeywordMapping)) {
+    if (allText.includes(keyword.toLowerCase())) {
+      matchedTerms.push(englishTerm);
+    }
+  }
+  
+  if (matchedTerms.length === 0) return null;
+  
+  // Use the first (most specific) match as primary term
+  const primaryTerm = matchedTerms[0];
+  const secondaryTerm = matchedTerms.length > 1 ? matchedTerms[1] : primaryTerm;
+  
+  return {
+    heroSplit: primaryTerm,
+    heroHome: primaryTerm,
+    aboutImage: secondaryTerm + " team professional",
+    ctaImage: primaryTerm + " success",
+    heroAbout: secondaryTerm + " team",
+    heroServices: primaryTerm,
+    heroBlog: primaryTerm.split(" ").slice(0, 3).join(" ") + " insights",
+    heroContact: primaryTerm.split(" ").slice(0, 2).join(" ") + " customer service",
+  };
+}
+
 // Sector-based search terms for different image placements
 const sectorSearchTerms: Record<string, Record<string, string>> = {
   service: {
@@ -351,10 +480,52 @@ serve(async (req) => {
     // Use sector/profession from project
     const sector = project.profession || "other";
     const generatedContent = project.generated_content || {};
-    const searchTerms = sectorSearchTerms[sector] || sectorSearchTerms.other;
-    const galleryTerms = gallerySearchTerms[sector] || gallerySearchTerms.other;
+    const formData = project.form_data || {};
+    
+    // Priority 1: AI-generated imageSearchTerms from generated_content
+    const aiSearchTerms = generatedContent.imageSearchTerms;
+    
+    // Priority 2: Dynamic terms from business name + services (Turkish keyword mapping)
+    const businessName = formData.extractedData?.businessName || formData.businessInfo?.businessName || project.name || "";
+    const services = formData.extractedData?.services || formData.professionalDetails?.services || [];
+    const dynamicTerms = buildDynamicSearchTerms(businessName, services, sector);
+    
+    // Build final search terms with priority: AI terms > dynamic mapping > static sector
+    const staticTerms = sectorSearchTerms[sector] || sectorSearchTerms.other;
+    const searchTerms: Record<string, string> = { ...staticTerms };
+    
+    // Apply dynamic profession-based terms (override static)
+    if (dynamicTerms) {
+      console.log(`Dynamic profession mapping found for: ${businessName}`);
+      Object.assign(searchTerms, dynamicTerms);
+    }
+    
+    // Apply AI-generated terms (highest priority override)
+    if (aiSearchTerms) {
+      console.log(`Using AI-generated imageSearchTerms`);
+      if (aiSearchTerms.hero) {
+        searchTerms.heroHome = aiSearchTerms.hero;
+        searchTerms.heroSplit = aiSearchTerms.hero;
+      }
+      if (aiSearchTerms.about) {
+        searchTerms.aboutImage = aiSearchTerms.about;
+        searchTerms.heroAbout = aiSearchTerms.about;
+      }
+      if (aiSearchTerms.services) {
+        searchTerms.heroServices = aiSearchTerms.services;
+      }
+      if (aiSearchTerms.cta) {
+        searchTerms.ctaImage = aiSearchTerms.cta;
+      }
+    }
+    
+    // Gallery terms: AI > static
+    const staticGalleryTerms = gallerySearchTerms[sector] || gallerySearchTerms.other;
+    const galleryTerms = (aiSearchTerms?.gallery && aiSearchTerms.gallery.length >= 3)
+      ? aiSearchTerms.gallery.slice(0, 6)
+      : staticGalleryTerms;
 
-    console.log(`Fetching Pixabay images for sector: ${sector}`);
+    console.log(`Fetching Pixabay images for sector: ${sector}, business: ${businessName}`);
 
     // Fetch ALL images in parallel for speed
     const images: Record<string, string | string[]> = {};
