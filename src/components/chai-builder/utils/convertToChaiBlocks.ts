@@ -213,7 +213,18 @@ export function convertGeneratedContentToChaiBlocks(
     });
   }
 
-  // 9. CTA Section
+  // 9. Appointment Booking Section (otomatik eklenir)
+  blocks.push({
+    _id: generateBlockId(),
+    _type: 'AppointmentBooking',
+    sectionTitle: 'Randevu Alın',
+    sectionSubtitle: 'Randevu',
+    sectionDescription: 'Size en uygun tarih ve saati seçerek kolayca randevu alabilirsiniz.',
+    submitButtonText: 'Randevu Oluştur',
+    successMessage: 'Randevunuz başarıyla oluşturuldu!',
+  });
+
+  // 10. CTA Section
   const ctaImage = resolveImage(images, 'ctaImage', 'heroHome');
   blocks.push({
     _id: generateBlockId(),

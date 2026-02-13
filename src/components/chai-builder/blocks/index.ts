@@ -33,6 +33,9 @@ import './cta/CTABanner';
 // FAQ blocks
 import './faq/FAQAccordion';
 
+// Appointment blocks
+import './appointment/AppointmentBooking';
+
 // Export all blocks
 export * from './hero';
 export * from './about';
@@ -44,6 +47,7 @@ export * from './testimonials';
 export * from './contact';
 export * from './cta';
 export * from './faq';
+export * from './appointment';
 
 // Registration function (called on import)
 export function registerCustomBlocks() {

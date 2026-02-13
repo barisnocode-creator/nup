@@ -251,6 +251,133 @@ function renderPricingTable(b: ChaiBlock): string {
 </section>`;
 }
 
+function renderAppointmentBooking(b: ChaiBlock): string {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const title = escapeHtml(b.sectionTitle as string || "Randevu Alın");
+  const subtitle = b.sectionSubtitle ? `<span class="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4" style="background:color-mix(in srgb, var(--primary) 10%, transparent);color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</span>` : "";
+  const desc = b.sectionDescription ? `<p class="max-w-2xl mx-auto mt-4" style="color:var(--muted-foreground)">${escapeHtml(b.sectionDescription as string)}</p>` : "";
+  const btnText = escapeHtml(b.submitButtonText as string || "Randevu Oluştur");
+  const successMsg = escapeHtml(b.successMessage as string || "Randevunuz başarıyla oluşturuldu!");
+
+  return `<section id="appointment" class="py-20" style="background:var(--muted)">
+  <div class="max-w-2xl mx-auto px-6">
+    <div class="text-center mb-12">
+      ${subtitle}
+      <h2 class="text-3xl font-bold" style="color:var(--foreground)">${title}</h2>
+      ${desc}
+    </div>
+    <div class="p-8 rounded-2xl" style="background:var(--card);border:1px solid var(--border)">
+      <div id="appt-form-container">
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium mb-3" style="color:var(--foreground)">📅 Tarih Seçin</label>
+            <div id="appt-dates" class="flex gap-2 flex-wrap max-h-32 overflow-y-auto"></div>
+          </div>
+          <div id="appt-slots-container" style="display:none">
+            <label class="block text-sm font-medium mb-3" style="color:var(--foreground)">🕐 Saat Seçin</label>
+            <div id="appt-slots" class="flex gap-2 flex-wrap"></div>
+          </div>
+          <div id="appt-fields" style="display:none">
+            <div class="grid sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Adınız *</label>
+                <input id="appt-name" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Adınızı girin">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">E-posta *</label>
+                <input id="appt-email" type="email" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="E-posta adresiniz">
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Telefon</label>
+              <input id="appt-phone" type="tel" class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Telefon numaranız">
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Not</label>
+              <textarea id="appt-note" rows="3" class="w-full px-4 py-3 rounded-lg resize-none" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Eklemek istediğiniz not..."></textarea>
+            </div>
+          </div>
+          <div id="appt-error" style="display:none" class="p-3 rounded-lg text-sm" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c"></div>
+          <button id="appt-submit" disabled class="w-full px-6 py-4 rounded-lg font-medium transition opacity-50 cursor-not-allowed" style="background:var(--primary);color:var(--primary-foreground)">${btnText}</button>
+        </div>
+      </div>
+      <div id="appt-success" style="display:none" class="text-center py-12">
+        <div class="text-5xl mb-4">✅</div>
+        <h3 class="text-xl font-semibold mb-2" style="color:var(--foreground)">${successMsg}</h3>
+        <p style="color:var(--muted-foreground)">En kısa sürede sizinle iletişime geçeceğiz.</p>
+        <button onclick="location.reload()" class="mt-6 px-6 py-2 rounded-lg" style="border:1px solid var(--border);color:var(--foreground)">Yeni Randevu</button>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var API='${supabaseUrl}/functions/v1/book-appointment';
+  var PID=window.__PROJECT_ID__;
+  var selDate='',selSlot='',dur=30;
+  var dates=[];
+  var today=new Date();
+  for(var i=1;i<=30;i++){var d=new Date(today);d.setDate(today.getDate()+i);dates.push(d.toISOString().split('T')[0])}
+  var dc=document.getElementById('appt-dates');
+  dates.forEach(function(dt){
+    var dd=new Date(dt+'T00:00:00');
+    var label=dd.toLocaleDateString('tr-TR',{day:'numeric',month:'short',weekday:'short'});
+    var btn=document.createElement('button');
+    btn.textContent=label;btn.dataset.date=dt;
+    btn.className='px-3 py-2 rounded-lg text-sm transition';
+    btn.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
+    btn.onclick=function(){
+      selDate=dt;selSlot='';
+      dc.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)'});
+      btn.style.background='var(--primary)';btn.style.color='var(--primary-foreground)';
+      document.getElementById('appt-fields').style.display='none';
+      document.getElementById('appt-submit').disabled=true;
+      document.getElementById('appt-submit').style.opacity='0.5';
+      fetch(API+'?project_id='+PID+'&date='+dt).then(function(r){return r.json()}).then(function(data){
+        var sc=document.getElementById('appt-slots-container');
+        var sl=document.getElementById('appt-slots');
+        sl.innerHTML='';dur=data.duration||30;
+        if(!data.slots||data.slots.length===0){sl.innerHTML='<p style="color:var(--muted-foreground)" class="text-sm">Bu tarihte müsait saat yok.</p>';sc.style.display='block';return}
+        data.slots.forEach(function(t){
+          var sb=document.createElement('button');sb.textContent=t;sb.dataset.time=t;
+          sb.className='px-4 py-2 rounded-lg text-sm transition';
+          sb.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
+          sb.onclick=function(){
+            selSlot=t;
+            sl.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)';b.style.color='var(--foreground)'});
+            sb.style.background='var(--primary)';sb.style.color='var(--primary-foreground)';
+            document.getElementById('appt-fields').style.display='block';
+            document.getElementById('appt-submit').disabled=false;
+            document.getElementById('appt-submit').style.opacity='1';
+            document.getElementById('appt-submit').style.cursor='pointer';
+          };
+          sl.appendChild(sb);
+        });
+        sc.style.display='block';
+      });
+    };
+    dc.appendChild(btn);
+  });
+  document.getElementById('appt-submit').onclick=function(){
+    if(!selDate||!selSlot)return;
+    var n=document.getElementById('appt-name').value;
+    var e=document.getElementById('appt-email').value;
+    if(!n||!e){document.getElementById('appt-error').textContent='Ad ve e-posta zorunludur';document.getElementById('appt-error').style.display='block';return}
+    document.getElementById('appt-submit').disabled=true;document.getElementById('appt-submit').textContent='Gönderiliyor...';
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      project_id:PID,date:selDate,start_time:selSlot,
+      client_name:n,client_email:e,
+      client_phone:document.getElementById('appt-phone').value||null,
+      client_note:document.getElementById('appt-note').value||null
+    })}).then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})}).then(function(res){
+      if(res.ok){document.getElementById('appt-form-container').style.display='none';document.getElementById('appt-success').style.display='block'}
+      else{document.getElementById('appt-error').textContent=res.data.error||'Bir hata oluştu';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'}
+    }).catch(function(){document.getElementById('appt-error').textContent='Bağlantı hatası';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'});
+  };
+})();
+<\/script>`;
+}
+
 // ── Main renderer ──
 
 function renderBlock(block: ChaiBlock): string {
@@ -277,6 +404,8 @@ function renderBlock(block: ChaiBlock): string {
       return renderCTABanner(block);
     case "PricingTable":
       return renderPricingTable(block);
+    case "AppointmentBooking":
+      return renderAppointmentBooking(block);
     default:
       const text = (block.title as string) || (block.content as string) || "";
       if (text) return `<section class="py-12"><div class="max-w-4xl mx-auto px-6"><p>${escapeHtml(text)}</p></div></section>`;
@@ -301,6 +430,7 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const trackingScript = projectId ? `<script>(function(){var p="${projectId}",u="${supabaseUrl}/functions/v1/track-analytics",a=navigator.userAgent,d=/android|iphone|ipad|mobile/i.test(a)?"mobile":"desktop",v=localStorage.getItem("ol_vid");if(!v){v="v_"+Date.now()+"_"+Math.random().toString(36).substr(2,9);localStorage.setItem("ol_vid",v)}fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({project_id:p,event_type:"page_view",page_path:location.pathname,user_agent:a,device_type:d,visitor_id:v})}).catch(function(){})})()<\/script>` : "";
+  const projectVarsScript = projectId ? `<script>window.__PROJECT_ID__="${projectId}";window.__SUPABASE_URL__="${supabaseUrl}";<\/script>` : "";
 
   return `<!DOCTYPE html>
 <html lang="tr">
@@ -322,6 +452,7 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   </style>
 </head>
 <body>
+${projectVarsScript}
 ${sectionsHtml}
 ${trackingScript}
 </body>

@@ -62,6 +62,177 @@ export type Database = {
           },
         ]
       }
+      appointment_settings: {
+        Row: {
+          buffer_minutes: number
+          created_at: string
+          id: string
+          is_enabled: boolean
+          lunch_break_end: string | null
+          lunch_break_start: string | null
+          max_advance_days: number
+          project_id: string
+          slot_duration_minutes: number
+          timezone: string
+          updated_at: string
+          user_id: string
+          working_days: Json
+          working_hours_end: string
+          working_hours_start: string
+        }
+        Insert: {
+          buffer_minutes?: number
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          max_advance_days?: number
+          project_id: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          working_days?: Json
+          working_hours_end?: string
+          working_hours_start?: string
+        }
+        Update: {
+          buffer_minutes?: number
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          lunch_break_end?: string | null
+          lunch_break_start?: string | null
+          max_advance_days?: number
+          project_id?: string
+          slot_duration_minutes?: number
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          working_days?: Json
+          working_hours_end?: string
+          working_hours_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          appointment_date: string
+          client_email: string
+          client_name: string
+          client_note: string | null
+          client_phone: string | null
+          created_at: string
+          end_time: string
+          id: string
+          project_id: string
+          start_time: string
+          status: string
+          timezone: string
+        }
+        Insert: {
+          appointment_date: string
+          client_email: string
+          client_name: string
+          client_note?: string | null
+          client_phone?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          project_id: string
+          start_time: string
+          status?: string
+          timezone?: string
+        }
+        Update: {
+          appointment_date?: string
+          client_email?: string
+          client_name?: string
+          client_note?: string | null
+          client_phone?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          project_id?: string
+          start_time?: string
+          status?: string
+          timezone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocked_slots: {
+        Row: {
+          blocked_date: string
+          created_at: string
+          id: string
+          project_id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_date: string
+          created_at?: string
+          id?: string
+          project_id: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_date?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_slots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_slots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "public_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_domains: {
         Row: {
           created_at: string

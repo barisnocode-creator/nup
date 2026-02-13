@@ -89,6 +89,14 @@ export default function PublicWebsite() {
 
   usePageView(project?.id || null, '/public');
 
+  // Set project globals for appointment booking block
+  useEffect(() => {
+    if (project?.id) {
+      (window as any).__PROJECT_ID__ = project.id;
+      (window as any).__SUPABASE_URL__ = import.meta.env.VITE_SUPABASE_URL;
+    }
+  }, [project?.id]);
+
   // Inject theme CSS variables
   const themeStyleTag = useMemo(() => {
     if (!project?.chai_theme) return null;
