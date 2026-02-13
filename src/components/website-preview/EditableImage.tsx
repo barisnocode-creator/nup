@@ -87,37 +87,35 @@ export function EditableImage({
         fallback
       )}
 
-      {/* Edit Overlay */}
+      {/* Hover border */}
       {isEditable && (
         <div
           className={cn(
-            'absolute inset-0 transition-all duration-200',
+            'absolute inset-0 border-2 rounded-[inherit] pointer-events-none transition-colors duration-200',
+            isHovered || isSelected ? 'border-primary' : 'border-transparent'
+          )}
+        />
+      )}
+
+      {/* Action box - top right */}
+      {isEditable && (
+        <div
+          className={cn(
+            'absolute top-2 right-2 z-20 transition-all duration-200 pointer-events-auto',
             isHovered || isSelected
-              ? 'bg-black/40 opacity-100'
-              : 'opacity-0'
+              ? 'opacity-100 scale-100'
+              : 'opacity-0 scale-95 pointer-events-none'
           )}
         >
-          {/* Edit Icon */}
-          <div
-            className={cn(
-              'absolute inset-0 flex items-center justify-center transition-all duration-200',
-              isHovered || isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
-            )}
-          >
-            <div className="bg-white rounded-full p-3 shadow-lg">
-              <Pencil className="w-5 h-5 text-gray-700" />
-            </div>
+          <div className="flex gap-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-1 border border-gray-200">
+            <button
+              title="Düzenle"
+              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              onClick={handleClick}
+            >
+              <Pencil className="w-3.5 h-3.5 text-gray-700" />
+            </button>
           </div>
-
-          {/* Border on hover/selected */}
-          <div
-            className={cn(
-              'absolute inset-0 border-2 rounded-[inherit] pointer-events-none transition-colors duration-200',
-              isHovered || isSelected
-                ? 'border-primary'
-                : 'border-transparent'
-            )}
-          />
         </div>
       )}
     </div>
