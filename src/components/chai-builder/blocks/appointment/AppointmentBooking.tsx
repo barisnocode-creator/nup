@@ -7,7 +7,7 @@ import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "..
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, User, CheckCircle2, Phone, MessageSquare } from "lucide-react";
 
 interface FormField {
   id: string;
@@ -121,9 +121,9 @@ const DateStrip = ({ dates, selectedDate, onSelect, weekOffset, onWeekChange, un
 
 // Skeleton for time slots loading
 const SlotsSkeleton = () => (
-  <div className="grid grid-cols-3 gap-2">
-    {Array.from({ length: 6 }).map((_, i) => (
-      <div key={i} className="h-10 rounded-full bg-muted animate-pulse" />
+  <div className="space-y-2">
+    {Array.from({ length: 4 }).map((_, i) => (
+      <div key={i} className="h-11 rounded-xl bg-muted animate-pulse" />
     ))}
   </div>
 );
@@ -195,8 +195,6 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
       results.forEach(r => {
         if (r.status === "fulfilled" && r.value.slots.length === 0) {
           newUnavailable.add(r.value.date);
-        } else if (r.status === "rejected") {
-          // treat failed fetches as unavailable
         }
       });
       setUnavailableDates(newUnavailable);
@@ -223,24 +221,45 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
           <div className="max-w-xl mx-auto rounded-2xl bg-card border border-border shadow-xl overflow-hidden">
             <div className="p-6">
               <StepIndicator currentStep={2} />
+              {/* Date strip preview */}
               <div className="grid grid-cols-7 gap-1.5 mb-6">
                 {["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"].map((d, i) => (
-                  <div key={d} className={`flex flex-col items-center py-3 rounded-xl ${i === 2 ? "bg-primary text-primary-foreground shadow-lg" : "border border-transparent"}`}>
+                  <div key={d} className={`flex flex-col items-center py-3 rounded-xl ${
+                    i === 2 ? "bg-primary text-primary-foreground shadow-lg" : 
+                    i === 5 ? "opacity-40" : "border border-transparent"
+                  }`}>
                     <span className={`text-[10px] uppercase mb-1 ${i === 2 ? "text-primary-foreground/80" : "text-muted-foreground"}`}>{d}</span>
-                    <span className={`text-lg font-semibold ${i === 2 ? "" : "text-foreground"}`}>{15 + i}</span>
+                    <span className={`text-lg font-semibold ${i === 5 ? "line-through text-muted-foreground" : i === 2 ? "" : "text-foreground"}`}>{15 + i}</span>
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-2 mb-6">
-                {["09:00", "09:30", "10:00", "10:30", "11:00", "14:00"].map((t, i) => (
-                  <button key={t} disabled className={`py-2.5 rounded-full text-sm font-medium transition ${
-                    i === 1 ? "bg-primary text-primary-foreground shadow-md" : "border border-border text-foreground hover:border-primary/50"
-                  }`}>{t}</button>
-                ))}
+              {/* Time slots - scrollable list preview */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">Müsait Saatler</span>
+                </div>
+                <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                  {["09:00", "09:30", "10:00", "10:30", "11:00", "14:00", "14:30", "15:00"].map((t, i) => (
+                    <div key={t} className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition ${
+                      i === 1 
+                        ? "bg-primary text-primary-foreground shadow-md" 
+                        : "border border-border text-foreground"
+                    }`}>
+                      <span>{t}</span>
+                      <span className={`text-xs ${i === 1 ? "text-primary-foreground/70" : "text-muted-foreground"}`}>30 dk</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-3">
-                <input disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm" placeholder="Adınızı girin" />
-                <input disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm" placeholder="E-posta adresiniz" />
+              {/* Form preview */}
+              <div className="space-y-3 pt-2">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <input disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm" placeholder="Adınız" />
+                  <input disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm" placeholder="E-posta" />
+                </div>
+                <input disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm" placeholder="Telefon numaranız" />
+                <textarea disabled className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm resize-none" rows={2} placeholder="Mesajınız veya notunuz..." />
               </div>
             </div>
             <div className="px-6 pb-6">
@@ -361,6 +380,8 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
   const systemFields = sortedFields?.filter(f => f.system) || [];
   const customFields = sortedFields?.filter(f => !f.system) || [];
 
+  const inputClass = "w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all";
+
   return (
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`} id="appointment">
       <div className="container mx-auto px-6">
@@ -404,31 +425,40 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                       weekOffset={weekOffset} onWeekChange={(dir) => setWeekOffset(Math.max(0, weekOffset + dir))}
                       unavailableDates={unavailableDates} />
 
-                    {/* Time selection */}
+                    {/* Time selection - scrollable list */}
                     <AnimatePresence>
                       {selectedDate && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
                           <div className="pt-6">
                             <div className="flex items-center gap-2 mb-3">
                               <Clock className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">Saat Seçin <span className="text-muted-foreground font-normal">({slotDuration} dk)</span></span>
+                              <span className="text-sm font-medium text-foreground">Müsait Saatler <span className="text-muted-foreground font-normal">({slotDuration} dk)</span></span>
                             </div>
                             {slotsLoading ? (
                               <SlotsSkeleton />
                             ) : availableSlots.length === 0 ? (
                               <p className="text-muted-foreground text-sm py-4 text-center">Bu tarihte müsait saat bulunmuyor.</p>
                             ) : (
-                              <div className="grid grid-cols-3 gap-2">
-                                {availableSlots.map(t => (
-                                  <button key={t} type="button" onClick={() => setSelectedSlot(t)}
-                                    className={`py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                                      selectedSlot === t
-                                        ? "bg-primary text-primary-foreground shadow-md scale-105"
-                                        : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
-                                    }`}>
-                                    {t}
-                                  </button>
-                                ))}
+                              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
+                                {availableSlots.map(t => {
+                                  const isSelected = selectedSlot === t;
+                                  const [h, m] = t.split(":").map(Number);
+                                  const endMin = h * 60 + m + slotDuration;
+                                  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}`;
+                                  return (
+                                    <button key={t} type="button" onClick={() => setSelectedSlot(t)}
+                                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                        isSelected
+                                          ? "bg-primary text-primary-foreground shadow-md"
+                                          : "border border-border text-foreground hover:border-primary/50 hover:bg-primary/5"
+                                      }`}>
+                                      <span>{t}</span>
+                                      <span className={`text-xs ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                        {t} – {endTime}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -451,20 +481,26 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                                 <div className="grid sm:grid-cols-2 gap-3">
                                   <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">Adınız *</label>
-                                    <input name="client_name" required className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="Adınızı girin" />
+                                    <input name="client_name" required className={inputClass} placeholder="Adınızı girin" />
                                   </div>
                                   <div>
                                     <label className="block text-sm font-medium text-foreground mb-1.5">E-posta *</label>
-                                    <input name="client_email" type="email" required className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="E-posta adresiniz" />
+                                    <input name="client_email" type="email" required className={inputClass} placeholder="E-posta adresiniz" />
                                   </div>
                                 </div>
                                 <div>
-                                  <label className="block text-sm font-medium text-foreground mb-1.5">Telefon</label>
-                                  <input name="client_phone" type="tel" className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all" placeholder="Telefon numaranız" />
+                                  <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
+                                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                                    Telefon
+                                  </label>
+                                  <input name="client_phone" type="tel" className={inputClass} placeholder="Telefon numaranız" />
                                 </div>
                                 <div>
-                                  <label className="block text-sm font-medium text-foreground mb-1.5">Not</label>
-                                  <textarea name="client_note" rows={3} className="w-full px-4 py-3 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all resize-none" placeholder="Eklemek istediğiniz not..." />
+                                  <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
+                                    <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+                                    Mesaj / Not
+                                  </label>
+                                  <textarea name="client_note" rows={3} className={`${inputClass} resize-none`} placeholder="Eklemek istediğiniz mesaj veya not..." />
                                 </div>
                               </>
                             )}

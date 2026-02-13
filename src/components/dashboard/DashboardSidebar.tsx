@@ -16,6 +16,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardSidebarProps {
   activeProjectId?: string;
@@ -24,6 +26,31 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Fetch pending appointment count
+  useEffect(() => {
+    if (!activeProjectId) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', activeProjectId)
+        .eq('status', 'pending');
+      setPendingCount(count || 0);
+    };
+    fetchPending();
+
+    // Listen for realtime changes
+    const channel = supabase
+      .channel('sidebar-appointments')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `project_id=eq.${activeProjectId}` }, () => {
+        fetchPending();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [activeProjectId]);
 
   const navItems = [
     { title: 'Home', url: '/dashboard', icon: Home },
@@ -78,8 +105,24 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
                       className="flex items-center gap-3 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <div className="relative shrink-0">
+                        <item.icon className="h-5 w-5" />
+                        {item.title === 'Randevular' && pendingCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                            {pendingCount > 9 ? '!' : pendingCount}
+                          </span>
+                        )}
+                      </div>
+                      {!isCollapsed && (
+                        <span className="flex items-center gap-2">
+                          {item.title}
+                          {item.title === 'Randevular' && pendingCount > 0 && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/10 text-destructive rounded-full">
+                              {pendingCount} yeni
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
