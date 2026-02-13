@@ -1285,6 +1285,7 @@ export default function Project() {
         <ChaiBuilderWrapper
           projectId={id || ''}
           projectName={project.name}
+          projectProfession={project.profession}
           initialBlocks={project.chai_blocks || []}
           initialTheme={project.chai_theme}
           onPublish={() => setPublishModalOpen(true)}

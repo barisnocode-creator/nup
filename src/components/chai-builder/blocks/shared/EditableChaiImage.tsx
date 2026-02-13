@@ -56,8 +56,10 @@ export function EditableChaiImage({
       icon: Paintbrush,
       label: 'Görsel Değiştir',
       onClick: () => {
-        // Dispatch a custom event that ChaiBuilderWrapper can listen to
-        window.dispatchEvent(new CustomEvent('chai-open-image-picker'));
+        // Dispatch event with current src for context
+        window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
+          detail: { currentSrc: src },
+        }));
       },
       group: 'primary' as const,
     },
@@ -127,7 +129,9 @@ export function EditableChaiBackground({
     icon: Paintbrush,
     label: 'Arka Plan Değiştir',
     onClick: () => {
-      window.dispatchEvent(new CustomEvent('chai-open-image-picker'));
+      window.dispatchEvent(new CustomEvent('chai-open-inline-image-switcher', {
+        detail: { currentSrc: backgroundImage },
+      }));
     },
     group: 'primary' as const,
   }];
