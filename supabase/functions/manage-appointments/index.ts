@@ -147,6 +147,35 @@ Deno.serve(async (req) => {
         .single();
 
       if (error) return json({ error: "Failed to update" }, 500);
+
+      // Trigger notification on status change
+      if (status && (status === "confirmed" || status === "cancelled") && data) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceRoleKey}` },
+            body: JSON.stringify({
+              project_id: projectId,
+              appointment_id: data.id,
+              event_type: status,
+              appointment_data: {
+                client_name: data.client_name,
+                client_email: data.client_email,
+                client_phone: data.client_phone,
+                date: data.appointment_date,
+                start_time: data.start_time,
+                end_time: data.end_time,
+                status: data.status,
+              },
+            }),
+          });
+        } catch (e) {
+          console.error("Notification trigger failed:", e);
+        }
+      }
+
       return json({ appointment: data });
     }
 
@@ -157,7 +186,8 @@ Deno.serve(async (req) => {
         "is_enabled", "timezone", "slot_duration_minutes", "buffer_minutes",
         "working_days", "working_hours_start", "working_hours_end",
         "lunch_break_start", "lunch_break_end", "max_advance_days",
-        "day_schedules", "form_fields", "consent_text", "consent_required"
+        "day_schedules", "form_fields", "consent_text", "consent_required",
+        "reminder_24h_enabled", "reminder_2h_enabled", "notification_email_enabled"
       ];
 
       const updates: Record<string, unknown> = {};

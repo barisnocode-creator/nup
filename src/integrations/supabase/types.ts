@@ -120,7 +120,10 @@ export type Database = {
           lunch_break_end: string | null
           lunch_break_start: string | null
           max_advance_days: number
+          notification_email_enabled: boolean
           project_id: string
+          reminder_24h_enabled: boolean
+          reminder_2h_enabled: boolean
           slot_duration_minutes: number
           timezone: string
           updated_at: string
@@ -141,7 +144,10 @@ export type Database = {
           lunch_break_end?: string | null
           lunch_break_start?: string | null
           max_advance_days?: number
+          notification_email_enabled?: boolean
           project_id: string
+          reminder_24h_enabled?: boolean
+          reminder_2h_enabled?: boolean
           slot_duration_minutes?: number
           timezone?: string
           updated_at?: string
@@ -162,7 +168,10 @@ export type Database = {
           lunch_break_end?: string | null
           lunch_break_start?: string | null
           max_advance_days?: number
+          notification_email_enabled?: boolean
           project_id?: string
+          reminder_24h_enabled?: boolean
+          reminder_2h_enabled?: boolean
           slot_duration_minutes?: number
           timezone?: string
           updated_at?: string
@@ -355,6 +364,129 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_logs: {
+        Row: {
+          appointment_id: string | null
+          channel: string
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          notification_id: string | null
+          project_id: string
+          recipient_email: string | null
+          recipient_type: string
+          status: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          notification_id?: string | null
+          project_id: string
+          recipient_email?: string | null
+          recipient_type?: string
+          status?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          notification_id?: string | null
+          project_id?: string
+          recipient_email?: string | null
+          recipient_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      notification_templates: {
+        Row: {
+          body_template: string
+          channel: string
+          created_at: string
+          event_type: string
+          id: string
+          is_enabled: boolean
+          project_id: string
+          subject: string
+          target: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body_template: string
+          channel?: string
+          created_at?: string
+          event_type: string
+          id?: string
+          is_enabled?: boolean
+          project_id: string
+          subject: string
+          target?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body_template?: string
+          channel?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          is_enabled?: boolean
+          project_id?: string
+          subject?: string
+          target?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          is_read: boolean
+          project_id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          body: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          project_id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          project_id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
