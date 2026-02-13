@@ -1,112 +1,130 @@
 
 
-# Ozelestir (Customize) Slide-Out Panel - Chai Builder Editoru Icin
+# Gorsel Hover Aksiyon Sistemi ve Kompakt Ozelestir Paneli
 
-## Mevcut Durum
+## Sorun
 
-Suanki "Ozelestir" butonu (ust toolbar'da) sadece sag paneldeki "Stiller" sekmesini aciyor (ChaiBlockStyleEditor). Ayrica projede zaten bir `CustomizeSidebar` komponenti var (`src/components/website-preview/CustomizeSidebar.tsx`) ama bu sadece eski website-preview akisinda kullaniliyor, Chai Builder editorune entegre degil.
+Mevcut CustomizePanel 392px genisliginde buyuk bir sol sidebar olarak aciliyor. Kullanici bunu istemiyor -- daha kompakt, Durable.co tarzinda bir yaklasim isteniyor. Ayrica gorsel uzerinde hover'da sadece "Gorsel Degistir" butonu var, oysa istenen: Restyle, Regenerate Images, Move Up/Down ve More Options (Edit Section, Duplicate, Delete) aksiyonlarini iceren zengin bir overlay.
 
-## Hedef
+## Plan
 
-"Ozelestir" butonuna basildiginda sol taraftan kayan, Durable.co tarzinda modern bir panel acilacak. Bu panel asagidaki menu ogelerini icerecek:
+### 1. MODIFY: `src/components/chai-builder/CustomizePanel.tsx` --> Kompakt Popover
 
-- Change Template
-- Colors
-- Fonts
-- Background Image
-- Buttons
-- Corners
-- Animations
-- Browser icon
-- Manage widgets
-- Regenerate text
-- Regenerate entire website
-- Keywords
+Mevcut 392px sidebar yerine, toolbar butonunun altinda acilan kompakt bir dropdown/popover'a donusturmek:
 
-Alt paneller (Colors, Fonts vb.) secildiginde ayni panel icinde derinlesme (drill-down) yapilacak.
-
-## Dosya Degisiklikleri
-
-### 1. CREATE: `src/components/chai-builder/CustomizePanel.tsx`
-
-Yeni bir Chai Builder'a ozel Customize paneli. Mevcut `CustomizeSidebar`'dan ilham alinacak ancak:
-
-- Radix Sheet yerine `framer-motion` ile animasyonlu bir `motion.div` kullanilacak (mevcut left panel pattern'i ile ayni)
-- Genislik: 392px (istenen 360-420px araliginda)
-- Padding: 16px dikey, 20px yatay
-- Her menu ogesi: 24px ikon + 16px medium label + chevron, 48px yukseklik
-- Grup boluculeri: 1px ince cizgi
-- Arka plan: `bg-background/95 backdrop-blur-xl` + `shadow-xl`
-- Alt paneller (Colors, Fonts, Corners, Animations) icerde ayni panel icerisinde gosterilecek (ArrowLeft ile geri donus)
-- Color presets, font seciciler, corner seciciler vb. mevcut `CustomizeSidebar`'daki iceriklerle ayni
-
-Icerik ozellikleri:
-- Renk preset'leri (Ocean, Forest, Sunset, Royal, Midnight) + custom color picker
-- Font secici (Inter, Poppins, Playfair Display, Roboto, Open Sans vb.)
-- Corners: Sharp / Rounded / Pill secenekleri
-- Animations: Toggle switch
-- Regenerate Text / Regenerate Entire Website butonlari (spinner destegi)
+- Genislik: 280px (sidebar degil, floating popover)
+- Toolbar butonuna tiklandiginda asagiya dogru acilan bir panel
+- Ayni menu ogeleri kalacak ama daha kompakt (40px yukseklik, 14px ikon)
+- Alt paneller (Renkler, Fontlar vb.) ayni popover icinde drill-down olarak acilacak
+- Popover disina tiklandiginda otomatik kapanacak
 
 ### 2. MODIFY: `src/components/chai-builder/DesktopEditorLayout.tsx`
 
-- `LeftPanel` tipine `'customize'` eklenmesi: `type LeftPanel = 'outline' | 'add' | 'customize' | null;`
-- "Ozelestir" butonunun artik `setLeftPanel('customize')` yapacak sekilde guncellenmesi (eskiden sag paneli aciyordu)
-- Left panel `AnimatePresence` blogu icinde `leftPanel === 'customize'` kontrolu eklenmesi
-- Customize paneli icin genislik 392px olarak ayarlanmasi (diger paneller 260px)
-- `CustomizePanel` komponentinin import ve render edilmesi
+- `leftPanel === 'customize'` durumunu kaldirmak
+- Yerine, "Ozelestir" butonuna tiklandiginda CustomizePanel'i toolbar'in hemen altinda floating olarak gostermek
+- Canvas alanini daraltmadan, overlay/popover seklinde acilacak
 
-### 3. MODIFY: `src/components/chai-builder/EditorContext.tsx`
+### 3. MODIFY: `src/components/chai-builder/blocks/shared/EditableChaiImage.tsx` --> Zengin Hover Overlay
 
-- `EditorContextValue` arayuzune asagidaki prop'lar eklenmesi:
-  - `onRegenerateText?: () => void`
-  - `onRegenerateWebsite?: () => void`
-  - `onChangeTemplate?: () => void`
-  - `projectProfession?: string`
+Mevcut tek butonlu overlay yerine, Durable tarzinda coklu aksiyon overlay'i:
 
-### 4. MODIFY: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+Kontroller (soldan saga):
+- **Gorsel Degistir** (metin butonu) -- mevcut `handleChangeImage` islevini kullanir
+- **Yeniden Olustur** (metin butonu) -- InlineImageSwitcher'i acar
+- **Yukari Tasi** (ikon butonu, ChevronUp)
+- **Asagi Tasi** (ikon butonu, ChevronDown)
+- **Diger** (uc nokta ikonu) --> acilir menu:
+  - Bolumu Duzenle
+  - Cogalt
+  - Sil (kirmizi, tehlike stili)
 
-- `editorContextValue` icine yeni callback'lerin eklenmesi (regenerate, change template)
-- `projectProfession` bilgisinin context'e aktarilmasi
+Onemli: Radix UI kullanilmayacak (Chai Builder iframe sorunu). Tum dropdown/tooltip'ler saf HTML/Tailwind ile yapilacak.
 
-### 5. MODIFY: `src/components/chai-builder/MobileEditorLayout.tsx`
+Hover davranisi:
+- 120ms debounce ile gosterilecek
+- Fade + translateY animasyonu (160ms ease-out)
+- Overlay uzerindeyken gorunur kalacak (mouseleave 200ms buffer)
 
-- Mobil alt navigasyona "Ozelestir" sekmesi eklenmesi (Paintbrush ikonu)
-- Mobil icin `CustomizePanel` iceriginin Sheet icinde gosterilmesi
+### 4. CREATE: `src/components/chai-builder/blocks/shared/ChaiImageActionOverlay.tsx`
+
+Radix-free, portal-free aksiyon overlay komponenti:
+
+```text
++--------------------------------------------------+
+| Gorsel Degistir | Yeniden Olustur | ^ | v | ... |
++--------------------------------------------------+
+```
+
+- Tum butonlar saf `<button>` elementleri
+- Dropdown (Diger) saf HTML ile: bir state toggle'i ile gosterilen/gizlenen `<div>`
+- Tooltip yerine `title` attribute kullanilacak
+- z-index: 30 (gorsel ustunde, modal altinda)
+- Disable durumu: `opacity-40 pointer-events-none`
+
+### 5. MODIFY: `src/components/chai-builder/blocks/shared/EditableChaiImage.tsx`
+
+- Yeni `ChaiImageActionOverlay` komponentini import edip kullanmak
+- `EditableChaiBackground` icin de ayni overlay'i uygulamak
+- Overlay'e gecirilen aksiyonlar:
+  - `onChangeImage`: mevcut `handleChangeImage`
+  - `onRegenerate`: InlineImageSwitcher'i tetikler
+  - `onMoveUp / onMoveDown`: CustomEvent ile parent bloga sinyal gonderir
+  - `onEditSection / onDuplicate / onDelete`: CustomEvent ile editor'e sinyal gonderir
+
+### 6. MODIFY: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+
+- Yeni CustomEvent dinleyicileri eklemek:
+  - `chai-move-block-up` / `chai-move-block-down`
+  - `chai-edit-section` / `chai-duplicate-block` / `chai-delete-block`
+- Bu event'ler Chai Builder SDK API'si uzerinden ilgili blogu manipule edecek
+
+### 7. MODIFY: `src/components/chai-builder/MobileEditorLayout.tsx`
+
+- Customize panel'in mobilde de popover/bottom-sheet formatinda kalmasini saglamak
 
 ## Teknik Detaylar
 
-### Panel Animasyonu
+### Overlay Animasyon Zamanlari
 
-Mevcut left panel pattern'i kullanilacak (spring animasyon):
+| Ozellik | Deger |
+|---------|-------|
+| Hover debounce | 120ms |
+| Fade-in suresi | 160ms ease-out |
+| Fade-out gecikmesi | 100ms |
+| Mouse buffer (overlay uzerinde) | 200ms |
+| Buton hover scale | 1.04 |
+| Dropdown acilma | 140ms |
+
+### Dropdown (Diger) Implementasyonu
+
+Radix DropdownMenu yerine saf HTML:
 
 ```text
-initial: { width: 0, opacity: 0 }
-animate: { width: 392, opacity: 1 }
-exit:    { width: 0, opacity: 0 }
-transition: { type: 'spring', stiffness: 400, damping: 30 }
+const [showMore, setShowMore] = useState(false);
+
+<div className="relative">
+  <button onClick={() => setShowMore(!showMore)}>
+    <MoreVertical />
+  </button>
+  {showMore && (
+    <div className="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl border min-w-[160px]">
+      <button>Bolumu Duzenle</button>
+      <button>Cogalt</button>
+      <hr />
+      <button className="text-red-600">Sil</button>
+    </div>
+  )}
+</div>
 ```
 
-### Alt Panel Gecisi
+### Dosya Degisiklikleri Ozeti
 
-Panel icinde drill-down yapildiginda `AnimatePresence` ile icerik degisimi:
-
-```text
-Ana Menu --> [Colors secildi] --> Color alt paneli (slide-right efekti)
-Color alt paneli --> [Geri ok] --> Ana Menu (slide-left efekti)
-```
-
-### Erisilebilirlik
-
-- Tum butonlarda `aria-label` ve `title`
-- Focus trap: Panel acikken Tab ile gezinme panel icinde kalacak
-- Escape tusu ile panel kapanacak
-- Renk secicilerde kontrast bilgisi
-
-### Responsive Davranis
-
-| Ekran | Davranis |
-|-------|----------|
-| Desktop (>1024px) | Sol taraftan 392px genislikte panel, canvas daraltilir |
-| Tablet (768-1024px) | Sol taraftan 320px genislikte panel |
-| Mobil (<768px) | Bottom Sheet seklinde tam genislik |
+| Dosya | Degisiklik |
+|-------|-----------|
+| `CustomizePanel.tsx` | 392px sidebar --> 280px floating popover |
+| `DesktopEditorLayout.tsx` | Left panel 'customize' state'i kaldirilip popover entegrasyonu |
+| `ChaiImageActionOverlay.tsx` | YENI -- Radix-free coklu aksiyon overlay |
+| `EditableChaiImage.tsx` | Tek buton yerine ChaiImageActionOverlay kullanimi |
+| `ChaiBuilderWrapper.tsx` | Yeni CustomEvent dinleyicileri (move, edit, duplicate, delete) |
+| `MobileEditorLayout.tsx` | Customize popover uyumu |
 
