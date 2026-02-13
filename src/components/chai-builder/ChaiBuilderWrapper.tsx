@@ -11,7 +11,7 @@ import { MobileEditorLayout } from './MobileEditorLayout';
 import { DesktopEditorLayout } from './DesktopEditorLayout';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { InlineImageSwitcher } from './InlineImageSwitcher';
-import { EditorProvider } from './EditorContext';
+import { EditorProvider, DEFAULT_FEATURE_FLAGS } from './EditorContext';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
@@ -141,6 +141,7 @@ export function ChaiBuilderWrapper({
     projectId,
     projectName,
     projectProfession,
+    featureFlags: DEFAULT_FEATURE_FLAGS,
     onDashboard: () => navigate('/dashboard'),
     onPublish,
     onPreview: () => {

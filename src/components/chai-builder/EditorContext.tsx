@@ -1,9 +1,18 @@
 import { createContext, useContext } from 'react';
 
+export interface FeatureFlags {
+  contextualPanel: boolean;
+}
+
+export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
+  contextualPanel: true,
+};
+
 interface EditorContextValue {
   projectId?: string;
   projectName: string;
   projectProfession?: string;
+  featureFlags: FeatureFlags;
   onDashboard: () => void;
   onPublish: () => void;
   onPreview: () => void;
