@@ -346,7 +346,7 @@ export function CustomizePanel({ onClose }: CustomizePanelProps) {
               }
                 <button
                 onClick={() => handleMenuClick(item)}
-                className="w-full flex items-center gap-2.5 px-4 h-9 text-left transition-colors group bg-primary-foreground"
+                className="w-full flex items-center gap-2.5 px-4 h-9 text-left transition-colors group hover:bg-accent/50"
                 disabled={isRegen && isRegenerating}>
 
                   {isRegen && isRegenerating ?
