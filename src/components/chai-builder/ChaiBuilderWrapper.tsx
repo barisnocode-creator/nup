@@ -58,7 +58,8 @@ export function ChaiBuilderWrapper({
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [inlineSwitcherOpen, setInlineSwitcherOpen] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
-  const currentTemplateId = templateId || 'temp1';
+  const [galleryContent, setGalleryContent] = useState<any>(null);
+  const currentTemplateId = templateId || 'pilates1';
 
   // Template preview state
   const [previewBlocks, setPreviewBlocks] = useState<ChaiBlock[] | null>(null);
@@ -271,7 +272,14 @@ export function ChaiBuilderWrapper({
     onRegenerateWebsite: () => {
       toast.info('Site yeniden oluşturuluyor...', { duration: 2000 });
     },
-    onChangeTemplate: () => setShowTemplateGallery(true),
+    onChangeTemplate: async () => {
+      // Fetch generated_content for live preview
+      try {
+        const { data } = await supabase.from('projects').select('generated_content').eq('id', projectId).single();
+        setGalleryContent(data?.generated_content || null);
+      } catch { /* use default demo content */ }
+      setShowTemplateGallery(true);
+    },
   }), [projectName, projectProfession, navigate, onPublish, projectId]);
 
   if (!isReady) {
@@ -348,6 +356,7 @@ export function ChaiBuilderWrapper({
             onClose={() => setShowTemplateGallery(false)}
             currentTemplateId={previewTemplateIdState || currentTemplateId}
             onPreview={handlePreviewTemplate}
+            generatedContent={galleryContent}
           />
         </div>
       </EditorProvider>
