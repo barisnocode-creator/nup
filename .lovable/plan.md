@@ -1,50 +1,47 @@
 
 
-# Ust Toolbar Yeniden Tasarimi - Modern & Sik
+# Gorsel Duzenleme Overlay'ini Tum Bloklara Uygulama
 
-## Ozet
-Editordeki ust toolbar'i hem masaustu hem mobil/tablet icin modern, sik ve daha duzgunlu bir tasarima kavusturacagiz. Ayni butonlar (Dashboard, Ozellesir, Sayfalar, Ekle, Ekran Boyutu, Panel Toggle, Yayinla) korunacak ama gorsel olarak iyilestirilecek.
+## Mevcut Durum Analizi
 
-## Masaustu Toolbar Tasarimi
+Projede 11 ChaiBuilder blogu var. Bunlarin gorsel durumu:
 
-Mevcut duz buton sirasini, gruplanmis ve gorsel olarak ayrilmis bir yapiya donusturuyoruz:
+| Blok | Gorsel Var mi? | EditableChaiImage Kullanıyor mu? |
+|------|---------------|--------------------------------|
+| AboutSection | Evet (ana gorsel) | Evet - zaten calisiyor |
+| HeroSplit | Evet (yan gorsel) | Evet - zaten calisiyor |
+| HeroOverlay | Evet (arka plan) | Evet (EditableChaiBackground) |
+| ServicesGrid | Evet (kart gorselleri) | Evet - zaten calisiyor |
+| ImageGallery | Evet (galeri gorselleri) | Evet - zaten calisiyor |
+| **HeroCentered** | **Evet (arka plan)** | **Hayir - eski ImageActionBox kullanıyor** |
+| TestimonialsCarousel | Avatar alani var ama initials fallback | Hayir |
+| CTABanner | Gorsel yok | Degisiklik gerekmiyor |
+| PricingTable | Gorsel yok | Degisiklik gerekmiyor |
+| StatisticsCounter | Gorsel yok | Degisiklik gerekmiyor |
+| ContactForm | Gorsel yok | Degisiklik gerekmiyor |
+| FAQAccordion | Gorsel yok | Degisiklik gerekmiyor |
+| AppointmentBooking | Gorsel yok | Degisiklik gerekmiyor |
 
-- **Sol grup**: Dashboard ikonu + ayirici + araclari iceren pill seklinde bir segmented kontrol (Ozellesir, Sayfalar, Ekle) -- muted arka plan uzerinde, aktif butona kayan animasyonlu pill efekti (framer-motion layoutId)
-- **Orta**: Bos (esneklik icin)
-- **Sag grup**: Ekran boyutu dongu butonu + Panel toggle + ayirici + Yayinla butonu (gradient efektli)
+## Yapilacak Degisiklikler
 
-### Gorsel Iyilestirmeler
-- Toolbar yuksekligi 56px, ince alt border + subtle shadow
-- Sol arac grubu: `bg-muted/50` ile yuvarlatilmis kapsayici, aktif butonda `bg-background` pill animasyonu (framer-motion)
-- Yayinla butonu: hafif gradient ve shadow ile daha belirgin
-- Tum butonlarda `active:scale-95` ve `transition-all duration-200`
-- Hover'da hafif ikon renk degisimi
+### 1. HeroCentered - EditableChaiBackground'a Gecis
 
-## Mobil/Tablet Toolbar Tasarimi
+**Sorun**: Eski `ImageActionBox` bilesenini kullaniyor, diger bloklardaki "Degistir / Yenile" overlay sistemiyle tutarsiz.
 
-- Ust toolbar: Geri butonu + sag tarafta ekran boyutu dongusu + Yayinla ikonu
-- Alt navigasyon cubugu ayni kalacak (zaten modern)
-- Mobil toolbar'dan gereksiz ogeleri (UndoRedo, Onizle, Gorsel Ara) kaldiracagiz -- masaustuyle tutarli
+**Cozum**: `ImageActionBox` yerine `EditableChaiBackground` kullanarak diger bloklarla ayni hover overlay davranisini saglama.
 
-## Teknik Degisiklikler
+### 2. TestimonialsCarousel - Avatar Gorseli Ekleme
+
+**Sorun**: Avatar alani var ama sadece isim bas harfi gosteriyor, gorsel degistirme imkani yok.
+
+**Cozum**: Avatar alaninda gorsel varsa `EditableChaiImage` ile sarmalayip hover'da "Degistir" overlay'i gosterme.
+
+## Teknik Detaylar
 
 | Dosya | Degisiklik |
 |-------|-----------|
-| `DesktopEditorLayout.tsx` | Toolbar'i gruplanmis segmented kontrol yapisiyla yeniden duzenle. Aktif buton icin framer-motion `layoutId` ile kayan pill animasyonu ekle. Yayinla butonuna gradient stil ekle. |
-| `MobileEditorLayout.tsx` | Ust toolbar'i sadelestrip masaustuyle tutarli hale getir (UndoRedo kaldir, Onizle kaldir). Ekran boyutu icin tek dongu butonu kullan. |
+| `src/components/chai-builder/blocks/hero/HeroCentered.tsx` | `ImageActionBox` import'unu kaldir, `EditableChaiBackground` import et. Arka plan gorselini `EditableChaiBackground` ile sarmala. Eski `bgHovered` state ve `ImageActionBox` kodunu kaldir. |
+| `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` | `EditableChaiImage` import et. Avatar alaninda gorsel varsa `EditableChaiImage` ile goster, yoksa mevcut initials fallback'i koru. |
 
-## Tasarim Detaylari
-
-```text
-Masaustu Toolbar:
-+-------+---+--------------------------------------+---+------------------+
-| [Home]| | | [Ozellesir] [Sayfalar] [Ekle] |   | [Screen][Panel]|[Yayinla]|
-|       | | | ^^^^ pill seklinde segmented ^^^^     |   |                 |         |
-+-------+---+--------------------------------------+---+-----------------+---------+
-
-Mobil Toolbar:
-+--------+                              +---+--------+
-| [<Back]|                              |[S]| [Globe]|
-+--------+                              +---+--------+
-```
+Toplam 2 dosya degisecek. Diger 5 blok zaten `EditableChaiImage` kullaniyor, gorseli olmayan 6 blokta degisiklik gerekmiyor.
 
