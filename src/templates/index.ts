@@ -6,6 +6,7 @@ import { VideoStudioTemplate } from './temp4-video-studio';
 import { GitH1Template } from './gith1';
 import { GitH2Template } from './gith2';
 import { GitH3Template } from './gith3';
+import { PilatesTemplate } from './pilates';
 
 // Import preview images
 import showcaseDental from '@/assets/showcase-dental.jpg';
@@ -20,6 +21,7 @@ import showcaseVideoStudio from '@/assets/showcase-video-studio.jpg';
 import gith1Preview from '@/assets/gith1-preview.jpg';
 import gith2Preview from '@/assets/gith2-preview.jpg';
 import gith3Preview from '@/assets/gith3-preview.jpg';
+import templatePilates from '@/assets/template-pilates.jpg';
 
 // Template registry - add new templates here
 const templateRegistry: Record<string, {
@@ -169,6 +171,18 @@ const templateRegistry: Record<string, {
       supportedTones: ['minimal', 'dark', 'elegant'],
     },
     component: GitH3Template,
+  },
+  pilates1: {
+    config: {
+      id: 'pilates1',
+      name: 'Wellness Studio',
+      description: 'Warm, elegant template for pilates studios, yoga centers, and wellness spaces',
+      category: 'Wellness',
+      preview: templatePilates,
+      supportedProfessions: ['pilates', 'yoga', 'fitness', 'pt', 'gym', 'wellness', 'spa'],
+      supportedTones: ['warm', 'elegant', 'premium', 'calm'],
+    },
+    component: PilatesTemplate,
   },
 };
 

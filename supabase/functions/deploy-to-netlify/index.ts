@@ -468,6 +468,201 @@ function renderAppointmentBooking(b: ChaiBlock): string {
 <\/script>`;
 }
 
+// ── Pilates Template Renderers ──
+
+function renderPilatesHero(b: ChaiBlock): string {
+  const rawBg = b.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background-image:url('${escapeHtml(bg)}')`
+    : `background:linear-gradient(135deg, #c4775a, #d4956e)`;
+  return `<section class="relative min-h-screen flex items-end overflow-hidden">
+  <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="${bgStyle}"></div>
+  <div class="absolute inset-0" style="background:linear-gradient(to right,rgba(196,119,90,0.6),rgba(196,119,90,0.2))"></div>
+  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.4),transparent)"></div>
+  <div class="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 pb-20 pt-40">
+    <div class="grid md:grid-cols-2 gap-12 items-end">
+      <div class="fade-in-up">
+        <h1 style="font-family:'Playfair Display',serif;font-size:clamp(3rem,8vw,6rem);color:#fff;line-height:0.95;margin-bottom:1.5rem">${escapeHtml(b.title as string)}</h1>
+        ${b.description ? `<p style="color:rgba(255,255,255,0.8);font-size:1.25rem;max-width:28rem">${escapeHtml(b.description as string)}</p>` : ""}
+      </div>
+      <div class="fade-in-up" style="animation-delay:0.3s">
+        <div style="backdrop-filter:blur(20px);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:1rem;padding:2rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
+          <h3 style="color:#fff;font-size:1.25rem;font-weight:600;margin-bottom:0.5rem">${escapeHtml(b.subtitle as string || "Begin Your Transformation")}</h3>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.875rem;margin-bottom:1.5rem">Starting from your first session</p>
+          <div style="display:flex;flex-direction:column;gap:0.75rem">
+            <input type="text" placeholder="Full Name" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
+            <input type="tel" placeholder="Phone Number" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
+            <button style="width:100%;padding:0.75rem;background:#fff;color:#c4775a;font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Request A Callback</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:10;color:rgba(255,255,255,0.7);display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+    <span style="font-size:0.875rem;letter-spacing:0.1em;text-transform:uppercase">Discover More</span>
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7"/></svg>
+  </div>
+</section>`;
+}
+
+function renderPilatesFeatures(b: ChaiBlock): string {
+  const services = (b.services as Array<{ title: string; description: string; image?: string }>) || [];
+  const cards = services.slice(0, 3).map((s, i) => `
+    <div class="fade-in-up" style="animation-delay:${i * 0.2}s">
+      <div style="overflow:hidden;border-radius:1rem;margin-bottom:1.5rem;aspect-ratio:4/5;position:relative">
+        ${s.image ? `<img src="${escapeHtml(s.image)}" alt="${escapeHtml(s.title)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.7s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#c4775a,#d4956e)"></div>`}
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.3),transparent)"></div>
+      </div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:#2d2420;margin-bottom:0.5rem">${escapeHtml(s.title)}</h3>
+      <p style="color:#6b5e54;font-size:0.875rem">${escapeHtml(s.description)}</p>
+    </div>`).join("");
+
+  return `<section style="padding:6rem 0;background:#f5ebe0">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
+    ${b.sectionTitle ? `<h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);text-align:center;color:#2d2420;margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderPilatesTour(b: ChaiBlock): string {
+  const images: string[] = [];
+  for (let i = 1; i <= 8; i++) {
+    const img = b[`image${i}`] as string;
+    if (img && !isBase64Image(img)) images.push(img);
+  }
+  const captions = ['Wunda Chair Studio', 'Reformer Training', 'Equipment Storage', 'Reception Area', 'Studio Interior', 'Lockers', 'Practice Space', 'Entrance'];
+  const cards = images.map((img, i) => `
+    <div style="flex-shrink:0;width:350px;scroll-snap-align:start">
+      <div style="overflow:hidden;border-radius:0.75rem;aspect-ratio:4/3">
+        <img src="${escapeHtml(img)}" alt="${escapeHtml(captions[i] || '')}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+      </div>
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#f5ebe0;margin-top:1rem">${escapeHtml(captions[i] || `Space ${i+1}`)}</h4>
+    </div>`).join("");
+
+  return `<section style="padding:6rem 0;background:#2d2420;overflow:hidden">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem;margin-bottom:3rem">
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#f5ebe0;margin-bottom:0.75rem" class="fade-in-up">${escapeHtml(b.title as string || "Tour our Space")}</h2>
+    <p style="color:rgba(245,235,224,0.6);font-size:1.125rem" class="fade-in-up">${escapeHtml(b.subtitle as string || "Experience our studio")}</p>
+  </div>
+  <div style="display:flex;gap:1.5rem;overflow-x:auto;padding:0 3rem 2rem;scroll-snap-type:x mandatory;-ms-overflow-style:none;scrollbar-width:none">${cards}</div>
+</section>`;
+}
+
+function renderPilatesTeachers(b: ChaiBlock): string {
+  const teachers = (b.teachers as Array<{ name: string; role: string; image?: string }>) || [
+    { name: 'Sarah Chen', role: 'Lead Instructor' },
+    { name: 'Maya Patel', role: 'Reformer Specialist' },
+    { name: 'Elena Rossi', role: 'Mat Pilates Expert' },
+    { name: 'Liam Foster', role: 'Rehabilitation Coach' },
+  ];
+  const cards = teachers.map((t, i) => `
+    <div class="fade-in-up" style="text-align:center;animation-delay:${i*0.15}s">
+      <div style="overflow:hidden;border-radius:1rem;aspect-ratio:3/4;margin-bottom:1rem">
+        ${t.image ? `<img src="${escapeHtml(t.image)}" alt="${escapeHtml(t.name)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#c4775a,#d4956e)"></div>`}
+      </div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#2d2420">${escapeHtml(t.name)}</h3>
+      <p style="color:#6b5e54;font-size:0.875rem">${escapeHtml(t.role)}</p>
+    </div>`).join("");
+
+  return `<section style="padding:6rem 0;background:#f5ebe0">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
+    <div style="text-align:center;margin-bottom:4rem" class="fade-in-up">
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#2d2420;margin-bottom:1rem">${escapeHtml(b.title as string || "Our Teachers")}</h2>
+      ${b.description ? `<p style="color:#6b5e54;font-size:1.125rem;max-width:42rem;margin:0 auto">${escapeHtml(b.description as string)}</p>` : ""}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderPilatesTestimonials(b: ChaiBlock): string {
+  const items = (b.testimonials as Array<{ name: string; role?: string; content: string }>) || [];
+  const cards = items.map((t, i) => `
+    <div class="fade-in-up" style="animation-delay:${i*0.2}s;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:2rem">
+      <div style="display:flex;gap:0.25rem;margin-bottom:1rem">${'★★★★★'.split('').map(() => `<span style="color:#c4775a">★</span>`).join('')}</div>
+      <p style="color:rgba(245,235,224,0.8);font-style:italic;margin-bottom:1.5rem;line-height:1.7">"${escapeHtml(t.content)}"</p>
+      <p style="color:#c4775a;font-weight:600;font-size:0.875rem">${escapeHtml(t.name)}</p>
+    </div>`).join("");
+
+  return `<section style="padding:6rem 0;background:#2d2420">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#f5ebe0;text-align:center;margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string || "What Our Clients Say")}</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderPilatesContact(b: ChaiBlock): string {
+  return `<section style="padding:6rem 0;background:#f5ebe0">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
+    <div style="text-align:center;margin-bottom:4rem" class="fade-in-up">
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#2d2420;margin-bottom:1rem">${escapeHtml(b.sectionTitle as string || "Get In Touch")}</h2>
+      ${b.sectionDescription ? `<p style="color:#6b5e54;font-size:1.125rem">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4rem" class="fade-in-up">
+      <div style="display:flex;flex-direction:column;gap:2rem">
+        ${b.address ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📍</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Address</h4><p style="color:#6b5e54">${escapeHtml(b.address as string)}</p></div></div>` : ""}
+        ${b.phone ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📞</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Phone</h4><p style="color:#6b5e54">${escapeHtml(b.phone as string)}</p></div></div>` : ""}
+        ${b.email ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📧</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Email</h4><p style="color:#6b5e54">${escapeHtml(b.email as string)}</p></div></div>` : ""}
+      </div>
+      <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);border:1px solid #e8ddd0">
+        <form onsubmit="event.preventDefault();alert('Message sent!')" style="display:flex;flex-direction:column;gap:1rem">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <input type="text" placeholder="First Name" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
+            <input type="text" placeholder="Last Name" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
+          </div>
+          <input type="email" placeholder="Email" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
+          <textarea placeholder="Message" rows="4" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none;resize:none" required></textarea>
+          <button type="submit" style="padding:0.75rem;background:#c4775a;color:#fff;font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.background='#b36a4f'" onmouseout="this.style.background='#c4775a'">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>`;
+}
+
+function renderPilatesHeader(siteName: string): string {
+  return `<header id="pilates-header" style="position:fixed;top:0;left:0;right:0;z-index:50;transition:all 0.5s;background:transparent">
+  <div style="max-width:80rem;margin:0 auto;padding:1rem 3rem;display:flex;align-items:center;justify-content:between">
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <div style="width:2rem;height:2rem;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center"><div style="width:0.75rem;height:0.75rem;border-radius:50%;background:#fff"></div></div>
+      <span style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#fff;letter-spacing:0.05em">${escapeHtml(siteName)}</span>
+    </div>
+    <nav style="display:flex;align-items:center;gap:2rem;margin-left:auto">
+      <a href="#features" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Why Us</a>
+      <a href="#tour" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Our Studio</a>
+      <a href="#teachers" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Teachers</a>
+      <a href="#testimonials" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Testimonials</a>
+      <a href="#contact" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Contact</a>
+    </nav>
+  </div>
+</header>
+<script>
+window.addEventListener('scroll',function(){var h=document.getElementById('pilates-header');if(window.scrollY>50){h.style.background='rgba(245,235,224,0.95)';h.style.backdropFilter='blur(12px)';h.querySelectorAll('a,span').forEach(function(e){e.style.color='#2d2420'})}else{h.style.background='transparent';h.style.backdropFilter='none';h.querySelectorAll('a,span').forEach(function(e){e.style.color='rgba(255,255,255,0.9)'})}});
+<\/script>`;
+}
+
+function renderPilatesFooter(siteName: string, tagline: string): string {
+  return `<footer style="background:#2d2420;padding:4rem 0;border-top:1px solid rgba(255,255,255,0.1)">
+  <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+      <div style="width:2rem;height:2rem;border-radius:50%;border:2px solid #c4775a;display:flex;align-items:center;justify-content:center"><div style="width:0.75rem;height:0.75rem;border-radius:50%;background:#c4775a"></div></div>
+      <span style="font-family:'Playfair Display',serif;font-size:1.25rem;color:#f5ebe0">${escapeHtml(siteName)}</span>
+    </div>
+    <p style="color:rgba(245,235,224,0.5);font-size:0.875rem;max-width:24rem;margin-bottom:2rem">${escapeHtml(tagline)}</p>
+    <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+      <p style="color:rgba(245,235,224,0.3);font-size:0.75rem">© ${new Date().getFullYear()} ${escapeHtml(siteName)}. All rights reserved.</p>
+      <div style="display:flex;gap:1.5rem">
+        <a href="#" style="color:rgba(245,235,224,0.3);font-size:0.75rem;text-decoration:none">Privacy Policy</a>
+        <a href="#" style="color:rgba(245,235,224,0.3);font-size:0.75rem;text-decoration:none">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+</footer>`;
+}
+
 // ── Main renderer ──
 
 function renderBlock(block: ChaiBlock): string {
@@ -496,6 +691,19 @@ function renderBlock(block: ChaiBlock): string {
       return renderPricingTable(block);
     case "AppointmentBooking":
       return renderAppointmentBooking(block);
+    // Pilates template block types
+    case "PilatesHero":
+      return renderPilatesHero(block);
+    case "PilatesFeatures":
+      return renderPilatesFeatures(block);
+    case "PilatesTour":
+      return renderPilatesTour(block);
+    case "PilatesTeachers":
+      return renderPilatesTeachers(block);
+    case "PilatesTestimonials":
+      return renderPilatesTestimonials(block);
+    case "PilatesContact":
+      return renderPilatesContact(block);
     default:
       const text = (block.title as string) || (block.content as string) || "";
       if (text) return `<section class="py-12"><div class="max-w-4xl mx-auto px-6"><p>${escapeHtml(text)}</p></div></section>`;
@@ -503,14 +711,15 @@ function renderBlock(block: ChaiBlock): string {
   }
 }
 
-function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string, projectId?: string): string {
+function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string, projectId?: string, templateId?: string): string {
   const themeCssVars = buildThemeCssVars(theme);
   const fontFamily = (theme?.fontFamily as { heading?: string; body?: string });
   const headingFont = fontFamily?.heading || "Inter";
   const bodyFont = fontFamily?.body || "Inter";
   const borderRadius = (theme?.borderRadius as string) || "8px";
-  const fonts = [...new Set([headingFont, bodyFont])];
-  const fontLinks = fonts.map(f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`).join("\n  ");
+  const isPilates = templateId === "pilates1";
+  const allFonts = isPilates ? [...new Set([headingFont, bodyFont, "Playfair Display", "DM Sans"])] : [...new Set([headingFont, bodyFont])];
+  const fontLinks = allFonts.map(f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`).join("\n  ");
 
   let sectionsHtml = blocks.map(b => renderBlock(b)).filter(Boolean).join("\n");
 
@@ -518,9 +727,24 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
     sectionsHtml = `<section class="min-h-screen flex items-center justify-center" style="background:var(--background)"><div class="text-center"><h1 class="text-4xl font-bold" style="color:var(--foreground)">${escapeHtml(projectName)}</h1><p class="mt-4" style="color:var(--muted-foreground)">Website coming soon</p></div></section>`;
   }
 
+  // Add pilates header/footer if template is pilates
+  if (isPilates) {
+    const tagline = "Experience movement in its most authentic form.";
+    sectionsHtml = renderPilatesHeader(projectName) + "\n" + sectionsHtml + "\n" + renderPilatesFooter(projectName, tagline);
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const trackingScript = projectId ? `<script>(function(){var p="${projectId}",u="${supabaseUrl}/functions/v1/track-analytics",a=navigator.userAgent,d=/android|iphone|ipad|mobile/i.test(a)?"mobile":"desktop",v=localStorage.getItem("ol_vid");if(!v){v="v_"+Date.now()+"_"+Math.random().toString(36).substr(2,9);localStorage.setItem("ol_vid",v)}fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({project_id:p,event_type:"page_view",page_path:location.pathname,user_agent:a,device_type:d,visitor_id:v})}).catch(function(){})})()<\/script>` : "";
   const projectVarsScript = projectId ? `<script>window.__PROJECT_ID__="${projectId}";window.__SUPABASE_URL__="${supabaseUrl}";<\/script>` : "";
+
+  const pilatesStyles = isPilates ? `
+    .fade-in-up { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+    ::-webkit-scrollbar { display: none; }
+  ` : "";
+  const pilatesScript = isPilates ? `<script>
+document.addEventListener('DOMContentLoaded',function(){var els=document.querySelectorAll('.fade-in-up');var obs=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:0.1});els.forEach(function(el){obs.observe(el)})});
+<\/script>` : "";
 
   return `<!DOCTYPE html>
 <html lang="tr">
@@ -535,15 +759,17 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   ${fontLinks}
   <style>
     :root { ${themeCssVars}; --radius: ${borderRadius}; }
-    body { font-family: '${bodyFont}', sans-serif; background-color: var(--background); color: var(--foreground); margin: 0; padding: 0; }
-    h1, h2, h3, h4, h5, h6 { font-family: '${headingFont}', sans-serif; }
+    body { font-family: '${isPilates ? "DM Sans" : bodyFont}', sans-serif; background-color: ${isPilates ? "#f5ebe0" : "var(--background)"}; color: ${isPilates ? "#2d2420" : "var(--foreground)"}; margin: 0; padding: 0; }
+    h1, h2, h3, h4, h5, h6 { font-family: '${isPilates ? "Playfair Display" : headingFont}', ${isPilates ? "serif" : "sans-serif"}; }
     img { max-width: 100%; height: auto; }
     html { scroll-behavior: smooth; }
+    ${pilatesStyles}
   </style>
 </head>
 <body>
 ${projectVarsScript}
 ${sectionsHtml}
+${pilatesScript}
 ${trackingScript}
 </body>
 </html>`;
@@ -618,7 +844,7 @@ Deno.serve(async (req) => {
     const chaiBlocks = (project.chai_blocks as ChaiBlock[]) || [];
     const chaiTheme = (project.chai_theme as Record<string, unknown>) || {};
 
-    const html = blocksToHtml(chaiBlocks, chaiTheme, project.name, projectId);
+    const html = blocksToHtml(chaiBlocks, chaiTheme, project.name, projectId, project.template_id || undefined);
     const { sha1, content } = await createDeployPayload(html);
 
     let netlifySiteId = project.netlify_site_id;
