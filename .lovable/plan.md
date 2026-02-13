@@ -1,71 +1,45 @@
 
-# Randevu Formunun Yayinlanan Sitede Calismasi - Netlify Renderer Guncelleme
+# Pembe Ekran Duzeltmesi - TooltipProvider Hatasi
 
-## Sorun Tespiti
+## Sorun
 
-Backend (book-appointment edge function) sorunsuz calisiyor - test randevusu basariyla olusturuldu. Sorun **yayinlanan Netlify sitesindeki HTML renderer**'da:
+Proje sayfasinda ChaiBuilder editoru acildiginda uygulama pembe hata ekraniyla cokuyor. Hata mesaji:
 
-1. **Eski tasarim**: `deploy-to-netlify/index.ts` icindeki `renderAppointmentBooking` fonksiyonu hala eski basit buton tasarimini kullaniyor (duz flex-wrap butonlar)
-2. **Editordeki yeni tasarim**: React bileseni (AppointmentBooking.tsx) Cal.com ilhamli modern tasarima sahip - step indicator, yatay tarih seridi, scrollable saat listesi
-3. **Uyumsuzluk**: Editorde gordugun ile yayinlanan site birbiriyle uyusmuyor
+```
+`Tooltip` must be used within `TooltipProvider`
+```
+
+Hata, `@chaibuilder/sdk` icinden geliyor. SDK, bloklari render ederken (canvas icinde) kendi dahili UI bilesenleri (blok arac cubugu, surukleme tutamaclari vb.) icin Radix Tooltip kullaniyor. Ancak SDK'nin render baglami (context), uygulamanin TooltipProvider'ina erisimiyor.
 
 ## Cozum
 
-`renderAppointmentBooking` fonksiyonunu tamamen yeniden yazarak editordeki modern tasarima eslemek:
+AppointmentBooking blogunun hem `inBuilder` hem de canli render ciktisini `TooltipProvider` ile sarmak. Bu, SDK canvas icinde blok render edildiginde Tooltip bilesenlerinin bir provider bulmasini saglar.
 
-### Yeni HTML Yapisi
+Ayni zamanda diger bloklarda da benzer sorun yasamanin onune gecmek icin, blok registration yapisinda genel bir koruma eklemek yerine, sorunlu blok olan AppointmentBooking'e odaklanacagiz.
 
-**Step Indicator**: Ust kisimda 3 adimli gosterge (Tarih - Saat - Bilgiler)
-- SVG ikonlar ile Calendar, Clock, User
-- Aktif adim: `var(--primary)` dolgu
-- Cizgi baglantilari adimlar arasi
-
-**Tarih Secimi (Date Strip)**:
-- 7 gunluk yatay grid (grid-cols-7)
-- Her gun: gun adi (kisa) + gun numarasi
-- Secili gun: `var(--primary)` arka plan, beyaz yazi
-- Sol/sag ok butonlari ile hafta degistirme
-- Ay ve yil basligini ustunde gosterme
-
-**Saat Secimi (Scrollable List)**:
-- Dikey liste, her slot bir satir (start - end time)
-- `max-height: 220px` ile scroll
-- Secili slot: `var(--primary)` arka plan
-- Sure bilgisi her satin saginda
-
-**Form Alanlari**:
-- Saat secildikten sonra gorunur (animasyonlu acilma JavaScript ile)
-- Ad + E-posta yan yana (2 sutunlu grid)
-- Telefon ve Mesaj alanlari alt alta
-- Rounded-xl, havadar input'lar
-
-**Consent + Submit**:
-- Checkbox + gizlilik metni
-- `var(--primary)` arka planli genis buton
-- Disabled state: `opacity: 0.4`
-
-### JavaScript Degisiklikleri
-
-Mevcut JS mantigi korunacak (tarih sec -> saat getir -> form goster -> gonder) ama DOM manipulasyonlari yeni HTML yapisina uyarlanacak:
-
-- `renderDates()`: 7'li grid render, hafta offset yonetimi
-- `selectDate()`: Grid item'inin stilini degistir, slot'lari getir
-- `renderSlots()`: Dikey liste render
-- `selectSlot()`: Form alanlarini ac, step indicator guncelle
-- `submit()`: Mevcut POST mantigi ayni
-
-### Unavailable Date Kontrolu (Bonus)
-
-Hafta goruntulediginde 7 paralel fetch ile musait olmayan gunleri belirle ve `opacity:0.4; pointer-events:none` ile devre disi birak.
-
-## Dosya Degisiklikleri
+## Degisiklik
 
 | Dosya | Islem |
 |-------|-------|
-| `supabase/functions/deploy-to-netlify/index.ts` | `renderAppointmentBooking` fonksiyonunu Cal.com ilhamli yeni HTML/CSS/JS ile yeniden yaz |
+| `src/components/chai-builder/blocks/appointment/AppointmentBooking.tsx` | `TooltipProvider` import edilip, blogun tum return degerlerini saracak |
+
+### Teknik Detaylar
+
+```text
+1. Import ekleme:
+   import { TooltipProvider } from '@/components/ui/tooltip';
+
+2. AppointmentBookingBlock fonksiyonunda:
+   - inBuilder return (satir 209): <TooltipProvider> ile sar
+   - submitted return (satir 399-401): <TooltipProvider> ile sar
+   - ana form return (satir 385): <TooltipProvider> ile sar
+
+Yani her return path'inde en disarida <TooltipProvider> olacak.
+Bu, SDK'nin bu blogu render ederken Tooltip context'ine erisebilmesini saglar.
+```
 
 ## Beklenen Sonuc
 
-- Yayinlanan sitedeki randevu formu editordekiyle birebir ayni gorunecek
-- Tarih seridi, saat listesi, step indicator, form alanlari tam eslesecek
-- Randevu olusturma calisan backend ile sorunsuz calisacak
+- Pembe hata ekrani kaybolacak
+- ChaiBuilder editoru normal sekilde acilacak
+- Randevu blogu editorde ve canli sitede dogru gorunecek
