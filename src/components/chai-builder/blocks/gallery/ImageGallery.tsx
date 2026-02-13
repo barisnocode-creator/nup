@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiImage } from "../shared/EditableChaiImage";
 
 export type ImageGalleryProps = {
   styles: ChaiStyles;
@@ -54,10 +55,12 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
         <div className={`grid grid-cols-1 ${gridCols[columns]} gap-4`}>
           {images.map((image, index) => (
             <div key={index} className="relative group overflow-hidden rounded-xl aspect-square">
-              <img 
+              <EditableChaiImage 
                 src={image || "/placeholder.svg"} 
                 alt={`Galeri ${index + 1}`}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                containerClassName="w-full h-full"
+                inBuilder={props.inBuilder}
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>

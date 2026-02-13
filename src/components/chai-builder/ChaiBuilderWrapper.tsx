@@ -88,6 +88,13 @@ export function ChaiBuilderWrapper({
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
+  // Listen for image picker open events from EditableChaiImage blocks
+  useEffect(() => {
+    const handler = () => setImagePickerOpen(true);
+    window.addEventListener('chai-open-image-picker', handler);
+    return () => window.removeEventListener('chai-open-image-picker', handler);
+  }, []);
+
   const handleSave = useCallback(async (data: { blocks: ChaiBlock[]; theme?: any; autoSave?: boolean }): Promise<boolean> => {
     return await saveToSupabase({ blocks: data.blocks, theme: data.theme });
   }, [saveToSupabase]);

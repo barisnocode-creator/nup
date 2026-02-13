@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiImage } from "../shared/EditableChaiImage";
 
 export type AboutSectionProps = {
   styles: ChaiStyles;
@@ -67,10 +68,11 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
 
           <div className={`relative ${imagePosition === 'left' ? 'lg:order-1' : ''}`}>
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-30" />
-            <img 
+            <EditableChaiImage 
               src={image || "/placeholder.svg"} 
               alt={title}
               className="relative rounded-2xl shadow-xl w-full object-cover aspect-[4/3]"
+              inBuilder={props.inBuilder}
             />
           </div>
         </div>
