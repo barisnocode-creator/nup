@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { EditableChaiImage } from "../shared/EditableChaiImage";
 
 interface Testimonial {
   name: string;
@@ -32,6 +33,7 @@ const TestimonialsCarouselBlock = (props: ChaiBlockComponentProps<TestimonialsCa
     sectionTitle,
     sectionSubtitle,
     testimonials = defaultTestimonials,
+    inBuilder,
     ...styleProps
   } = props;
 
@@ -59,9 +61,19 @@ const TestimonialsCarouselBlock = (props: ChaiBlockComponentProps<TestimonialsCa
                 {testimonial.content}
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                  {testimonial.name.charAt(0)}
-                </div>
+                {testimonial.avatar ? (
+                  <EditableChaiImage
+                    src={testimonial.avatar}
+                    alt={testimonial.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                    containerClassName="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
+                    inBuilder={inBuilder}
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold flex-shrink-0">
+                    {testimonial.name.charAt(0)}
+                  </div>
+                )}
                 <div>
                   <div className="font-semibold text-foreground">{testimonial.name}</div>
                   <div className="text-sm text-muted-foreground">{testimonial.role}</div>
