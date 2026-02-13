@@ -6,6 +6,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { useState } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface FAQItem {
   question: string;
@@ -39,6 +40,7 @@ const FAQAccordionBlock = (props: ChaiBlockComponentProps<FAQAccordionProps>) =>
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className={`text-${s.textAlign} max-w-3xl mx-auto mb-16`}>
@@ -70,6 +72,7 @@ const FAQAccordionBlock = (props: ChaiBlockComponentProps<FAQAccordionProps>) =>
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 

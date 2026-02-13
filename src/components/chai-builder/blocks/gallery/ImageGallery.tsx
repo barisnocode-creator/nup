@@ -6,6 +6,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { EditableChaiImage } from "../shared/EditableChaiImage";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type ImageGalleryProps = {
   styles: ChaiStyles;
@@ -35,6 +36,7 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
   const gridCols = { "2": "md:grid-cols-2", "3": "md:grid-cols-3", "4": "md:grid-cols-4" };
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
@@ -68,6 +70,7 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 

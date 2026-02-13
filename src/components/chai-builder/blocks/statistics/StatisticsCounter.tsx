@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type StatisticsCounterProps = {
   styles: ChaiStyles;
@@ -41,6 +42,7 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
   ].filter(st => st.value && st.label);
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor} text-primary-foreground`}>
       <div className="container mx-auto px-6">
         {(title || subtitle) && (
@@ -68,6 +70,7 @@ const StatisticsCounterBlock = (props: ChaiBlockComponentProps<StatisticsCounter
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 

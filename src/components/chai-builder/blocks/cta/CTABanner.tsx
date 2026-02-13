@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type CTABannerProps = {
   styles: ChaiStyles;
@@ -32,6 +33,7 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
   const s = resolveStyles(styleProps);
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className={`max-w-4xl mx-auto text-${s.textAlign}`}>
@@ -67,6 +69,7 @@ const CTABannerBlock = (props: ChaiBlockComponentProps<CTABannerProps>) => {
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 

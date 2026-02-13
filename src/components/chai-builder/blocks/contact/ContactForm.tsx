@@ -5,6 +5,7 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type ContactFormProps = {
   styles: ChaiStyles;
@@ -39,6 +40,7 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
   };
 
   return (
+    <TooltipProvider>
     <section {...blockProps} className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-16">
@@ -122,6 +124,7 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
         </div>
       </div>
     </section>
+    </TooltipProvider>
   );
 };
 
