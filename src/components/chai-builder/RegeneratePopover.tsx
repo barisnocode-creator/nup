@@ -118,7 +118,7 @@ export function RegeneratePopover({ projectId, fieldPath, currentValue, onApply 
     <div className="relative">
       <button
         onClick={handleOpen}
-        className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all duration-200 active:scale-95"
+        className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all duration-200 active:scale-95 focus-visible:ring-2 focus-visible:ring-primary/50"
         title="İçerik Yeniden Oluştur"
       >
         <Sparkles className="w-3.5 h-3.5" />
@@ -132,6 +132,8 @@ export function RegeneratePopover({ projectId, fieldPath, currentValue, onApply 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
+            role="dialog"
+            aria-label="Alternatif içerikler"
             className="absolute right-0 top-full mt-2 w-[300px] bg-white border border-border/50 rounded-xl shadow-2xl z-[70] overflow-hidden"
           >
             {/* Header */}
@@ -165,8 +167,10 @@ export function RegeneratePopover({ projectId, fieldPath, currentValue, onApply 
                   <button
                     key={idx}
                     onClick={() => handleApply(variant)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleApply(variant); }}
+                    aria-label={`${lengthLabels[variant.length] || variant.length} varyant: ${variant.text.slice(0, 40)}`}
                     className={cn(
-                      'w-full text-left p-3 rounded-lg border transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 group',
+                      'w-full text-left p-3 rounded-lg border transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 group focus-visible:ring-2 focus-visible:ring-primary/50',
                       selectedIdx === idx ? 'border-primary bg-primary/5' : 'border-border/30'
                     )}
                   >

@@ -31,10 +31,10 @@ const tools: { key: ToolKey; icon: React.ElementType; label: string }[] = [
 ];
 
 export function DesktopEditorLayout() {
-  const { onDashboard, onPublish, projectId } = useEditorContext();
+  const { onDashboard, onPublish, projectId, featureFlags } = useEditorContext();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
-  const [showRight, setShowRight] = useState(true);
+  const [showRight, setShowRight] = useState(featureFlags.contextualPanel);
   const [showCustomize, setShowCustomize] = useState(false);
   const [screenMode, setScreenMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [activeTool, setActiveTool] = useState<ToolKey | null>(null);
@@ -179,16 +179,18 @@ export function DesktopEditorLayout() {
             {screenMode === 'mobile' && <Smartphone className="w-4 h-4" />}
           </button>
 
-          <button
-            onClick={handleToggleRight}
-            className={cn(
-              'p-2 rounded-xl transition-all duration-200 active:scale-95',
-              showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
-            )}
-            title="Düzenleme Paneli"
-          >
-            <PanelRightClose className="w-4 h-4" />
-          </button>
+          {featureFlags.contextualPanel && (
+            <button
+              onClick={handleToggleRight}
+              className={cn(
+                'p-2 rounded-xl transition-all duration-200 active:scale-95',
+                showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
+              )}
+              title="Düzenleme Paneli"
+            >
+              <PanelRightClose className="w-4 h-4" />
+            </button>
+          )}
 
           <div className="h-5 w-px bg-border/40 mx-1" />
 
@@ -252,6 +254,8 @@ export function DesktopEditorLayout() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 20, opacity: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
+              role="region"
+              aria-label="Bölüm düzenleme paneli"
               className="absolute right-3 top-3 bottom-3 w-[360px] bg-white rounded-xl shadow-2xl border border-border/40 z-40 flex flex-col overflow-hidden right-edit-panel"
             >
               {/* Header */}
