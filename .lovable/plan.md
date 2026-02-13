@@ -1,109 +1,100 @@
 
 
-# Pilates Template Kalite Yukseltmesi - Referans Siteye Uyum
+# Randevu Formu Yeniden Tasarimi ve Editor-Yayinlama Parite Duzeltmesi
 
-## Sorun Analizi
+## Sorun 1: Randevu Formu Cok Basit ve Kaba
 
-Mevcut template ile referans site (pilates-circles-by-cult.lovable.app) arasinda ciddi farklar var:
+Mevcut tasarim duz butonlar ve sade bir form. Cal.com'dan ilham alinarak modern, minimal ve profesyonel bir randevu bilesenine donusturulecek.
 
-1. **Sabit kodlanmis renkler**: Tum sectionlarda `#c4775a`, `#2d2420`, `#f5ebe0` dogrudan yazilmis. Tema degistiginde hicbir sey degismiyor
-2. **Statik icerik**: Ogretmenler, testimonial'lar, nav linkleri, galeri basliklari hep ayni sabit degerlerle geliyor - AI'nin urettigi icerik kullanilmiyor
-3. **Eksik ozellikler**: Referans sitedeki sonsuz yatay galeri kaydirmasi, daha rafine glassmorphism efektleri, daha akici animasyonlar yok
-4. **Esneklik yok**: Farkli bir meslek/sektor secildiginde bile site ayni gorunuyor cunku icerik baglantisi yok
+## Sorun 2: Editorde Farkli, Yayinlayinca Farkli
 
-## Cozum: Tum Sectionlari Yeniden Yazmak
+`deploy-to-netlify/index.ts` dosyasindaki Pilates template renderer fonksiyonlari hala sabit renkler kullanıyor:
+- `#c4775a` (terracotta) yerine `var(--primary)` olmali
+- `#2d2420` (koyu kahve) yerine `var(--foreground)` olmali
+- `#f5ebe0` (krem) yerine `var(--background)` olmali
+- `#6b5e54` yerine `var(--muted-foreground)` olmali
+- `#e8ddd0` yerine `var(--border)` olmali
 
-### Degisiklik 1: CSS Degiskenleri Kullanimi (Tum Sectionlar)
+Bu yuzden editorde tema degiskenlerini gorurken, yayinlayinca eski sabit renkler cikiyor.
 
-Sabit hex kodlari yerine tema degiskenlerine gecis:
+---
+
+## Degisiklik 1: AppointmentBooking.tsx - Cal.com Ilhamli Yeniden Tasarim
+
+Mevcut kare butonlar ve duz liste yerine:
+
+**Tarih Secimi:**
+- Yatay kaydirmali takvim seritdi (horizontal date strip)
+- Her gun: gun ismi + gun numarasi (ornek: "Pzt 17")
+- Secili gun: `bg-primary text-primary-foreground` dolgu ile belirgin
+- Secilmemis gun: hafif border, hover efekti
+- Sol/sag ok butonlari ile haftalar arasi gezinti
+
+**Saat Secimi:**
+- 2 veya 3 sutunlu grid layout
+- Pill seklinde butonlar (rounded-full)
+- Secili saat: dolgu animasyonu ile belirgin
+- Hover: hafif scale ve golge efekti
+
+**Form Alanlari:**
+- Saat secildikten sonra asagiya dogru akici bir `framer-motion` slide-down animasyonu ile acilsin
+- Input alanlari: buyuk, havadar, minimal border
+- Focus durumunda ring animasyonu
+
+**Genel Gorunum:**
+- Kart: `rounded-2xl shadow-xl` buyuk golge
+- Adim gostergesi: "1. Tarih -> 2. Saat -> 3. Bilgiler" seklinde ust kisimda minimal step indicator
+- Basarili gonderim: konfeti/check animasyonu
+
+### Teknik Detaylar
 
 ```text
-Onceki:  bg-[#f5ebe0]  text-[#2d2420]  text-[#c4775a]  bg-[#2d2420]
-Sonraki: bg-background  text-foreground  text-primary    bg-card (koyu varyant)
+Dosya: src/components/chai-builder/blocks/appointment/AppointmentBooking.tsx
+
+Degisiklikler:
+- Tarih butonlari: yatay scroll strip, gun adi + numara formati
+- Saat grid: 3 sutun, pill butonlar  
+- Step indicator: ustde 3 adim gostergesi
+- Form acilisi: framer-motion AnimatePresence ile slide-down
+- Basari ekrani: buyuk check ikonu ile animasyon
+- inBuilder preview'i da ayni tasarima uyumlu
 ```
 
-Her section icin renk esleme:
-- `#f5ebe0` (krem arka plan) -> `bg-background`
-- `#2d2420` (koyu metin) -> `text-foreground`
-- `#c4775a` (terracotta vurgu) -> `text-primary`
-- `#6b5e54` (soluk metin) -> `text-muted-foreground`
-- `#e8ddd0` (border) -> `border-border`
-- `#2d2420` (koyu arka plan) -> `bg-secondary` veya ozel koyu section icin gradient
+## Degisiklik 2: deploy-to-netlify - Pilates Renderers Renk Duzeltmesi
 
-### Degisiklik 2: HeroFullscreen.tsx - Referans Siteye Uyum
+Asagidaki fonksiyonlardaki tum sabit renk kodlari CSS degiskenlerine donusturulecek:
 
-- Gradient overlay'i tema renklerine bagla: `from-primary/60 via-primary/30 to-primary/20` yerine sabit hex
-- Form alanlarini tema renklerine bagla
-- "Discover More" metnini Turkce yap ve generated content'ten al
-- Buton rengini `bg-primary text-primary-foreground` yap
+| Fonksiyon | Sabit Renk | CSS Degiskeni |
+|-----------|-----------|---------------|
+| `renderPilatesHero` | `#c4775a` | `var(--primary)` |
+| `renderPilatesHero` | `rgba(196,119,90,...)` | `color-mix(in srgb, var(--primary) ...)` |
+| `renderPilatesFeatures` | `#f5ebe0`, `#2d2420`, `#6b5e54` | `var(--background)`, `var(--foreground)`, `var(--muted-foreground)` |
+| `renderPilatesTour` | `#2d2420`, `#f5ebe0` | `var(--foreground)`, `var(--background)` |
+| `renderPilatesTeachers` | `#c4775a`, `#2d2420`, `#6b5e54` | `var(--primary)`, `var(--foreground)`, `var(--muted-foreground)` |
+| `renderPilatesTestimonials` | `#c4775a`, `#2d2420`, `#f5ebe0` | `var(--primary)`, `var(--foreground)`, `var(--background)` |
+| `renderPilatesContact` | `#c4775a`, `#2d2420`, `#6b5e54`, `#e8ddd0` | `var(--primary)`, `var(--foreground)`, `var(--muted-foreground)`, `var(--border)` |
+| `renderPilatesHeader` | `#fff`, `#2d2420`, `rgba(245,235,224,...)` | `var(--primary-foreground)`, `var(--foreground)`, `var(--background)` |
+| `renderPilatesFooter` | `#c4775a`, `#2d2420`, `#f5ebe0` | `var(--primary)`, `var(--foreground)`, `var(--background)` |
 
-### Degisiklik 3: FeatureCards.tsx - Dinamik Icerik
+**Ayrica:** Header'daki nav linkleri ve footer'daki metinler Turkce'ye cevrilecek (editordeki ile ayni).
 
-- Arka plan rengini `bg-background` yap
-- Baslik rengini `text-foreground`, aciklama `text-muted-foreground`
-- Servis gorselleri icin `servicesImages` dizisini duzgun kullan
-- Kart hover animasyonlarini iyilestir
+## Degisiklik 3: deploy-to-netlify - Randevu Blogu Renderer Guncelleme
 
-### Degisiklik 4: TourGallery.tsx - Sonsuz Kaydirma
-
-- Referans sitedeki gibi galeri gorsellerini ciftleyerek sonsuz yatay kaydirma efekti ekle (CSS animation ile)
-- Koyu arka plan icin `bg-foreground text-background` seklinde ters tema kullan
-- Galeri basliklarini `generated_content`'teki servis adlarindan al
-- `scrollbar-hide` CSS sinifini ekle
-
-### Degisiklik 5: TeacherGrid.tsx - Dinamik Ekip Verisi
-
-Su an 4 sabit ogretmen var. Bunun yerine:
-- `generated_content.pages.about.values` verisinden ekip uyeleri olustur
-- Gorselleri `servicesImages` dizisinden cek
-- Isimleri ve rolleri AI icerigi olan `values` dizisinden map'le
-- Renkleri tema degiskenlerine bagla
-
-### Degisiklik 6: Testimonials.tsx - Generated Content Kullanimi
-
-Su an `highlights` prop'u alinip kullanilmiyor. Duzeltme:
-- `highlights` dizisini gercekten testimonial olarak render et
-- Her highlight'in `title`'ini musteri adi, `description`'ini yorum olarak goster
-- Renkleri tema degiskenlerine bagla
-- Koyu section icin ters tema kullan
-
-### Degisiklik 7: ContactSection.tsx - Tema Uyumu
-
-- Form alanlarinin renklerini tema degiskenlerine bagla
-- Buton rengini `bg-primary text-primary-foreground` yap
-- Ikon renklerini `text-primary` yap
-- Border renklerini `border-border` yap
-
-### Degisiklik 8: TemplateHeader.tsx ve TemplateFooter.tsx
-
-- Sabit renkleri tema degiskenlerine cevir
-- Nav item'lari Turkce yap (generated content'ten)
-- Logo rengini tema'ya bagla
-- Footer link renklerini tema'ya bagla
-
-### Degisiklik 9: index.tsx (PilatesTemplate)
-
-- Wrapper `div`'deki sabit `bg-[#f5ebe0] text-[#2d2420]` -> `bg-background text-foreground`
-- `fontFamily` stil override'ini kaldir (tema zaten hallediyor)
+`renderAppointmentBooking` fonksiyonu da yeni UI tasarimina uyumlu hale getirilecek:
+- Ayni yatay tarih strip, pill saat butonlari
+- Step indicator
+- Tema degiskenlerini kullanan stiller
 
 ## Dosya Degisiklikleri Ozeti
 
-| Dosya | Islem | Aciklama |
-|-------|-------|----------|
-| `src/templates/pilates/index.tsx` | Guncelle | Sabit renkleri tema degiskenlerine cevir |
-| `src/templates/pilates/sections/hero/HeroFullscreen.tsx` | Yeniden yaz | Tema renkleri, Turkce metinler, referans site uyumu |
-| `src/templates/pilates/sections/features/FeatureCards.tsx` | Guncelle | Tema renkleri, dinamik gorsel kullanimi |
-| `src/templates/pilates/sections/tour/TourGallery.tsx` | Yeniden yaz | Sonsuz kaydirma, tema renkleri, dinamik basliklar |
-| `src/templates/pilates/sections/teachers/TeacherGrid.tsx` | Yeniden yaz | Dinamik ekip verisi, tema renkleri |
-| `src/templates/pilates/sections/testimonials/Testimonials.tsx` | Yeniden yaz | Generated content kullanimi, tema renkleri |
-| `src/templates/pilates/sections/contact/ContactSection.tsx` | Guncelle | Tema renkleri |
-| `src/templates/pilates/components/TemplateHeader.tsx` | Guncelle | Tema renkleri, Turkce nav |
-| `src/templates/pilates/components/TemplateFooter.tsx` | Guncelle | Tema renkleri |
+| Dosya | Islem |
+|-------|-------|
+| `src/components/chai-builder/blocks/appointment/AppointmentBooking.tsx` | Cal.com ilhamli yeniden tasarim |
+| `supabase/functions/deploy-to-netlify/index.ts` | Pilates renderer'larindaki sabit renkleri CSS degiskenlerine cevir + randevu renderer guncelle |
 
 ## Beklenen Sonuc
 
-- Tema preset degistirildiginde tum renkler aninda degisecek
-- Farkli meslek/sektor icin farkli AI icerigi uretildiginde, template o icerigi dogru gosterecek
-- Galeri sonsuz kaydirma ile referans siteye yakin gorunecek
-- Her section dinamik olacak, sabit veri kalmayacak
+- Randevu formu Cal.com kalitesinde modern ve akici gorunecek
+- Editorde gorunen ile yayinlanan site birebir ayni olacak
+- Tema degistirildiginde hem editorde hem yayinlanan sitede renkler dogru yansiyacak
 
