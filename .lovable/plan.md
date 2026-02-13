@@ -1,35 +1,32 @@
 
-
-# SaaS Renk Sifirlama - DashboardLayout'a Tasima
+# Renk Sifirlama - Route Degisiminde Tetikleme
 
 ## Sorun
 
-`useLayoutEffect` ile CSS degisken temizligi sadece `Dashboard.tsx` sayfasina eklendi. Ancak kullanici editordan cikinca her zaman Dashboard'a gitmeyebilir -- Analytics, Appointments, Settings, Help, Studio veya WebsiteDashboard sayfasina gidebilir. Bu sayfalarda reset olmadigi icin renkler bozuk kaliyor.
+`DashboardLayout` icindeki `useLayoutEffect` sadece component ilk mount oldugunda calisiyor (`[]` dependency). Kullanici sidebar'dan sayfa degistirdiginde `DashboardLayout` unmount olmadigi icin (ayni wrapper) reset tekrar calismiyor. ChaiBuilder SDK'nin asenkron olarak enjekte ettigi stiller de ilk reset'ten sonra gelebiliyor.
 
 ## Cozum
 
-Tum SaaS sayfalari `DashboardLayout` bilesenini kullaniyor. CSS degisken temizligini `DashboardLayout.tsx` icine tasiyarak tek bir noktada tum sayfalari kapsayacagiz.
-
-## Teknik Detaylar
-
 ### 1. `src/components/dashboard/DashboardLayout.tsx`
 
-`useLayoutEffect` eklenerek mount aninda tum proje tema degiskenlerini temizler:
+- `useLocation()` hook'unu import edip, `location.pathname` degerini `useLayoutEffect` dependency array'ine eklemek
+- Boylece her sayfa degisiminde CSS degiskenleri yeniden turuncu temaya zorlanacak
+- SDK style tag'leri de her geciste temizlenecek
 
 ```text
---primary, --ring, --accent, --sidebar-primary, --sidebar-ring,
---color-secondary-custom, --color-accent-custom,
---font-heading, --font-body, --radius
+Degisiklik ozeti:
+- import { useNavigate, useLocation } from 'react-router-dom';
+- const location = useLocation();
+- useLayoutEffect dependency: [location.pathname]
 ```
 
-Ayrica `reduce-motion` sinifini da kaldirir.
+### 2. Ek Guvenlik: Gecikmel Temizlik
 
-### 2. `src/pages/Dashboard.tsx`
+- `useLayoutEffect` icine 100ms gecikmeyle ikinci bir temizlik eklemek (setTimeout)
+- Bu, SDK'nin asenkron style injection'larini da yakalayacak
 
-Artik gereksiz olan `useLayoutEffect` blogu ve `useLayoutEffect` import'u kaldirilir (DashboardLayout zaten yapacagi icin).
+## Etki
 
-### Etki
-
-- Editordan herhangi bir SaaS sayfasina geciste renkler otomatik turuncu temaya doner
-- Tek bir yerde yonetim, tekrar yok
-- Mevcut `useThemeColors` hook'undaki cleanup da yedek olarak calisir
+- Editordan cikip herhangi bir SaaS sayfasina gidildiginde renkler turuncu kalir
+- Sidebar'dan sayfalar arasi geciste de renkler korunur
+- SDK'nin gecikmeli style injection'lari da temizlenir
