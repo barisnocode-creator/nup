@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { CustomizePanel } from './CustomizePanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useEditorContext } from './EditorContext';
 
 type LeftPanel = 'outline' | 'add' | null;
@@ -98,6 +99,7 @@ export function DesktopEditorLayout() {
   }, [leftPanel, activeTool]);
 
   return (
+    <TooltipProvider>
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
       {/* ===== TOP TOOLBAR ===== */}
       <div className="h-14 shrink-0 flex items-center border-b border-border/30 bg-background/95 backdrop-blur-xl z-50 px-3 shadow-sm">
@@ -294,5 +296,6 @@ export function DesktopEditorLayout() {
         </AnimatePresence>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
