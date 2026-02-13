@@ -277,26 +277,12 @@ function renderAppointmentBooking(b: ChaiBlock): string {
             <label class="block text-sm font-medium mb-3" style="color:var(--foreground)">🕐 Saat Seçin</label>
             <div id="appt-slots" class="flex gap-2 flex-wrap"></div>
           </div>
-          <div id="appt-fields" style="display:none">
-            <div class="grid sm:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Adınız *</label>
-                <input id="appt-name" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Adınızı girin">
-              </div>
-              <div>
-                <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">E-posta *</label>
-                <input id="appt-email" type="email" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="E-posta adresiniz">
-              </div>
-            </div>
-            <div class="mb-4">
-              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Telefon</label>
-              <input id="appt-phone" type="tel" class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Telefon numaranız">
-            </div>
-            <div class="mb-4">
-              <label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Not</label>
-              <textarea id="appt-note" rows="3" class="w-full px-4 py-3 rounded-lg resize-none" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Eklemek istediğiniz not..."></textarea>
-            </div>
+          <!-- Honeypot -->
+          <div style="position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden" aria-hidden="true">
+            <input type="text" id="appt-hp" tabindex="-1" autocomplete="off">
           </div>
+          <div id="appt-fields" style="display:none"></div>
+          <div id="appt-consent" style="display:none"></div>
           <div id="appt-error" style="display:none" class="p-3 rounded-lg text-sm" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c"></div>
           <button id="appt-submit" disabled class="w-full px-6 py-4 rounded-lg font-medium transition opacity-50 cursor-not-allowed" style="background:var(--primary);color:var(--primary-foreground)">${btnText}</button>
         </div>
@@ -315,10 +301,63 @@ function renderAppointmentBooking(b: ChaiBlock): string {
   var API='${supabaseUrl}/functions/v1/book-appointment';
   var PID=window.__PROJECT_ID__;
   var selDate='',selSlot='',dur=30;
+  var formFields=null,consentRequired=false,consentText='';
+  var formLoadedAt='';
   var dates=[];
   var today=new Date();
   for(var i=1;i<=30;i++){var d=new Date(today);d.setDate(today.getDate()+i);dates.push(d.toISOString().split('T')[0])}
   var dc=document.getElementById('appt-dates');
+  function renderDynamicFields(fields){
+    var fc=document.getElementById('appt-fields');
+    fc.innerHTML='';
+    if(!fields||!fields.length){
+      fc.innerHTML='<div class="grid sm:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Adınız *</label><input id="appt-name" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Adınızı girin"></div><div><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">E-posta *</label><input id="appt-email" type="email" required class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="E-posta adresiniz"></div></div><div class="mb-4"><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Telefon</label><input id="appt-phone" type="tel" class="w-full px-4 py-3 rounded-lg" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Telefon numaranız"></div><div class="mb-4"><label class="block text-sm font-medium mb-2" style="color:var(--foreground)">Not</label><textarea id="appt-note" rows="3" class="w-full px-4 py-3 rounded-lg resize-none" style="border:1px solid var(--input);background:var(--background);color:var(--foreground)" placeholder="Eklemek istediğiniz not..."></textarea></div>';
+      return;
+    }
+    var sorted=fields.slice().sort(function(a,b){return a.order-b.order});
+    var sysFields=sorted.filter(function(f){return f.system});
+    var customFields=sorted.filter(function(f){return !f.system});
+    if(sysFields.length>0){
+      var grid=document.createElement('div');grid.className='grid sm:grid-cols-2 gap-4 mb-4';
+      sysFields.forEach(function(f){grid.appendChild(makeFieldEl(f))});
+      fc.appendChild(grid);
+    }
+    customFields.forEach(function(f){var w=document.createElement('div');w.className='mb-4';w.appendChild(makeFieldEl(f));fc.appendChild(w)});
+  }
+  function makeFieldEl(f){
+    var wrap=document.createElement('div');
+    var lbl=document.createElement('label');lbl.className='block text-sm font-medium mb-2';lbl.style.color='var(--foreground)';
+    lbl.textContent=f.label+(f.required?' *':'');wrap.appendChild(lbl);
+    var inputStyle='border:1px solid var(--input);background:var(--background);color:var(--foreground)';
+    if(f.type==='textarea'){
+      var ta=document.createElement('textarea');ta.id='appt-field-'+f.id;ta.name=f.id;ta.rows=3;
+      ta.className='w-full px-4 py-3 rounded-lg resize-none';ta.style.cssText=inputStyle;
+      if(f.placeholder)ta.placeholder=f.placeholder;if(f.required)ta.required=true;wrap.appendChild(ta);
+    }else if(f.type==='select'){
+      var sel=document.createElement('select');sel.id='appt-field-'+f.id;sel.name=f.id;
+      sel.className='w-full px-4 py-3 rounded-lg';sel.style.cssText=inputStyle;
+      if(f.required)sel.required=true;
+      var defOpt=document.createElement('option');defOpt.value='';defOpt.textContent='Seçin...';sel.appendChild(defOpt);
+      (f.options||[]).forEach(function(o){var opt=document.createElement('option');opt.value=o;opt.textContent=o;sel.appendChild(opt)});
+      wrap.appendChild(sel);
+    }else{
+      var inp=document.createElement('input');inp.id='appt-field-'+f.id;inp.name=f.id;inp.type=f.type||'text';
+      inp.className='w-full px-4 py-3 rounded-lg';inp.style.cssText=inputStyle;
+      if(f.placeholder)inp.placeholder=f.placeholder;if(f.required)inp.required=true;wrap.appendChild(inp);
+    }
+    return wrap;
+  }
+  function renderConsent(){
+    var cc=document.getElementById('appt-consent');
+    cc.innerHTML='';
+    if(!consentRequired||!consentText)return;
+    cc.style.display='block';
+    var wrap=document.createElement('div');wrap.className='flex items-start gap-3';
+    var cb=document.createElement('input');cb.type='checkbox';cb.id='appt-consent-cb';cb.style.marginTop='4px';
+    var lbl=document.createElement('label');lbl.htmlFor='appt-consent-cb';lbl.className='text-sm';
+    lbl.style.color='var(--muted-foreground)';lbl.style.cursor='pointer';lbl.textContent=consentText;
+    wrap.appendChild(cb);wrap.appendChild(lbl);cc.appendChild(wrap);
+  }
   dates.forEach(function(dt){
     var dd=new Date(dt+'T00:00:00');
     var label=dd.toLocaleDateString('tr-TR',{day:'numeric',month:'short',weekday:'short'});
@@ -328,25 +367,31 @@ function renderAppointmentBooking(b: ChaiBlock): string {
     btn.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
     btn.onclick=function(){
       selDate=dt;selSlot='';
-      dc.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)'});
+      dc.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)';b.style.color='var(--foreground)'});
       btn.style.background='var(--primary)';btn.style.color='var(--primary-foreground)';
       document.getElementById('appt-fields').style.display='none';
+      document.getElementById('appt-consent').style.display='none';
       document.getElementById('appt-submit').disabled=true;
       document.getElementById('appt-submit').style.opacity='0.5';
       fetch(API+'?project_id='+PID+'&date='+dt).then(function(r){return r.json()}).then(function(data){
         var sc=document.getElementById('appt-slots-container');
         var sl=document.getElementById('appt-slots');
         sl.innerHTML='';dur=data.duration||30;
+        formFields=data.form_fields||null;
+        consentRequired=data.consent_required||false;
+        consentText=data.consent_text||'';
         if(!data.slots||data.slots.length===0){sl.innerHTML='<p style="color:var(--muted-foreground)" class="text-sm">Bu tarihte müsait saat yok.</p>';sc.style.display='block';return}
         data.slots.forEach(function(t){
           var sb=document.createElement('button');sb.textContent=t;sb.dataset.time=t;
           sb.className='px-4 py-2 rounded-lg text-sm transition';
           sb.style.cssText='border:1px solid var(--border);color:var(--foreground);background:var(--background)';
           sb.onclick=function(){
-            selSlot=t;
+            selSlot=t;formLoadedAt=new Date().toISOString();
             sl.querySelectorAll('button').forEach(function(b){b.style.background='var(--background)';b.style.color='var(--foreground)'});
             sb.style.background='var(--primary)';sb.style.color='var(--primary-foreground)';
             document.getElementById('appt-fields').style.display='block';
+            renderDynamicFields(formFields);
+            renderConsent();
             document.getElementById('appt-submit').disabled=false;
             document.getElementById('appt-submit').style.opacity='1';
             document.getElementById('appt-submit').style.cursor='pointer';
@@ -360,16 +405,45 @@ function renderAppointmentBooking(b: ChaiBlock): string {
   });
   document.getElementById('appt-submit').onclick=function(){
     if(!selDate||!selSlot)return;
-    var n=document.getElementById('appt-name').value;
-    var e=document.getElementById('appt-email').value;
-    if(!n||!e){document.getElementById('appt-error').textContent='Ad ve e-posta zorunludur';document.getElementById('appt-error').style.display='block';return}
+    var hp=document.getElementById('appt-hp').value;
+    var consentCb=document.getElementById('appt-consent-cb');
+    if(consentRequired&&consentText&&(!consentCb||!consentCb.checked)){
+      document.getElementById('appt-error').textContent='Gizlilik onayını kabul etmelisiniz';
+      document.getElementById('appt-error').style.display='block';return;
+    }
+    var payload={project_id:PID,date:selDate,start_time:selSlot,honeypot:hp||'',form_loaded_at:formLoadedAt,consent_given:consentCb?consentCb.checked:false};
+    var formDataExtra={};
+    var systemIds=['client_name','client_email'];
+    if(formFields&&formFields.length){
+      formFields.forEach(function(f){
+        var el=document.getElementById('appt-field-'+f.id);
+        if(!el)return;
+        var v=el.value||'';
+        if(f.system){
+          if(f.id==='client_name')payload.client_name=v;
+          else if(f.id==='client_email')payload.client_email=v;
+        } else {
+          if(f.id==='client_phone')payload.client_phone=v;
+          else if(f.id==='client_note')payload.client_note=v;
+          else formDataExtra[f.id]=v;
+        }
+        if(f.required&&!v.trim()){
+          document.getElementById('appt-error').textContent=f.label+' alanı zorunludur';
+          document.getElementById('appt-error').style.display='block';payload=null;return;
+        }
+      });
+    }else{
+      var nEl=document.getElementById('appt-name'),eEl=document.getElementById('appt-email');
+      if(nEl)payload.client_name=nEl.value;
+      if(eEl)payload.client_email=eEl.value;
+      var pEl=document.getElementById('appt-phone');if(pEl)payload.client_phone=pEl.value||null;
+      var ntEl=document.getElementById('appt-note');if(ntEl)payload.client_note=ntEl.value||null;
+    }
+    if(!payload)return;
+    if(!payload.client_name||!payload.client_email){document.getElementById('appt-error').textContent='Ad ve e-posta zorunludur';document.getElementById('appt-error').style.display='block';return}
+    if(Object.keys(formDataExtra).length>0)payload.form_data=formDataExtra;
     document.getElementById('appt-submit').disabled=true;document.getElementById('appt-submit').textContent='Gönderiliyor...';
-    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      project_id:PID,date:selDate,start_time:selSlot,
-      client_name:n,client_email:e,
-      client_phone:document.getElementById('appt-phone').value||null,
-      client_note:document.getElementById('appt-note').value||null
-    })}).then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})}).then(function(res){
+    fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}})}).then(function(res){
       if(res.ok){document.getElementById('appt-form-container').style.display='none';document.getElementById('appt-success').style.display='block'}
       else{document.getElementById('appt-error').textContent=res.data.error||'Bir hata oluştu';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'}
     }).catch(function(){document.getElementById('appt-error').textContent='Bağlantı hatası';document.getElementById('appt-error').style.display='block';document.getElementById('appt-submit').disabled=false;document.getElementById('appt-submit').textContent='${btnText}'});

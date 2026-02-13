@@ -28,6 +28,17 @@ interface BlockedSlot {
   block_end_time: string | null;
 }
 
+interface FormField {
+  id: string;
+  type: string;
+  label: string;
+  required: boolean;
+  system: boolean;
+  order: number;
+  placeholder?: string;
+  options?: string[];
+}
+
 function timeToMin(t: string): number {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
@@ -59,7 +70,13 @@ function getNowInTimezone(tz: string): { hours: number; minutes: number } {
 }
 
 function getTodayInTimezone(tz: string): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
+  return new Date().toLocaleDateString("en-CA", { timeZone: tz });
+}
+
+function sanitize(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  const str = String(val).trim().slice(0, 500);
+  return str.replace(/<[^>]*>/g, "");
 }
 
 Deno.serve(async (req) => {
@@ -91,14 +108,12 @@ Deno.serve(async (req) => {
       const dateObj = new Date(dateStr + "T00:00:00");
       const dayOfWeek = dateObj.getDay();
 
-      // max_advance_days check
       const todayDate = new Date(todayStr + "T00:00:00");
       const targetDate = new Date(dateStr + "T00:00:00");
       const diffDays = Math.ceil((targetDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
       if (diffDays < 0) return json({ slots: [], message: "Cannot book past dates" });
       if (diffDays > settings.max_advance_days) return json({ slots: [], message: "Date too far in advance" });
 
-      // Determine schedule for this day
       let dayStart: number, dayEnd: number, dayEnabled: boolean;
       let breaks: { start: string; end: string }[] = [];
       const daySchedules = settings.day_schedules as Record<string, DaySchedule> | null;
@@ -110,7 +125,6 @@ Deno.serve(async (req) => {
         dayEnd = ds.end ? timeToMin(ds.end) : 0;
         breaks = ds.breaks || [];
       } else {
-        // Legacy fallback
         const workingDays = settings.working_days as number[];
         dayEnabled = workingDays.includes(dayOfWeek);
         dayStart = timeToMin(settings.working_hours_start);
@@ -122,7 +136,6 @@ Deno.serve(async (req) => {
 
       if (!dayEnabled) return json({ slots: [], message: "Not a working day" });
 
-      // Blocked slots check
       const { data: blocked } = await supabase
         .from("blocked_slots").select("id, blocked_date, block_type, block_start_time, block_end_time")
         .eq("project_id", projectId).eq("blocked_date", dateStr);
@@ -132,7 +145,6 @@ Deno.serve(async (req) => {
       );
       if (fullDayBlocked) return json({ slots: [], message: "This date is blocked" });
 
-      // Add time-range blocks as extra breaks
       const timeRangeBlocks = (blocked || []).filter(
         (b: BlockedSlot) => b.block_type === "time_range" && b.block_start_time && b.block_end_time
       );
@@ -145,14 +157,12 @@ Deno.serve(async (req) => {
       const buffer = settings.buffer_minutes;
       let slots = generateSlots(dayStart, dayEnd, duration, buffer, allBreaks);
 
-      // Filter past slots if today
       if (dateStr === todayStr) {
         const now = getNowInTimezone(tz);
         const nowMin = now.hours * 60 + now.minutes;
         slots = slots.filter(s => timeToMin(s) > nowMin);
       }
 
-      // Remove booked slots
       const { data: booked } = await supabase
         .from("appointments").select("start_time")
         .eq("project_id", projectId).eq("appointment_date", dateStr).neq("status", "cancelled");
@@ -160,12 +170,43 @@ Deno.serve(async (req) => {
       const bookedTimes = new Set((booked || []).map((a: { start_time: string }) => a.start_time));
       const availableSlots = slots.filter(s => !bookedTimes.has(s));
 
-      return json({ slots: availableSlots, duration, timezone: tz });
+      // Return form_fields and consent settings along with slots
+      const formFields = settings.form_fields as FormField[] | null;
+      const consentRequired = settings.consent_required ?? true;
+      const consentText = settings.consent_text || null;
+
+      return json({
+        slots: availableSlots,
+        duration,
+        timezone: tz,
+        form_fields: formFields,
+        consent_required: consentRequired,
+        consent_text: consentText,
+      });
     }
 
     if (req.method === "POST") {
       const body = await req.json();
-      const { project_id, date, start_time, client_name, client_email, client_phone, client_note } = body;
+      const {
+        project_id, date, start_time,
+        client_name, client_email, client_phone, client_note,
+        form_data: customFormData, consent_given,
+        honeypot, form_loaded_at,
+      } = body;
+
+      // Anti-spam: honeypot check - return fake success to mislead bots
+      if (honeypot) {
+        return json({ success: true, appointment: { id: "fake" } }, 201);
+      }
+
+      // Anti-spam: timing check
+      if (form_loaded_at) {
+        const loadedAt = new Date(form_loaded_at).getTime();
+        const now = Date.now();
+        if (now - loadedAt < 3000) {
+          return json({ error: "Lütfen formu dikkatlice doldurun" }, 400);
+        }
+      }
 
       if (!project_id || !date || !start_time || !client_name || !client_email) {
         return json({ error: "Missing required fields" }, 400);
@@ -176,6 +217,24 @@ Deno.serve(async (req) => {
         .eq("project_id", project_id).eq("is_enabled", true).single();
 
       if (!settings) return json({ error: "Appointment system not available" }, 404);
+
+      // Consent check
+      const consentRequired = settings.consent_required ?? true;
+      if (consentRequired && !consent_given) {
+        return json({ error: "Gizlilik onayı gereklidir" }, 400);
+      }
+
+      // Dynamic form field validation
+      const formFields = settings.form_fields as FormField[] | null;
+      if (formFields) {
+        for (const field of formFields) {
+          if (!field.required || field.system) continue;
+          const value = customFormData?.[field.id];
+          if (!value || String(value).trim() === "") {
+            return json({ error: `${field.label} alanı zorunludur` }, 400);
+          }
+        }
+      }
 
       const tz = settings.timezone || "Europe/Istanbul";
       const duration = settings.slot_duration_minutes;
@@ -209,11 +268,9 @@ Deno.serve(async (req) => {
       if (!dayEnabled) return json({ error: "Not a working day" }, 400);
       if (slotStartMin < dayStart || endMinTotal > dayEnd) return json({ error: "Outside working hours" }, 400);
 
-      // Break conflict
       const inBreak = breaks.some(br => slotStartMin < timeToMin(br.end) && endMinTotal > timeToMin(br.start));
       if (inBreak) return json({ error: "Conflicts with break time" }, 400);
 
-      // Blocked check
       const { data: blocked } = await supabase
         .from("blocked_slots").select("id, block_type, block_start_time, block_end_time")
         .eq("project_id", project_id).eq("blocked_date", date);
@@ -230,7 +287,6 @@ Deno.serve(async (req) => {
       );
       if (timeBlocked) return json({ error: "Time range is blocked" }, 400);
 
-      // Date range check
       const todayStr = getTodayInTimezone(tz);
       const todayDate = new Date(todayStr + "T00:00:00");
       const targetDate = new Date(date + "T00:00:00");
@@ -238,7 +294,6 @@ Deno.serve(async (req) => {
       if (diffDays < 0) return json({ error: "Cannot book past dates" }, 400);
       if (diffDays > settings.max_advance_days) return json({ error: "Date too far in advance" }, 400);
 
-      // Past time check for today
       if (date === todayStr) {
         const now = getNowInTimezone(tz);
         if (slotStartMin <= now.hours * 60 + now.minutes) {
@@ -246,7 +301,6 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Overlap check
       const { data: overlap } = await supabase
         .from("appointments").select("id")
         .eq("project_id", project_id).eq("appointment_date", date)
@@ -254,14 +308,26 @@ Deno.serve(async (req) => {
 
       if (overlap && overlap.length > 0) return json({ error: "Time slot already booked" }, 409);
 
+      // Sanitize custom form data
+      const sanitizedFormData: Record<string, string> = {};
+      if (customFormData && typeof customFormData === "object") {
+        for (const [key, val] of Object.entries(customFormData)) {
+          sanitizedFormData[key] = sanitize(val);
+        }
+      }
+
       const { data: appointment, error: insertErr } = await supabase
         .from("appointments").insert({
-          project_id, client_name, client_email,
-          client_phone: client_phone || null,
-          client_note: client_note || null,
+          project_id,
+          client_name: sanitize(client_name),
+          client_email: sanitize(client_email),
+          client_phone: client_phone ? sanitize(client_phone) : null,
+          client_note: client_note ? sanitize(client_note) : null,
           appointment_date: date,
           start_time, end_time: endTime,
           status: "pending", timezone: tz,
+          form_data: Object.keys(sanitizedFormData).length > 0 ? sanitizedFormData : null,
+          consent_given: !!consent_given,
         }).select().single();
 
       if (insertErr) return json({ error: "Failed to create appointment" }, 500);

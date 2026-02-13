@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
         "is_enabled", "timezone", "slot_duration_minutes", "buffer_minutes",
         "working_days", "working_hours_start", "working_hours_end",
         "lunch_break_start", "lunch_break_end", "max_advance_days",
-        "day_schedules"
+        "day_schedules", "form_fields", "consent_text", "consent_required"
       ];
 
       const updates: Record<string, unknown> = {};
