@@ -20,9 +20,12 @@ import {
   Paintbrush,
   ArrowLeft,
   ImageIcon,
+  Eye,
+  Globe,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
+import { useEditorContext } from './EditorContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -82,6 +85,7 @@ function injectImageUrlToPropsPanel(url: string): boolean {
 
 export function MobileEditorLayout() {
   const navigate = useNavigate();
+  const { onPublish, onPreview, onImageSearch } = useEditorContext();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
 
@@ -114,12 +118,12 @@ export function MobileEditorLayout() {
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      {/* Top toolbar - glassmorphism */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 bg-background/70 backdrop-blur-xl z-10 shrink-0">
-        <div className="flex items-center gap-1.5">
+      {/* Top toolbar */}
+      <div className="h-12 flex items-center justify-between px-2 border-b border-border/50 bg-background/70 backdrop-blur-xl z-10 shrink-0">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1 px-2.5 py-2 rounded-xl hover:bg-accent/80 transition-all text-sm text-foreground active:scale-95"
+            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-foreground active:scale-95"
             title="Dashboard'a dön"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -140,14 +144,29 @@ export function MobileEditorLayout() {
             openDelay={0}
             canvas={false}
             tooltip={true}
-            buttonClass="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground"
-            activeButtonClass="p-2 rounded-xl bg-primary/10 text-primary"
+            buttonClass="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all"
+            activeButtonClass="p-2 rounded-lg bg-primary/10 text-primary"
           />
+          <div className="h-5 w-px bg-border/50" />
+          <button
+            onClick={onPreview}
+            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground active:scale-95"
+            title="Önizle"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onPublish}
+            className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+            title="Yayınla"
+          >
+            <Globe className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Canvas area */}
-      <div className="flex-1 overflow-hidden relative" onClick={handleCanvasClick}>
+      <div className="flex-1 overflow-hidden relative" style={{ touchAction: 'manipulation' }} onClick={handleCanvasClick}>
         <ChaiBuilderCanvas />
       </div>
 
@@ -162,7 +181,7 @@ export function MobileEditorLayout() {
         >
           <SheetContent
             side={side}
-            className="w-[85vw] max-w-sm p-0 flex flex-col border-border/50 bg-background/95 backdrop-blur-xl"
+            className="w-[80vw] max-w-sm p-0 flex flex-col border-border/50 bg-background/95 backdrop-blur-xl"
           >
             {/* Modern panel header with accent bar */}
             <div className="relative px-5 py-4 border-b border-border/30 shrink-0">
@@ -205,15 +224,15 @@ export function MobileEditorLayout() {
       />
 
       {/* Floating bottom navigation bar */}
-      <div className="px-4 pb-2 pt-1 shrink-0 safe-area-bottom">
-        <div className="flex items-center justify-around px-2 py-1.5 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5">
+      <div className="px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 shrink-0">
+        <div className="flex items-center justify-around px-1 py-1 rounded-2xl bg-background/80 backdrop-blur-xl border border-border/40 shadow-lg shadow-black/5">
           {panels.map(({ key, icon: Icon, label }) => {
             const isActive = activePanel === key;
             return (
               <button
                 key={key}
                 onClick={() => handlePanelToggle(key)}
-                className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[60px] min-h-[52px] active:scale-95"
+                className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[52px] min-h-[44px] active:scale-95"
               >
                 {isActive && (
                   <motion.div
