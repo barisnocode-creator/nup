@@ -1,47 +1,37 @@
 
 
-# Gorsel Duzenleme Overlay'ini Tum Bloklara Uygulama
+# Galeri Gorsel Overlay Duzeltmesi
 
-## Mevcut Durum Analizi
+## Sorun
 
-Projede 11 ChaiBuilder blogu var. Bunlarin gorsel durumu:
+ImageGallery blokundaki gorsellerin uzerinde "Degistir / Yenile" overlay'i gorunmuyor. Sebep: Her gorselin uzerinde hover'da beliren karanlik bir katman (`bg-black/40 opacity-0 group-hover:opacity-100`) var ve bu katman mouse olaylarini engelliyor. Ayrica parent div'deki `overflow-hidden` aksiyon butonlarini kirpiyor.
 
-| Blok | Gorsel Var mi? | EditableChaiImage Kullanıyor mu? |
-|------|---------------|--------------------------------|
-| AboutSection | Evet (ana gorsel) | Evet - zaten calisiyor |
-| HeroSplit | Evet (yan gorsel) | Evet - zaten calisiyor |
-| HeroOverlay | Evet (arka plan) | Evet (EditableChaiBackground) |
-| ServicesGrid | Evet (kart gorselleri) | Evet - zaten calisiyor |
-| ImageGallery | Evet (galeri gorselleri) | Evet - zaten calisiyor |
-| **HeroCentered** | **Evet (arka plan)** | **Hayir - eski ImageActionBox kullanıyor** |
-| TestimonialsCarousel | Avatar alani var ama initials fallback | Hayir |
-| CTABanner | Gorsel yok | Degisiklik gerekmiyor |
-| PricingTable | Gorsel yok | Degisiklik gerekmiyor |
-| StatisticsCounter | Gorsel yok | Degisiklik gerekmiyor |
-| ContactForm | Gorsel yok | Degisiklik gerekmiyor |
-| FAQAccordion | Gorsel yok | Degisiklik gerekmiyor |
-| AppointmentBooking | Gorsel yok | Degisiklik gerekmiyor |
+## Cozum
 
-## Yapilacak Degisiklikler
+`src/components/chai-builder/blocks/gallery/ImageGallery.tsx` dosyasinda iki degisiklik:
 
-### 1. HeroCentered - EditableChaiBackground'a Gecis
+1. **Satir 65**: Karanlik overlay div'ine `pointer-events-none` ekle - boylece mouse olaylari altindaki `EditableChaiImage`'a ulasir
+2. **Satir 57**: Parent div'deki `overflow-hidden`'i kaldir veya `overflow-visible` yap - aksiyon butonlarinin kirpilmasini onle
 
-**Sorun**: Eski `ImageActionBox` bilesenini kullaniyor, diger bloklardaki "Degistir / Yenile" overlay sistemiyle tutarsiz.
+### Degisecek Kod
 
-**Cozum**: `ImageActionBox` yerine `EditableChaiBackground` kullanarak diger bloklarla ayni hover overlay davranisini saglama.
+Satir 57 (oncesi):
+```
+<div key={index} className="relative group overflow-hidden rounded-xl aspect-square">
+```
+Satir 57 (sonrasi):
+```
+<div key={index} className="relative group rounded-xl aspect-square">
+```
 
-### 2. TestimonialsCarousel - Avatar Gorseli Ekleme
+Satir 65 (oncesi):
+```
+<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+```
+Satir 65 (sonrasi):
+```
+<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+```
 
-**Sorun**: Avatar alani var ama sadece isim bas harfi gosteriyor, gorsel degistirme imkani yok.
-
-**Cozum**: Avatar alaninda gorsel varsa `EditableChaiImage` ile sarmalayip hover'da "Degistir" overlay'i gosterme.
-
-## Teknik Detaylar
-
-| Dosya | Degisiklik |
-|-------|-----------|
-| `src/components/chai-builder/blocks/hero/HeroCentered.tsx` | `ImageActionBox` import'unu kaldir, `EditableChaiBackground` import et. Arka plan gorselini `EditableChaiBackground` ile sarmala. Eski `bgHovered` state ve `ImageActionBox` kodunu kaldir. |
-| `src/components/chai-builder/blocks/testimonials/TestimonialsCarousel.tsx` | `EditableChaiImage` import et. Avatar alaninda gorsel varsa `EditableChaiImage` ile goster, yoksa mevcut initials fallback'i koru. |
-
-Toplam 2 dosya degisecek. Diger 5 blok zaten `EditableChaiImage` kullaniyor, gorseli olmayan 6 blokta degisiklik gerekmiyor.
+Toplam 1 dosya, 2 satir degisiklik.
 
