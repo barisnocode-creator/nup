@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Paintbrush } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ImageActionBox, type ImageAction } from '@/components/website-preview/ImageActionBox';
 
 // Global callback store for image updates
 declare global {
@@ -19,7 +17,6 @@ interface EditableChaiImageProps {
   className?: string;
   containerClassName?: string;
   inBuilder?: boolean;
-  extraActions?: ImageAction[];
 }
 
 /**
@@ -33,7 +30,6 @@ export function EditableChaiImage({
   className,
   containerClassName,
   inBuilder = false,
-  extraActions = [],
 }: EditableChaiImageProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [overrideSrc, setOverrideSrc] = useState<string | null>(null);
@@ -64,17 +60,6 @@ export function EditableChaiImage({
     return <img src={src || '/placeholder.svg'} alt={alt} className={className} />;
   }
 
-  const actions: ImageAction[] = [
-    {
-      id: 'change-image',
-      icon: Paintbrush,
-      label: 'Görsel Değiştir',
-      onClick: handleChangeImage,
-      group: 'primary' as const,
-    },
-    ...extraActions,
-  ];
-
   return (
     <div
       className={cn('relative', containerClassName)}
@@ -93,7 +78,21 @@ export function EditableChaiImage({
           isHovered ? 'border-primary' : 'border-transparent',
         )}
       />
-      <ImageActionBox actions={actions} isVisible={isHovered} />
+      <div
+        className={cn(
+          'absolute top-3 right-3 z-30 transition-all duration-200 pointer-events-auto',
+          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+        )}
+      >
+        <div className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-lg border border-black/10 overflow-hidden">
+          <button
+            className="px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-black/5 hover:text-foreground active:scale-[0.98] transition-all whitespace-nowrap"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleChangeImage(); }}
+          >
+            Görsel Değiştir
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -153,14 +152,6 @@ export function EditableChaiBackground({
     }));
   };
 
-  const actions: ImageAction[] = [{
-    id: 'change-bg',
-    icon: Paintbrush,
-    label: 'Arka Plan Değiştir',
-    onClick: handleChangeBg,
-    group: 'primary' as const,
-  }];
-
   return (
     <div
       className={cn(className, 'relative')}
@@ -175,7 +166,21 @@ export function EditableChaiBackground({
           isHovered ? 'border-primary' : 'border-transparent',
         )}
       />
-      <ImageActionBox actions={actions} isVisible={isHovered} />
+      <div
+        className={cn(
+          'absolute top-3 right-3 z-30 transition-all duration-200 pointer-events-auto',
+          isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+        )}
+      >
+        <div className="flex items-center bg-white/95 backdrop-blur-md rounded-lg shadow-lg border border-black/10 overflow-hidden">
+          <button
+            className="px-3 py-2 text-[13px] font-medium text-foreground/80 hover:bg-black/5 hover:text-foreground active:scale-[0.98] transition-all whitespace-nowrap"
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleChangeBg(); }}
+          >
+            Arka Plan Değiştir
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
