@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,14 +26,6 @@ export default function Dashboard() {
   const [loadingProjects, setLoadingProjects] = useState(true);
   const { user } = useAuth();
 
-  // Safety reset: clear any leftover theme CSS variables from editor
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    ['--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
-     '--color-secondary-custom', '--color-accent-custom',
-     '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
-    root.classList.remove('reduce-motion');
-  }, []);
 
   // Fetch user's projects
   useEffect(() => {

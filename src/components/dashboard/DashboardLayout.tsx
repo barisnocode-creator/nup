@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useLayoutEffect } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { DashboardSidebar } from './DashboardSidebar';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,15 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, rightPanel, activeProjectId }: DashboardLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Safety reset: clear any leftover theme CSS variables from editor
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    ['--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
+     '--color-secondary-custom', '--color-accent-custom',
+     '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
+    root.classList.remove('reduce-motion');
+  }, []);
 
   const handleSignOut = async () => {
     await signOut();
