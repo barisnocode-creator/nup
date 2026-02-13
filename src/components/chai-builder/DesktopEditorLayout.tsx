@@ -153,7 +153,7 @@ export function DesktopEditorLayout() {
 
         {/* Right group */}
         <div className="flex items-center gap-1">
-          <ChaiUndoRedo />
+          
 
           {/* Hidden SDK screen sizes for programmatic control */}
           <div ref={hiddenScreenRef} className="chai-screen-hidden">
