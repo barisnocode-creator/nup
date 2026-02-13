@@ -344,55 +344,12 @@ div[data-radix-portal] > div[data-radix-overlay] {
   color: hsl(var(--foreground));
 }
 
-/* ===== Lovable-style Screen Size Toggle ===== */
-.chai-screen-toggle {
-  display: flex;
-  align-items: center;
-}
-.chai-screen-toggle > div,
-.chai-screen-toggle > span {
-  display: flex;
-  align-items: center;
-  background: hsl(var(--muted));
-  border-radius: 8px;
-  padding: 2px;
-  gap: 0;
-}
-
-/* Base style for all screen buttons */
-.chai-screen-btn {
-  position: relative;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 28px;
-  border-radius: 6px;
-  color: hsl(var(--muted-foreground));
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s ease, background 0.2s ease, transform 0.15s ease;
-  z-index: 1;
-}
-.chai-screen-btn:hover {
-  color: hsl(var(--foreground));
-}
-.chai-screen-btn svg {
-  width: 15px;
-  height: 15px;
-}
-
-/* Active state with smooth background pill */
-.chai-screen-btn.chai-screen-btn-active {
-  color: hsl(var(--foreground)) !important;
-  background: hsl(var(--background)) !important;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.08), 0 1px 2px -1px rgba(0,0,0,0.08);
-}
-
-/* Hide extra sizes: keep only Mobile(1st), Tablet(3rd), Desktop(5th) */
-.chai-screen-toggle button.chai-screen-btn:nth-child(2),
-.chai-screen-toggle button.chai-screen-btn:nth-child(4),
-.chai-screen-toggle button.chai-screen-btn:nth-child(6) {
-  display: none !important;
+/* ===== Hidden SDK Screen Sizes ===== */
+.chai-screen-hidden {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
