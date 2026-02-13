@@ -1,87 +1,186 @@
 
-# Hero Gorsel Alaka Sorununu Cozme Plani
+# Pilates Template Entegrasyonu ve Tekrarlanabilir Template Ekleme Sistemi
 
-## Sorun Analizi
+## Hedef
+Pilates Circle template'inin birebir aynisini sisteme entegre etmek ve gelecekte her yeni template icin kullanilabilecek standart bir "template ekleme prompt'u" olusturmak.
 
-Uc temel sorun tespit edildi:
+## Template Analizi - Pilates Circle
 
-1. **Jenerik sektor eslestirme**: "Psikoloji", "Hukuk Bürosu" gibi isletmeler `service` sektorune dusüyor ve "professional business consulting office" gibi alakasiz arama terimleriyle gorsel cekiliyor
-2. **`fetch-images` fonksiyonu AI terimlerini yok sayiyor**: `generate-website` AI'dan isletmeye ozel gorsel arama terimleri (`imageSearchTerms`) uretiyor, ancak `fetch-images` bunlari kullanmiyor - sadece sabit sektor mapping'i kullaniyor
-3. **Eski projeler**: Bazi projelerde hala ~1.8MB base64 gorsel verisi DB'de sakli (eski AI gorsel uretiminden kalan)
-
-## Cozum Plani
-
-### Adim 1: `generate-website` Prompt'unu Güclendirme
-
-AI'nin urettigi `imageSearchTerms` icin prompt'a daha guclu yonergeler eklenmeli:
-- Isletme adi, sektoru ve sunduğu hizmetleri dogrudan arama terimine dahil etmesini sagla
-- Ornekler: "psychology therapy counseling office calm", "law office legal books professional", "turkish kebab restaurant grilled meat"
-
-### Adim 2: `fetch-images` Fonksiyonunu Guncelleme
-
-`fetch-images` edge function'i su sekilde guncellenecek:
-- Projenin `generated_content` icerisindeki `imageSearchTerms` verisini oku
-- Eger AI-uretilmis terimler varsa onlari kullan
-- Yoksa sektor bazli fallback'e dus
-- Ek olarak, isletme adi + sektorden dinamik arama terimi olustur
-
-### Adim 3: Sektor-Meslek Eslestirmesi Iyilestirme
-
-`generate-website` ve `fetch-images` fonksiyonlarina daha spesifik meslek eslestirmeleri eklenmeli:
+Sitenin 7 ana bolumu:
 
 ```text
-"service" sektoru alt kategorileri:
-  - psikolog/psikoloji -> "psychology therapy counseling calm modern office"
-  - avukat/hukuk      -> "law office legal books courtroom professional"
-  - muhasebeci        -> "accounting finance office calculator professional"
-  - mimar             -> "architecture design blueprint modern building"
-  - danismanlik       -> "consulting meeting boardroom professional"
++------------------------------------------+
+| HEADER: Logo + Nav (transparent overlay)  |
++------------------------------------------+
+| HERO: Full-screen image/video bg          |
+|   - Buyuk serif baslik (sol)              |
+|   - Callback form overlay (sag)          |
+|   - "Discover More" scroll butonu         |
++------------------------------------------+
+| FEATURES: 3 gorsel kart                   |
+|   "A studio where control meets calm"     |
+|   Bespoke Space / Immersive / Trainers    |
++------------------------------------------+
+| TOUR/GALLERY: Yatay kayan gorsel slider   |
+|   "Tour our Space" - 3D studio turu       |
++------------------------------------------+
+| TEACHERS: Egitmen kadrosu                 |
++------------------------------------------+
+| TESTIMONIALS: Musteri yorumlari           |
++------------------------------------------+
+| CONTACT: Iletisim bolumu                  |
++------------------------------------------+
+| FOOTER: Logo + linkler                    |
++------------------------------------------+
 ```
 
-Bu, `extractedData.services` alanindaki anahtar kelimelere bakarak daha hassas eslestirme yapmayi saglar.
+Renk paleti: Sicak terracotta/peach tonlari, koyu yazi, krem arka plan
+Tipografi: Serif basliklar (Playfair Display), sans-serif govde
+Animasyonlar: Fade-in scroll, hover scale, smooth transitions
 
-### Adim 4: Deploy Fonksiyonunda Gorsel Kontrolu
+## Uygulama Plani
 
-`deploy-to-netlify` fonksiyonunda hero bloklerinin gorsellerinin dogru render edildigini dogrula. Base64 gorsel kontrolu ekle - eger base64 ise atla veya placeholder goster.
+### Adim 1: React Template Bilesenlerini Olusturma (Editor Onizleme)
+
+Yeni dosya yapisi:
+```text
+src/templates/pilates/
+  index.tsx                    -- Ana template wrapper (TemplateProps uyumlu)
+  components/
+    TemplateHeader.tsx         -- Transparent overlay header
+    TemplateFooter.tsx         -- Footer
+  sections/
+    hero/HeroFullscreen.tsx    -- Tam ekran hero + form overlay
+    features/FeatureCards.tsx   -- 3 gorsel kartli ozellik bolumu
+    tour/TourGallery.tsx       -- Yatay slider galeri
+    teachers/TeacherGrid.tsx   -- Egitmen kartlari
+    testimonials/Testimonials.tsx
+    contact/ContactSection.tsx
+  pages/
+    FullLandingPage.tsx        -- Tum bolumleri sirayla render eder
+```
+
+Ana bilesenler mevcut `TemplateProps` interface'ini kullanarak:
+- `content.pages.home.hero` -> Hero baslik, aciklama
+- `content.pages.services.servicesList` -> Feature kartlari
+- `content.pages.contact.info` -> Iletisim bilgileri
+- `content.metadata` -> Site adi, tagline
+
+### Adim 2: Template Registry'ye Kayit
+
+`src/templates/index.ts` dosyasina yeni template eklenmesi:
+- id: `pilates1`
+- name: "Wellness Studio"
+- category: "Wellness"
+- Onizleme gorseli eklenmesi (screenshot)
+- `supportedProfessions`: pilates, yoga, fitness, pt, gym, wellness, spa
+- `supportedTones`: warm, elegant, premium, calm
+
+### Adim 3: HTML Render Fonksiyonlari (Deploy/Publish)
+
+`supabase/functions/deploy-to-netlify/index.ts` dosyasina yeni render fonksiyonlari:
+- `renderHeroFullscreen()` -- Tam ekran hero + form + serif tipografi
+- `renderFeatureCards()` -- 3 gorsel kartli ozellik bolumu
+- `renderTourGallery()` -- CSS-only yatay galeri (JS gerektirmeden)
+- `renderTeacherGrid()` -- Egitmen kartlari
+- Her fonksiyon mevcut CSS degisken sistemini (`var(--primary)` vb.) kullanir
+- Animasyonlar icin CSS `@keyframes` ve `IntersectionObserver` tabanli scroll-triggered animasyonlar eklenir
+
+### Adim 4: Gorsel Stil Detaylari
+
+Template'in ozel gorsel ozellikleri HTML ciktisina yansitilacak:
+- Google Fonts: Playfair Display (serif basliklar) + Inter/DM Sans (govde)
+- Warm color scheme: `--primary: #c4775a` (terracotta), `--background: #f5ebe0` (krem)
+- Hero'da glassmorphism form overlay (backdrop-blur + rgba bg)
+- Hover efektleri: Scale transform, shadow artisi
+- Scroll animasyonlari: fade-in-up (CSS IntersectionObserver ile)
+
+### Adim 5: Chaibuilder Blok Eslestirmesi
+
+Mevcut Chaibuilder bloklari bu template icin yeniden eslenir:
+- `HeroCentered` veya yeni `HeroFullscreen` blok tipi
+- `ServicesGrid` -> Feature kartlari olarak kullanilir
+- `ImageGallery` -> Tour galerisi
+- `ContactForm` -> Iletisim bolumu
+- `TestimonialsCarousel` -> Yorumlar
+
+`renderBlock()` fonksiyonunda template-bazli render secimi eklenir:
+- Proje hangi template'i kullaniyorsa, o template'in HTML ciktisi uretilir.
+
+## Tekrarlanabilir Template Ekleme Prompt'u
+
+Asagidaki prompt, her yeni template eklerken kullanilacak standart talimatlar setidir:
+
+---
+
+**TEMPLATE EKLEME PROMPT'U:**
+
+```text
+Yeni bir template eklemek istiyorum. Asagidaki adimlari siraya uyarak uygula:
+
+1. ANALIZ: [TEMPLATE_URL] sitesini incele. Su bilgileri cikar:
+   - Kac bolum var ve isimleri ne?
+   - Renk paleti (hex kodlari)
+   - Tipografi (font ailesi, agirliklari)
+   - Ozel animasyonlar ve efektler
+   - Layout yapisi (grid, flex, kolon sayilari)
+
+2. REACT BILESEN: src/templates/[TEMPLATE_ID]/ altinda olustur:
+   - index.tsx: TemplateProps interface'ini implement et
+   - components/TemplateHeader.tsx ve TemplateFooter.tsx
+   - sections/: Her bolum icin ayri bilesenler
+   - pages/FullLandingPage.tsx: Tum bolumleri sectionOrder'a gore render et
+   - GeneratedContent verisinden icerik cek (hero, services, contact, about)
+
+3. REGISTRY KAYIT: src/templates/index.ts dosyasina ekle:
+   - Benzersiz template ID
+   - Onizleme gorseli
+   - supportedProfessions ve supportedTones dizileri
+
+4. HTML RENDER: supabase/functions/deploy-to-netlify/index.ts dosyasina:
+   - Her bolum icin renderXxx() fonksiyonu yaz
+   - CSS degiskenleri kullan (var(--primary), var(--background) vb.)
+   - Google Fonts linkini <head>'e ekle
+   - Animasyonlar icin CSS @keyframes ekle
+   - renderBlock() switch'ine yeni tipleri ekle VEYA
+     template-bazli render mantigi ekle
+
+5. TEST: Template'i editor'de onizle ve Netlify'a deploy et.
+   Her iki tarafin da ayni goruntuyu verdigi dogrulanmali.
+
+KURALLAR:
+- Gorseller Pixabay'den cekilecek (AI generation kullanma)
+- Icerik GeneratedContent yapisindan gelecek (hardcode etme)
+- Responsive olmali (mobil, tablet, masaustu)
+- CSS degisken sistemiyle tema uyumlu olmali
+- Mevcut editör ozelliklerini desteklemeli (isEditable, onFieldEdit vb.)
+```
+
+---
 
 ## Teknik Detaylar
 
-### Degisecek Dosyalar:
+### Degisecek/Olusturulacak Dosyalar:
 
-1. **`supabase/functions/generate-website/index.ts`**
-   - `buildPrompt()` fonksiyonuna daha guclu imageSearchTerms yonergeleri ekle
-   - Isletme hizmetlerinden (services) otomatik anahtar kelime cikarma mantigi ekle
-   - `fetchAllImages()` icinde hizmet adlarindan dinamik arama terimi olusturma
+**Yeni dosyalar (8 adet):**
+1. `src/templates/pilates/index.tsx`
+2. `src/templates/pilates/components/TemplateHeader.tsx`
+3. `src/templates/pilates/components/TemplateFooter.tsx`
+4. `src/templates/pilates/sections/hero/HeroFullscreen.tsx`
+5. `src/templates/pilates/sections/features/FeatureCards.tsx`
+6. `src/templates/pilates/sections/tour/TourGallery.tsx`
+7. `src/templates/pilates/sections/teachers/TeacherGrid.tsx`
+8. `src/templates/pilates/pages/FullLandingPage.tsx`
 
-2. **`supabase/functions/fetch-images/index.ts`**
-   - `generated_content.imageSearchTerms` verisini projeden oku ve kullan
-   - Isletme adi + hizmetlerinden dinamik arama terimi fallback'i ekle
-   - Hizmet listesindeki kelimelerden (orn. "Psikolojik Danismanlik") Ingilizce karsilik ureterek Pixabay aramasinda kullan
+**Guncellenecek dosyalar (2 adet):**
+1. `src/templates/index.ts` -- Yeni template registry kaydı
+2. `supabase/functions/deploy-to-netlify/index.ts` -- Yeni HTML render fonksiyonlari + template-bazli render mantigi
 
-3. **`supabase/functions/deploy-to-netlify/index.ts`**
-   - Hero gorsellerinde base64 veri kontrolu ekle (base64 ise gorsel render etme, yerine gradient kullan)
+### Olusturma Sirasi:
+1. Once React bilesenlerini olustur (editor'de hemen gorunsun)
+2. Template registry'ye kaydet
+3. HTML render fonksiyonlarini yaz (publish calissin)
+4. Test et
 
-### Yeni Eklenen Mantik:
-
-- **Hizmet-bazli anahtar kelime cikarma**: `extractedData.services` dizisindeki kelimeleri Ingilizce karsiliklarina cevir (basit mapping tablosu ile) ve Pixabay aramasinda kullan
-- **Turkce-Ingilizce meslek mapping**: Yaygin Turkce meslek/hizmet adlari icin Ingilizce Pixabay arama terimleri tablosu
-
-```text
-Ornek mapping:
-  psikoloji/psikolog    -> "psychology therapy counseling session"
-  hukuk/avukat          -> "law office lawyer legal justice"
-  kebap/restoran        -> "turkish kebab restaurant grilled meat dining"
-  guzellik/kuafor       -> "beauty salon hairdresser styling"
-  dis/dishekimi         -> "dental clinic modern teeth"
-  eczane                -> "pharmacy drugstore medicine"
-  cafe/kahve            -> "coffee cafe barista latte art"
-  insaat/mimarlik       -> "architecture construction building modern"
-```
-
-### Sonuc
-
-Bu degisikliklerle:
-- Yeni olusturulan sitelerin hero gorselleri isletmenin gercek faaliyet alaniyla dogrudan iliskili olacak
-- "Psikoloji" icin terapi/danismanlik gorselleri, "Hukuk" icin adalet/ofis gorselleri gelecek
-- `fetch-images` ayrı cagirildiginda bile dogru gorseller donecek
-- Eski base64 gorseller yayinlanan sitelerde sorun yaratmayacak
+### Onizleme Gorseli:
+Pilates Circle sitesinin screenshot'u `src/assets/template-pilates.jpg` olarak kaydedilecek.
