@@ -12,6 +12,7 @@ import { DesktopEditorLayout } from './DesktopEditorLayout';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { InlineImageSwitcher } from './InlineImageSwitcher';
 import { EditorProvider, DEFAULT_FEATURE_FLAGS } from './EditorContext';
+import { TemplateGalleryOverlay } from './TemplateGalleryOverlay';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
@@ -32,6 +33,7 @@ interface ChaiBuilderWrapperProps {
   projectProfession?: string;
   initialBlocks: ChaiBlock[];
   initialTheme?: Partial<ChaiThemeValues>;
+  templateId?: string;
   onPublish: () => void;
 }
 
@@ -41,6 +43,7 @@ export function ChaiBuilderWrapper({
   projectProfession = '',
   initialBlocks,
   initialTheme,
+  templateId,
   onPublish,
 }: ChaiBuilderWrapperProps) {
   const navigate = useNavigate();
@@ -51,7 +54,8 @@ export function ChaiBuilderWrapper({
   );
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [inlineSwitcherOpen, setInlineSwitcherOpen] = useState(false);
-
+  const [showTemplateGallery, setShowTemplateGallery] = useState(false);
+  const currentTemplateId = templateId || 'temp1';
   const handleImageSelect = useCallback((url: string) => {
     // Use the global callback from EditableChaiImage if available
     if (window.__chaiImageCallback?.setter) {
@@ -155,9 +159,7 @@ export function ChaiBuilderWrapper({
     onRegenerateWebsite: () => {
       toast.info('Site yeniden oluşturuluyor...', { duration: 2000 });
     },
-    onChangeTemplate: () => {
-      toast.info('Şablon değiştirme yakında aktif olacak', { duration: 2000 });
-    },
+    onChangeTemplate: () => setShowTemplateGallery(true),
   }), [projectName, projectProfession, navigate, onPublish, projectId]);
 
   if (!isReady) {
@@ -216,6 +218,16 @@ export function ChaiBuilderWrapper({
               />
             </>
           )}
+
+          <TemplateGalleryOverlay
+            isOpen={showTemplateGallery}
+            onClose={() => setShowTemplateGallery(false)}
+            currentTemplateId={currentTemplateId}
+            onPreview={(id) => {
+              console.log('Preview template:', id);
+              setShowTemplateGallery(false);
+            }}
+          />
         </div>
       </EditorProvider>
     </TooltipProvider>

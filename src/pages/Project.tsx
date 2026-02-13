@@ -1288,6 +1288,7 @@ export default function Project() {
           projectProfession={project.profession}
           initialBlocks={project.chai_blocks || []}
           initialTheme={project.chai_theme}
+          templateId={project.template_id}
           onPublish={() => setPublishModalOpen(true)}
         />
 
