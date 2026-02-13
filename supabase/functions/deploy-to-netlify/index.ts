@@ -475,10 +475,10 @@ function renderPilatesHero(b: ChaiBlock): string {
   const bg = isBase64Image(rawBg) ? "" : rawBg;
   const bgStyle = bg
     ? `background-image:url('${escapeHtml(bg)}')`
-    : `background:linear-gradient(135deg, #c4775a, #d4956e)`;
+    : `background:linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, white))`;
   return `<section class="relative min-h-screen flex items-end overflow-hidden">
   <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="${bgStyle}"></div>
-  <div class="absolute inset-0" style="background:linear-gradient(to right,rgba(196,119,90,0.6),rgba(196,119,90,0.2))"></div>
+  <div class="absolute inset-0" style="background:linear-gradient(to right,color-mix(in srgb, var(--primary) 60%, transparent),color-mix(in srgb, var(--primary) 20%, transparent))"></div>
   <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.4),transparent)"></div>
   <div class="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 pb-20 pt-40">
     <div class="grid md:grid-cols-2 gap-12 items-end">
@@ -488,19 +488,19 @@ function renderPilatesHero(b: ChaiBlock): string {
       </div>
       <div class="fade-in-up" style="animation-delay:0.3s">
         <div style="backdrop-filter:blur(20px);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:1rem;padding:2rem;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
-          <h3 style="color:#fff;font-size:1.25rem;font-weight:600;margin-bottom:0.5rem">${escapeHtml(b.subtitle as string || "Begin Your Transformation")}</h3>
-          <p style="color:rgba(255,255,255,0.6);font-size:0.875rem;margin-bottom:1.5rem">Starting from your first session</p>
+          <h3 style="color:#fff;font-size:1.25rem;font-weight:600;margin-bottom:0.5rem">${escapeHtml(b.subtitle as string || "Dönüşümünüze Başlayın")}</h3>
+          <p style="color:rgba(255,255,255,0.6);font-size:0.875rem;margin-bottom:1.5rem">İlk seanstan itibaren</p>
           <div style="display:flex;flex-direction:column;gap:0.75rem">
-            <input type="text" placeholder="Full Name" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
-            <input type="tel" placeholder="Phone Number" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
-            <button style="width:100%;padding:0.75rem;background:#fff;color:#c4775a;font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Request A Callback</button>
+            <input type="text" placeholder="Ad Soyad" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
+            <input type="tel" placeholder="Telefon Numarası" style="width:100%;padding:0.75rem 1rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:0.5rem;color:#fff;outline:none">
+            <button style="width:100%;padding:0.75rem;background:var(--primary-foreground);color:var(--primary);font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Bizi Arayın</button>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div style="position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:10;color:rgba(255,255,255,0.7);display:flex;flex-direction:column;align-items:center;gap:0.5rem">
-    <span style="font-size:0.875rem;letter-spacing:0.1em;text-transform:uppercase">Discover More</span>
+    <span style="font-size:0.875rem;letter-spacing:0.1em;text-transform:uppercase">Keşfedin</span>
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7"/></svg>
   </div>
 </section>`;
@@ -511,16 +511,16 @@ function renderPilatesFeatures(b: ChaiBlock): string {
   const cards = services.slice(0, 3).map((s, i) => `
     <div class="fade-in-up" style="animation-delay:${i * 0.2}s">
       <div style="overflow:hidden;border-radius:1rem;margin-bottom:1.5rem;aspect-ratio:4/5;position:relative">
-        ${s.image ? `<img src="${escapeHtml(s.image)}" alt="${escapeHtml(s.title)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.7s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#c4775a,#d4956e)"></div>`}
+        ${s.image ? `<img src="${escapeHtml(s.image)}" alt="${escapeHtml(s.title)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.7s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--primary),color-mix(in srgb, var(--primary) 70%, white))"></div>`}
         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.3),transparent)"></div>
       </div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:#2d2420;margin-bottom:0.5rem">${escapeHtml(s.title)}</h3>
-      <p style="color:#6b5e54;font-size:0.875rem">${escapeHtml(s.description)}</p>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--foreground);margin-bottom:0.5rem">${escapeHtml(s.title)}</h3>
+      <p style="color:var(--muted-foreground);font-size:0.875rem">${escapeHtml(s.description)}</p>
     </div>`).join("");
 
-  return `<section style="padding:6rem 0;background:#f5ebe0">
+  return `<section id="features" style="padding:6rem 0;background:var(--background)">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
-    ${b.sectionTitle ? `<h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);text-align:center;color:#2d2420;margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionTitle ? `<h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);text-align:center;color:var(--foreground);margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem">${cards}</div>
   </div>
 </section>`;
@@ -532,45 +532,40 @@ function renderPilatesTour(b: ChaiBlock): string {
     const img = b[`image${i}`] as string;
     if (img && !isBase64Image(img)) images.push(img);
   }
-  const captions = ['Wunda Chair Studio', 'Reformer Training', 'Equipment Storage', 'Reception Area', 'Studio Interior', 'Lockers', 'Practice Space', 'Entrance'];
+  const captions = (b.captions as string[] | undefined) || ['Stüdyo', 'Eğitim Alanı', 'Ekipman', 'Resepsiyon', 'İç Mekan', 'Soyunma Odası', 'Uygulama Alanı', 'Giriş'];
   const cards = images.map((img, i) => `
     <div style="flex-shrink:0;width:350px;scroll-snap-align:start">
       <div style="overflow:hidden;border-radius:0.75rem;aspect-ratio:4/3">
         <img src="${escapeHtml(img)}" alt="${escapeHtml(captions[i] || '')}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
       </div>
-      <h4 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#f5ebe0;margin-top:1rem">${escapeHtml(captions[i] || `Space ${i+1}`)}</h4>
+      <h4 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:var(--background);margin-top:1rem">${escapeHtml(captions[i] || `Alan ${i+1}`)}</h4>
     </div>`).join("");
 
-  return `<section style="padding:6rem 0;background:#2d2420;overflow:hidden">
+  return `<section id="tour" style="padding:6rem 0;background:var(--foreground);overflow:hidden">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem;margin-bottom:3rem">
-    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#f5ebe0;margin-bottom:0.75rem" class="fade-in-up">${escapeHtml(b.title as string || "Tour our Space")}</h2>
-    <p style="color:rgba(245,235,224,0.6);font-size:1.125rem" class="fade-in-up">${escapeHtml(b.subtitle as string || "Experience our studio")}</p>
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:var(--background);margin-bottom:0.75rem" class="fade-in-up">${escapeHtml(b.title as string || "Mekanımızı Keşfedin")}</h2>
+    <p style="color:color-mix(in srgb, var(--background) 60%, transparent);font-size:1.125rem" class="fade-in-up">${escapeHtml(b.subtitle as string || "Stüdyomuzu deneyimleyin")}</p>
   </div>
   <div style="display:flex;gap:1.5rem;overflow-x:auto;padding:0 3rem 2rem;scroll-snap-type:x mandatory;-ms-overflow-style:none;scrollbar-width:none">${cards}</div>
 </section>`;
 }
 
 function renderPilatesTeachers(b: ChaiBlock): string {
-  const teachers = (b.teachers as Array<{ name: string; role: string; image?: string }>) || [
-    { name: 'Sarah Chen', role: 'Lead Instructor' },
-    { name: 'Maya Patel', role: 'Reformer Specialist' },
-    { name: 'Elena Rossi', role: 'Mat Pilates Expert' },
-    { name: 'Liam Foster', role: 'Rehabilitation Coach' },
-  ];
+  const teachers = (b.teachers as Array<{ name: string; role: string; image?: string }>) || [];
   const cards = teachers.map((t, i) => `
     <div class="fade-in-up" style="text-align:center;animation-delay:${i*0.15}s">
       <div style="overflow:hidden;border-radius:1rem;aspect-ratio:3/4;margin-bottom:1rem">
-        ${t.image ? `<img src="${escapeHtml(t.image)}" alt="${escapeHtml(t.name)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#c4775a,#d4956e)"></div>`}
+        ${t.image ? `<img src="${escapeHtml(t.image)}" alt="${escapeHtml(t.name)}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">` : `<div style="width:100%;height:100%;background:linear-gradient(135deg,var(--primary),color-mix(in srgb, var(--primary) 70%, white))"></div>`}
       </div>
-      <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#2d2420">${escapeHtml(t.name)}</h3>
-      <p style="color:#6b5e54;font-size:0.875rem">${escapeHtml(t.role)}</p>
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.125rem;color:var(--foreground)">${escapeHtml(t.name)}</h3>
+      <p style="color:var(--muted-foreground);font-size:0.875rem">${escapeHtml(t.role)}</p>
     </div>`).join("");
 
-  return `<section style="padding:6rem 0;background:#f5ebe0">
+  return `<section id="teachers" style="padding:6rem 0;background:var(--background)">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
     <div style="text-align:center;margin-bottom:4rem" class="fade-in-up">
-      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#2d2420;margin-bottom:1rem">${escapeHtml(b.title as string || "Our Teachers")}</h2>
-      ${b.description ? `<p style="color:#6b5e54;font-size:1.125rem;max-width:42rem;margin:0 auto">${escapeHtml(b.description as string)}</p>` : ""}
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:var(--foreground);margin-bottom:1rem">${escapeHtml(b.title as string || "Ekibimiz")}</h2>
+      ${b.description ? `<p style="color:var(--muted-foreground);font-size:1.125rem;max-width:42rem;margin:0 auto">${escapeHtml(b.description as string)}</p>` : ""}
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem">${cards}</div>
   </div>
@@ -581,41 +576,41 @@ function renderPilatesTestimonials(b: ChaiBlock): string {
   const items = (b.testimonials as Array<{ name: string; role?: string; content: string }>) || [];
   const cards = items.map((t, i) => `
     <div class="fade-in-up" style="animation-delay:${i*0.2}s;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:1rem;padding:2rem">
-      <div style="display:flex;gap:0.25rem;margin-bottom:1rem">${'★★★★★'.split('').map(() => `<span style="color:#c4775a">★</span>`).join('')}</div>
-      <p style="color:rgba(245,235,224,0.8);font-style:italic;margin-bottom:1.5rem;line-height:1.7">"${escapeHtml(t.content)}"</p>
-      <p style="color:#c4775a;font-weight:600;font-size:0.875rem">${escapeHtml(t.name)}</p>
+      <div style="display:flex;gap:0.25rem;margin-bottom:1rem">${'★★★★★'.split('').map(() => `<span style="color:var(--primary)">★</span>`).join('')}</div>
+      <p style="color:color-mix(in srgb, var(--background) 80%, transparent);font-style:italic;margin-bottom:1.5rem;line-height:1.7">"${escapeHtml(t.content)}"</p>
+      <p style="color:var(--primary);font-weight:600;font-size:0.875rem">${escapeHtml(t.name)}</p>
     </div>`).join("");
 
-  return `<section style="padding:6rem 0;background:#2d2420">
+  return `<section id="testimonials" style="padding:6rem 0;background:var(--foreground)">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
-    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#f5ebe0;text-align:center;margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string || "What Our Clients Say")}</h2>
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:var(--background);text-align:center;margin-bottom:4rem" class="fade-in-up">${escapeHtml(b.sectionTitle as string || "Müşterilerimiz Ne Diyor")}</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem">${cards}</div>
   </div>
 </section>`;
 }
 
 function renderPilatesContact(b: ChaiBlock): string {
-  return `<section style="padding:6rem 0;background:#f5ebe0">
+  return `<section id="contact" style="padding:6rem 0;background:var(--background)">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
     <div style="text-align:center;margin-bottom:4rem" class="fade-in-up">
-      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:#2d2420;margin-bottom:1rem">${escapeHtml(b.sectionTitle as string || "Get In Touch")}</h2>
-      ${b.sectionDescription ? `<p style="color:#6b5e54;font-size:1.125rem">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
+      <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.875rem,4vw,3rem);color:var(--foreground);margin-bottom:1rem">${escapeHtml(b.sectionTitle as string || "İletişime Geçin")}</h2>
+      ${b.sectionDescription ? `<p style="color:var(--muted-foreground);font-size:1.125rem">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4rem" class="fade-in-up">
       <div style="display:flex;flex-direction:column;gap:2rem">
-        ${b.address ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📍</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Address</h4><p style="color:#6b5e54">${escapeHtml(b.address as string)}</p></div></div>` : ""}
-        ${b.phone ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📞</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Phone</h4><p style="color:#6b5e54">${escapeHtml(b.phone as string)}</p></div></div>` : ""}
-        ${b.email ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:rgba(196,119,90,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">📧</div><div><h4 style="font-weight:600;color:#2d2420;margin-bottom:0.25rem">Email</h4><p style="color:#6b5e54">${escapeHtml(b.email as string)}</p></div></div>` : ""}
+        ${b.address ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:color-mix(in srgb, var(--primary) 10%, transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0">📍</div><div><h4 style="font-weight:600;color:var(--foreground);margin-bottom:0.25rem">Adres</h4><p style="color:var(--muted-foreground)">${escapeHtml(b.address as string)}</p></div></div>` : ""}
+        ${b.phone ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:color-mix(in srgb, var(--primary) 10%, transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0">📞</div><div><h4 style="font-weight:600;color:var(--foreground);margin-bottom:0.25rem">Telefon</h4><p style="color:var(--muted-foreground)">${escapeHtml(b.phone as string)}</p></div></div>` : ""}
+        ${b.email ? `<div style="display:flex;align-items:flex-start;gap:1rem"><div style="width:3rem;height:3rem;border-radius:50%;background:color-mix(in srgb, var(--primary) 10%, transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0">📧</div><div><h4 style="font-weight:600;color:var(--foreground);margin-bottom:0.25rem">E-posta</h4><p style="color:var(--muted-foreground)">${escapeHtml(b.email as string)}</p></div></div>` : ""}
       </div>
-      <div style="background:#fff;border-radius:1rem;padding:2rem;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);border:1px solid #e8ddd0">
-        <form onsubmit="event.preventDefault();alert('Message sent!')" style="display:flex;flex-direction:column;gap:1rem">
+      <div style="background:var(--card);border-radius:1rem;padding:2rem;box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);border:1px solid var(--border)">
+        <form onsubmit="event.preventDefault();alert('Mesajınız gönderildi!')" style="display:flex;flex-direction:column;gap:1rem">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-            <input type="text" placeholder="First Name" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
-            <input type="text" placeholder="Last Name" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
+            <input type="text" placeholder="Adınız" style="padding:0.75rem 1rem;background:var(--muted);border:1px solid var(--border);border-radius:0.5rem;color:var(--foreground);outline:none" required>
+            <input type="text" placeholder="Soyadınız" style="padding:0.75rem 1rem;background:var(--muted);border:1px solid var(--border);border-radius:0.5rem;color:var(--foreground);outline:none" required>
           </div>
-          <input type="email" placeholder="Email" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none" required>
-          <textarea placeholder="Message" rows="4" style="padding:0.75rem 1rem;background:rgba(245,235,224,0.5);border:1px solid #e8ddd0;border-radius:0.5rem;color:#2d2420;outline:none;resize:none" required></textarea>
-          <button type="submit" style="padding:0.75rem;background:#c4775a;color:#fff;font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.background='#b36a4f'" onmouseout="this.style.background='#c4775a'">Send Message</button>
+          <input type="email" placeholder="E-posta" style="padding:0.75rem 1rem;background:var(--muted);border:1px solid var(--border);border-radius:0.5rem;color:var(--foreground);outline:none" required>
+          <textarea placeholder="Mesajınız" rows="4" style="padding:0.75rem 1rem;background:var(--muted);border:1px solid var(--border);border-radius:0.5rem;color:var(--foreground);outline:none;resize:none" required></textarea>
+          <button type="submit" style="padding:0.75rem;background:var(--primary);color:var(--primary-foreground);font-weight:600;border-radius:0.5rem;border:none;cursor:pointer" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Mesaj Gönder</button>
         </form>
       </div>
     </div>
@@ -631,32 +626,32 @@ function renderPilatesHeader(siteName: string): string {
       <span style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#fff;letter-spacing:0.05em">${escapeHtml(siteName)}</span>
     </div>
     <nav style="display:flex;align-items:center;gap:2rem;margin-left:auto">
-      <a href="#features" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Why Us</a>
-      <a href="#tour" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Our Studio</a>
-      <a href="#teachers" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Teachers</a>
-      <a href="#testimonials" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Testimonials</a>
-      <a href="#contact" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Contact</a>
+      <a href="#features" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Neden Biz</a>
+      <a href="#tour" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Mekanımız</a>
+      <a href="#teachers" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Ekibimiz</a>
+      <a href="#testimonials" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">Yorumlar</a>
+      <a href="#contact" style="color:rgba(255,255,255,0.9);font-size:0.875rem;text-decoration:none;letter-spacing:0.05em">İletişim</a>
     </nav>
   </div>
 </header>
 <script>
-window.addEventListener('scroll',function(){var h=document.getElementById('pilates-header');if(window.scrollY>50){h.style.background='rgba(245,235,224,0.95)';h.style.backdropFilter='blur(12px)';h.querySelectorAll('a,span').forEach(function(e){e.style.color='#2d2420'})}else{h.style.background='transparent';h.style.backdropFilter='none';h.querySelectorAll('a,span').forEach(function(e){e.style.color='rgba(255,255,255,0.9)'})}});
+window.addEventListener('scroll',function(){var h=document.getElementById('pilates-header');if(window.scrollY>50){h.style.background='color-mix(in srgb, var(--background) 95%, transparent)';h.style.backdropFilter='blur(12px)';h.querySelectorAll('a,span').forEach(function(e){e.style.color='var(--foreground)'})}else{h.style.background='transparent';h.style.backdropFilter='none';h.querySelectorAll('a,span').forEach(function(e){e.style.color='rgba(255,255,255,0.9)'})}});
 <\/script>`;
 }
 
 function renderPilatesFooter(siteName: string, tagline: string): string {
-  return `<footer style="background:#2d2420;padding:4rem 0;border-top:1px solid rgba(255,255,255,0.1)">
+  return `<footer style="background:var(--foreground);padding:4rem 0;border-top:1px solid rgba(255,255,255,0.1)">
   <div style="max-width:80rem;margin:0 auto;padding:0 3rem">
     <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
-      <div style="width:2rem;height:2rem;border-radius:50%;border:2px solid #c4775a;display:flex;align-items:center;justify-content:center"><div style="width:0.75rem;height:0.75rem;border-radius:50%;background:#c4775a"></div></div>
-      <span style="font-family:'Playfair Display',serif;font-size:1.25rem;color:#f5ebe0">${escapeHtml(siteName)}</span>
+      <div style="width:2rem;height:2rem;border-radius:50%;border:2px solid var(--primary);display:flex;align-items:center;justify-content:center"><div style="width:0.75rem;height:0.75rem;border-radius:50%;background:var(--primary)"></div></div>
+      <span style="font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--background)">${escapeHtml(siteName)}</span>
     </div>
-    <p style="color:rgba(245,235,224,0.5);font-size:0.875rem;max-width:24rem;margin-bottom:2rem">${escapeHtml(tagline)}</p>
+    <p style="color:color-mix(in srgb, var(--background) 50%, transparent);font-size:0.875rem;max-width:24rem;margin-bottom:2rem">${escapeHtml(tagline)}</p>
     <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
-      <p style="color:rgba(245,235,224,0.3);font-size:0.75rem">© ${new Date().getFullYear()} ${escapeHtml(siteName)}. All rights reserved.</p>
+      <p style="color:color-mix(in srgb, var(--background) 30%, transparent);font-size:0.75rem">© ${new Date().getFullYear()} ${escapeHtml(siteName)}. Tüm hakları saklıdır.</p>
       <div style="display:flex;gap:1.5rem">
-        <a href="#" style="color:rgba(245,235,224,0.3);font-size:0.75rem;text-decoration:none">Privacy Policy</a>
-        <a href="#" style="color:rgba(245,235,224,0.3);font-size:0.75rem;text-decoration:none">Terms of Service</a>
+        <a href="#" style="color:color-mix(in srgb, var(--background) 30%, transparent);font-size:0.75rem;text-decoration:none">Gizlilik Politikası</a>
+        <a href="#" style="color:color-mix(in srgb, var(--background) 30%, transparent);font-size:0.75rem;text-decoration:none">Kullanım Koşulları</a>
       </div>
     </div>
   </div>
@@ -759,7 +754,7 @@ document.addEventListener('DOMContentLoaded',function(){var els=document.querySe
   ${fontLinks}
   <style>
     :root { ${themeCssVars}; --radius: ${borderRadius}; }
-    body { font-family: '${isPilates ? "DM Sans" : bodyFont}', sans-serif; background-color: ${isPilates ? "#f5ebe0" : "var(--background)"}; color: ${isPilates ? "#2d2420" : "var(--foreground)"}; margin: 0; padding: 0; }
+    body { font-family: '${isPilates ? "DM Sans" : bodyFont}', sans-serif; background-color: var(--background); color: var(--foreground); margin: 0; padding: 0; }
     h1, h2, h3, h4, h5, h6 { font-family: '${isPilates ? "Playfair Display" : headingFont}', ${isPilates ? "serif" : "sans-serif"}; }
     img { max-width: 100%; height: auto; }
     html { scroll-behavior: smooth; }
