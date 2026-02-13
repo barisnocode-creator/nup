@@ -152,53 +152,53 @@ export function DesktopEditorLayout() {
         </div>
 
         {/* Right group */}
-        <div className="flex items-center gap-1">
-          <ChaiUndoRedo />
+        
 
-          {/* Hidden SDK screen sizes for programmatic control */}
-          <div ref={hiddenScreenRef} className="chai-screen-hidden">
-            <ChaiScreenSizes openDelay={0} canvas={false} tooltip={false} />
-          </div>
 
-          {/* Lovable-style cycling screen button */}
-          <button
-            onClick={cycleScreen}
-            className="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all active:scale-95"
-            title={screenMode === 'desktop' ? 'Show tablet preview' : screenMode === 'tablet' ? 'Show mobile preview' : 'Show desktop preview'}>
 
-            {screenMode === 'desktop' && <Monitor className="w-4 h-4" />}
-            {screenMode === 'tablet' && <Tablet className="w-4 h-4" />}
-            {screenMode === 'mobile' && <Smartphone className="w-4 h-4" />}
-          </button>
 
-          <button
-            onClick={handleToggleRight}
-            className={`p-2 rounded-lg transition-all ${
-            showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'}`
-            }
-            title="Düzenleme Paneli">
 
-            <PanelRightClose className="w-4 h-4" />
-          </button>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
 
-          <button
-            onClick={onPreview}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/80 transition-all">
 
-            <Eye className="w-3.5 h-3.5" />
-            Önizle
-          </button>
 
-          <button
-            onClick={onPublish}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95">
 
-            <Globe className="w-3.5 h-3.5" />
-            Yayınla
-          </button>
-        </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       </div>
 
       {/* ===== MAIN AREA (below toolbar) ===== */}
