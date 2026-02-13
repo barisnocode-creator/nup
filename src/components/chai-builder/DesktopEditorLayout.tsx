@@ -184,14 +184,6 @@ export function DesktopEditorLayout() {
           <Separator orientation="vertical" className="h-6 mx-1" />
 
           <button
-            onClick={onPreview}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/80 transition-all">
-
-            <Eye className="w-3.5 h-3.5" />
-            Önizle
-          </button>
-
-          <button
             onClick={onPublish}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95">
 
