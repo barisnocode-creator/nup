@@ -26,6 +26,37 @@ function nl2br(str: string): string {
   return escapeHtml(str).replace(/\n/g, "<br>");
 }
 
+// ── Theme color extraction ──
+
+function extractThemeColor(colors: Record<string, unknown>, key: string, fallback: string, index = 0): string {
+  const val = colors?.[key];
+  if (Array.isArray(val) && val[index]) return val[index];
+  if (typeof val === "string") return val;
+  return fallback;
+}
+
+function buildThemeCssVars(theme: Record<string, unknown>): string {
+  const colors = (theme?.colors || {}) as Record<string, unknown>;
+  const vars: Record<string, string> = {
+    "--background": extractThemeColor(colors, "background", "#ffffff"),
+    "--foreground": extractThemeColor(colors, "foreground", "#1a1a1a"),
+    "--primary": extractThemeColor(colors, "primary", "#f97316"),
+    "--primary-foreground": extractThemeColor(colors, "primary-foreground", "#ffffff"),
+    "--secondary": extractThemeColor(colors, "secondary", "#f4f4f5"),
+    "--secondary-foreground": extractThemeColor(colors, "secondary-foreground", "#4a4a4a"),
+    "--muted": extractThemeColor(colors, "muted", "#f4f4f5"),
+    "--muted-foreground": extractThemeColor(colors, "muted-foreground", "#737373"),
+    "--accent": extractThemeColor(colors, "accent", "#f97316"),
+    "--accent-foreground": extractThemeColor(colors, "accent-foreground", "#ffffff"),
+    "--border": extractThemeColor(colors, "border", "#e5e5e5"),
+    "--input": extractThemeColor(colors, "input", "#e5e5e5"),
+    "--ring": extractThemeColor(colors, "ring", "#f97316"),
+    "--card": extractThemeColor(colors, "card", "#ffffff"),
+    "--card-foreground": extractThemeColor(colors, "card-foreground", "#1a1a1a"),
+  };
+  return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join("; ");
+}
+
 // ── Block Renderers ──
 
 function renderHeroCentered(b: ChaiBlock): string {
@@ -36,7 +67,7 @@ function renderHeroCentered(b: ChaiBlock): string {
     ${b.subtitle ? `<p class="text-lg md:text-xl opacity-90 mb-4">${escapeHtml(b.subtitle as string)}</p>` : ""}
     ${b.description ? `<p class="text-base opacity-80 mb-8 max-w-2xl mx-auto">${escapeHtml(b.description as string)}</p>` : ""}
     <div class="flex flex-wrap gap-4 justify-center">
-      ${b.primaryButtonText ? `<a href="${escapeHtml(b.primaryButtonLink as string || '#')}" class="px-8 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition">${escapeHtml(b.primaryButtonText as string)}</a>` : ""}
+      ${b.primaryButtonText ? `<a href="${escapeHtml(b.primaryButtonLink as string || '#')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(b.primaryButtonText as string)}</a>` : ""}
       ${b.secondaryButtonText ? `<a href="${escapeHtml(b.secondaryButtonLink as string || '#')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(b.secondaryButtonText as string)}</a>` : ""}
     </div>
   </div>
@@ -49,12 +80,12 @@ function renderStatisticsCounter(b: ChaiBlock): string {
     const val = b[`stat${i}Value`] as string;
     const label = b[`stat${i}Label`] as string;
     if (val && label) {
-      stats.push(`<div class="text-center"><div class="text-3xl md:text-4xl font-bold text-indigo-600">${escapeHtml(val)}</div><div class="text-sm text-gray-600 mt-1">${escapeHtml(label)}</div></div>`);
+      stats.push(`<div class="text-center"><div class="text-3xl md:text-4xl font-bold" style="color:var(--primary)">${escapeHtml(val)}</div><div class="text-sm mt-1" style="color:var(--muted-foreground)">${escapeHtml(label)}</div></div>`);
     }
   }
-  return `<section class="py-16 bg-gray-50">
+  return `<section class="py-16" style="background:var(--muted)">
   <div class="max-w-5xl mx-auto px-6">
-    ${b.title ? `<h2 class="text-2xl font-bold text-center mb-8">${escapeHtml(b.title as string)}</h2>` : ""}
+    ${b.title ? `<h2 class="text-2xl font-bold text-center mb-8" style="color:var(--foreground)">${escapeHtml(b.title as string)}</h2>` : ""}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-8">${stats.join("")}</div>
   </div>
 </section>`;
@@ -63,16 +94,16 @@ function renderStatisticsCounter(b: ChaiBlock): string {
 function renderAboutSection(b: ChaiBlock): string {
   const img = b.image as string || "";
   const features = (b.features as string || "").split("\n").filter(Boolean);
-  const featuresHtml = features.map(f => `<li class="flex items-center gap-2"><span class="text-indigo-600">✓</span> ${escapeHtml(f)}</li>`).join("");
+  const featuresHtml = features.map(f => `<li class="flex items-center gap-2"><span style="color:var(--primary)">✓</span> ${escapeHtml(f)}</li>`).join("");
   const isRight = (b.imagePosition as string) === "right";
 
-  return `<section id="about" class="py-20 bg-white">
+  return `<section id="about" class="py-20" style="background:var(--background)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.subtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider mb-2">${escapeHtml(b.subtitle as string)}</p>` : ""}
+    ${b.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider mb-2" style="color:var(--primary)">${escapeHtml(b.subtitle as string)}</p>` : ""}
     <div class="grid md:grid-cols-2 gap-12 items-center ${isRight ? "" : ""}">
       <div class="${isRight ? "order-1" : "order-2 md:order-1"}">
-        <h2 class="text-3xl font-bold mb-6">${escapeHtml(b.title as string)}</h2>
-        <div class="text-gray-600 leading-relaxed mb-6 whitespace-pre-line">${nl2br(b.description as string)}</div>
+        <h2 class="text-3xl font-bold mb-6" style="color:var(--foreground)">${escapeHtml(b.title as string)}</h2>
+        <div class="leading-relaxed mb-6 whitespace-pre-line" style="color:var(--muted-foreground)">${nl2br(b.description as string)}</div>
         ${featuresHtml ? `<ul class="space-y-2">${featuresHtml}</ul>` : ""}
       </div>
       <div class="${isRight ? "order-2" : "order-1 md:order-2"}">
@@ -86,19 +117,19 @@ function renderAboutSection(b: ChaiBlock): string {
 function renderServicesGrid(b: ChaiBlock): string {
   const services = (b.services as Array<{ title: string; description: string; image?: string; icon?: string }>) || [];
   const cards = services.map(s => `
-    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
+    <div class="rounded-xl shadow-md overflow-hidden hover:shadow-lg transition" style="background:var(--card)">
       ${s.image ? `<img src="${escapeHtml(s.image)}" alt="${escapeHtml(s.title)}" class="w-full h-48 object-cover" />` : ""}
       <div class="p-6">
-        <h3 class="text-lg font-semibold mb-2">${escapeHtml(s.title)}</h3>
-        <p class="text-gray-600 text-sm">${escapeHtml(s.description)}</p>
+        <h3 class="text-lg font-semibold mb-2" style="color:var(--card-foreground)">${escapeHtml(s.title)}</h3>
+        <p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(s.description)}</p>
       </div>
     </div>`).join("");
 
-  return `<section id="services" class="py-20 bg-gray-50">
+  return `<section id="services" class="py-20" style="background:var(--muted)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.sectionSubtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider text-center mb-2">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
-    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-4">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
-    ${b.sectionDescription ? `<p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
+    ${b.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
+    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-4" style="color:var(--foreground)">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionDescription ? `<p class="text-center max-w-2xl mx-auto mb-12" style="color:var(--muted-foreground)">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
   </div>
 </section>`;
@@ -107,16 +138,16 @@ function renderServicesGrid(b: ChaiBlock): string {
 function renderTestimonialsCarousel(b: ChaiBlock): string {
   const items = (b.testimonials as Array<{ name: string; role: string; content: string }>) || [];
   const cards = items.map(t => `
-    <div class="bg-white rounded-xl p-6 shadow-md">
-      <p class="text-gray-600 italic mb-4">"${escapeHtml(t.content)}"</p>
-      <div class="font-semibold">${escapeHtml(t.name)}</div>
-      <div class="text-sm text-gray-500">${escapeHtml(t.role)}</div>
+    <div class="rounded-xl p-6 shadow-md" style="background:var(--card)">
+      <p class="italic mb-4" style="color:var(--muted-foreground)">"${escapeHtml(t.content)}"</p>
+      <div class="font-semibold" style="color:var(--card-foreground)">${escapeHtml(t.name)}</div>
+      <div class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(t.role)}</div>
     </div>`).join("");
 
-  return `<section class="py-20 bg-white">
+  return `<section class="py-20" style="background:var(--background)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.sectionSubtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider text-center mb-2">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
-    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
+    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12" style="color:var(--foreground)">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
     <div class="grid md:grid-cols-3 gap-8">${cards}</div>
   </div>
 </section>`;
@@ -132,10 +163,10 @@ function renderImageGallery(b: ChaiBlock): string {
   const gridCols = cols === "2" ? "md:grid-cols-2" : cols === "4" ? "md:grid-cols-4" : "md:grid-cols-3";
   const imgHtml = images.map(src => `<img src="${escapeHtml(src)}" alt="Galeri" class="rounded-lg w-full aspect-square object-cover hover:scale-105 transition duration-300" />`).join("");
 
-  return `<section class="py-20 bg-gray-50">
+  return `<section class="py-20" style="background:var(--muted)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.subtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider text-center mb-2">${escapeHtml(b.subtitle as string)}</p>` : ""}
-    ${b.title ? `<h2 class="text-3xl font-bold text-center mb-12">${escapeHtml(b.title as string)}</h2>` : ""}
+    ${b.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.subtitle as string)}</p>` : ""}
+    ${b.title ? `<h2 class="text-3xl font-bold text-center mb-12" style="color:var(--foreground)">${escapeHtml(b.title as string)}</h2>` : ""}
     <div class="grid grid-cols-2 ${gridCols} gap-4">${imgHtml}</div>
   </div>
 </section>`;
@@ -144,40 +175,40 @@ function renderImageGallery(b: ChaiBlock): string {
 function renderFAQAccordion(b: ChaiBlock): string {
   const items = (b.items as Array<{ question: string; answer: string }>) || [];
   const faqHtml = items.map((item, i) => `
-    <details class="group border-b border-gray-200 py-4" ${i === 0 ? "open" : ""}>
-      <summary class="flex justify-between items-center cursor-pointer font-medium text-gray-900 hover:text-indigo-600">
+    <details class="group py-4" style="border-bottom:1px solid var(--border)" ${i === 0 ? "open" : ""}>
+      <summary class="flex justify-between items-center cursor-pointer font-medium" style="color:var(--foreground)">
         ${escapeHtml(item.question)}
-        <svg class="w-5 h-5 text-gray-500 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <svg class="w-5 h-5 group-open:rotate-180 transition-transform" style="color:var(--muted-foreground)" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
       </summary>
-      <p class="mt-3 text-gray-600 leading-relaxed">${escapeHtml(item.answer)}</p>
+      <p class="mt-3 leading-relaxed" style="color:var(--muted-foreground)">${escapeHtml(item.answer)}</p>
     </details>`).join("");
 
-  return `<section class="py-20 bg-white">
+  return `<section class="py-20" style="background:var(--background)">
   <div class="max-w-3xl mx-auto px-6">
-    ${b.sectionSubtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider text-center mb-2">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
-    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
+    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12" style="color:var(--foreground)">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
     <div>${faqHtml}</div>
   </div>
 </section>`;
 }
 
 function renderContactForm(b: ChaiBlock): string {
-  return `<section id="contact" class="py-20 bg-gray-50">
+  return `<section id="contact" class="py-20" style="background:var(--muted)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.sectionSubtitle ? `<p class="text-sm font-semibold text-indigo-600 uppercase tracking-wider text-center mb-2">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
-    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-4">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
-    ${b.sectionDescription ? `<p class="text-gray-600 text-center max-w-2xl mx-auto mb-12">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
+    ${b.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
+    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-4" style="color:var(--foreground)">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionDescription ? `<p class="text-center max-w-2xl mx-auto mb-12" style="color:var(--muted-foreground)">${escapeHtml(b.sectionDescription as string)}</p>` : ""}
     <div class="grid md:grid-cols-2 gap-12">
       <div class="space-y-6">
-        ${b.phone ? `<div class="flex items-center gap-3"><span class="text-2xl">📞</span><div><div class="text-sm text-gray-500">Telefon</div><div class="font-medium">${escapeHtml(b.phone as string)}</div></div></div>` : ""}
-        ${b.email ? `<div class="flex items-center gap-3"><span class="text-2xl">📧</span><div><div class="text-sm text-gray-500">E-posta</div><div class="font-medium">${escapeHtml(b.email as string)}</div></div></div>` : ""}
-        ${b.address ? `<div class="flex items-center gap-3"><span class="text-2xl">📍</span><div><div class="text-sm text-gray-500">Adres</div><div class="font-medium">${escapeHtml(b.address as string)}</div></div></div>` : ""}
+        ${b.phone ? `<div class="flex items-center gap-3"><span class="text-2xl">📞</span><div><div class="text-sm" style="color:var(--muted-foreground)">Telefon</div><div class="font-medium" style="color:var(--foreground)">${escapeHtml(b.phone as string)}</div></div></div>` : ""}
+        ${b.email ? `<div class="flex items-center gap-3"><span class="text-2xl">📧</span><div><div class="text-sm" style="color:var(--muted-foreground)">E-posta</div><div class="font-medium" style="color:var(--foreground)">${escapeHtml(b.email as string)}</div></div></div>` : ""}
+        ${b.address ? `<div class="flex items-center gap-3"><span class="text-2xl">📍</span><div><div class="text-sm" style="color:var(--muted-foreground)">Adres</div><div class="font-medium" style="color:var(--foreground)">${escapeHtml(b.address as string)}</div></div></div>` : ""}
       </div>
       <form class="space-y-4" onsubmit="event.preventDefault();alert('Mesajınız alındı!')">
-        <input type="text" placeholder="Adınız" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" required />
-        <input type="email" placeholder="E-posta" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" required />
-        <textarea placeholder="Mesajınız" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none" required></textarea>
-        <button type="submit" class="w-full px-8 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">${escapeHtml((b.submitButtonText as string) || "Gönder")}</button>
+        <input type="text" placeholder="Adınız" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
+        <input type="email" placeholder="E-posta" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
+        <textarea placeholder="Mesajınız" rows="4" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required></textarea>
+        <button type="submit" class="w-full px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition" style="background:var(--primary);color:var(--primary-foreground)">${escapeHtml((b.submitButtonText as string) || "Gönder")}</button>
       </form>
     </div>
   </div>
@@ -191,7 +222,7 @@ function renderCTABanner(b: ChaiBlock): string {
     <h2 class="text-3xl md:text-4xl font-bold mb-4">${escapeHtml(b.title as string)}</h2>
     ${b.description ? `<p class="text-lg opacity-90 mb-8">${escapeHtml(b.description as string)}</p>` : ""}
     <div class="flex flex-wrap gap-4 justify-center">
-      ${b.buttonText ? `<a href="${escapeHtml(b.buttonLink as string || '#')}" class="px-8 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition">${escapeHtml(b.buttonText as string)}</a>` : ""}
+      ${b.buttonText ? `<a href="${escapeHtml(b.buttonLink as string || '#')}" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition" style="background:var(--primary);color:var(--primary-foreground)">${escapeHtml(b.buttonText as string)}</a>` : ""}
       ${b.secondaryButtonText ? `<a href="${escapeHtml(b.secondaryButtonLink as string || '#')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(b.secondaryButtonText as string)}</a>` : ""}
     </div>
   </div>
@@ -202,19 +233,19 @@ function renderPricingTable(b: ChaiBlock): string {
   const plans = (b.plans as Array<{ name: string; price: string; period?: string; features?: string; buttonText?: string; highlighted?: boolean }>) || [];
   const cards = plans.map(p => {
     const features = (p.features || "").split("\n").filter(Boolean);
-    const featList = features.map(f => `<li class="flex items-center gap-2 py-1"><span class="text-green-500">✓</span>${escapeHtml(f)}</li>`).join("");
-    return `<div class="bg-white rounded-xl p-8 shadow-md ${p.highlighted ? 'ring-2 ring-indigo-600' : ''}">
-      <h3 class="text-xl font-bold mb-2">${escapeHtml(p.name)}</h3>
-      <div class="text-3xl font-bold text-indigo-600 mb-1">${escapeHtml(p.price)}</div>
-      ${p.period ? `<div class="text-sm text-gray-500 mb-6">${escapeHtml(p.period)}</div>` : '<div class="mb-6"></div>'}
+    const featList = features.map(f => `<li class="flex items-center gap-2 py-1"><span style="color:var(--primary)">✓</span>${escapeHtml(f)}</li>`).join("");
+    return `<div class="rounded-xl p-8 shadow-md" style="background:var(--card);${p.highlighted ? 'ring:2px solid var(--primary);box-shadow:0 0 0 2px var(--primary)' : ''}">
+      <h3 class="text-xl font-bold mb-2" style="color:var(--card-foreground)">${escapeHtml(p.name)}</h3>
+      <div class="text-3xl font-bold mb-1" style="color:var(--primary)">${escapeHtml(p.price)}</div>
+      ${p.period ? `<div class="text-sm mb-6" style="color:var(--muted-foreground)">${escapeHtml(p.period)}</div>` : '<div class="mb-6"></div>'}
       <ul class="space-y-1 mb-8 text-sm">${featList}</ul>
-      <a href="#contact" class="block text-center px-6 py-3 ${p.highlighted ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg font-semibold hover:opacity-90 transition">${escapeHtml(p.buttonText || 'Seç')}</a>
+      <a href="#contact" class="block text-center px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="${p.highlighted ? 'background:var(--primary);color:var(--primary-foreground)' : 'background:var(--muted);color:var(--foreground)'}">${escapeHtml(p.buttonText || 'Seç')}</a>
     </div>`;
   }).join("");
 
-  return `<section class="py-20 bg-gray-50">
+  return `<section class="py-20" style="background:var(--muted)">
   <div class="max-w-6xl mx-auto px-6">
-    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
+    ${b.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12" style="color:var(--foreground)">${escapeHtml(b.sectionTitle as string)}</h2>` : ""}
     <div class="grid md:grid-cols-3 gap-8">${cards}</div>
   </div>
 </section>`;
@@ -247,7 +278,6 @@ function renderBlock(block: ChaiBlock): string {
     case "PricingTable":
       return renderPricingTable(block);
     default:
-      // Fallback: try to render any text content
       const text = (block.title as string) || (block.content as string) || "";
       if (text) return `<section class="py-12"><div class="max-w-4xl mx-auto px-6"><p>${escapeHtml(text)}</p></div></section>`;
       return "";
@@ -255,15 +285,18 @@ function renderBlock(block: ChaiBlock): string {
 }
 
 function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string, projectId?: string): string {
-  const primaryColor = (theme?.primaryColor as string) || "#4f46e5";
-  const fontFamily = (theme?.fontFamily as string) || "'Inter', sans-serif";
-  const bodyBg = (theme?.bodyBg as string) || "#ffffff";
-  const bodyText = (theme?.bodyText as string) || "#1f2937";
+  const themeCssVars = buildThemeCssVars(theme);
+  const fontFamily = (theme?.fontFamily as { heading?: string; body?: string });
+  const headingFont = fontFamily?.heading || "Inter";
+  const bodyFont = fontFamily?.body || "Inter";
+  const borderRadius = (theme?.borderRadius as string) || "8px";
+  const fonts = [...new Set([headingFont, bodyFont])];
+  const fontLinks = fonts.map(f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`).join("\n  ");
 
   let sectionsHtml = blocks.map(b => renderBlock(b)).filter(Boolean).join("\n");
 
   if (!sectionsHtml.trim()) {
-    sectionsHtml = `<section class="min-h-screen flex items-center justify-center"><div class="text-center"><h1 class="text-4xl font-bold">${escapeHtml(projectName)}</h1><p class="mt-4 text-gray-600">Website coming soon</p></div></section>`;
+    sectionsHtml = `<section class="min-h-screen flex items-center justify-center" style="background:var(--background)"><div class="text-center"><h1 class="text-4xl font-bold" style="color:var(--foreground)">${escapeHtml(projectName)}</h1><p class="mt-4" style="color:var(--muted-foreground)">Website coming soon</p></div></section>`;
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -279,10 +312,11 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   <script src="https://cdn.tailwindcss.com"><\/script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  ${fontLinks}
   <style>
-    :root { --primary: ${primaryColor}; }
-    body { font-family: ${fontFamily}; background-color: ${bodyBg}; color: ${bodyText}; margin: 0; padding: 0; }
+    :root { ${themeCssVars}; --radius: ${borderRadius}; }
+    body { font-family: '${bodyFont}', sans-serif; background-color: var(--background); color: var(--foreground); margin: 0; padding: 0; }
+    h1, h2, h3, h4, h5, h6 { font-family: '${headingFont}', sans-serif; }
     img { max-width: 100%; height: auto; }
     html { scroll-behavior: smooth; }
   </style>

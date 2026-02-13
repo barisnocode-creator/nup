@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { RenderChaiBlocks } from '@chaibuilder/sdk/render';
@@ -18,13 +18,44 @@ interface PublicProject {
   template_id?: string;
 }
 
+// Extract theme color (light mode = index 0)
+function extractColor(colors: Record<string, any> | undefined, key: string, fallback: string): string {
+  if (!colors) return fallback;
+  const val = colors[key];
+  if (Array.isArray(val) && val[0]) return val[0];
+  if (typeof val === 'string') return val;
+  return fallback;
+}
+
+function buildThemeStyle(theme: any): string {
+  if (!theme?.colors) return '';
+  const c = theme.colors;
+  const vars: Record<string, string> = {
+    '--background': extractColor(c, 'background', '#ffffff'),
+    '--foreground': extractColor(c, 'foreground', '#1a1a1a'),
+    '--primary': extractColor(c, 'primary', '#f97316'),
+    '--primary-foreground': extractColor(c, 'primary-foreground', '#ffffff'),
+    '--secondary': extractColor(c, 'secondary', '#f4f4f5'),
+    '--secondary-foreground': extractColor(c, 'secondary-foreground', '#4a4a4a'),
+    '--muted': extractColor(c, 'muted', '#f4f4f5'),
+    '--muted-foreground': extractColor(c, 'muted-foreground', '#737373'),
+    '--accent': extractColor(c, 'accent', '#f97316'),
+    '--accent-foreground': extractColor(c, 'accent-foreground', '#ffffff'),
+    '--border': extractColor(c, 'border', '#e5e5e5'),
+    '--input': extractColor(c, 'input', '#e5e5e5'),
+    '--ring': extractColor(c, 'ring', '#f97316'),
+    '--card': extractColor(c, 'card', '#ffffff'),
+    '--card-foreground': extractColor(c, 'card-foreground', '#1a1a1a'),
+  };
+  return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
+}
+
 export default function PublicWebsite() {
   const { subdomain } = useParams<{ subdomain: string }>();
   const [project, setProject] = useState<PublicProject | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Fetch published project by subdomain using secure public view
   useEffect(() => {
     async function fetchProject() {
       if (!subdomain) {
@@ -33,44 +64,39 @@ export default function PublicWebsite() {
         return;
       }
 
-      // Use the secure public_projects view that excludes sensitive fields (user_id, form_data)
       const { data, error } = await supabase
         .from('public_projects')
         .select('id, name, profession, subdomain, generated_content, chai_blocks, chai_theme, template_id')
         .eq('subdomain', subdomain)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching project:', error);
+      if (error || !data) {
         setNotFound(true);
         setLoading(false);
         return;
       }
 
-      if (!data) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
-
-      // Cast the data properly
       const projectData = data as unknown as PublicProject;
       setProject(projectData);
       setLoading(false);
 
-      // Update page title with site name
       if (projectData.generated_content?.metadata?.siteName) {
         document.title = `${projectData.generated_content.metadata.siteName} | Open Lucius`;
       }
     }
-
     fetchProject();
   }, [subdomain]);
 
-  // Track page view for analytics
   usePageView(project?.id || null, '/public');
 
-  // Loading state
+  // Inject theme CSS variables
+  const themeStyleTag = useMemo(() => {
+    if (!project?.chai_theme) return null;
+    const cssVars = buildThemeStyle(project.chai_theme);
+    if (!cssVars) return null;
+    return <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />;
+  }, [project?.chai_theme]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -82,7 +108,6 @@ export default function PublicWebsite() {
     );
   }
 
-  // Not found state
   if (notFound || !project) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -96,10 +121,7 @@ export default function PublicWebsite() {
               The website you're looking for doesn't exist or hasn't been published yet.
             </p>
           </div>
-          <a 
-            href="/"
-            className="inline-flex items-center gap-2 text-primary hover:underline"
-          >
+          <a href="/" className="inline-flex items-center gap-2 text-primary hover:underline">
             Go to Open Lucius
           </a>
         </div>
@@ -107,23 +129,18 @@ export default function PublicWebsite() {
     );
   }
 
-  // Use default light theme since form_data is not exposed in public view for security
   const colorPreference = 'light';
-
-  // Check if project uses ChaiBuilder blocks
   const hasChaiBlocks = project.chai_blocks && project.chai_blocks.length > 0;
 
   return (
     <>
-      {/* Render ChaiBuilder blocks if available */}
+      {themeStyleTag}
+
       {hasChaiBlocks ? (
         <div className="min-h-screen">
-          <RenderChaiBlocks 
-            blocks={project.chai_blocks || []} 
-          />
+          <RenderChaiBlocks blocks={project.chai_blocks || []} />
         </div>
       ) : (
-        /* Legacy Website Preview - Read Only */
         project.generated_content && (
           <WebsitePreview 
             content={project.generated_content} 
@@ -133,7 +150,6 @@ export default function PublicWebsite() {
         )
       )}
 
-      {/* Powered by badge */}
       <div className="fixed bottom-4 right-4 z-50">
         <a 
           href="/"
