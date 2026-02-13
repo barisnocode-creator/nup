@@ -26,6 +26,7 @@ interface EditableImageProps {
   onDelete?: () => void;
   isFirst?: boolean;
   isLast?: boolean;
+  isLocked?: boolean;
   fallback?: React.ReactNode;
 }
 
@@ -50,6 +51,7 @@ export function EditableImage({
   onDelete,
   isFirst = false,
   isLast = false,
+  isLocked = false,
   fallback,
 }: EditableImageProps) {
   const [isHovered, setIsHovered] = useState(false);
@@ -88,7 +90,8 @@ export function EditableImage({
       className={cn(
         'relative group',
         containerClassName,
-        isEditable && 'cursor-pointer z-10',
+        isEditable && !isLocked && 'cursor-pointer z-10',
+        isEditable && isLocked && 'cursor-default z-10',
         isSelected && 'ring-2 ring-primary ring-offset-2'
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -113,16 +116,18 @@ export function EditableImage({
         <div
           className={cn(
             'absolute inset-0 border-2 rounded-[inherit] pointer-events-none transition-colors duration-200',
-            isHovered || isSelected ? 'border-primary' : 'border-transparent'
+            isHovered || isSelected
+              ? (isLocked ? 'border-muted-foreground/30' : 'border-primary')
+              : 'border-transparent'
           )}
         />
       )}
 
       {/* Action box - top right */}
-      {isEditable && (
+      {isEditable && !isLocked && (
         <div
           className={cn(
-            'absolute top-2 right-2 z-20 transition-all duration-200 pointer-events-auto',
+            'absolute top-2 right-2 z-30 transition-all duration-200 pointer-events-auto',
             isHovered || isSelected
               ? 'opacity-100 scale-100'
               : 'opacity-0 scale-95 pointer-events-none'
