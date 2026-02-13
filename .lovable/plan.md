@@ -1,140 +1,91 @@
 
-# Prompt 2: Template Onizleme Akisi
+
+# Template Galerisi Sadeleştirme ve Görsel Önizleme
 
 ## Ozet
 
-"Onizle" butonuna tiklandiginda, secilen template'in bloklari ve temasi gecici olarak editore yuklenir. Ustte mor gradient banner ile "Uygula" ve "Iptal" butonlari gosterilir. Kullanici "Uygula" derse veritabanina kaydedilir; "Iptal" derse orijinal bloklar ve temaya geri donulur.
+Template registry'den pilates1 haricindeki tum template'ler kaldirilacak. Galeri overlay'inde template kartina tiklandiginda, template'in gercek React bilesenlerinin render edilmis bir goruntusu (canli onizleme) gosterilecek.
 
-## Akis Diyagrami
+## Adim 1: Template Registry Sadeleştirme
+
+### `src/templates/index.ts`
+
+- temp1 ~ temp9, gith1, gith2, gith3 tum kayitlar kaldirilacak
+- Sadece `pilates1` kalacak
+- Kullanilmayan import'lar (showcase goerselleri, template bilesenleri) temizlenecek
+- `DEFAULT_TEMPLATE_ID` -> `'pilates1'` olacak
+- `getTemplate()` fallback'i `pilates1` olacak
+- `selectTemplate()` her zaman `'pilates1'` donecek
+
+**Registry sonrasi hali (tek kayit):**
+```
+pilates1 -> PilatesTemplate (preview: template-pilates.jpg)
+```
+
+### `src/components/chai-builder/themes/presets.ts`
+
+- `templateToPreset` mapping'ine `pilates1` eklenmeli (simdiki haliyle eksik)
+- Pilates icin uygun preset tanimlanacak (warm tonlar, Playfair Display + DM Sans)
+
+### `supabase/functions/generate-website/index.ts`
+
+- `selectTemplate()` fonksiyonu `'pilates1'` donecek sekilde guncellenecek
+
+## Adim 2: Galeri Overlay'inde Canli Template Onizlemesi
+
+### `src/components/chai-builder/TemplateGalleryOverlay.tsx`
+
+Su an kartlar sadece statik `preview` gorselini gosteriyor. Bunu gelistirmek icin:
+
+1. **Kart icine canli render**: Template'in React bilesenini kucuk bir iframe/scale-down container icinde render et
+2. **Yaklasim**: `iframe` yerine CSS `transform: scale()` ile kucultulmus bir container kullanilacak
+   - Template bilesenini ~1200px genislikte render et
+   - `transform: scale(0.23)` ile kartin icine sigdir (280px / 1200px)
+   - `pointer-events: none` ile etkilesimi engelle
+   - `overflow: hidden` ile tasmalari gizle
 
 ```text
-Galeri Overlay -> "Onizle" tikla
-  |
-  v
-1. Orijinal blok/tema yedeklenir (state)
-2. Secilen template icin yeni bloklar olusturulur (convertGeneratedContentToChaiBlocks)
-3. Yeni tema preset alinir (getThemeForTemplate)
-4. ChaiBuilderEditor'e yeni blocks + theme props gecirilir
-5. Galeri kapanir, TemplatePreviewBanner gosterilir
-  |
-  +-- "Uygula" -> DB'ye kaydet (chai_blocks, chai_theme, template_id) -> banner kaldir
-  |
-  +-- "Iptal" -> Orijinal blok/tema geri yukle -> banner kaldir
++------- 280px kart --------+
+| +---- 1200px scaled ----+ |
+| |                        | |
+| |  [Template tam render] | |  <- scale(0.23), pointer-events:none
+| |                        | |
+| |                        | |
+| +------------------------+ |
++----------------------------+
+Template Adi
+Kategori
 ```
 
-## Teknik Detaylar
+3. **Dummy content**: Template'e verilecek icerik, projenin `generated_content`'inden alinacak. Eger yoksa, varsayilan Turkce demo icerik olusturulacak.
+4. **Fallback**: Render basarisiz olursa statik `preview` gorseli gosterilecek (ErrorBoundary ile)
 
-### Degistirilecek Dosya: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+### Teknik uygulama detaylari:
 
-**Yeni state'ler:**
-```typescript
-// Template preview state
-const [previewBlocks, setPreviewBlocks] = useState<ChaiBlock[] | null>(null);
-const [previewTheme, setPreviewTheme] = useState<Partial<ChaiThemeValues> | null>(null);
-const [previewTemplateName, setPreviewTemplateName] = useState<string | null>(null);
-const [previewTemplateIdState, setPreviewTemplateIdState] = useState<string | null>(null);
-const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
+- `TemplateGalleryOverlay` icinde `generated_content`'i prop olarak alacak (ChaiBuilderWrapper'dan)
+- Her kart icin template bilesenini `React.lazy` + `Suspense` ile yukleyecek
+- Container: `width: 1200px, height: 2000px` -> `transform: scale(0.23) translateOrigin: top left`
+- Kart boyutu 280px genislik, 3:5 oran korunacak
 
-// Backup of original blocks/theme before preview
-const originalBlocksRef = useRef<ChaiBlock[]>(initialBlocks);
-const originalThemeRef = useRef<Partial<ChaiThemeValues> | undefined>(initialTheme);
-```
+### `src/components/chai-builder/ChaiBuilderWrapper.tsx`
 
-**`handlePreviewTemplate` fonksiyonu:**
-1. `getTemplateConfig(templateId)` ile template adini al
-2. Projenin mevcut `generated_content`'ini veritabanindan oku (veya mevcut prop'tan al)
-3. `convertGeneratedContentToChaiBlocks(content, templateId)` ile yeni bloklar olustur
-4. `getThemeForTemplate(templateId)` ile yeni tema al
-5. `previewBlocks`, `previewTheme`, `previewTemplateName` state'lerini set et
-6. `showTemplateGallery` kapat
-7. Eger `generated_content` yoksa, varsayilan bos bloklar olustur
-
-**`handleApplyTemplate` fonksiyonu:**
-1. `setIsApplyingTemplate(true)`
-2. `saveToSupabase({ blocks: previewBlocks, theme: previewTheme })` ile kaydet
-3. Ayrica `template_id` alanini guncelle: `supabase.from('projects').update({ template_id: previewTemplateIdState })`
-4. Basarili olursa: `originalBlocksRef.current = previewBlocks`, preview state'lerini temizle
-5. `toast.success('Template uygulandı!')`
-6. Hata olursa: `toast.error(...)`, preview state'lerini temizleme (kullanici tekrar deneyebilir)
-
-**`handleCancelPreview` fonksiyonu:**
-1. Preview state'lerini null'a cek (previewBlocks, previewTheme, previewTemplateName)
-2. Orijinal bloklar/tema otomatik olarak ChaiBuilderEditor'e geri gecer (cunku artik previewBlocks null oldugu icin initialBlocks kullanilir)
-
-**ChaiBuilderEditor props degisikligi:**
-```typescript
-<ChaiBuilderEditor
-  blocks={previewBlocks || initialBlocks}
-  theme={(previewTheme || initialTheme || defaultTheme) as ChaiThemeValues}
-  // ... diger props ayni
-/>
-```
-
-**TemplatePreviewBanner render:**
-```typescript
-{previewTemplateName && (
-  <TemplatePreviewBanner
-    templateName={previewTemplateName}
-    onApply={handleApplyTemplate}
-    onCancel={handleCancelPreview}
-    isApplying={isApplyingTemplate}
-  />
-)}
-```
-
-Banner, editörun ustunde `absolute top-0 left-0 right-0 z-[90]` ile konumlandirilacak (toolbar'in da ustunde).
-
-### Degistirilecek Dosya: `src/components/website-preview/TemplatePreviewBanner.tsx`
-
-**Turkcelestirme:**
-- "Previewing:" -> "Onizleniyor:"
-- "Cancel" -> "Iptal"
-- "Apply Template" -> "Uygula"
-- "Applying..." -> "Uygulanıyor..."
-
-### Degistirilecek Dosya: `src/components/chai-builder/TemplateGalleryOverlay.tsx`
-
-Degisiklik yok -- mevcut `onPreview` callback'i zaten dogru calisiyor.
-
-## SDK Uyumlulugu
-
-ChaiBuilderEditor `blocks` prop'unu degistirdigimizde SDK canvas'i yeniden render eder. Bu, React'in standart prop degisikligi davranisidir. SDK belgelerine gore `blocks` bir kontrollü (controlled) prop'tur.
-
-Onemli: Preview sirasinda auto-save DEVRE DISI BIRAKILMAMALI. Bunun yerine, `onSave` callback'i preview modundayken kaydetmeyi engelleyecek sekilde sarmalanmalidir:
-
-```typescript
-const handleSave = useCallback(async (data) => {
-  // Preview modundayken SDK auto-save'i engelle
-  if (previewBlocks) return true; // "basarili" dondur ama kaydetme
-  return await saveToSupabase({ blocks: data.blocks, theme: data.theme });
-}, [saveToSupabase, previewBlocks]);
-```
-
-## Banner Konumlandirma
-
-Banner, editör container'inin icinde `absolute` olarak konumlandirilacak:
-
-```text
-+-----------------------------------------------------------------------+
-| [Onizleniyor: Wellness Studio]            [Iptal] [Uygula]   z-[90] |
-|-----------------------------------------------------------------------|
-| [Toolbar]                                                     z-50    |
-|-----------------------------------------------------------------------|
-|                     Canvas                                            |
-+-----------------------------------------------------------------------+
-```
+- `TemplateGalleryOverlay`'e `generatedContent` prop'u gecilecek (DB'den okunan `generated_content`)
+- Mevcut preview akisi (Prompt 2'de eklenen) aynen korunacak
 
 ## Dosya Degisiklikleri Ozeti
 
 | Dosya | Islem | Aciklama |
 |-------|-------|----------|
-| `ChaiBuilderWrapper.tsx` | Guncelle | Preview state, handlePreview/Apply/Cancel, banner render, save guard |
-| `TemplatePreviewBanner.tsx` | Guncelle | Turkce ceviri |
+| `src/templates/index.ts` | Guncelle | Sadece pilates1 kalacak, diger kayitlar ve import'lar kaldirilacak |
+| `src/components/chai-builder/themes/presets.ts` | Guncelle | pilates1 preset ekleme, templateToPreset guncelleme |
+| `src/components/chai-builder/TemplateGalleryOverlay.tsx` | Guncelle | Canli template render, scale-down container |
+| `src/components/chai-builder/ChaiBuilderWrapper.tsx` | Guncelle | generatedContent prop gecisi |
+| `supabase/functions/generate-website/index.ts` | Guncelle | selectTemplate -> 'pilates1' |
 
-## Edge Case'ler
+## Dikkat Edilecekler
 
-- **generated_content yoksa**: Bos blok seti olusturulur (sadece bir hero + CTA). Kullanici bunu gorecek ve template'in layout'unu anlayacak.
-- **Ayni template secilirse**: Galeri'de zaten engelleniyor (mevcut template'e tiklanamaz).
-- **Preview sirasinda sayfa yenileme**: Preview state kaybolur, orijinal bloklar yuklenir (guvenli).
-- **Preview sirasinda baska template preview**: Onceki preview uzerine yazilir (yeni preview baslar).
-- **Network hatasi Apply sirasinda**: Toast ile hata gosterilir, preview aktif kalir, kullanici tekrar deneyebilir.
+- `WebsitePreview.tsx` hala `getTemplate()` kullaniyor -- fallback pilates1 olacagi icin calismaya devam edecek
+- `ChangeTemplateModal.tsx` (legacy) dokunulmayacak, zaten kullanilmiyor
+- Mevcut projelerde `template_id` olarak temp1 vb. kayitli olabilir -- `getTemplate()` fallback'i ile pilates1'e yonlendirilecek
+- Template dosyalari (src/templates/temp1, temp2, vb.) su an silinmeyecek (diger referanslar olabilir), sadece registry'den cikarilacak
+
