@@ -66,6 +66,7 @@ export type Database = {
         Row: {
           buffer_minutes: number
           created_at: string
+          day_schedules: Json | null
           id: string
           is_enabled: boolean
           lunch_break_end: string | null
@@ -83,6 +84,7 @@ export type Database = {
         Insert: {
           buffer_minutes?: number
           created_at?: string
+          day_schedules?: Json | null
           id?: string
           is_enabled?: boolean
           lunch_break_end?: string | null
@@ -100,6 +102,7 @@ export type Database = {
         Update: {
           buffer_minutes?: number
           created_at?: string
+          day_schedules?: Json | null
           id?: string
           is_enabled?: boolean
           lunch_break_end?: string | null
@@ -193,6 +196,9 @@ export type Database = {
       }
       blocked_slots: {
         Row: {
+          block_end_time: string | null
+          block_start_time: string | null
+          block_type: string
           blocked_date: string
           created_at: string
           id: string
@@ -201,6 +207,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          block_end_time?: string | null
+          block_start_time?: string | null
+          block_type?: string
           blocked_date: string
           created_at?: string
           id?: string
@@ -209,6 +218,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          block_end_time?: string | null
+          block_start_time?: string | null
+          block_type?: string
           blocked_date?: string
           created_at?: string
           id?: string
