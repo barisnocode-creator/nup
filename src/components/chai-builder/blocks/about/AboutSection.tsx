@@ -38,14 +38,14 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
       className={`${s.sectionPadding} ${s.bgColor}`}
     >
       <div className="container mx-auto px-6">
-        <div className={`grid lg:grid-cols-2 gap-12 items-center ${imagePosition === 'left' ? 'lg:flex-row-reverse' : ''}`}>
+        <div className={`grid lg:grid-cols-2 gap-16 items-center ${imagePosition === 'left' ? 'lg:flex-row-reverse' : ''}`}>
           <div className={`space-y-6 ${imagePosition === 'left' ? 'lg:order-2' : ''}`}>
             {subtitle && (
               <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform}`}>
                 {subtitle}
               </span>
             )}
-            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign}`}>
+            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign} font-serif`}>
               {title}
             </h2>
             <p className={`${s.descSize} ${s.descColor} leading-relaxed`}>
@@ -53,12 +53,10 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
             </p>
             
             {featureList.length > 0 && (
-              <ul className="space-y-3">
+              <ul className="space-y-4 pt-2">
                 {featureList.map((feature, index) => (
-                  <li key={index} className="flex items-start gap-3">
-                    <svg className="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                  <li key={index} className="flex items-start gap-4">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2.5 flex-shrink-0" />
                     <span className="text-foreground">{feature}</span>
                   </li>
                 ))}
@@ -67,11 +65,12 @@ const AboutSectionBlock = (props: ChaiBlockComponentProps<AboutSectionProps>) =>
           </div>
 
           <div className={`relative ${imagePosition === 'left' ? 'lg:order-1' : ''}`}>
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-30" />
+            {/* Decorative gradient blob */}
+            <div className="absolute -inset-8 bg-gradient-to-br from-primary/15 to-accent/15 rounded-[2rem] blur-3xl opacity-50" />
             <EditableChaiImage 
               src={image || "/placeholder.svg"} 
               alt={title}
-              className="relative rounded-2xl shadow-xl w-full object-cover aspect-[4/3]"
+              className="relative rounded-3xl shadow-2xl w-full object-cover aspect-[4/3]"
               inBuilder={props.inBuilder}
             />
           </div>
