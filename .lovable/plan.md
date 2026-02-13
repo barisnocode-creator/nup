@@ -1,180 +1,121 @@
 
+# Esnek Musaitlik ve Calisma Saatleri Yapilandirma Sistemi
 
-# Randevu Sistemi - Otomatik Provizyon ve Entegrasyon
+## Mevcut Durum
 
-## Genel Bakis
+Simdi `appointment_settings` tablosu tum gunler icin **tek bir calisma saati** tutuyor:
+- `working_hours_start` / `working_hours_end` (tek deger)
+- `lunch_break_start` / `lunch_break_end` (tek deger)
+- `working_days` (hangi gunler acik)
 
-Her yeni olusturulan web sitesine otomatik olarak gomulu bir randevu alma modulu eklenecek. Doktor, psikolog, fitness egitmeni, ogretmen gibi hizmet saglayicilari icin musterilerinden randevu toplayabilecekleri bir sistem.
+Bu yapi **gun bazli farkli saat dilimlerini** desteklemiyor. Ornegin "Pazartesi 09-18, Cumartesi 10-14" yapilamiyor.
 
-## Veritabani Mimarisi
+## Yeni Veri Yapisi
 
-3 yeni tablo olusturulacak:
+### Veritabani Degisikligi: `day_schedules` JSONB Sutunu
 
-### 1. appointment_settings (Proje bazli ayarlar)
-
-| Sutun | Tip | Aciklama |
-|-------|-----|----------|
-| id | uuid | PK |
-| project_id | uuid | FK -> projects |
-| user_id | uuid | Sahiplik (RLS) |
-| is_enabled | boolean | Randevu sistemi acik/kapali |
-| timezone | text | Ornek: "Europe/Istanbul" |
-| slot_duration_minutes | integer | Varsayilan: 30 |
-| buffer_minutes | integer | Randevular arasi bosluk: 0 |
-| working_days | jsonb | [1,2,3,4,5] (Pazartesi-Cuma) |
-| working_hours_start | text | "09:00" |
-| working_hours_end | text | "18:00" |
-| lunch_break_start | text | "12:00" (nullable) |
-| lunch_break_end | text | "13:00" (nullable) |
-| max_advance_days | integer | Kac gun ileriye randevu alinabilir: 30 |
-| created_at | timestamptz | |
-| updated_at | timestamptz | |
-
-### 2. appointments (Alinan randevular)
-
-| Sutun | Tip | Aciklama |
-|-------|-----|----------|
-| id | uuid | PK |
-| project_id | uuid | FK -> projects |
-| client_name | text | Musteri adi |
-| client_email | text | Musteri e-posta |
-| client_phone | text | Musteri telefon (nullable) |
-| client_note | text | Musteri notu (nullable) |
-| appointment_date | date | Randevu tarihi |
-| start_time | text | "14:00" |
-| end_time | text | "14:30" |
-| status | text | "pending", "confirmed", "cancelled" |
-| timezone | text | Olusturulma anindaki timezone |
-| created_at | timestamptz | |
-
-### 3. blocked_slots (Tatil/kapalı gunler)
-
-| Sutun | Tip | Aciklama |
-|-------|-----|----------|
-| id | uuid | PK |
-| project_id | uuid | FK -> projects |
-| user_id | uuid | Sahiplik (RLS) |
-| blocked_date | date | Kapatilan tarih |
-| reason | text | "Tatil", "Ozel gun" vb. (nullable) |
-| created_at | timestamptz | |
-
-## Sektor Bazli Varsayilan Ayarlar
-
-Proje olusturulurken `profession` alanina gore otomatik varsayilanlar:
+`appointment_settings` tablosuna yeni bir `day_schedules` JSONB sutunu eklenecek. Mevcut `working_hours_start/end` ve `lunch_break_start/end` alanlari geriye uyumluluk icin korunacak, yeni alan varsa oncelikli kullanilacak.
 
 ```text
-service (danismanlik):  Pzt-Cum, 09:00-18:00, 60dk slot
-food (restoran):        Pzt-Paz, 10:00-22:00, 120dk slot (rezervasyon)
-creative (tasarim):     Pzt-Cum, 10:00-19:00, 45dk slot
-technology (yazilim):   Pzt-Cum, 09:00-18:00, 30dk slot
-retail (magaza):        Pzt-Cmt, 09:00-20:00, 30dk slot
-other:                  Pzt-Cum, 09:00-18:00, 30dk slot
+day_schedules yapisi:
+{
+  "1": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [{"start": "12:00", "end": "13:00"}] },
+  "2": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [{"start": "12:00", "end": "13:00"}] },
+  "3": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [] },
+  "4": { "enabled": true, "start": "10:00", "end": "16:00", "breaks": [{"start": "12:30", "end": "13:00"}] },
+  "5": { "enabled": true, "start": "09:00", "end": "17:00", "breaks": [] },
+  "6": { "enabled": true, "start": "10:00", "end": "14:00", "breaks": [] },
+  "0": { "enabled": false, "start": "", "end": "", "breaks": [] }
+}
 ```
 
-## Cakisma Onleme Modeli
+Anahtar = haftanin gunu (0=Pazar, 6=Cumartesi). Her gun icin:
+- `enabled`: O gun acik mi
+- `start` / `end`: Calisma saatleri
+- `breaks`: Birden fazla mola destegi (sadece ogle degil, cay molasi vb. de eklenebilir)
 
-Yeni randevu olusturulurken bir Edge Function su kontrolleri yapar:
+### Geriye Uyumluluk
 
-1. Secilen tarih `blocked_slots` tablosunda mi? -> Reddet
-2. Secilen gun `working_days` dizisinde mi? -> Reddet
-3. Secilen saat `working_hours_start` - `working_hours_end` araliginda mi? -> Reddet
-4. Oglen arasi ile cakisiyor mu? -> Reddet
-5. Ayni `project_id` + `appointment_date` + zaman araliginda baska randevu var mi? (status != 'cancelled') -> Reddet (SQL overlap kontrolu)
-6. Tarih `max_advance_days` sinirini asiyor mu? -> Reddet
+- `day_schedules` NULL ise eski alanlar (`working_hours_start/end`, `working_days`, `lunch_break_start/end`) kullanilir
+- `day_schedules` dolduruldugunda yeni sistem devreye girer
+- Mevcut projeler etkilenmez
 
-Cakisma SQL kontrolu:
+## Slot Yeniden Hesaplama Mantigi
+
+`book-appointment` edge function guncellenecek:
+
 ```text
-WHERE project_id = X
-  AND appointment_date = Y
-  AND status != 'cancelled'
-  AND (start_time < new_end_time AND end_time > new_start_time)
+1. day_schedules varsa:
+   - Istenen gun icin schedule'u al (orn: day_schedules["3"])
+   - enabled=false ise slot dondurme
+   - start/end saatlerinden slotlari uret
+   - breaks dizisindeki her mola araligini atla
+2. day_schedules yoksa:
+   - Mevcut mantik aynen calisir (working_hours_start/end + lunch)
+3. Gecmis saat kontrolu:
+   - Bugunun tarihiyse, gecmis slotlari otomatik cikar
 ```
+
+## Istisna Gunu Yonetimi (blocked_slots Genisletme)
+
+`blocked_slots` tablosuna yeni alanlar eklenerek tam gun kapatma yerine **saat araligi kapatma** da desteklenecek:
+
+- `block_start_time` (text, nullable): NULL ise tam gun kapali
+- `block_end_time` (text, nullable): NULL ise tam gun kapali
+- `block_type` (text, default 'full_day'): 'full_day', 'time_range', 'vacation'
+
+Boylece:
+- Tam gun kapatma: `blocked_date = '2026-03-15', block_type = 'full_day'`
+- Saat araligi kapatma: `blocked_date = '2026-03-15', block_start_time = '14:00', block_end_time = '16:00'`
+- Tatil: `blocked_date = '2026-03-15', block_type = 'vacation', reason = 'Yillik izin'`
+
+## Timezone Normalizasyonu
+
+- Tum saatler `appointment_settings.timezone` alanina gore saklanir (varsayilan: Europe/Istanbul)
+- Edge function'da slot uretimi ve gecmis saat kontrolu icin sunucu zamani yerine `timezone` degeri kullanilir
+- Musteri tarafinda tarayici timezone'u gosterilir ama backend'e gonderilirken proje timezone'una cevirilir
+
+## UI Degisiklikleri (AppointmentsPanel.tsx - Ayarlar Sekmesi)
+
+Mevcut basit form yerine zengin bir gun bazli yapilandirma ekrani:
+
+### Genel Ayarlar Karti
+- Randevu sistemi acik/kapali (switch)
+- Randevu suresi secimi (15/30/45/60/90/120 dk - select)
+- Tampon sure (0/5/10/15 dk - select)
+- Timezone secimi (select)
+- Maksimum ileri gun (input)
+
+### Gun Bazli Program Karti
+7 gunun her biri icin bir satir:
+```text
+[Pazartesi]  [Acik/Kapali Toggle]  [09:00] - [18:00]  [+ Mola Ekle]
+  Molalar: [12:00-13:00] [x]
+[Sali]       [Acik/Kapali Toggle]  [09:00] - [18:00]  [+ Mola Ekle]
+[Cumartesi]  [Acik/Kapali Toggle]  [10:00] - [14:00]  [+ Mola Ekle]
+[Pazar]      [Kapali]
+```
+
+### Kapali Gunler Karti (Gelistirilmis)
+- Tarih secici (calendar picker)
+- Kapatma tipi: Tam gun / Saat araligi / Tatil
+- Saat araligi secildiginde baslangic-bitis saati girdileri
+- Sebep alani
+- Mevcut kapali gunler listesi (badge ile tip gosterimi)
 
 ## Dosya Degisiklikleri
 
-### Veritabani (Migration)
-- `appointment_settings`, `appointments`, `blocked_slots` tablolari
-- RLS politikalari: Sahip tum islemleri yapabilir, anonim kullanicilar sadece randevu olusturabilir
-- `public_projects` gorunumune `appointment_settings` verisini dahil etmek icin iliskili sorgu
+| Dosya | Degisiklik |
+|---|---|
+| Migration SQL | `appointment_settings` tablosuna `day_schedules` JSONB sutunu ekle; `blocked_slots` tablosuna `block_start_time`, `block_end_time`, `block_type` sutunlari ekle; auto-provision trigger'i guncelle (day_schedules ile varsayilan program olustur) |
+| `supabase/functions/book-appointment/index.ts` | Slot uretim mantigi: `day_schedules` varsa gun bazli program kullan, gecmis saat filtreleme ekle, saat araligi bloklama destegi |
+| `supabase/functions/manage-appointments/index.ts` | PUT'a `day_schedules` alanini ekle, POST'a `block_start_time/end_time/block_type` destegi |
+| `src/components/dashboard/AppointmentsPanel.tsx` | Ayarlar sekmesini tamamen yeniden tasarla: gun bazli program editoru, mola ekleme/cikarma, gelistirilmis kapatma formu |
 
-### Edge Functions (2 yeni)
+## Gelecekte Multi-Staff Destegi Icin Hazirlik
 
-**1. `book-appointment/index.ts`** - Herkese acik (verify_jwt=false)
-- POST: Musteri randevu olusturur (cakisma kontrolu ile)
-- GET: Belirli tarih icin musait slotlari dondurur (`?project_id=X&date=2025-03-15`)
-- Slot uretim mantigi: working_hours baslangictan bitis saatine kadar slot_duration araliklarla slotlar olusturulur, dolu olanlar cikarilir
-
-**2. `manage-appointments/index.ts`** - Kimlik dogrulamali
-- GET: Kullanicinin projesi icin tum randevulari listeler
-- PATCH: Randevu durumunu gunceller (onayla/iptal)
-- PUT: Ayarlari gunceller (calisma saatleri, slot suresi vb.)
-- POST /block: Belirli tarihi kapatir
-
-### Frontend Bilesenleri
-
-**1. `src/components/chai-builder/blocks/appointment/AppointmentBooking.tsx`**
-- ChaiBuilder bloku olarak kayitli bir randevu formu
-- Takvim goruntusunde musait gunleri gosterir
-- Secilen gune ait musait saatleri listeler
-- Ad, e-posta, telefon, not alanlari
-- Otomatik olarak `convertToChaiBlocks` sirasinda siteye eklenir
-
-**2. `src/components/dashboard/AppointmentsPanel.tsx`**
-- Dashboard'da yeni bir sekme/bolum
-- Gelen randevulari listeler (bekleyen, onaylanan, iptal edilen)
-- Randevu onaylama/iptal etme butonlari
-- Calisma saatlerini duzenleme formu
-- Takvim gorunumu ile dolu/bos gun ozeti
-
-**3. `deploy-to-netlify` guncelleme**
-- Yeni `renderAppointmentBooking()` fonksiyonu eklenir
-- Yayinlanan siteye JavaScript ile slot sorgulama ve form gonderme islevi gomulur
-- Edge Function API cagrilari icin fetch tabanli istemci kodu
-
-### Otomatik Provizyon Akisi
-
-```text
-Kullanici proje olusturur (CreateWebsiteWizard)
-    |
-    v
-projects tablosuna INSERT
-    |
-    v
-DB Trigger: profession'a gore appointment_settings INSERT
-    |
-    v
-generate-website edge function cagirilir
-    |
-    v
-convertToChaiBlocks: AppointmentBooking bloku otomatik eklenir
-    |
-    v
-Editor'de randevu bolumu gorunur (duzenlenebilir)
-    |
-    v
-Yayinlama: deploy-to-netlify icinde randevu HTML + JS render edilir
-```
-
-- Veritabani trigger'i `AFTER INSERT ON projects` tetiklenir
-- Profession alanina bakilir, uygun varsayilan ayarlarla `appointment_settings` satiri olusturulur
-- Kullanici isterse daha sonra dashboard'dan ayarlari duzenler veya sistemi kapatir
-
-### Kullanici Sonradan Duzenleme Senaryolari
-
-1. **Calisma saatlerini degistirme**: Dashboard -> Randevular -> Ayarlar -> Saat/gun duzenleme
-2. **Slot suresini degistirme**: 30dk -> 60dk gibi (mevcut randevular etkilenmez)
-3. **Sistemi kapatma**: `is_enabled = false` yapilir, siteye gomulu blok gizlenir
-4. **Tatil ekleme**: Belirli tarihleri `blocked_slots` ile kapatma
-5. **Oglen arasi ekleme/kaldirma**: Ayarlardan `lunch_break_start/end` duzenleme
-
-## Uygulama Sirasi
-
-1. Veritabani tablolari + RLS + trigger (migration)
-2. `book-appointment` edge function (slot sorgulama + randevu olusturma)
-3. `manage-appointments` edge function (yonetim API)
-4. `AppointmentBooking` ChaiBuilder bloku (site icine gomulu form)
-5. `convertToChaiBlocks` guncelleme (otomatik blok ekleme)
-6. `deploy-to-netlify` guncelleme (yayinlanan siteye gomme)
-7. Dashboard randevu yonetim paneli
-8. `public_projects` gorunumu guncelleme
-
+Mevcut yapi `appointment_settings` -> `project_id` ile baglidir. Gelecekte:
+- `staff_id` sutunu eklenebilir (nullable, NULL = genel ayar)
+- `day_schedules` zaten kisi bazli farkli programlari destekler
+- `appointments` tablosuna `staff_id` eklenerek hangi personele atandigi izlenebilir
+- Simdilik sutunlar eklenmez ama yapi buna uygun tasarlandi
