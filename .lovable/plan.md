@@ -1,91 +1,105 @@
 
 
-# Template Galerisi Sadeleştirme ve Görsel Önizleme
+# Prompt 3: Mobil Duyarlilik Iyilestirmeleri ve Animasyon Optimizasyonu
 
 ## Ozet
 
-Template registry'den pilates1 haricindeki tum template'ler kaldirilacak. Galeri overlay'inde template kartina tiklandiginda, template'in gercek React bilesenlerinin render edilmis bir goruntusu (canli onizleme) gosterilecek.
+Template galerisi overlay'i ve onizleme banner'i su anda sadece masaustu icin optimize edilmis durumda. Bu prompt'ta her iki bileseni mobil ve tablet ekranlar icin uyumlu hale getirecek, animasyonlari performans acisindan iyilestirecek ve dokunmatik etkilesimi gelistirecegiz.
 
-## Adim 1: Template Registry Sadeleştirme
+## Degisiklikler
 
-### `src/templates/index.ts`
+### 1. TemplateGalleryOverlay.tsx - Mobil Uyumluluk
 
-- temp1 ~ temp9, gith1, gith2, gith3 tum kayitlar kaldirilacak
-- Sadece `pilates1` kalacak
-- Kullanilmayan import'lar (showcase goerselleri, template bilesenleri) temizlenecek
-- `DEFAULT_TEMPLATE_ID` -> `'pilates1'` olacak
-- `getTemplate()` fallback'i `pilates1` olacak
-- `selectTemplate()` her zaman `'pilates1'` donecek
+**Sorunlar:**
+- Kartlar sabit 280px genislikte, mobilde ekrani tasiriyor
+- Header padding'leri mobilde buyuk
+- Yatay scroll alani mobilde yeterli alan birakmiyar
+- Canli template render (1200px scaled) mobilde gereksiz agir
 
-**Registry sonrasi hali (tek kayit):**
-```
-pilates1 -> PilatesTemplate (preview: template-pilates.jpg)
-```
+**Cozumler:**
 
-### `src/components/chai-builder/themes/presets.ts`
+- Kart genisligini responsive yap: mobilde ~200px, tablette ~240px, masaustunde 280px
+- Mobilde canli render yerine statik preview gorseli kullan (performans icin)
+- Header padding'lerini responsive yap: `px-4 md:px-6`
+- Kartlar arasi boslugu responsive yap: `gap-3 md:gap-5`
+- Touch scroll icin `-webkit-overflow-scrolling: touch` ekle
+- Kart hover overlay'ini mobilde `opacity-100` yap (hover olmadigi icin her zaman gorunsun, kucuk bir "Onizle" butonu)
+- Mobilde scroll snap ekle: `scroll-snap-type: x mandatory`, her kart `scroll-snap-align: start`
 
-- `templateToPreset` mapping'ine `pilates1` eklenmeli (simdiki haliyle eksik)
-- Pilates icin uygun preset tanimlanacak (warm tonlar, Playfair Display + DM Sans)
+**Mobil kart davranisi:**
+- Hover yerine, her kartın altindaki bilgi alanina kucuk bir "Onizle" butonu eklenir
+- "Kullanilan" badge'i boyutu kucultulur
 
-### `supabase/functions/generate-website/index.ts`
+### 2. TemplatePreviewBanner.tsx - Mobil Uyumluluk
 
-- `selectTemplate()` fonksiyonu `'pilates1'` donecek sekilde guncellenecek
+**Sorunlar:**
+- Banner icerigi `flex items-center justify-between` ile tek satira sikistiriliyor
+- Mobilde ikon + metin + 2 buton sığmıyor
+- Font boyutlari ve padding'ler buyuk
 
-## Adim 2: Galeri Overlay'inde Canli Template Onizlemesi
+**Cozumler:**
 
-### `src/components/chai-builder/TemplateGalleryOverlay.tsx`
+- Mobilde layout'u dikey yap: ust satir ikon + template adi, alt satir butonlar
+- `flex-wrap` ile tasmayi onle
+- Buton boyutlarini mobilde kucult
+- Eye ikonu mobilde gizle, sadece metin goster
+- `py-2 md:py-3` ve `px-3 md:px-4` responsive padding
 
-Su an kartlar sadece statik `preview` gorselini gosteriyor. Bunu gelistirmek icin:
+### 3. Animasyon Optimizasyonlari
 
-1. **Kart icine canli render**: Template'in React bilesenini kucuk bir iframe/scale-down container icinde render et
-2. **Yaklasim**: `iframe` yerine CSS `transform: scale()` ile kucultulmus bir container kullanilacak
-   - Template bilesenini ~1200px genislikte render et
-   - `transform: scale(0.23)` ile kartin icine sigdir (280px / 1200px)
-   - `pointer-events: none` ile etkilesimi engelle
-   - `overflow: hidden` ile tasmalari gizle
+**Overlay giris/cikis:**
+- Mevcut: `x: '-100%' -> '0%'` (tum sayfa kaydirma, mobilde agir olabilir)
+- Iyilestirme: `will-change: transform` ekle, mobilde `opacity` ile birlikte kullan
+- `transition` suresini mobilde biraz kisalt (250ms)
 
-```text
-+------- 280px kart --------+
-| +---- 1200px scaled ----+ |
-| |                        | |
-| |  [Template tam render] | |  <- scale(0.23), pointer-events:none
-| |                        | |
-| |                        | |
-| +------------------------+ |
-+----------------------------+
-Template Adi
-Kategori
-```
+**Kart hover:**
+- `group-hover:scale-[1.02]` yerine `transform: translateY(-2px)` kullan (daha hafif)
+- `will-change: transform, box-shadow` ekle
 
-3. **Dummy content**: Template'e verilecek icerik, projenin `generated_content`'inden alinacak. Eger yoksa, varsayilan Turkce demo icerik olusturulacak.
-4. **Fallback**: Render basarisiz olursa statik `preview` gorseli gosterilecek (ErrorBoundary ile)
+**Banner:**
+- Banner'a giris animasyonu ekle: yukaridan asagi `translateY(-100%) -> 0` ile 200ms
 
-### Teknik uygulama detaylari:
+### 4. Safe Area ve Touch Destegi
 
-- `TemplateGalleryOverlay` icinde `generated_content`'i prop olarak alacak (ChaiBuilderWrapper'dan)
-- Her kart icin template bilesenini `React.lazy` + `Suspense` ile yukleyecek
-- Container: `width: 1200px, height: 2000px` -> `transform: scale(0.23) translateOrigin: top left`
-- Kart boyutu 280px genislik, 3:5 oran korunacak
-
-### `src/components/chai-builder/ChaiBuilderWrapper.tsx`
-
-- `TemplateGalleryOverlay`'e `generatedContent` prop'u gecilecek (DB'den okunan `generated_content`)
-- Mevcut preview akisi (Prompt 2'de eklenen) aynen korunacak
+- Overlay: `padding-top: env(safe-area-inset-top)` (notch'lu telefonlar)
+- Scroll alani: `padding-bottom: env(safe-area-inset-bottom)`
+- Kartlara `touch-action: pan-x` ekle (yatay swipe'i kolaylastir)
+- Scroll container'a `overscroll-behavior-x: contain` ekle (sayfa scroll'unu engelle)
 
 ## Dosya Degisiklikleri Ozeti
 
 | Dosya | Islem | Aciklama |
 |-------|-------|----------|
-| `src/templates/index.ts` | Guncelle | Sadece pilates1 kalacak, diger kayitlar ve import'lar kaldirilacak |
-| `src/components/chai-builder/themes/presets.ts` | Guncelle | pilates1 preset ekleme, templateToPreset guncelleme |
-| `src/components/chai-builder/TemplateGalleryOverlay.tsx` | Guncelle | Canli template render, scale-down container |
-| `src/components/chai-builder/ChaiBuilderWrapper.tsx` | Guncelle | generatedContent prop gecisi |
-| `supabase/functions/generate-website/index.ts` | Guncelle | selectTemplate -> 'pilates1' |
+| `TemplateGalleryOverlay.tsx` | Guncelle | Responsive kart boyutlari, mobil scroll snap, touch destegi, mobilde statik gorsel |
+| `TemplatePreviewBanner.tsx` | Guncelle | Responsive layout, mobilde dikey yigilma, kucuk butonlar |
 
-## Dikkat Edilecekler
+## Teknik Detaylar
 
-- `WebsitePreview.tsx` hala `getTemplate()` kullaniyor -- fallback pilates1 olacagi icin calismaya devam edecek
-- `ChangeTemplateModal.tsx` (legacy) dokunulmayacak, zaten kullanilmiyor
-- Mevcut projelerde `template_id` olarak temp1 vb. kayitli olabilir -- `getTemplate()` fallback'i ile pilates1'e yonlendirilecek
-- Template dosyalari (src/templates/temp1, temp2, vb.) su an silinmeyecek (diger referanslar olabilir), sadece registry'den cikarilacak
+### TemplateGalleryOverlay.tsx Degisiklikleri
+
+```text
+Responsive kart boyutlari:
+- Mobil (<640px):  CARD_WIDTH = 200, canli render YOK (statik gorsel)
+- Tablet (640-1024px): CARD_WIDTH = 240, canli render VAR
+- Masaustu (>1024px): CARD_WIDTH = 280, canli render VAR
+```
+
+- `useIsMobile()` hook'u import edilecek (mevcut `src/hooks/use-mobile.tsx`)
+- Ek olarak tablet kontrolu icin `window.innerWidth` kullanilacak
+- Mobilde `TemplateCard` icinde `TemplateComponent` yerine `<img src={template.preview}>` render edilecek
+- Scroll container'a `scroll-snap-type: x mandatory` ve kartlara `scroll-snap-align: start` eklenecek
+- Mobilde hover overlay kaldirilacak, bunun yerine kart altina kucuk "Onizle" butonu eklenecek
+
+### TemplatePreviewBanner.tsx Degisiklikleri
+
+```text
+Masaustu:  [Eye] Onizleniyor: Template Adi     [Iptal] [Uygula]
+Mobil:     Onizleniyor: Template Adi
+           [Iptal] [Uygula]
+```
+
+- `flex-col sm:flex-row` ile responsive layout
+- Butonlar: `w-full sm:w-auto` ile mobilde tam genislik
+- `py-2 sm:py-3` responsive padding
+- Eye ikonu: `hidden sm:flex` ile mobilde gizle
 
