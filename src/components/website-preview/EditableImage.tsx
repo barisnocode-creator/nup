@@ -139,7 +139,7 @@ export function EditableImage({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                    className="p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700"
                     onClick={(e) => handleActionClick(e, () => onSelect?.({
                       type, index, imagePath, currentUrl: src, altText: alt, positionX, positionY,
                     }))}
@@ -155,7 +155,7 @@ export function EditableImage({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      className="p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                      className="p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700"
                       onClick={(e) => handleActionClick(e, onRegenerate)}
                     >
                       <Wand2 className="w-3.5 h-3.5" />
@@ -171,7 +171,7 @@ export function EditableImage({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        "p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-700",
+                        "p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700",
                         isFirst && "opacity-40 pointer-events-none"
                       )}
                       onClick={(e) => handleActionClick(e, onMoveUp)}
@@ -190,7 +190,7 @@ export function EditableImage({
                   <TooltipTrigger asChild>
                     <button
                       className={cn(
-                        "p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-700",
+                        "p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700",
                         isLast && "opacity-40 pointer-events-none"
                       )}
                       onClick={(e) => handleActionClick(e, onMoveDown)}
@@ -215,7 +215,7 @@ export function EditableImage({
                     <TooltipTrigger asChild>
                       <DropdownMenuTrigger asChild>
                         <button
-                          className="p-1.5 rounded-md hover:bg-gray-100 transition-colors text-gray-700"
+                          className="p-1.5 rounded-md hover:bg-gray-100 hover:shadow-sm active:scale-95 transition-all text-gray-700"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MoreHorizontal className="w-3.5 h-3.5" />
@@ -241,7 +241,7 @@ export function EditableImage({
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-600"
+                          className="text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-600 active:scale-[0.98] transition-transform"
                           onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
