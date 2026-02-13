@@ -322,6 +322,10 @@ export function ChaiBuilderWrapper({
             htmlDir="ltr"
             layout={isMobileView ? MobileEditorLayout : DesktopEditorLayout}
             smallScreenComponent={() => null}
+            onError={(error: any) => {
+              console.error('ChaiBuilder Error:', error);
+              toast.error('Editörde bir hata oluştu. Sayfayı yenileyin.');
+            }}
             flags={{
               darkMode: true,
               dragAndDrop: !isMobileView,
