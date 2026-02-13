@@ -1,152 +1,178 @@
 
-
-# Randevu Talep Formu Sistemi
+# Randevularim Dashboard Paneli - Gelismis Takvim ve Yonetim Sistemi
 
 ## Mevcut Durum
 
-Simdi randevu formu sabit 4 alandan olusuyor: Ad (zorunlu), E-posta (zorunlu), Telefon (opsiyonel), Not (opsiyonel). Hizmet saglayicisi bu alanlari ozellestiremez, yeni alan ekleyemez, sira degistiremez. Gizlilik onayi ve spam korunmasi yok.
+Simdi `AppointmentsPanel.tsx` (801 satir) basit bir liste gorunumunde randevulari gosteriyor. 5 sekmeli bir yapi var: Randevular (duz liste), Form Alanlari, Ayarlar, Haftalik Program, Kapali Gunler. Takvim gorunumu, arama/filtreleme, manuel randevu olusturma ve dahili not ozellikleri yok.
 
-## Yeni Veri Yapisi
+Sidebar'da "Randevular" (`CalendarCheck` ikonu) zaten `/project/:id/appointments` rotasina bagli ve `DashboardSidebar.tsx`'de mevcut.
 
-### appointment_settings tablosuna yeni JSONB sutunu: `form_fields`
+## Yeni Ozellikler
 
+### 1. Takvim Gorunumleri (Aylik / Haftalik / Gunluk / Liste)
+
+Mevcut "Randevular" sekmesi yerine 4 alt gorunum butonu eklenecek:
+
+**Aylik Gorunum:**
+- 7x5 veya 7x6 grid (haftanin gunleri x haftalar)
+- Her hucrede o gune ait randevu sayisi ve renk kodlu durum gostergesi
+- Kapali gunler ve tatiller gri/cizgili arka plan ile isaretlenir
+- Gune tiklaninca gunluk gorunume gecer
+
+**Haftalik Gorunum:**
+- 7 sutunlu zaman cizelgesi (saat satirlari sol tarafta, gunler ust tarafta)
+- Randevular saat dilimlerine gore yerlestirilmis kutucuklar olarak gosterilir
+- Mola saatleri ve kapali slotlar gorunur sekilde isaretlenir
+- Renk kodlari: bekleyen=sari, onayli=yesil, iptal=kirmizi, bloklu=gri
+
+**Gunluk Gorunum:**
+- Tek gunun tam zaman cizelgesi (orn: 08:00-20:00 arasi her slot)
+- Dolu slotlar musteri bilgileriyle gosterilir
+- Bos slotlar tiklanabilir (manuel randevu olusturma icin)
+
+**Ajanda/Liste Gorunumu:**
+- Mevcut liste gorunumunun gelistirilmis hali
+- Tarihe gore gruplandirma (Bugun, Yarin, Bu Hafta, Gelecek Hafta vb.)
+- Kart tasarimi korunur
+
+### 2. Arama ve Filtreleme
+
+Tum gorunumlerin ustune bir toolbar eklenir:
+- **Arama**: Musteri adi, e-posta veya telefona gore arama (client-side filter)
+- **Durum filtresi**: Tumu / Bekleyen / Onayli / Iptal (multi-select badge butonlari)
+- **Tarih araligi**: Baslangic-Bitis tarih secici
+
+### 3. Manuel Randevu Olusturma
+
+Gunluk gorunumde bos slota tiklandiginda veya "+" butonuyla acilan bir dialog:
+- Tarih ve saat secimi (musait slotlardan)
+- Musteri bilgileri (ad, e-posta, telefon, not)
+- Durum secimi (direkt "confirmed" olarak olusturulabilir)
+- `manage-appointments` edge function'a yeni bir `POST` action eklenir (`action: "create_appointment"`)
+
+### 4. Dahili Notlar (Internal Notes)
+
+Veritabanindaki `appointments` tablosuna `internal_note` (text, nullable) sutunu eklenir.
+- Sadece hizmet saglayici gorebilir (musteri goremez)
+- Randevu kartinda kucuk bir not ikonu ile gosterilir
+- Tiklaninca inline edit yapilabilir
+- `manage-appointments` PATCH handler'a `internal_note` guncelleme destegi eklenir
+
+### 5. Kisisel Ajanda Notlari
+
+Veritabanina yeni `agenda_notes` tablosu:
 ```text
-form_fields yapisi:
-[
-  { "id": "client_name", "type": "text", "label": "Adiniz", "required": true, "system": true, "order": 0 },
-  { "id": "client_email", "type": "email", "label": "E-posta", "required": true, "system": true, "order": 1 },
-  { "id": "client_phone", "type": "tel", "label": "Telefon", "required": false, "system": false, "order": 2 },
-  { "id": "subject", "type": "text", "label": "Konu", "required": false, "system": false, "order": 3 },
-  { "id": "client_note", "type": "textarea", "label": "Not", "required": false, "system": false, "order": 4 }
-]
+agenda_notes:
+  id (uuid, PK)
+  project_id (uuid, NOT NULL)
+  user_id (uuid, NOT NULL)
+  note_date (date, NOT NULL)
+  content (text, NOT NULL)
+  created_at (timestamptz)
+  updated_at (timestamptz)
 ```
 
-Her alan icin:
-- `id`: Benzersiz anahtar (veritabanina kaydedilirken kullanilir)
-- `type`: text, email, tel, textarea, select, checkbox
-- `label`: Kullaniciya gosterilecek etiket
-- `required`: Zorunlu mu
-- `system`: true ise silinemez (client_name ve client_email)
-- `order`: Siralama
-- `placeholder`: Opsiyonel yer tutucu metin
-- `options`: select tipi icin secenek listesi (ornek: ["Bireysel", "Kurumsal"])
+- Takvim gorunumlerinde gune ait notlar kucuk bir ikon ile gosterilir
+- Gunluk gorunumde notlar randevularin altinda listelenir
+- Not ekleme/duzenleme/silme islemi `manage-appointments` edge function uzerinden yapilir
 
-### appointments tablosuna yeni JSONB sutunu: `form_data`
+### 6. Calisma Saatleri Hizli Erisim
 
-Musterinin doldurdugu tum form verilerini saklar. Sabit alanlar (client_name, client_email, client_phone, client_note) mevcut sutunlarda kalir, ozel alanlar `form_data` JSONB'ye yazilir.
+Haftalik Program sekmesi mevcut, ancak takvim gorunumlerinden de hizli erisim butonu eklenir:
+- Takvim toolbar'inda "Calisma Saatleri" ikonu
+- Tiklaninca mevcut Haftalik Program sekmesini acar
 
-```text
-form_data ornegi:
-{
-  "subject": "Dis beyazlatma",
-  "pre_session_notes": "Onceki tedavim var",
-  "custom_field_1": "Deger"
-}
-```
+## Veritabani Degisiklikleri
 
-### Gizlilik onayi: `consent_text` ve `consent_required`
-
-`appointment_settings` tablosuna 2 alan daha:
-- `consent_text` (text, nullable): "Kisisel verilerinizin islenmesini kabul ediyorum" gibi
-- `consent_required` (boolean, default true): Onay kutusu zorunlu mu
-
-### Anti-spam: Honeypot + zaman kontrolu
-
-Captcha yerine iki katmanli koruma:
-1. **Honeypot alani**: Gorunmez bir input, botlar doldurursa istek reddedilir
-2. **Zaman kontrolu**: Form acilma suresi 3 saniyeden kisa ise (bot hizi) reddedilir
-
-## Sektor Bazli Varsayilan Form Alanlari
-
-`auto_provision_appointment_settings` trigger'i guncellenecek. Her sektor icin farkli varsayilan form alanlari olusturulacak:
+### Migration
 
 ```text
-health (doktor/psikolog):
-  + "Sikayet / Belirti" (textarea, zorunlu)
-  + "Onceki tedavi var mi?" (select: Evet/Hayir)
-
-service (danismanlik):
-  + "Konu" (text)
-  + "Sirket Adi" (text)
-
-food (restoran):
-  + "Kisi Sayisi" (select: 1-2, 3-4, 5-6, 7+)
-  + "Ozel Istek" (textarea)
-
-creative (tasarim):
-  + "Proje Turu" (select: Logo, Web, Sosyal Medya, Diger)
-  + "Brifing Notu" (textarea)
-
-technology:
-  + "Konu" (text)
-
-other (varsayilan):
-  + "Konu" (text)
-  + "Not" (textarea)
+1. appointments tablosuna internal_note (text, nullable) sutunu ekle
+2. agenda_notes tablosu olustur (id, project_id, user_id, note_date, content, created_at, updated_at)
+3. agenda_notes icin RLS politikalari:
+   - SELECT/INSERT/UPDATE/DELETE: auth.uid() = user_id
+4. agenda_notes icin user_owns_project kontrolu
 ```
 
-## Dosya Degisiklikleri
+### Edge Function Guncellemeleri (manage-appointments)
 
-### 1. Veritabani (Migration)
+```text
+PATCH handler'a:
+  - internal_note guncelleme destegi
 
-- `appointment_settings` tablosuna `form_fields` (JSONB), `consent_text` (text), `consent_required` (boolean) ekle
-- `appointments` tablosuna `form_data` (JSONB), `consent_given` (boolean) ekle
-- `auto_provision_appointment_settings` trigger fonksiyonunu guncelle (sektor bazli form_fields)
+POST handler'a:
+  - action: "create_appointment" -> tarih, saat, musteri bilgileri, durum ile yeni randevu olusturma
+  - action: "create_note" -> ajanda notu ekleme
+  - action: "update_note" -> ajanda notu guncelleme
+  - action: "delete_note" -> ajanda notu silme
+  - Mevcut blocked_date mantigi "block_date" action'i altina alinir (geriye uyumlu)
 
-### 2. book-appointment Edge Function
+GET handler'a:
+  - type=notes -> belirli tarih araligindaki ajanda notlarini getir
+  - type=appointments'a date_from, date_to parametreleri eklenir (takvim gorunumleri icin tarih araligina gore sorgulama)
+```
 
-- POST handler'a `form_data`, `consent_given`, `honeypot`, `form_loaded_at` alanlari ekle
-- Honeypot dolu ise 200 OK dondur (botu yaniltma)
-- `form_loaded_at` ile suanki zaman farki < 3sn ise reddet
-- `consent_required=true` ise `consent_given` kontrolu yap
-- `form_fields` uzerinden zorunlu alan validasyonu yap (required=true olan alanlar bos mu?)
-- Ozel alan verilerini `form_data` JSONB'ye kaydet
+## UI Bilesenlerinin Yapilandirilmasi
 
-### 3. manage-appointments Edge Function
+Mevcut `AppointmentsPanel.tsx` (801 satir) cok buyuk oldugu icin alt bilesenler olarak ayrilacak:
 
-- PUT'a `form_fields`, `consent_text`, `consent_required` alanlari ekle
-- GET appointments ciktisina `form_data` dahil et
+```text
+src/components/dashboard/appointments/
+  AppointmentsPanel.tsx        -> Ana konteyner (tab yonetimi, veri cekme)
+  CalendarToolbar.tsx           -> Gorunum secici, arama, filtreler
+  MonthlyView.tsx               -> Aylik takvim grid'i
+  WeeklyView.tsx                -> Haftalik zaman cizelgesi
+  DailyView.tsx                 -> Gunluk detay gorunumu
+  AgendaView.tsx                -> Liste/ajanda gorunumu
+  AppointmentCard.tsx           -> Tekil randevu karti (tum gorunumlerde kullanilir)
+  AppointmentDetailModal.tsx    -> Randevu detay dialog'u (not ekleme, durum degistirme)
+  CreateAppointmentModal.tsx    -> Manuel randevu olusturma dialog'u
+  AgendaNoteEditor.tsx          -> Ajanda notu ekleme/duzenleme
+  SettingsTab.tsx               -> Mevcut Ayarlar sekmesi (tasindi)
+  ScheduleTab.tsx               -> Mevcut Haftalik Program sekmesi (tasindi)
+  BlockedDatesTab.tsx           -> Mevcut Kapali Gunler sekmesi (tasindi)
+  FormFieldsTab.tsx             -> Mevcut Form Alanlari sekmesi (tasindi)
+```
 
-### 4. AppointmentBooking.tsx (ChaiBuilder bloku)
+## Sidebar Entegrasyon Modeli
 
-- Tarih+saat secildikten sonra formu goster
-- Slot sorgulamayla birlikte `form_fields` verisini de cek (GET response'a ekle)
-- `form_fields` dizisini `order` sirasina gore render et
-- Her alan tipine uygun input bileseni olustur (text, email, tel, textarea, select)
-- Honeypot alani ekle (CSS ile gizli)
-- Form yuklenme zamanini kaydet (hidden field)
-- `consent_required` ise checkbox goster, isaretlenmeden gonderimi engelle
+Mevcut sidebar'da "Randevular" zaten var. Degisiklik gerektirmez. Rota `/project/:id/appointments` korunur.
 
-### 5. AppointmentsPanel.tsx (Dashboard)
+## Randevu Durum Yasam Dongusu
 
-- Yeni **Form Alanlari** sekmesi ekle
-- Mevcut alanlari listele (surukleme ile siralama - hello-pangea/dnd zaten yuklu)
-- Yeni alan ekleme formu: Label, Tip, Zorunlu, Placeholder, Secenekler
-- Sistem alanlarini (client_name, client_email) silinemez olarak goster
-- Gizlilik metni duzenleyicisi
-- Randevu detayinda `form_data` icerigini goster
+```text
+pending -> confirmed (onay)
+pending -> cancelled (red)
+confirmed -> cancelled (iptal)
+cancelled -> pending (yeniden aktif etme - yeni ozellik)
+Manuel olusturma: direkt "confirmed" veya "pending"
+```
 
-### 6. deploy-to-netlify (Yayinlanan site)
+## Slot Bloklama Mekanigi
 
-- `renderAppointmentBooking` fonksiyonunu guncelle
-- Dinamik form alanlarini render et
-- Honeypot + zaman kontrolu JavaScript'i ekle
-- Gizlilik onay kutusunu ekle
+Mevcut sistem korunur:
+- Takvim gorunumlerinde bloklu gunler/saatler gorunur isaretlenir
+- Aylik gorunumde bloklu gunler gri arka plan
+- Haftalik/Gunluk gorunumde bloklu saat dilimleri cizgili desen
+- Tatil gunleri ozel ikon ile gosterilir
 
 ## Uygulama Sirasi
 
-1. Migration: Yeni sutunlar + trigger guncelleme
-2. book-appointment: Form validasyonu + anti-spam + form_data kaydi
-3. manage-appointments: Form alanlari CRUD + consent ayarlari
-4. AppointmentBooking.tsx: Dinamik form render + honeypot + consent
-5. AppointmentsPanel.tsx: Form alanlari yonetim sekmesi + randevu detayinda form_data
-6. deploy-to-netlify: Yayinlanan sitede dinamik form + anti-spam
+1. **Migration**: `internal_note` sutunu + `agenda_notes` tablosu + RLS
+2. **Edge Function**: `manage-appointments` guncellemesi (tarih araligi sorgu, not CRUD, manuel randevu, internal_note)
+3. **Alt bilesenler**: Mevcut kodu parcalayip yeni bilesenler olustur
+4. **Takvim gorunumleri**: Monthly -> Weekly -> Daily -> Agenda sirasinda
+5. **Arama/filtreleme toolbar'i**: Client-side filtreleme
+6. **Manuel randevu olusturma modal**: Dialog + edge function entegrasyonu
+7. **Ajanda not sistemi**: Tablo + CRUD + takvim entegrasyonu
+8. **Internal notes**: Randevu kartina dahili not alani
 
 ## Teknik Notlar
 
-- `system: true` alanlari (client_name, client_email) silinemez ve tipi degistirilemez
-- form_fields NULL ise eski sabit form render edilir (geriye uyumluluk)
-- Surukleme ile siralama icin `@hello-pangea/dnd` kullanilir (proje bagimliliginda mevcut)
-- Select tipi alanlar icin `options` dizisi kullanilir
-- Tum form verileri sanitize edilir (max 500 karakter per alan, HTML strip)
-
+- Takvim gorunumleri tamamen client-side hesaplanir (tarih araligi icin fetch edilen veriler uzerinden)
+- Haftalik/Gunluk gorunumde saat dilimi `settings.timezone` baz alinir
+- Performans icin aylik gorunum sadece o ayin randevularini ceker (`date_from`, `date_to` parametreleri)
+- Arama client-side yapilir (mevcut veri seti uzerinde `filter`)
+- `@hello-pangea/dnd` Form Alanlari sekmesinde kalir, takvim gorunumlerinde kullanilmaz
+- Tum bilesenler mevcut UI kutuphanesini kullanir (shadcn/ui)
+- Haftalik gorunum icin ozel CSS grid kullanilir (7 sutun x 24 satir saat dilimi)
