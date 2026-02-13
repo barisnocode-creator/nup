@@ -22,7 +22,7 @@ export function TemplatePreviewBanner({
             <Eye className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-sm opacity-90">Previewing:</span>
+            <span className="text-sm opacity-90">Önizleniyor:</span>
             <strong className="ml-2 font-semibold">{templateName}</strong>
           </div>
         </div>
@@ -36,7 +36,7 @@ export function TemplatePreviewBanner({
             className="text-white hover:bg-white/20 hover:text-white gap-2"
           >
             <X className="w-4 h-4" />
-            Cancel
+            İptal
           </Button>
           <Button
             size="sm"
@@ -45,7 +45,7 @@ export function TemplatePreviewBanner({
             className="bg-white text-purple-600 hover:bg-gray-100 gap-2 font-semibold"
           >
             <Check className="w-4 h-4" />
-            {isApplying ? 'Applying...' : 'Apply Template'}
+            {isApplying ? 'Uygulanıyor...' : 'Uygula'}
           </Button>
         </div>
       </div>
