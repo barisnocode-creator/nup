@@ -52,6 +52,15 @@ export function ChaiBuilderWrapper({
   const [inlineSwitcherOpen, setInlineSwitcherOpen] = useState(false);
 
   const handleImageSelect = useCallback((url: string) => {
+    // Use the global callback from EditableChaiImage if available
+    if (window.__chaiImageCallback?.setter) {
+      window.__chaiImageCallback.setter(url);
+      window.__chaiImageCallback = undefined;
+      toast.success('Görsel uygulandı!');
+      return;
+    }
+
+    // Fallback: try DOM injection for legacy cases
     const allInputs = document.querySelectorAll('input[type="text"]');
     let injected = false;
     for (const input of allInputs) {
