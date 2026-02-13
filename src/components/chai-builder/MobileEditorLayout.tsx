@@ -25,11 +25,12 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
+import { CustomizePanel } from './CustomizePanel';
 import { useEditorContext } from './EditorContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
-type PanelType = 'outline' | 'add' | 'props' | 'styles' | null;
+type PanelType = 'outline' | 'add' | 'props' | 'styles' | 'customize' | null;
 
 type PanelConfig = {
   key: Exclude<PanelType, null>;
@@ -42,6 +43,7 @@ type PanelConfig = {
 const panels: PanelConfig[] = [
   { key: 'outline', icon: Layers, label: 'Katmanlar', description: 'Sayfa yapısını yönetin', side: 'left' },
   { key: 'add', icon: Plus, label: 'Ekle', description: 'Yeni blok ekleyin', side: 'left' },
+  { key: 'customize', icon: Paintbrush, label: 'Özelleştir', description: 'Siteyi özelleştirin', side: 'left' },
   { key: 'props', icon: Settings2, label: 'Özellikler', description: 'Blok içeriğini düzenleyin', side: 'right' },
   { key: 'styles', icon: Paintbrush, label: 'Stiller', description: 'Görünümü özelleştirin', side: 'right' },
 ];
@@ -208,6 +210,9 @@ export function MobileEditorLayout() {
               {key === 'outline' && <ChaiOutline />}
               {key === 'add' && (
                 <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />
+              )}
+              {key === 'customize' && (
+                <CustomizePanel onClose={() => setActivePanel(null)} />
               )}
               {key === 'props' && <ChaiBlockPropsEditor />}
               {key === 'styles' && <ChaiBlockStyleEditor />}

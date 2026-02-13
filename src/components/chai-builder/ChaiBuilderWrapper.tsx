@@ -138,15 +138,24 @@ export function ChaiBuilderWrapper({
 
   const editorContextValue = useMemo(() => ({
     projectName,
+    projectProfession,
     onDashboard: () => navigate('/dashboard'),
     onPublish,
     onPreview: () => {
-      // Open preview in new tab
-      const subdomain = projectId; // Will resolve via public route
+      const subdomain = projectId;
       window.open(`/site/${subdomain}`, '_blank');
     },
     onImageSearch: () => setImagePickerOpen(true),
-  }), [projectName, navigate, onPublish, projectId]);
+    onRegenerateText: () => {
+      toast.info('Metin yeniden oluşturuluyor...', { duration: 2000 });
+    },
+    onRegenerateWebsite: () => {
+      toast.info('Site yeniden oluşturuluyor...', { duration: 2000 });
+    },
+    onChangeTemplate: () => {
+      toast.info('Şablon değiştirme yakında aktif olacak', { duration: 2000 });
+    },
+  }), [projectName, projectProfession, navigate, onPublish, projectId]);
 
   if (!isReady) {
     return (
