@@ -258,6 +258,36 @@ export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
 // Default theme
 export const defaultTheme: Partial<ChaiThemeValues> = modernProfessionalPreset;
 
+// Wellness Studio (pilates1) - Warm, Terracotta/Cream
+export const wellnessStudioPreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Playfair Display",
+    body: "DM Sans",
+  },
+  borderRadius: "8px",
+  colors: {
+    background: ["#f5ebe0", "#1a1412"],
+    foreground: ["#2d2420", "#f5ebe0"],
+    primary: ["#c4956a", "#d4a57a"],
+    "primary-foreground": ["#ffffff", "#1a1412"],
+    secondary: ["#e8ddd0", "#2d2820"],
+    "secondary-foreground": ["#6b5e54", "#d4cfc6"],
+    muted: ["#e8ddd0", "#2d2820"],
+    "muted-foreground": ["#8b7d72", "#a69d91"],
+    accent: ["#c4956a", "#d4a57a"],
+    "accent-foreground": ["#ffffff", "#1a1412"],
+    destructive: ["#c53030", "#fc8181"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#ddd3c5", "#3d362c"],
+    input: ["#ddd3c5", "#3d362c"],
+    ring: ["#c4956a", "#d4a57a"],
+    card: ["#ffffff", "#221e19"],
+    "card-foreground": ["#2d2420", "#f5ebe0"],
+    popover: ["#ffffff", "#221e19"],
+    "popover-foreground": ["#2d2420", "#f5ebe0"],
+  },
+};
+
 // Export template ID to preset mapping
 export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
   "temp1": modernProfessionalPreset,
@@ -267,6 +297,7 @@ export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
   "gith1": modernSaasPreset,
   "gith2": corporateBluePreset,
   "gith3": minimalDarkPreset,
+  "pilates1": wellnessStudioPreset,
 };
 
 // Re-export the ChaiThemeValues type from SDK

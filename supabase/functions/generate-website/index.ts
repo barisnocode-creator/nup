@@ -54,8 +54,7 @@ interface FormData {
 
 // Template selection logic - automatically picks the best template
 function selectTemplate(_profession: string, _tone?: string): string {
-  // All sectors use temp1 for now
-  return 'temp1';
+  return 'pilates1';
 }
 
 // Sector-specific content instructions
