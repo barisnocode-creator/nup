@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MobileEditorLayout } from './MobileEditorLayout';
 import { DesktopEditorLayout } from './DesktopEditorLayout';
 import { PixabayImagePicker } from './PixabayImagePicker';
+import { InlineImageSwitcher } from './InlineImageSwitcher';
 import { EditorProvider } from './EditorContext';
 import { toast } from 'sonner';
 
@@ -27,6 +28,7 @@ const MIN_EDITOR_WIDTH = 768;
 interface ChaiBuilderWrapperProps {
   projectId: string;
   projectName: string;
+  projectProfession?: string;
   initialBlocks: ChaiBlock[];
   initialTheme?: Partial<ChaiThemeValues>;
   onPublish: () => void;
@@ -35,6 +37,7 @@ interface ChaiBuilderWrapperProps {
 export function ChaiBuilderWrapper({
   projectId,
   projectName,
+  projectProfession = '',
   initialBlocks,
   initialTheme,
   onPublish,
@@ -46,6 +49,7 @@ export function ChaiBuilderWrapper({
     typeof window !== 'undefined' ? window.innerWidth < MIN_EDITOR_WIDTH : false
   );
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [inlineSwitcherOpen, setInlineSwitcherOpen] = useState(false);
 
   const handleImageSelect = useCallback((url: string) => {
     const allInputs = document.querySelectorAll('input[type="text"]');
@@ -88,7 +92,14 @@ export function ChaiBuilderWrapper({
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  // Listen for image picker open events from EditableChaiImage blocks
+  // Listen for inline image switcher events from EditableChaiImage blocks
+  useEffect(() => {
+    const handler = () => setInlineSwitcherOpen(true);
+    window.addEventListener('chai-open-inline-image-switcher', handler);
+    return () => window.removeEventListener('chai-open-inline-image-switcher', handler);
+  }, []);
+
+  // Listen for legacy image picker open events
   useEffect(() => {
     const handler = () => setImagePickerOpen(true);
     window.addEventListener('chai-open-image-picker', handler);
@@ -169,11 +180,19 @@ export function ChaiBuilderWrapper({
         />
 
         {!isMobileView && (
-          <PixabayImagePicker
-            open={imagePickerOpen}
-            onOpenChange={setImagePickerOpen}
-            onSelect={handleImageSelect}
-          />
+          <>
+            <PixabayImagePicker
+              open={imagePickerOpen}
+              onOpenChange={setImagePickerOpen}
+              onSelect={handleImageSelect}
+            />
+            <InlineImageSwitcher
+              isOpen={inlineSwitcherOpen}
+              onClose={() => setInlineSwitcherOpen(false)}
+              onSelect={handleImageSelect}
+              profession={projectProfession}
+            />
+          </>
         )}
       </div>
     </EditorProvider>
