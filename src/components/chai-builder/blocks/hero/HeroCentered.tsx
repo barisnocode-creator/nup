@@ -7,6 +7,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { heroCenteredTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { EditableChaiBackground } from "../shared/EditableChaiImage";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type HeroCenteredProps = {
   styles: ChaiStyles;
@@ -88,15 +89,17 @@ const HeroCenteredBlock = (props: ChaiBlockComponentProps<HeroCenteredProps>) =>
   );
 
   return (
-    <EditableChaiBackground
-      backgroundImage={backgroundImage}
-      className={`relative min-h-[700px] flex items-center justify-center ${s.bgColor} overflow-hidden`}
-      inBuilder={inBuilder}
-    >
-      <section {...blockProps} className="contents">
-        {innerContent}
-      </section>
-    </EditableChaiBackground>
+    <TooltipProvider>
+      <EditableChaiBackground
+        backgroundImage={backgroundImage}
+        className={`relative min-h-[700px] flex items-center justify-center ${s.bgColor} overflow-hidden`}
+        inBuilder={inBuilder}
+      >
+        <section {...blockProps} className="contents">
+          {innerContent}
+        </section>
+      </EditableChaiBackground>
+    </TooltipProvider>
   );
 };
 
