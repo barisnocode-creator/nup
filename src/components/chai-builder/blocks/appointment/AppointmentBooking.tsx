@@ -66,12 +66,13 @@ const StepIndicator = ({ currentStep }: { currentStep: number }) => {
 };
 
 // Date strip component
-const DateStrip = ({ dates, selectedDate, onSelect, weekOffset, onWeekChange }: {
+const DateStrip = ({ dates, selectedDate, onSelect, weekOffset, onWeekChange, unavailableDates }: {
   dates: string[];
   selectedDate: string;
   onSelect: (d: string) => void;
   weekOffset: number;
   onWeekChange: (dir: number) => void;
+  unavailableDates: Set<string>;
 }) => {
   const visibleDates = dates.slice(weekOffset * 7, weekOffset * 7 + 7);
   return (
@@ -95,17 +96,21 @@ const DateStrip = ({ dates, selectedDate, onSelect, weekOffset, onWeekChange }: 
           const dayName = dateObj.toLocaleDateString("tr-TR", { weekday: "short" });
           const dayNum = dateObj.getDate();
           const isSelected = selectedDate === d;
+          const isUnavailable = unavailableDates.has(d);
           return (
-            <button key={d} type="button" onClick={() => onSelect(d)}
+            <button key={d} type="button" onClick={() => !isUnavailable && onSelect(d)}
+              disabled={isUnavailable}
               className={`flex flex-col items-center py-3 px-1 rounded-xl transition-all duration-200 ${
-                isSelected
-                  ? "bg-primary text-primary-foreground shadow-lg scale-105"
-                  : "hover:bg-muted border border-transparent hover:border-border"
+                isUnavailable
+                  ? "opacity-40 cursor-not-allowed"
+                  : isSelected
+                    ? "bg-primary text-primary-foreground shadow-lg scale-105"
+                    : "hover:bg-muted border border-transparent hover:border-border"
               }`}>
-              <span className={`text-[10px] uppercase tracking-wider mb-1 ${isSelected ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              <span className={`text-[10px] uppercase tracking-wider mb-1 ${isSelected && !isUnavailable ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {dayName}
               </span>
-              <span className={`text-lg font-semibold ${isSelected ? "" : "text-foreground"}`}>{dayNum}</span>
+              <span className={`text-lg font-semibold ${isUnavailable ? "line-through text-muted-foreground" : isSelected ? "" : "text-foreground"}`}>{dayNum}</span>
             </button>
           );
         })}
@@ -113,6 +118,15 @@ const DateStrip = ({ dates, selectedDate, onSelect, weekOffset, onWeekChange }: 
     </div>
   );
 };
+
+// Skeleton for time slots loading
+const SlotsSkeleton = () => (
+  <div className="grid grid-cols-3 gap-2">
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div key={i} className="h-10 rounded-full bg-muted animate-pulse" />
+    ))}
+  </div>
+);
 
 const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBookingProps>) => {
   const { 
@@ -139,6 +153,9 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
   const [consentText, setConsentText] = useState<string | null>(null);
   const [consentChecked, setConsentChecked] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [unavailableDates, setUnavailableDates] = useState<Set<string>>(new Set());
+  const [checkedWeeks, setCheckedWeeks] = useState<Set<number>>(new Set());
   const formLoadedAt = useRef<string>("");
 
   const currentStep = !selectedDate ? 1 : !selectedSlot ? 2 : 3;
@@ -153,6 +170,38 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
     }
     return result;
   }, []);
+
+  // Weekly availability check
+  useEffect(() => {
+    if (inBuilder) return;
+    if (checkedWeeks.has(weekOffset)) return;
+    const projectId = (window as any).__PROJECT_ID__;
+    const supabaseUrl = (window as any).__SUPABASE_URL__;
+    if (!projectId || !supabaseUrl) return;
+
+    const visibleDates = dates.slice(weekOffset * 7, weekOffset * 7 + 7);
+    if (visibleDates.length === 0) return;
+
+    setCheckedWeeks(prev => new Set(prev).add(weekOffset));
+
+    Promise.allSettled(
+      visibleDates.map(d =>
+        fetch(`${supabaseUrl}/functions/v1/book-appointment?project_id=${projectId}&date=${d}`)
+          .then(r => r.json())
+          .then(data => ({ date: d, slots: data.slots || [] }))
+      )
+    ).then(results => {
+      const newUnavailable = new Set(unavailableDates);
+      results.forEach(r => {
+        if (r.status === "fulfilled" && r.value.slots.length === 0) {
+          newUnavailable.add(r.value.date);
+        } else if (r.status === "rejected") {
+          // treat failed fetches as unavailable
+        }
+      });
+      setUnavailableDates(newUnavailable);
+    });
+  }, [weekOffset, dates, inBuilder, checkedWeeks]);
 
   useEffect(() => {
     if (selectedSlot) formLoadedAt.current = new Date().toISOString();
@@ -206,11 +255,12 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
   const fetchSlots = async (d: string) => {
     setSelectedDate(d);
     setSelectedSlot("");
+    setSlotsLoading(true);
     setAvailableSlots([]);
     setFormFields(null);
     const projectId = (window as any).__PROJECT_ID__;
     const supabaseUrl = (window as any).__SUPABASE_URL__;
-    if (!projectId || !supabaseUrl) return;
+    if (!projectId || !supabaseUrl) { setSlotsLoading(false); return; }
     try {
       const res = await fetch(`${supabaseUrl}/functions/v1/book-appointment?project_id=${projectId}&date=${d}`);
       const data = await res.json();
@@ -220,6 +270,7 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
       setConsentRequired(data.consent_required ?? true);
       setConsentText(data.consent_text || null);
     } catch { setAvailableSlots([]); }
+    setSlotsLoading(false);
   };
 
   const renderFormField = (field: FormField) => {
@@ -350,7 +401,8 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
 
                     {/* Date selection */}
                     <DateStrip dates={dates} selectedDate={selectedDate} onSelect={fetchSlots}
-                      weekOffset={weekOffset} onWeekChange={(dir) => setWeekOffset(Math.max(0, weekOffset + dir))} />
+                      weekOffset={weekOffset} onWeekChange={(dir) => setWeekOffset(Math.max(0, weekOffset + dir))}
+                      unavailableDates={unavailableDates} />
 
                     {/* Time selection */}
                     <AnimatePresence>
@@ -361,7 +413,9 @@ const AppointmentBookingBlock = (props: ChaiBlockComponentProps<AppointmentBooki
                               <Clock className="w-4 h-4 text-primary" />
                               <span className="text-sm font-medium text-foreground">Saat Seçin <span className="text-muted-foreground font-normal">({slotDuration} dk)</span></span>
                             </div>
-                            {availableSlots.length === 0 ? (
+                            {slotsLoading ? (
+                              <SlotsSkeleton />
+                            ) : availableSlots.length === 0 ? (
                               <p className="text-muted-foreground text-sm py-4 text-center">Bu tarihte müsait saat bulunmuyor.</p>
                             ) : (
                               <div className="grid grid-cols-3 gap-2">
