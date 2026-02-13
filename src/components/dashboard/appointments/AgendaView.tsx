@@ -1,7 +1,8 @@
 import React from 'react';
 import { format, isToday, isTomorrow, isThisWeek, addWeeks, isWithinInterval, startOfWeek, endOfWeek } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { Calendar } from 'lucide-react';
+import { Calendar, CalendarPlus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Appointment, FormField } from './types';
 import { AppointmentCard } from './AppointmentCard';
@@ -20,7 +21,6 @@ interface GroupedAppointments {
 
 export function AgendaView({ appointments, formFields, onUpdateStatus, onUpdateInternalNote }: AgendaViewProps) {
   const today = new Date();
-
   const grouped: GroupedAppointments[] = [];
   const todayAppts: Appointment[] = [];
   const tomorrowAppts: Appointment[] = [];
@@ -34,12 +34,12 @@ export function AgendaView({ appointments, formFields, onUpdateStatus, onUpdateI
 
   appointments.forEach(appt => {
     const date = new Date(appt.appointment_date);
-    if (date < today && !isToday(date)) { pastAppts.push(appt); }
-    else if (isToday(date)) { todayAppts.push(appt); }
-    else if (isTomorrow(date)) { tomorrowAppts.push(appt); }
-    else if (isThisWeek(date, { weekStartsOn: 1 })) { thisWeekAppts.push(appt); }
-    else if (isWithinInterval(date, { start: nextWeekStart, end: nextWeekEnd })) { nextWeekAppts.push(appt); }
-    else { laterAppts.push(appt); }
+    if (date < today && !isToday(date)) pastAppts.push(appt);
+    else if (isToday(date)) todayAppts.push(appt);
+    else if (isTomorrow(date)) tomorrowAppts.push(appt);
+    else if (isThisWeek(date, { weekStartsOn: 1 })) thisWeekAppts.push(appt);
+    else if (isWithinInterval(date, { start: nextWeekStart, end: nextWeekEnd })) nextWeekAppts.push(appt);
+    else laterAppts.push(appt);
   });
 
   if (todayAppts.length) grouped.push({ label: 'Bugün', appointments: todayAppts });
@@ -51,10 +51,16 @@ export function AgendaView({ appointments, formFields, onUpdateStatus, onUpdateI
 
   if (grouped.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Randevu bulunamadı</p>
+      <Card className="border-dashed">
+        <CardContent className="py-16 text-center">
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+          >
+            <CalendarPlus className="w-14 h-14 mx-auto text-muted-foreground/40 mb-4" />
+          </motion.div>
+          <p className="text-muted-foreground font-medium">Henüz randevu yok</p>
+          <p className="text-xs text-muted-foreground/60 mt-1">İlk randevunuzu oluşturmak için "Randevu" butonuna tıklayın</p>
         </CardContent>
       </Card>
     );
@@ -62,18 +68,28 @@ export function AgendaView({ appointments, formFields, onUpdateStatus, onUpdateI
 
   return (
     <div className="space-y-6">
-      {grouped.map(group => (
+      {grouped.map((group, groupIdx) => (
         <div key={group.label}>
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{group.label}</h3>
+          <h3 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+            {group.label}
+            <span className="text-muted-foreground/50">({group.appointments.length})</span>
+          </h3>
           <div className="space-y-2">
-            {group.appointments.map(appt => (
-              <AppointmentCard
+            {group.appointments.map((appt, idx) => (
+              <motion.div
                 key={appt.id}
-                appointment={appt}
-                formFields={formFields}
-                onUpdateStatus={onUpdateStatus}
-                onUpdateInternalNote={onUpdateInternalNote}
-              />
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (groupIdx * 0.05) + (idx * 0.04), duration: 0.3 }}
+              >
+                <AppointmentCard
+                  appointment={appt}
+                  formFields={formFields}
+                  onUpdateStatus={onUpdateStatus}
+                  onUpdateInternalNote={onUpdateInternalNote}
+                />
+              </motion.div>
             ))}
           </div>
         </div>
