@@ -11,8 +11,9 @@ import {
 import {
   Home, Paintbrush, FileText, Plus, HelpCircle,
   Settings2, X, PanelRightClose, Eye, Globe,
-  Layers, ImageIcon,
+  Layers, ImageIcon, Monitor, Tablet, Smartphone,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { CustomizePanel } from './CustomizePanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,10 +29,26 @@ export function DesktopEditorLayout() {
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(true);
   const [showCustomize, setShowCustomize] = useState(false);
+  const [screenMode, setScreenMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const customizeRef = useRef<HTMLDivElement>(null);
+  const hiddenScreenRef = useRef<HTMLDivElement>(null);
 
-  const handleToggleRight = useCallback(() => {
-    setShowRight((prev) => !prev);
+  const handleToggleRight = useCallback(() => setShowRight((prev) => !prev), []);
+
+  const cycleScreen = useCallback(() => {
+    const order: Array<'desktop' | 'tablet' | 'mobile'> = ['desktop', 'tablet', 'mobile'];
+    const btnIndex = { desktop: 4, tablet: 2, mobile: 0 }; // nth-child index (0-based) in ChaiScreenSizes
+    setScreenMode((prev) => {
+      const next = order[(order.indexOf(prev) + 1) % 3];
+      // Click the corresponding hidden SDK button
+      setTimeout(() => {
+        const btns = hiddenScreenRef.current?.querySelectorAll('button');
+        if (btns && btns[btnIndex[next]]) {
+          btns[btnIndex[next]].click();
+        }
+      }, 0);
+      return next;
+    });
   }, []);
 
   // Close customize popover on outside click
@@ -138,15 +155,21 @@ export function DesktopEditorLayout() {
         <div className="flex items-center gap-1">
           <ChaiUndoRedo />
 
-          <div className="chai-screen-toggle">
-            <ChaiScreenSizes
-              openDelay={0}
-              canvas={false}
-              tooltip={false}
-              buttonClass="chai-screen-btn"
-              activeButtonClass="chai-screen-btn chai-screen-btn-active"
-            />
+          {/* Hidden SDK screen sizes for programmatic control */}
+          <div ref={hiddenScreenRef} className="chai-screen-hidden">
+            <ChaiScreenSizes openDelay={0} canvas={false} tooltip={false} />
           </div>
+
+          {/* Lovable-style cycling screen button */}
+          <button
+            onClick={cycleScreen}
+            className="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all active:scale-95"
+            title={screenMode === 'desktop' ? 'Show tablet preview' : screenMode === 'tablet' ? 'Show mobile preview' : 'Show desktop preview'}
+          >
+            {screenMode === 'desktop' && <Monitor className="w-4 h-4" />}
+            {screenMode === 'tablet' && <Tablet className="w-4 h-4" />}
+            {screenMode === 'mobile' && <Smartphone className="w-4 h-4" />}
+          </button>
 
           <button
             onClick={handleToggleRight}
