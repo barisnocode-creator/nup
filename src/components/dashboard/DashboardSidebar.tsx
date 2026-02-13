@@ -1,4 +1,4 @@
-import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown, Wand2 } from 'lucide-react';
+import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown, Wand2, CalendarCheck } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -30,6 +30,12 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
       title: 'Website', 
       url: activeProjectId ? `/project/${activeProjectId}/website` : '/dashboard', 
       icon: Globe,
+      disabled: !activeProjectId 
+    },
+    { 
+      title: 'Randevular', 
+      url: activeProjectId ? `/project/${activeProjectId}/appointments` : '/dashboard', 
+      icon: CalendarCheck,
       disabled: !activeProjectId 
     },
     { title: 'Studio', url: '/studio', icon: Wand2 },
