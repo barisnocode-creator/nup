@@ -40,7 +40,7 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
     { title: 'Studio', url: '/studio', icon: Wand2 },
     { 
       title: 'Analytics', 
-      url: activeProjectId ? `/project/${activeProjectId}/analytics` : '/dashboard', 
+      url: activeProjectId ? `/project/${activeProjectId}/analytics` : '/analytics', 
       icon: BarChart3,
     },
     { title: 'Settings', url: '/settings', icon: Settings },
