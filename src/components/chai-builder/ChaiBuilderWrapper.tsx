@@ -12,6 +12,7 @@ import { DesktopEditorLayout } from './DesktopEditorLayout';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { InlineImageSwitcher } from './InlineImageSwitcher';
 import { EditorProvider } from './EditorContext';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
 // Register custom blocks
@@ -169,50 +170,52 @@ export function ChaiBuilderWrapper({
   }
 
   return (
-    <EditorProvider value={editorContextValue}>
-      <div className="h-screen w-screen overflow-hidden relative">
-        <ChaiBuilderEditor
-          pageId={projectId}
-          blocks={initialBlocks}
-          theme={(initialTheme || defaultTheme) as ChaiThemeValues}
-          themePresets={themePresets}
-          onSave={handleSave}
-          autoSave={true}
-          autoSaveActionsCount={5}
-          locale="tr"
-          askAiCallBack={handleAskAi}
-          htmlDir="ltr"
-          layout={isMobileView ? MobileEditorLayout : DesktopEditorLayout}
-          smallScreenComponent={() => null}
-          flags={{
-            darkMode: true,
-            dragAndDrop: !isMobileView,
-            copyPaste: true,
-            exportCode: false,
-            importHtml: !isMobileView,
-            designTokens: !isMobileView,
-          }}
-          gotoPage={({ pageId }) => {
-            navigate(`/project/${pageId}`);
-          }}
-        />
+    <TooltipProvider>
+      <EditorProvider value={editorContextValue}>
+        <div className="h-screen w-screen overflow-hidden relative">
+          <ChaiBuilderEditor
+            pageId={projectId}
+            blocks={initialBlocks}
+            theme={(initialTheme || defaultTheme) as ChaiThemeValues}
+            themePresets={themePresets}
+            onSave={handleSave}
+            autoSave={true}
+            autoSaveActionsCount={5}
+            locale="tr"
+            askAiCallBack={handleAskAi}
+            htmlDir="ltr"
+            layout={isMobileView ? MobileEditorLayout : DesktopEditorLayout}
+            smallScreenComponent={() => null}
+            flags={{
+              darkMode: true,
+              dragAndDrop: !isMobileView,
+              copyPaste: true,
+              exportCode: false,
+              importHtml: !isMobileView,
+              designTokens: !isMobileView,
+            }}
+            gotoPage={({ pageId }) => {
+              navigate(`/project/${pageId}`);
+            }}
+          />
 
-        {!isMobileView && (
-          <>
-            <PixabayImagePicker
-              open={imagePickerOpen}
-              onOpenChange={setImagePickerOpen}
-              onSelect={handleImageSelect}
-            />
-            <InlineImageSwitcher
-              isOpen={inlineSwitcherOpen}
-              onClose={() => setInlineSwitcherOpen(false)}
-              onSelect={handleImageSelect}
-              profession={projectProfession}
-            />
-          </>
-        )}
-      </div>
-    </EditorProvider>
+          {!isMobileView && (
+            <>
+              <PixabayImagePicker
+                open={imagePickerOpen}
+                onOpenChange={setImagePickerOpen}
+                onSelect={handleImageSelect}
+              />
+              <InlineImageSwitcher
+                isOpen={inlineSwitcherOpen}
+                onClose={() => setInlineSwitcherOpen(false)}
+                onSelect={handleImageSelect}
+                profession={projectProfession}
+              />
+            </>
+          )}
+        </div>
+      </EditorProvider>
+    </TooltipProvider>
   );
 }
