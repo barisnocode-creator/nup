@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'; 
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 import { ChaiBuilderEditor, ChaiThemeValues } from '@chaibuilder/sdk';
 import type { ChaiBlock } from '@chaibuilder/sdk/types';
@@ -13,8 +13,11 @@ import { PixabayImagePicker } from './PixabayImagePicker';
 import { InlineImageSwitcher } from './InlineImageSwitcher';
 import { EditorProvider, DEFAULT_FEATURE_FLAGS } from './EditorContext';
 import { TemplateGalleryOverlay } from './TemplateGalleryOverlay';
+import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePreviewBanner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
+import { getTemplateConfig } from '@/templates';
+import { convertGeneratedContentToChaiBlocks, getThemeForTemplate } from './utils/convertToChaiBlocks';
 
 // Register custom blocks
 import './blocks';
@@ -56,6 +59,25 @@ export function ChaiBuilderWrapper({
   const [inlineSwitcherOpen, setInlineSwitcherOpen] = useState(false);
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const currentTemplateId = templateId || 'temp1';
+
+  // Template preview state
+  const [previewBlocks, setPreviewBlocks] = useState<ChaiBlock[] | null>(null);
+  const [previewTheme, setPreviewTheme] = useState<Partial<ChaiThemeValues> | null>(null);
+  const [previewTemplateName, setPreviewTemplateName] = useState<string | null>(null);
+  const [previewTemplateIdState, setPreviewTemplateIdState] = useState<string | null>(null);
+  const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
+
+  // Backup original blocks/theme
+  const originalBlocksRef = useRef<ChaiBlock[]>(initialBlocks);
+  const originalThemeRef = useRef<Partial<ChaiThemeValues> | undefined>(initialTheme);
+
+  // Keep refs in sync when initialBlocks/initialTheme change (e.g. after DB reload)
+  useEffect(() => {
+    if (!previewBlocks) {
+      originalBlocksRef.current = initialBlocks;
+      originalThemeRef.current = initialTheme;
+    }
+  }, [initialBlocks, initialTheme, previewBlocks]);
   const handleImageSelect = useCallback((url: string) => {
     // Use the global callback from EditableChaiImage if available
     if (window.__chaiImageCallback?.setter) {
@@ -121,8 +143,98 @@ export function ChaiBuilderWrapper({
   }, []);
 
   const handleSave = useCallback(async (data: { blocks: ChaiBlock[]; theme?: any; autoSave?: boolean }): Promise<boolean> => {
+    // Prevent auto-save during preview mode
+    if (previewBlocks) return true;
     return await saveToSupabase({ blocks: data.blocks, theme: data.theme });
-  }, [saveToSupabase]);
+  }, [saveToSupabase, previewBlocks]);
+
+  // Template preview handler
+  const handlePreviewTemplate = useCallback(async (selectedTemplateId: string) => {
+    const config = getTemplateConfig(selectedTemplateId);
+    if (!config) {
+      toast.error('Template bulunamadı');
+      return;
+    }
+
+    try {
+      // Fetch generated_content from DB
+      const { data, error } = await supabase
+        .from('projects')
+        .select('generated_content')
+        .eq('id', projectId)
+        .single();
+
+      const content = error ? null : (data?.generated_content as any);
+      
+      // Generate new blocks from content (or fallback empty blocks)
+      const newBlocks = content
+        ? convertGeneratedContentToChaiBlocks(content, selectedTemplateId)
+        : [
+            { _id: `preview_hero_${Date.now()}`, _type: 'HeroCentered', title: 'Hoş Geldiniz', subtitle: '', description: '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
+            { _id: `preview_cta_${Date.now()}`, _type: 'CTABanner', title: 'Hemen Başlayalım', description: 'Sizinle çalışmak için sabırsızlanıyoruz.', buttonText: 'İletişime Geç', buttonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
+          ];
+
+      const newTheme = getThemeForTemplate(selectedTemplateId);
+
+      setPreviewBlocks(newBlocks);
+      setPreviewTheme(newTheme);
+      setPreviewTemplateName(config.name);
+      setPreviewTemplateIdState(selectedTemplateId);
+      setShowTemplateGallery(false);
+    } catch (err) {
+      console.error('Preview error:', err);
+      toast.error('Önizleme yüklenemedi');
+    }
+  }, [projectId]);
+
+  // Apply template handler
+  const handleApplyTemplate = useCallback(async () => {
+    if (!previewBlocks || !previewTheme || !previewTemplateIdState) return;
+
+    setIsApplyingTemplate(true);
+    try {
+      const saved = await saveToSupabase({ blocks: previewBlocks, theme: previewTheme });
+      if (!saved) {
+        toast.error('Template kaydedilemedi. Lütfen tekrar deneyin.');
+        return;
+      }
+
+      // Update template_id in DB
+      const { error } = await supabase
+        .from('projects')
+        .update({ template_id: previewTemplateIdState, updated_at: new Date().toISOString() })
+        .eq('id', projectId);
+
+      if (error) {
+        console.error('Template ID update error:', error);
+      }
+
+      // Update refs to new blocks/theme
+      originalBlocksRef.current = previewBlocks;
+      originalThemeRef.current = previewTheme;
+
+      // Clear preview state
+      setPreviewBlocks(null);
+      setPreviewTheme(null);
+      setPreviewTemplateName(null);
+      setPreviewTemplateIdState(null);
+      
+      toast.success('Template uygulandı!');
+    } catch (err) {
+      console.error('Apply error:', err);
+      toast.error('Template uygulanırken bir hata oluştu.');
+    } finally {
+      setIsApplyingTemplate(false);
+    }
+  }, [previewBlocks, previewTheme, previewTemplateIdState, saveToSupabase, projectId]);
+
+  // Cancel preview handler
+  const handleCancelPreview = useCallback(() => {
+    setPreviewBlocks(null);
+    setPreviewTheme(null);
+    setPreviewTemplateName(null);
+    setPreviewTemplateIdState(null);
+  }, []);
 
   const handleAskAi = useCallback(async (type: 'styles' | 'content', prompt: string, blocks: ChaiBlock[], lang: string) => {
     try {
@@ -177,10 +289,22 @@ export function ChaiBuilderWrapper({
     <TooltipProvider>
       <EditorProvider value={editorContextValue}>
         <div className="h-screen w-screen overflow-hidden relative">
+          {/* Template Preview Banner */}
+          {previewTemplateName && (
+            <div className="absolute top-0 left-0 right-0 z-[90]">
+              <TemplatePreviewBanner
+                templateName={previewTemplateName}
+                onApply={handleApplyTemplate}
+                onCancel={handleCancelPreview}
+                isApplying={isApplyingTemplate}
+              />
+            </div>
+          )}
+
           <ChaiBuilderEditor
             pageId={projectId}
-            blocks={initialBlocks}
-            theme={(initialTheme || defaultTheme) as ChaiThemeValues}
+            blocks={previewBlocks || initialBlocks}
+            theme={(previewTheme || initialTheme || defaultTheme) as ChaiThemeValues}
             themePresets={themePresets}
             onSave={handleSave}
             autoSave={true}
@@ -222,11 +346,8 @@ export function ChaiBuilderWrapper({
           <TemplateGalleryOverlay
             isOpen={showTemplateGallery}
             onClose={() => setShowTemplateGallery(false)}
-            currentTemplateId={currentTemplateId}
-            onPreview={(id) => {
-              console.log('Preview template:', id);
-              setShowTemplateGallery(false);
-            }}
+            currentTemplateId={previewTemplateIdState || currentTemplateId}
+            onPreview={handlePreviewTemplate}
           />
         </div>
       </EditorProvider>
