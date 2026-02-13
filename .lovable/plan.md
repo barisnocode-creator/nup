@@ -1,96 +1,87 @@
 
-# Randevu Sistemi - Kapsamli UI/UX Iyilestirmesi
+# Hero Gorsel Alaka Sorununu Cozme Plani
 
-Mevcut randevu panelini Cal.com ilhamli modern, animasyonlu ve surukle-birak destekli bir sisteme donusturecegiz.
+## Sorun Analizi
 
----
+Uc temel sorun tespit edildi:
 
-## 1. Cal.com Tarzi Modern UI Tasarimi
+1. **Jenerik sektor eslestirme**: "Psikoloji", "Hukuk Bürosu" gibi isletmeler `service` sektorune dusüyor ve "professional business consulting office" gibi alakasiz arama terimleriyle gorsel cekiliyor
+2. **`fetch-images` fonksiyonu AI terimlerini yok sayiyor**: `generate-website` AI'dan isletmeye ozel gorsel arama terimleri (`imageSearchTerms`) uretiyor, ancak `fetch-images` bunlari kullanmiyor - sadece sabit sektor mapping'i kullaniyor
+3. **Eski projeler**: Bazi projelerde hala ~1.8MB base64 gorsel verisi DB'de sakli (eski AI gorsel uretiminden kalan)
 
-### Genel Bakis Kartlari (Overview Cards)
-- Mevcut duz kartlar yerine glassmorphism efektli, gradient arka planli ve hover'da hafif yukari kayma animasyonlu kartlar
-- Her kartta kucuk bir trend gostergesi (ornegin son 7 gune gore artis/azalis oku)
-- Framer Motion ile staggered fade-in animasyonu (kartlar sirayla belirsin)
+## Cozum Plani
 
-### Takvim Gorunum Degistirici
-- Mevcut kucuk butonlar yerine daha buyuk, yumusak koselikli segment control tarzi gorsel degistirici
-- Aktif gorunumde gradient arka plan ve yumusak gecis animasyonu
+### Adim 1: `generate-website` Prompt'unu Güclendirme
 
-### Randevu Kartlari (AppointmentCard)
-- Sol kenarda durum rengine gore dikey cizgi (confirmed=yesil, pending=turuncu, cancelled=kirmizi)
-- Hover'da scale(1.02) ve hafif golge artisi
-- Avatar/baslangic harfi icin gradient renkli daire
-- Durum degistirme butonlarina tooltip eklenmesi
-- Acilir detay bolumu icin akici animasyon (framer-motion layout)
+AI'nin urettigi `imageSearchTerms` icin prompt'a daha guclu yonergeler eklenmeli:
+- Isletme adi, sektoru ve sunduğu hizmetleri dogrudan arama terimine dahil etmesini sagla
+- Ornekler: "psychology therapy counseling office calm", "law office legal books professional", "turkish kebab restaurant grilled meat"
 
-### Renk ve Tipografi
-- Mevcut amber/emerald renk semasi korunacak ama daha rafine tonlar
-- Font boyutlari ve araliklar Cal.com tarzinda daha ferah
+### Adim 2: `fetch-images` Fonksiyonunu Guncelleme
 
----
+`fetch-images` edge function'i su sekilde guncellenecek:
+- Projenin `generated_content` icerisindeki `imageSearchTerms` verisini oku
+- Eger AI-uretilmis terimler varsa onlari kullan
+- Yoksa sektor bazli fallback'e dus
+- Ek olarak, isletme adi + sektorden dinamik arama terimi olustur
 
-## 2. Framer Motion Animasyonlari
+### Adim 3: Sektor-Meslek Eslestirmesi Iyilestirme
 
-### Sayfa Gecisleri
-- Tab degistirmede fade + slide animasyonu
-- Liste ogelerinde staggered animasyon (her kart 50ms arayla belirsin)
+`generate-website` ve `fetch-images` fonksiyonlarina daha spesifik meslek eslestirmeleri eklenmeli:
 
-### Takvim Animasyonlari
-- Ay/hafta gecislerinde yatay slide animasyonu (ileri giderken saga, geri giderken sola kayma)
-- Gune tiklandiginda gunluk gorunume genis acilma efekti
+```text
+"service" sektoru alt kategorileri:
+  - psikolog/psikoloji -> "psychology therapy counseling calm modern office"
+  - avukat/hukuk      -> "law office legal books courtroom professional"
+  - muhasebeci        -> "accounting finance office calculator professional"
+  - mimar             -> "architecture design blueprint modern building"
+  - danismanlik       -> "consulting meeting boardroom professional"
+```
 
-### Mikro Animasyonlar
-- Durum degistirmede (onayla/iptal) basarili aksiyonda hafif pulse efekti
-- Yeni randevu olusturuldigunda kart icin bounce-in animasyonu
-- Bos durum ikonlarinda yumusak float animasyonu
+Bu, `extractedData.services` alanindaki anahtar kelimelere bakarak daha hassas eslestirme yapmayi saglar.
 
----
+### Adim 4: Deploy Fonksiyonunda Gorsel Kontrolu
 
-## 3. Drag & Drop Takvim
-
-### Haftalik ve Gunluk Gorunumde Surukleme
-- `@hello-pangea/dnd` kutuphanesi (zaten projede yuklu) ile randevulari zaman dilimleri arasinda surukleyerek tasima
-- Surukleme sirasinda orijinal konumda hayalet kart, hedefte mavi vurgulu alan
-- Biraktiginda veritabaninda `start_time`, `end_time` ve gerekirse `appointment_date` guncellenmesi
-
-### Gorsel Geri Bildirim
-- Suruklenebilir kartlarda sol ust kosede grip ikonu (6 nokta)
-- Suruklerken kartin hafif dondurulmesi ve opaklik azalmasi
-- Gecerli birakma alanlari yesil, gecersiz alanlar (kapali slotlar) kirmizi kenarlma
-
----
-
-## 4. Diger Iyilestirmeler
-
-### Aylık Gorunumde Mini Onizleme
-- Gune hover'da kucuk popup ile o gunun randevularinin ozet listesi
-
-### Bos Durum (Empty State) Tasarimi
-- Randevu yokken guzel bir illustrasyon ve "Ilk randevunuzu olusturun" aksiyonu
-
-### Toolbar Iyilestirmesi
-- Arama alaninda live autocomplete efekti
-- "Bugun" butonuna vurgu animasyonu (pulse)
-
----
+`deploy-to-netlify` fonksiyonunda hero bloklerinin gorsellerinin dogru render edildigini dogrula. Base64 gorsel kontrolu ekle - eger base64 ise atla veya placeholder goster.
 
 ## Teknik Detaylar
 
-### Degisecek Dosyalar
-1. `src/components/dashboard/appointments/AppointmentsPanel.tsx` - Ana layout, overview kartlari, tab gecis animasyonlari
-2. `src/components/dashboard/appointments/AppointmentCard.tsx` - Kart tasarimi, hover/animasyon, durum gostergesi
-3. `src/components/dashboard/appointments/MonthlyView.tsx` - Hover popup, animasyonlu gun gecisleri
-4. `src/components/dashboard/appointments/WeeklyView.tsx` - Drag & drop entegrasyonu, modernize grid
-5. `src/components/dashboard/appointments/DailyView.tsx` - Drag & drop entegrasyonu, animasyonlar
-6. `src/components/dashboard/appointments/AgendaView.tsx` - Staggered liste animasyonlari
-7. `src/components/dashboard/appointments/CalendarToolbar.tsx` - Modern segment control, animasyonlar
-8. `src/components/dashboard/appointments/CreateAppointmentModal.tsx` - Modal animasyonu
+### Degisecek Dosyalar:
 
-### Kullanilacak Kutuphaneler (hepsi zaten yuklu)
-- `framer-motion` - Tum animasyonlar icin
-- `@hello-pangea/dnd` - Drag & drop islevi icin
-- Mevcut shadcn/ui bilesenleri - Tooltip, Popover eklentileri
+1. **`supabase/functions/generate-website/index.ts`**
+   - `buildPrompt()` fonksiyonuna daha guclu imageSearchTerms yonergeleri ekle
+   - Isletme hizmetlerinden (services) otomatik anahtar kelime cikarma mantigi ekle
+   - `fetchAllImages()` icinde hizmet adlarindan dinamik arama terimi olusturma
 
-### Veritabani Degisikligi
-- Drag & drop icin mevcut `manage-appointments` edge function yeterli (start_time/end_time/appointment_date guncelleme)
-- Yeni tablo veya kolon gerekmez
+2. **`supabase/functions/fetch-images/index.ts`**
+   - `generated_content.imageSearchTerms` verisini projeden oku ve kullan
+   - Isletme adi + hizmetlerinden dinamik arama terimi fallback'i ekle
+   - Hizmet listesindeki kelimelerden (orn. "Psikolojik Danismanlik") Ingilizce karsilik ureterek Pixabay aramasinda kullan
+
+3. **`supabase/functions/deploy-to-netlify/index.ts`**
+   - Hero gorsellerinde base64 veri kontrolu ekle (base64 ise gorsel render etme, yerine gradient kullan)
+
+### Yeni Eklenen Mantik:
+
+- **Hizmet-bazli anahtar kelime cikarma**: `extractedData.services` dizisindeki kelimeleri Ingilizce karsiliklarina cevir (basit mapping tablosu ile) ve Pixabay aramasinda kullan
+- **Turkce-Ingilizce meslek mapping**: Yaygin Turkce meslek/hizmet adlari icin Ingilizce Pixabay arama terimleri tablosu
+
+```text
+Ornek mapping:
+  psikoloji/psikolog    -> "psychology therapy counseling session"
+  hukuk/avukat          -> "law office lawyer legal justice"
+  kebap/restoran        -> "turkish kebab restaurant grilled meat dining"
+  guzellik/kuafor       -> "beauty salon hairdresser styling"
+  dis/dishekimi         -> "dental clinic modern teeth"
+  eczane                -> "pharmacy drugstore medicine"
+  cafe/kahve            -> "coffee cafe barista latte art"
+  insaat/mimarlik       -> "architecture construction building modern"
+```
+
+### Sonuc
+
+Bu degisikliklerle:
+- Yeni olusturulan sitelerin hero gorselleri isletmenin gercek faaliyet alaniyla dogrudan iliskili olacak
+- "Psikoloji" icin terapi/danismanlik gorselleri, "Hukuk" icin adalet/ofis gorselleri gelecek
+- `fetch-images` ayrı cagirildiginda bile dogru gorseller donecek
+- Eski base64 gorseller yayinlanan sitelerde sorun yaratmayacak
