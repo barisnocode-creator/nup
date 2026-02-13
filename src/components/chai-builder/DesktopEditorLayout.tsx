@@ -138,13 +138,13 @@ export function DesktopEditorLayout() {
         <div className="flex items-center gap-1">
           <ChaiUndoRedo />
 
-          <div className="chai-screen-cycle">
+          <div className="chai-screen-toggle">
             <ChaiScreenSizes
               openDelay={0}
               canvas={false}
-              tooltip={true}
-              buttonClass="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all chai-screen-btn"
-              activeButtonClass="p-2 rounded-lg bg-primary/10 text-primary chai-screen-btn-active"
+              tooltip={false}
+              buttonClass="chai-screen-btn"
+              activeButtonClass="chai-screen-btn chai-screen-btn-active"
             />
           </div>
 
