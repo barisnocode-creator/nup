@@ -116,21 +116,21 @@ export function CustomizePanel({ onClose }: CustomizePanelProps) {
 
   // Sub-panel header
   const SubPanelHeader = ({ title }: { title: string }) => (
-    <div className="flex items-center gap-2 px-5 py-3 border-b border-border/30 shrink-0">
+    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/30 shrink-0">
       <button
         onClick={() => setSubPanel(null)}
-        className="p-1.5 hover:bg-accent/50 rounded-lg transition-colors"
+        className="p-1 hover:bg-accent/50 rounded-lg transition-colors"
         aria-label="Geri"
       >
-        <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+        <ArrowLeft className="w-3.5 h-3.5 text-muted-foreground" />
       </button>
-      <span className="text-sm font-medium flex-1">{title}</span>
+      <span className="text-xs font-medium flex-1">{title}</span>
       <button
         onClick={onClose}
-        className="p-1.5 hover:bg-accent/50 rounded-lg transition-colors"
+        className="p-1 hover:bg-accent/50 rounded-lg transition-colors"
         aria-label="Kapat"
       >
-        <X className="w-3.5 h-3.5 text-muted-foreground" />
+        <X className="w-3 h-3 text-muted-foreground" />
       </button>
     </div>
   );
@@ -322,41 +322,41 @@ export function CustomizePanel({ onClose }: CustomizePanelProps) {
   const renderMainMenu = () => (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-border/30 shrink-0">
-        <span className="text-sm font-semibold">Özelleştir</span>
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/30 shrink-0">
+        <span className="text-xs font-semibold">Özelleştir</span>
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-accent/50 rounded-lg transition-colors"
+          className="p-1 hover:bg-accent/50 rounded-lg transition-colors"
           aria-label="Kapat"
         >
-          <X className="w-3.5 h-3.5 text-muted-foreground" />
+          <X className="w-3 h-3 text-muted-foreground" />
         </button>
       </div>
 
       {/* Items */}
       <ScrollArea className="flex-1">
-        <div className="py-2">
+        <div className="py-1">
           {menuItems.map((item, idx) => {
             const Icon = item.icon;
             const isRegen = item.id === 'regenerate-text' || item.id === 'regenerate-website';
             return (
               <div key={item.id}>
                 {item.separator && idx > 0 && (
-                  <div className="mx-5 my-1 border-t border-border/20" />
+                  <div className="mx-4 my-0.5 border-t border-border/20" />
                 )}
                 <button
                   onClick={() => handleMenuClick(item)}
-                  className="w-full flex items-center gap-3 px-5 h-12 text-left hover:bg-accent/40 transition-colors group"
+                  className="w-full flex items-center gap-2.5 px-4 h-9 text-left hover:bg-accent/40 transition-colors group"
                   disabled={isRegen && isRegenerating}
                 >
                   {isRegen && isRegenerating ? (
-                    <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />
                   ) : (
-                    <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                   )}
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
+                  <span className="text-xs font-medium flex-1">{item.label}</span>
                   {!item.isAction && (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+                    <ChevronRight className="w-3 h-3 text-muted-foreground/50" />
                   )}
                 </button>
               </div>

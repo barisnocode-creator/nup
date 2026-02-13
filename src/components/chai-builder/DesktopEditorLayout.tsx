@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -19,7 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useEditorContext } from './EditorContext';
 
-type LeftPanel = 'outline' | 'add' | 'customize' | null;
+type LeftPanel = 'outline' | 'add' | null;
 type RightTab = 'props' | 'styles';
 
 export function DesktopEditorLayout() {
@@ -27,10 +27,34 @@ export function DesktopEditorLayout() {
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(true);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const customizeRef = useRef<HTMLDivElement>(null);
 
   const handleToggleRight = useCallback(() => {
     setShowRight((prev) => !prev);
   }, []);
+
+  // Close customize popover on outside click
+  useEffect(() => {
+    if (!showCustomize) return;
+    const handler = (e: MouseEvent) => {
+      if (customizeRef.current && !customizeRef.current.contains(e.target as Node)) {
+        setShowCustomize(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showCustomize]);
+
+  // Close customize on Escape
+  useEffect(() => {
+    if (!showCustomize) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowCustomize(false);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showCustomize]);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
@@ -47,15 +71,33 @@ export function DesktopEditorLayout() {
 
         <Separator orientation="vertical" className="h-6 mx-1" />
 
-        <button
-          onClick={() => setLeftPanel(leftPanel === 'customize' ? null : 'customize')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            leftPanel === 'customize' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
-          }`}
-        >
-          <Paintbrush className="w-3.5 h-3.5" />
-          Özelleştir
-        </button>
+        {/* Özelleştir - floating popover trigger */}
+        <div className="relative" ref={customizeRef}>
+          <button
+            onClick={() => setShowCustomize(!showCustomize)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              showCustomize ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
+            }`}
+          >
+            <Paintbrush className="w-3.5 h-3.5" />
+            Özelleştir
+          </button>
+
+          {/* Floating Customize Popover */}
+          <AnimatePresence>
+            {showCustomize && (
+              <motion.div
+                initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="absolute top-full left-0 mt-2 w-[280px] max-h-[calc(100vh-80px)] bg-popover border border-border/50 rounded-xl shadow-2xl z-[60] overflow-hidden"
+              >
+                <CustomizePanel onClose={() => setShowCustomize(false)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <button
           onClick={() => setLeftPanel(leftPanel === 'outline' ? null : 'outline')}
@@ -142,35 +184,29 @@ export function DesktopEditorLayout() {
             <motion.div
               data-editor-panel="left"
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: leftPanel === 'customize' ? 392 : 260, opacity: 1 }}
+              animate={{ width: 260, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               className="shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30 shadow-xl"
             >
-              <div className={`${leftPanel === 'customize' ? 'w-[392px]' : 'w-[260px]'} h-full flex flex-col`}>
-                {leftPanel === 'customize' ? (
-                  <CustomizePanel onClose={() => setLeftPanel(null)} />
-                ) : (
-                  <>
-                    <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
-                      <span className="text-sm font-semibold">
-                        {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
-                      </span>
-                      <button
-                        onClick={() => setLeftPanel(null)}
-                        className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    <ScrollArea className="flex-1">
-                      <div className="p-3 chai-panel-scroll" data-panel={leftPanel === 'outline' ? 'outline' : 'add'}>
-                        {leftPanel === 'outline' && <ChaiOutline />}
-                        {leftPanel === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
-                      </div>
-                    </ScrollArea>
-                  </>
-                )}
+              <div className="w-[260px] h-full flex flex-col">
+                <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
+                  </span>
+                  <button
+                    onClick={() => setLeftPanel(null)}
+                    className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <ScrollArea className="flex-1">
+                  <div className="p-3 chai-panel-scroll" data-panel={leftPanel === 'outline' ? 'outline' : 'add'}>
+                    {leftPanel === 'outline' && <ChaiOutline />}
+                    {leftPanel === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
+                  </div>
+                </ScrollArea>
               </div>
             </motion.div>
           )}
