@@ -1,37 +1,34 @@
 
-
-# Galeri Gorsel Overlay Duzeltmesi
+# Galeri Gorsel Tasma Duzeltmesi
 
 ## Sorun
 
-ImageGallery blokundaki gorsellerin uzerinde "Degistir / Yenile" overlay'i gorunmuyor. Sebep: Her gorselin uzerinde hover'da beliren karanlik bir katman (`bg-black/40 opacity-0 group-hover:opacity-100`) var ve bu katman mouse olaylarini engelliyor. Ayrica parent div'deki `overflow-hidden` aksiyon butonlarini kirpiyor.
+Son degisiklikte `overflow-hidden` kaldirildi ki aksiyon butonlari kirpilmasin. Ancak gorsellerde `group-hover:scale-110` (zoom efekti) var ve `overflow-hidden` olmadan gorsel tasma yapiyor.
 
 ## Cozum
 
-`src/components/chai-builder/blocks/gallery/ImageGallery.tsx` dosyasinda iki degisiklik:
-
-1. **Satir 65**: Karanlik overlay div'ine `pointer-events-none` ekle - boylece mouse olaylari altindaki `EditableChaiImage`'a ulasir
-2. **Satir 57**: Parent div'deki `overflow-hidden`'i kaldir veya `overflow-visible` yap - aksiyon butonlarinin kirpilmasini onle
+`overflow-hidden`'i geri ekle ama zoom efektini kaldir. Diger bloklarda (AboutSection, ServicesGrid vb.) zoom efekti yok, galeri de ayni sekilde olmali.
 
 ### Degisecek Kod
 
-Satir 57 (oncesi):
+`src/components/chai-builder/blocks/gallery/ImageGallery.tsx` - 2 satir:
+
+**Satir 57** - `overflow-hidden` geri ekle:
 ```
+// Oncesi
+<div key={index} className="relative group rounded-xl aspect-square">
+// Sonrasi
 <div key={index} className="relative group overflow-hidden rounded-xl aspect-square">
 ```
-Satir 57 (sonrasi):
+
+**Satir 61** - Zoom efektini kaldir:
 ```
-<div key={index} className="relative group rounded-xl aspect-square">
+// Oncesi
+className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+// Sonrasi
+className="w-full h-full object-cover"
 ```
 
-Satir 65 (oncesi):
-```
-<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-```
-Satir 65 (sonrasi):
-```
-<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-```
+Bu sayede hem tasma onlenir hem de aksiyon butonlari `EditableChaiImage` icinden (overflow-hidden sinirlari dahilinde) duzgun gorunur.
 
 Toplam 1 dosya, 2 satir degisiklik.
-
