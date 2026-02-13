@@ -1,178 +1,251 @@
 
-# Randevularim Dashboard Paneli - Gelismis Takvim ve Yonetim Sistemi
+
+# Bildirim ve Hatirlatma Sistemi
 
 ## Mevcut Durum
 
-Simdi `AppointmentsPanel.tsx` (801 satir) basit bir liste gorunumunde randevulari gosteriyor. 5 sekmeli bir yapi var: Randevular (duz liste), Form Alanlari, Ayarlar, Haftalik Program, Kapali Gunler. Takvim gorunumu, arama/filtreleme, manuel randevu olusturma ve dahili not ozellikleri yok.
+Projede bildirim altyapisi bulunmuyor. Randevu durumu degistiginde (olusturma, onay, iptal) hicbir bildirim gonderilmiyor. `profiles` tablosunda `email_notifications` tercihi var ama fonksiyonel degil. Sidebar'da bildirim ikonu yok. E-posta gonderim servisi entegre degil.
 
-Sidebar'da "Randevular" (`CalendarCheck` ikonu) zaten `/project/:id/appointments` rotasina bagli ve `DashboardSidebar.tsx`'de mevcut.
+## Sistem Mimarisi
 
-## Yeni Ozellikler
+### Veritabani Tablolari
 
-### 1. Takvim Gorunumleri (Aylik / Haftalik / Gunluk / Liste)
+**1. `notifications` tablosu** - Uygulama ici bildirimler icin
 
-Mevcut "Randevular" sekmesi yerine 4 alt gorunum butonu eklenecek:
-
-**Aylik Gorunum:**
-- 7x5 veya 7x6 grid (haftanin gunleri x haftalar)
-- Her hucrede o gune ait randevu sayisi ve renk kodlu durum gostergesi
-- Kapali gunler ve tatiller gri/cizgili arka plan ile isaretlenir
-- Gune tiklaninca gunluk gorunume gecer
-
-**Haftalik Gorunum:**
-- 7 sutunlu zaman cizelgesi (saat satirlari sol tarafta, gunler ust tarafta)
-- Randevular saat dilimlerine gore yerlestirilmis kutucuklar olarak gosterilir
-- Mola saatleri ve kapali slotlar gorunur sekilde isaretlenir
-- Renk kodlari: bekleyen=sari, onayli=yesil, iptal=kirmizi, bloklu=gri
-
-**Gunluk Gorunum:**
-- Tek gunun tam zaman cizelgesi (orn: 08:00-20:00 arasi her slot)
-- Dolu slotlar musteri bilgileriyle gosterilir
-- Bos slotlar tiklanabilir (manuel randevu olusturma icin)
-
-**Ajanda/Liste Gorunumu:**
-- Mevcut liste gorunumunun gelistirilmis hali
-- Tarihe gore gruplandirma (Bugun, Yarin, Bu Hafta, Gelecek Hafta vb.)
-- Kart tasarimi korunur
-
-### 2. Arama ve Filtreleme
-
-Tum gorunumlerin ustune bir toolbar eklenir:
-- **Arama**: Musteri adi, e-posta veya telefona gore arama (client-side filter)
-- **Durum filtresi**: Tumu / Bekleyen / Onayli / Iptal (multi-select badge butonlari)
-- **Tarih araligi**: Baslangic-Bitis tarih secici
-
-### 3. Manuel Randevu Olusturma
-
-Gunluk gorunumde bos slota tiklandiginda veya "+" butonuyla acilan bir dialog:
-- Tarih ve saat secimi (musait slotlardan)
-- Musteri bilgileri (ad, e-posta, telefon, not)
-- Durum secimi (direkt "confirmed" olarak olusturulabilir)
-- `manage-appointments` edge function'a yeni bir `POST` action eklenir (`action: "create_appointment"`)
-
-### 4. Dahili Notlar (Internal Notes)
-
-Veritabanindaki `appointments` tablosuna `internal_note` (text, nullable) sutunu eklenir.
-- Sadece hizmet saglayici gorebilir (musteri goremez)
-- Randevu kartinda kucuk bir not ikonu ile gosterilir
-- Tiklaninca inline edit yapilabilir
-- `manage-appointments` PATCH handler'a `internal_note` guncelleme destegi eklenir
-
-### 5. Kisisel Ajanda Notlari
-
-Veritabanina yeni `agenda_notes` tablosu:
 ```text
-agenda_notes:
-  id (uuid, PK)
+notifications:
+  id (uuid, PK, default gen_random_uuid())
+  user_id (uuid, NOT NULL)         -- Bildirimi alan kullanici
+  project_id (uuid, NOT NULL)      -- Ilgili proje
+  appointment_id (uuid, nullable)  -- Ilgili randevu (varsa)
+  type (text, NOT NULL)            -- 'new_appointment', 'confirmed', 'cancelled', 'reminder_24h', 'reminder_2h'
+  title (text, NOT NULL)           -- Baslik
+  body (text, NOT NULL)            -- Icerik
+  is_read (boolean, default false)
+  channel (text, default 'in_app') -- 'in_app', 'email', 'sms' (gelecek)
+  created_at (timestamptz, default now())
+```
+
+RLS: `auth.uid() = user_id` (SELECT, UPDATE, DELETE)
+
+**2. `notification_templates` tablosu** - Ozellestirilabilir sablonlar
+
+```text
+notification_templates:
+  id (uuid, PK, default gen_random_uuid())
   project_id (uuid, NOT NULL)
   user_id (uuid, NOT NULL)
-  note_date (date, NOT NULL)
-  content (text, NOT NULL)
+  event_type (text, NOT NULL)      -- 'new_appointment', 'confirmed', 'cancelled', 'reminder_24h', 'reminder_2h'
+  target (text, NOT NULL)          -- 'provider' veya 'client'
+  subject (text, NOT NULL)         -- E-posta konusu
+  body_template (text, NOT NULL)   -- Sablon icerigi (degiskenler: {{client_name}}, {{date}}, {{time}}, {{status}})
+  is_enabled (boolean, default true)
+  channel (text, default 'email')  -- 'email', 'in_app', 'sms'
   created_at (timestamptz)
   updated_at (timestamptz)
 ```
 
-- Takvim gorunumlerinde gune ait notlar kucuk bir ikon ile gosterilir
-- Gunluk gorunumde notlar randevularin altinda listelenir
-- Not ekleme/duzenleme/silme islemi `manage-appointments` edge function uzerinden yapilir
+RLS: `auth.uid() = user_id` (tum islemler)
 
-### 6. Calisma Saatleri Hizli Erisim
-
-Haftalik Program sekmesi mevcut, ancak takvim gorunumlerinden de hizli erisim butonu eklenir:
-- Takvim toolbar'inda "Calisma Saatleri" ikonu
-- Tiklaninca mevcut Haftalik Program sekmesini acar
-
-## Veritabani Degisiklikleri
-
-### Migration
+**3. `notification_logs` tablosu** - Gonderim takibi
 
 ```text
-1. appointments tablosuna internal_note (text, nullable) sutunu ekle
-2. agenda_notes tablosu olustur (id, project_id, user_id, note_date, content, created_at, updated_at)
-3. agenda_notes icin RLS politikalari:
-   - SELECT/INSERT/UPDATE/DELETE: auth.uid() = user_id
-4. agenda_notes icin user_owns_project kontrolu
+notification_logs:
+  id (uuid, PK)
+  notification_id (uuid, nullable)   -- in-app bildirimi varsa
+  project_id (uuid, NOT NULL)
+  appointment_id (uuid, nullable)
+  event_type (text, NOT NULL)
+  channel (text, NOT NULL)           -- 'email', 'in_app', 'sms'
+  recipient_email (text, nullable)
+  recipient_type (text, NOT NULL)    -- 'provider' veya 'client'
+  status (text, default 'sent')      -- 'sent', 'failed', 'pending'
+  error_message (text, nullable)
+  created_at (timestamptz)
 ```
 
-### Edge Function Guncellemeleri (manage-appointments)
+RLS: `user_owns_project(project_id)` (SELECT only)
+
+**4. `appointment_settings` tablosuna yeni alanlar**
 
 ```text
-PATCH handler'a:
-  - internal_note guncelleme destegi
-
-POST handler'a:
-  - action: "create_appointment" -> tarih, saat, musteri bilgileri, durum ile yeni randevu olusturma
-  - action: "create_note" -> ajanda notu ekleme
-  - action: "update_note" -> ajanda notu guncelleme
-  - action: "delete_note" -> ajanda notu silme
-  - Mevcut blocked_date mantigi "block_date" action'i altina alinir (geriye uyumlu)
-
-GET handler'a:
-  - type=notes -> belirli tarih araligindaki ajanda notlarini getir
-  - type=appointments'a date_from, date_to parametreleri eklenir (takvim gorunumleri icin tarih araligina gore sorgulama)
++ reminder_24h_enabled (boolean, default true)
++ reminder_2h_enabled (boolean, default true)
++ notification_email_enabled (boolean, default true)
 ```
 
-## UI Bilesenlerinin Yapilandirilmasi
-
-Mevcut `AppointmentsPanel.tsx` (801 satir) cok buyuk oldugu icin alt bilesenler olarak ayrilacak:
+### Bildirim Tetikleme Olaylari
 
 ```text
-src/components/dashboard/appointments/
-  AppointmentsPanel.tsx        -> Ana konteyner (tab yonetimi, veri cekme)
-  CalendarToolbar.tsx           -> Gorunum secici, arama, filtreler
-  MonthlyView.tsx               -> Aylik takvim grid'i
-  WeeklyView.tsx                -> Haftalik zaman cizelgesi
-  DailyView.tsx                 -> Gunluk detay gorunumu
-  AgendaView.tsx                -> Liste/ajanda gorunumu
-  AppointmentCard.tsx           -> Tekil randevu karti (tum gorunumlerde kullanilir)
-  AppointmentDetailModal.tsx    -> Randevu detay dialog'u (not ekleme, durum degistirme)
-  CreateAppointmentModal.tsx    -> Manuel randevu olusturma dialog'u
-  AgendaNoteEditor.tsx          -> Ajanda notu ekleme/duzenleme
-  SettingsTab.tsx               -> Mevcut Ayarlar sekmesi (tasindi)
-  ScheduleTab.tsx               -> Mevcut Haftalik Program sekmesi (tasindi)
-  BlockedDatesTab.tsx           -> Mevcut Kapali Gunler sekmesi (tasindi)
-  FormFieldsTab.tsx             -> Mevcut Form Alanlari sekmesi (tasindi)
+Olay                    | Alici              | Kanal
+------------------------|--------------------|-----------
+Yeni randevu talebi     | Provider (in-app)  | in_app + email
+Randevu onaylandi       | Client (email)     | email
+                        | Provider (in-app)  | in_app
+Randevu iptal edildi    | Client (email)     | email
+                        | Provider (in-app)  | in_app
+24 saat hatirlatma      | Client (email)     | email
+                        | Provider (in-app)  | in_app
+2 saat hatirlatma       | Client (email)     | email
+                        | Provider (in-app)  | in_app
 ```
 
-## Sidebar Entegrasyon Modeli
+### Sablon Degiskenleri
 
-Mevcut sidebar'da "Randevular" zaten var. Degisiklik gerektirmez. Rota `/project/:id/appointments` korunur.
-
-## Randevu Durum Yasam Dongusu
+Sablonlarda kullanilabilecek degiskenler:
 
 ```text
-pending -> confirmed (onay)
-pending -> cancelled (red)
-confirmed -> cancelled (iptal)
-cancelled -> pending (yeniden aktif etme - yeni ozellik)
-Manuel olusturma: direkt "confirmed" veya "pending"
+{{client_name}}       - Musteri adi
+{{client_email}}      - Musteri e-postasi
+{{client_phone}}      - Musteri telefonu
+{{date}}              - Randevu tarihi (formatli)
+{{time}}              - Randevu saati
+{{end_time}}          - Bitis saati
+{{status}}            - Durum (Turkce)
+{{project_name}}      - Isletme adi
+{{provider_name}}     - Hizmet saglayici adi
 ```
 
-## Slot Bloklama Mekanigi
+### Varsayilan Sablonlar (auto_provision ile)
 
-Mevcut sistem korunur:
-- Takvim gorunumlerinde bloklu gunler/saatler gorunur isaretlenir
-- Aylik gorunumde bloklu gunler gri arka plan
-- Haftalik/Gunluk gorunumde bloklu saat dilimleri cizgili desen
-- Tatil gunleri ozel ikon ile gosterilir
+Proje olusturuldiginda varsayilan sablonlar eklenir:
+
+```text
+new_appointment / client:
+  Konu: "Randevu Talebiniz Alindi - {{project_name}}"
+  Icerik: "Sayin {{client_name}}, {{date}} tarihinde saat {{time}} icin randevu talebiniz alinmistir. Onay durumu size bildirilecektir."
+
+confirmed / client:
+  Konu: "Randevunuz Onaylandi - {{project_name}}"
+  Icerik: "Sayin {{client_name}}, {{date}} tarihinde saat {{time}}-{{end_time}} arasindaki randevunuz onaylanmistir."
+
+cancelled / client:
+  Konu: "Randevunuz Iptal Edildi - {{project_name}}"
+  Icerik: "Sayin {{client_name}}, {{date}} tarihindeki randevunuz iptal edilmistir. Yeni randevu icin web sitemizi ziyaret edin."
+
+reminder_24h / client:
+  Konu: "Randevu Hatirlatmasi - Yarin {{time}}"
+  Icerik: "Sayin {{client_name}}, yarin saat {{time}} icin {{project_name}} ile randevunuzu hatirlatiriz."
+
+reminder_2h / client:
+  Konu: "Randevu Hatirlatmasi - Bugun {{time}}"
+  Icerik: "Sayin {{client_name}}, bugun saat {{time}} icin {{project_name}} ile randevunuzu hatirlatiriz."
+```
+
+## Edge Function'lar
+
+### 1. `send-notification` (Yeni)
+
+Merkezi bildirim gonderim fonksiyonu. Diger fonksiyonlar tarafindan cagirilir.
+
+Islevler:
+- Sablon degiskenlerini doldurma
+- In-app bildirim olusturma (`notifications` tablosuna INSERT)
+- E-posta gonderimi (Lovable AI uzerinden veya Supabase Auth'un yerlesik SMTP'si)
+- Gonderim logunu kaydetme (`notification_logs`)
+- Kanal tercihi kontrolu (provider'in ayarlarindan)
+
+Cagri formati:
+```text
+POST /send-notification
+Body: {
+  project_id,
+  appointment_id,
+  event_type: "new_appointment" | "confirmed" | "cancelled" | "reminder_24h" | "reminder_2h",
+  appointment_data: { client_name, client_email, date, time, ... }
+}
+```
+
+### 2. `process-reminders` (Yeni, Cron ile zamanlanir)
+
+Her saat calisan bir cron job:
+- 24 saat ve 2 saat icinde olan randevulari bulur
+- Daha once hatirlatma gonderilmemis olanlari filtreler (`notification_logs` kontrolu)
+- Her biri icin `send-notification` fonksiyonunu cagirarak bildirim gonderir
+
+Cron zamanlama: Her saat basinda (`0 * * * *`)
+
+Bu fonksiyon pg_cron + pg_net ile zamanlanir (veritabanina SQL olarak eklenir).
+
+### 3. Mevcut fonksiyonlara entegrasyon
+
+**book-appointment:** POST basarili olunca `send-notification` cagirilir (`event_type: 'new_appointment'`)
+
+**manage-appointments:** PATCH'te status degisince:
+- `confirmed` -> `send-notification` (`event_type: 'confirmed'`)
+- `cancelled` -> `send-notification` (`event_type: 'cancelled'`)
+
+Bu cagrilar edge function icinden `fetch` ile dahili olarak yapilir (service role key ile).
+
+## UI Bilesenleri
+
+### 1. Bildirim Cani (Header'a eklenir)
+
+`DashboardLayout.tsx` header'ina bildirim ikonu eklenir:
+- Bell ikonu + okunmamis bildirim sayisi badge'i
+- Tiklaninca dropdown/popover ile son bildirimleri gosterir
+- "Tumunu Gor" linki -> Bildirimler sayfasi veya modal
+- Bildirimi okundu olarak isaretleme
+- Realtime subscription ile anlik guncelleme
+
+Dosya: `src/components/dashboard/NotificationBell.tsx`
+
+### 2. Bildirim Ayarlari Sekmesi
+
+`AppointmentsPanel.tsx`'e yeni "Bildirimler" sekmesi eklenir:
+- E-posta bildirimleri acik/kapali
+- 24 saat hatirlatma acik/kapali
+- 2 saat hatirlatma acik/kapali
+- Sablon duzenleyicisi (her olay tipi icin subject + body)
+- Onizleme butonu (degiskenleri ornek degerlerle gosterir)
+
+Dosya: `src/components/dashboard/appointments/NotificationsTab.tsx`
+
+### 3. Bildirim Loglari
+
+Ayni sekme icinde veya ayri bir alt sekme olarak:
+- Son gonderilen bildirimlerin listesi
+- Tarih, alici, kanal, durum (basarili/basarisiz)
+- Filtreleme: olay tipine ve kanala gore
+
+Dosya: `src/components/dashboard/appointments/NotificationLogsTab.tsx`
+
+## E-posta Gonderim Yontemi
+
+E-posta gondermek icin `send-notification` edge function'i icerisinde Supabase Auth'un yerlesik sistemi yerine dogrudan bir SMTP/API kullanilmasi gerekecek. Secenekler:
+
+**Secilen yaklasim: Lovable AI destekli e-posta gonderimi**
+Bir AI modeli uzerinden e-posta icerigini olusturup, `Resend` veya benzeri bir servis ile gonderim yapilabilir. Ancak bu bir API key gerektirir.
+
+**Alternatif (baslangic icin):** E-posta gonderimi olmadan sadece in-app bildirimlerle baslamak ve e-posta entegrasyonunu kullanici API key'i ekledikten sonra aktif etmek.
+
+Baslangicta **in-app bildirimleri tam fonksiyonel** olarak uygulanir. E-posta icin kullanicidan Resend API key istenir veya mevcut bir connector kullanilir.
+
+## Gelecek Genisleme Icin Hazirlik
+
+- `channel` alani SMS ve WhatsApp icin hazir ('sms', 'whatsapp')
+- `notification_templates` tablosu kanal bazli sablonlari destekler
+- `notification_logs` tum kanallari takip eder
+- `send-notification` fonksiyonu kanal switch/case yapisiyla genisletilebilir
 
 ## Uygulama Sirasi
 
-1. **Migration**: `internal_note` sutunu + `agenda_notes` tablosu + RLS
-2. **Edge Function**: `manage-appointments` guncellemesi (tarih araligi sorgu, not CRUD, manuel randevu, internal_note)
-3. **Alt bilesenler**: Mevcut kodu parcalayip yeni bilesenler olustur
-4. **Takvim gorunumleri**: Monthly -> Weekly -> Daily -> Agenda sirasinda
-5. **Arama/filtreleme toolbar'i**: Client-side filtreleme
-6. **Manuel randevu olusturma modal**: Dialog + edge function entegrasyonu
-7. **Ajanda not sistemi**: Tablo + CRUD + takvim entegrasyonu
-8. **Internal notes**: Randevu kartina dahili not alani
+1. **Migration:** `notifications`, `notification_templates`, `notification_logs` tablolari + `appointment_settings`'e yeni alanlar + varsayilan sablonlar trigger'i + Realtime acik
+2. **send-notification edge function:** Merkezi bildirim gonderim fonksiyonu (in-app + e-posta altyapisi)
+3. **process-reminders edge function:** Hatirlatma zamanlayicisi + pg_cron kurulumu
+4. **book-appointment guncelleme:** Yeni randevu bildirimi tetiklemesi
+5. **manage-appointments guncelleme:** Onay/iptal bildirimi tetiklemesi
+6. **NotificationBell bileseni:** Header'a bildirim cani + dropdown + Realtime
+7. **NotificationsTab bileseni:** Bildirim ayarlari + sablon duzenleyici + loglar
+8. **AppointmentsPanel guncelleme:** Yeni "Bildirimler" sekmesi ekleme
 
 ## Teknik Notlar
 
-- Takvim gorunumleri tamamen client-side hesaplanir (tarih araligi icin fetch edilen veriler uzerinden)
-- Haftalik/Gunluk gorunumde saat dilimi `settings.timezone` baz alinir
-- Performans icin aylik gorunum sadece o ayin randevularini ceker (`date_from`, `date_to` parametreleri)
-- Arama client-side yapilir (mevcut veri seti uzerinde `filter`)
-- `@hello-pangea/dnd` Form Alanlari sekmesinde kalir, takvim gorunumlerinde kullanilmaz
-- Tum bilesenler mevcut UI kutuphanesini kullanir (shadcn/ui)
-- Haftalik gorunum icin ozel CSS grid kullanilir (7 sutun x 24 satir saat dilimi)
+- `notifications` tablosu Realtime yayin ile acilir (anlik bildirim gosterimi)
+- Hatirlatma cron job'i, ayni randevu icin tekrar gonderim yapmamak icin `notification_logs` kontrolu yapar
+- Sablonlarda `{{degisken}}` formati ile basit string replace kullanilir
+- E-posta gonderimi icin bir API key (Resend vb.) gerekecek - bu kullanicidan istenecek
+- Provider'in `profiles.preferences.email_notifications` tercihi kontrol edilir
+- Tum bildirimler `notification_logs`'a kaydedilir (basari/basarisizlik takibi)
+- SMS/WhatsApp kanallari su an icin devre disi olarak saklanir, gelecekte aktive edilir
+
