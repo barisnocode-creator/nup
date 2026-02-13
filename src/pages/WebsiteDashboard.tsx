@@ -10,6 +10,7 @@ import { WebsiteDashboardTab } from '@/components/website-dashboard/WebsiteDashb
 import { BlogTab } from '@/components/website-dashboard/BlogTab';
 import { DomainTab } from '@/components/website-dashboard/DomainTab';
 import { SettingsTab } from '@/components/website-dashboard/SettingsTab';
+import { AppointmentsPanel } from '@/components/dashboard/AppointmentsPanel';
 
 interface Project {
   id: string;
@@ -94,6 +95,7 @@ export default function WebsiteDashboard() {
         <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="bg-muted/50">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="appointments">Randevular</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="domain">Domain</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -113,6 +115,10 @@ export default function WebsiteDashboard() {
               projectId={id!} 
               isPublished={project.is_published ?? false} 
             />
+          </TabsContent>
+
+          <TabsContent value="appointments">
+            <AppointmentsPanel projectId={id!} />
           </TabsContent>
 
           <TabsContent value="blog">
