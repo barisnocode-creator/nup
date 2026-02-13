@@ -138,6 +138,7 @@ export function ChaiBuilderWrapper({
   }, []);
 
   const editorContextValue = useMemo(() => ({
+    projectId,
     projectName,
     projectProfession,
     onDashboard: () => navigate('/dashboard'),

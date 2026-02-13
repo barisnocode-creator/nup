@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 
 interface EditorContextValue {
+  projectId?: string;
   projectName: string;
   projectProfession?: string;
   onDashboard: () => void;
