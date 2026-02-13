@@ -6,166 +6,171 @@ import {
   ChaiOutline,
   ChaiAddBlocksPanel,
   ChaiScreenSizes,
-  ChaiUndoRedo } from
-'@chaibuilder/sdk';
+  ChaiUndoRedo,
+} from '@chaibuilder/sdk';
 import {
-  Home, Paintbrush, FileText, Plus, HelpCircle,
-  Settings2, X, PanelRightClose, Eye, Globe,
-  Layers, ImageIcon, Monitor, Tablet, Smartphone } from
-'lucide-react';
+  Home, Paintbrush, Plus, X, PanelRightClose, Globe,
+  Layers, Monitor, Tablet, Smartphone, Settings2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomizePanel } from './CustomizePanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { useEditorContext } from './EditorContext';
 
 type LeftPanel = 'outline' | 'add' | null;
 type RightTab = 'props' | 'styles';
 
+type ToolKey = 'customize' | 'outline' | 'add';
+const tools: { key: ToolKey; icon: React.ElementType; label: string }[] = [
+  { key: 'customize', icon: Paintbrush, label: 'Özelleştir' },
+  { key: 'outline', icon: Layers, label: 'Sayfalar' },
+  { key: 'add', icon: Plus, label: 'Ekle' },
+];
+
 export function DesktopEditorLayout() {
-  const { projectName, onDashboard, onPublish, onPreview, onImageSearch } = useEditorContext();
+  const { onDashboard, onPublish } = useEditorContext();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(true);
   const [showCustomize, setShowCustomize] = useState(false);
   const [screenMode, setScreenMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [activeTool, setActiveTool] = useState<ToolKey | null>(null);
   const customizeRef = useRef<HTMLDivElement>(null);
   const hiddenScreenRef = useRef<HTMLDivElement>(null);
 
   const handleToggleRight = useCallback(() => setShowRight((prev) => !prev), []);
 
+  const handleToolClick = useCallback((key: ToolKey) => {
+    if (key === 'customize') {
+      setShowCustomize((prev) => !prev);
+      setLeftPanel(null);
+      setActiveTool((prev) => (prev === 'customize' ? null : 'customize'));
+    } else {
+      setShowCustomize(false);
+      setLeftPanel((prev) => (prev === key ? null : key));
+      setActiveTool((prev) => (prev === key ? null : key));
+    }
+  }, []);
+
   const cycleScreen = useCallback(() => {
     const order: Array<'desktop' | 'tablet' | 'mobile'> = ['desktop', 'tablet', 'mobile'];
-    const btnIndex = { desktop: 4, tablet: 2, mobile: 0 }; // nth-child index (0-based) in ChaiScreenSizes
+    const btnIndex = { desktop: 4, tablet: 2, mobile: 0 };
     setScreenMode((prev) => {
       const next = order[(order.indexOf(prev) + 1) % 3];
-      // Click the corresponding hidden SDK button
       setTimeout(() => {
         const btns = hiddenScreenRef.current?.querySelectorAll('button');
-        if (btns && btns[btnIndex[next]]) {
-          btns[btnIndex[next]].click();
-        }
+        if (btns && btns[btnIndex[next]]) btns[btnIndex[next]].click();
       }, 0);
       return next;
     });
   }, []);
 
-  // Close customize popover on outside click
+  // Close customize on outside click
   useEffect(() => {
     if (!showCustomize) return;
     const handler = (e: MouseEvent) => {
       if (customizeRef.current && !customizeRef.current.contains(e.target as Node)) {
         setShowCustomize(false);
+        if (activeTool === 'customize') setActiveTool(null);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [showCustomize]);
+  }, [showCustomize, activeTool]);
 
   // Close customize on Escape
   useEffect(() => {
     if (!showCustomize) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowCustomize(false);
+      if (e.key === 'Escape') {
+        setShowCustomize(false);
+        if (activeTool === 'customize') setActiveTool(null);
+      }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [showCustomize]);
+  }, [showCustomize, activeTool]);
+
+  // Sync activeTool when panels close
+  useEffect(() => {
+    if (!leftPanel && activeTool !== 'customize') setActiveTool(null);
+  }, [leftPanel, activeTool]);
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
       {/* ===== TOP TOOLBAR ===== */}
-      <div className="h-14 shrink-0 flex items-center border-b border-border/40 bg-background/95 backdrop-blur-xl z-50 px-2 gap-1">
-        {/* Left group */}
-        <button
-          onClick={onDashboard}
-          className="p-2.5 rounded-xl text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all active:scale-95"
-          title="Dashboard'a dön">
-
-          <Home className="w-4 h-4" />
-        </button>
-
-        <Separator orientation="vertical" className="h-6 mx-1" />
-
-        {/* Özelleştir - floating popover trigger */}
-        <div className="relative" ref={customizeRef}>
+      <div className="h-14 shrink-0 flex items-center border-b border-border/30 bg-background/95 backdrop-blur-xl z-50 px-3 shadow-sm">
+        {/* Left: Home + Segmented Tools */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowCustomize(!showCustomize)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-            showCustomize ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'}`
-            }>
-
-            <Paintbrush className="w-3.5 h-3.5" />
-            Özelleştir
+            onClick={onDashboard}
+            className="p-2 rounded-xl text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all duration-200 active:scale-95"
+            title="Dashboard'a dön"
+          >
+            <Home className="w-4 h-4" />
           </button>
 
-          {/* Floating Customize Popover */}
-          <AnimatePresence>
-            {showCustomize &&
-            <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.97 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="absolute top-full left-0 mt-2 w-[280px] max-h-[calc(100vh-80px)] bg-background border border-border/50 rounded-xl shadow-2xl backdrop-blur-xl z-[60] overflow-hidden">
+          <div className="h-5 w-px bg-border/40" />
 
-                <CustomizePanel onClose={() => setShowCustomize(false)} />
-              </motion.div>
-            }
-          </AnimatePresence>
+          {/* Segmented pill control */}
+          <div className="relative flex items-center gap-0.5 p-1 rounded-xl bg-muted/50" ref={customizeRef}>
+            {tools.map(({ key, icon: Icon, label }) => {
+              const isActive = activeTool === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleToolClick(key)}
+                  className={cn(
+                    'relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.97] z-10',
+                    isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/80'
+                  )}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="desktopToolPill"
+                      className="absolute inset-0 bg-background rounded-lg shadow-sm border border-border/50"
+                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <Icon className="w-3.5 h-3.5 relative z-10" />
+                  <span className="relative z-10">{label}</span>
+                </button>
+              );
+            })}
+
+            {/* Floating Customize Popover */}
+            <AnimatePresence>
+              {showCustomize && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="absolute top-full left-0 mt-2 w-[280px] max-h-[calc(100vh-80px)] bg-background border border-border/50 rounded-xl shadow-2xl backdrop-blur-xl z-[60] overflow-hidden"
+                >
+                  <CustomizePanel onClose={() => { setShowCustomize(false); setActiveTool(null); }} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
-        <button
-          onClick={() => setLeftPanel(leftPanel === 'outline' ? null : 'outline')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-          leftPanel === 'outline' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'}`
-          }>
+        {/* Center spacer */}
+        <div className="flex-1" />
 
-          <Layers className="w-3.5 h-3.5" />
-          Sayfalar
-        </button>
-
-        <button
-          onClick={() => setLeftPanel(leftPanel === 'add' ? null : 'add')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-          leftPanel === 'add' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'}`
-          }>
-
-          <Plus className="w-3.5 h-3.5" />
-          Ekle
-        </button>
-
-        
-
-
-
-
-
-
-
-        {/* Center: project name */}
-        <div className="flex-1 flex items-center justify-center">
-          
-
-
-        </div>
-
-        {/* Right group */}
+        {/* Right: Screen + Panel toggle + Publish */}
         <div className="flex items-center gap-1">
-          
-
-          {/* Hidden SDK screen sizes for programmatic control */}
+          {/* Hidden SDK screen sizes */}
           <div ref={hiddenScreenRef} className="chai-screen-hidden">
             <ChaiScreenSizes openDelay={0} canvas={false} tooltip={false} />
           </div>
 
-          {/* Lovable-style cycling screen button */}
           <button
             onClick={cycleScreen}
-            className="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all active:scale-95"
-            title={screenMode === 'desktop' ? 'Show tablet preview' : screenMode === 'tablet' ? 'Show mobile preview' : 'Show desktop preview'}>
-
+            className="p-2 rounded-xl text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all duration-200 active:scale-95"
+            title={screenMode === 'desktop' ? 'Tablet görünüm' : screenMode === 'tablet' ? 'Mobil görünüm' : 'Masaüstü görünüm'}
+          >
             {screenMode === 'desktop' && <Monitor className="w-4 h-4" />}
             {screenMode === 'tablet' && <Tablet className="w-4 h-4" />}
             {screenMode === 'mobile' && <Smartphone className="w-4 h-4" />}
@@ -173,48 +178,49 @@ export function DesktopEditorLayout() {
 
           <button
             onClick={handleToggleRight}
-            className={`p-2 rounded-lg transition-all ${
-            showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'}`
-            }
-            title="Düzenleme Paneli">
-
+            className={cn(
+              'p-2 rounded-xl transition-all duration-200 active:scale-95',
+              showRight ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/80'
+            )}
+            title="Düzenleme Paneli"
+          >
             <PanelRightClose className="w-4 h-4" />
           </button>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+          <div className="h-5 w-px bg-border/40 mx-1" />
 
           <button
             onClick={onPublish}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95">
-
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
+          >
             <Globe className="w-3.5 h-3.5" />
             Yayınla
           </button>
         </div>
       </div>
 
-      {/* ===== MAIN AREA (below toolbar) ===== */}
+      {/* ===== MAIN AREA ===== */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Left panel content */}
         <AnimatePresence>
-          {leftPanel &&
-          <motion.div
-            data-editor-panel="left"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 260, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30 shadow-xl">
-
+          {leftPanel && (
+            <motion.div
+              data-editor-panel="left"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 260, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="shrink-0 border-r border-border/30 bg-background/95 backdrop-blur-xl overflow-hidden z-30 shadow-xl"
+            >
               <div className="w-[260px] h-full flex flex-col">
                 <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
                   <span className="text-sm font-semibold">
                     {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
                   </span>
                   <button
-                  onClick={() => setLeftPanel(null)}
-                  className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground">
-
+                    onClick={() => setLeftPanel(null)}
+                    className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -226,7 +232,7 @@ export function DesktopEditorLayout() {
                 </ScrollArea>
               </div>
             </motion.div>
-          }
+          )}
         </AnimatePresence>
 
         {/* Canvas */}
@@ -236,41 +242,43 @@ export function DesktopEditorLayout() {
 
         {/* Right edit panel */}
         <AnimatePresence>
-          {showRight &&
-          <motion.div
-            data-editor-panel="right"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel">
-
+          {showRight && (
+            <motion.div
+              data-editor-panel="right"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              className="shrink-0 border-l border-border/30 bg-background overflow-hidden z-30 right-edit-panel"
+            >
               <div className="w-[320px] h-full flex flex-col">
                 <div className="flex items-center gap-1 px-3 py-2.5 border-b border-border/30">
                   <button
-                  onClick={() => setRightTab('props')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  rightTab === 'props' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'}`
-                  }>
-
+                    onClick={() => setRightTab('props')}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+                      rightTab === 'props' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                    )}
+                  >
                     <Settings2 className="w-3.5 h-3.5" />
                     Özellikler
                   </button>
                   <button
-                  onClick={() => setRightTab('styles')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'}`
-                  }>
-
+                    onClick={() => setRightTab('styles')}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+                      rightTab === 'styles' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent/50'
+                    )}
+                  >
                     <Paintbrush className="w-3.5 h-3.5" />
                     Stiller
                   </button>
                   <div className="flex-1" />
                   <button
-                  onClick={handleToggleRight}
-                  className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
-                  title="Paneli Kapat">
-
+                    onClick={handleToggleRight}
+                    className="p-1.5 rounded-lg hover:bg-accent/50 text-muted-foreground transition-all"
+                    title="Paneli Kapat"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -282,9 +290,9 @@ export function DesktopEditorLayout() {
                 </ScrollArea>
               </div>
             </motion.div>
-          }
+          )}
         </AnimatePresence>
       </div>
-    </div>);
-
+    </div>
+  );
 }

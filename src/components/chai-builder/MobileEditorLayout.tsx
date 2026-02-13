@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
@@ -6,7 +6,6 @@ import {
   ChaiOutline,
   ChaiAddBlocksPanel,
   ChaiScreenSizes,
-  ChaiUndoRedo,
 } from '@chaibuilder/sdk';
 import {
   Sheet,
@@ -14,14 +13,9 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import {
-  Layers,
-  Plus,
-  Settings2,
-  Paintbrush,
-  ArrowLeft,
-  ImageIcon,
-  Eye,
-  Globe,
+  Layers, Plus, Settings2, Paintbrush,
+  ArrowLeft, ImageIcon, Globe,
+  Monitor, Tablet, Smartphone,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
@@ -73,7 +67,6 @@ function injectImageUrlToPropsPanel(url: string): boolean {
       window.HTMLInputElement.prototype,
       'value'
     )?.set;
-
     if (nativeInputValueSetter) {
       nativeInputValueSetter.call(targetInput, url);
       targetInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -81,15 +74,16 @@ function injectImageUrlToPropsPanel(url: string): boolean {
       return true;
     }
   }
-
   return false;
 }
 
 export function MobileEditorLayout() {
   const navigate = useNavigate();
-  const { onPublish, onPreview, onImageSearch } = useEditorContext();
+  const { onPublish } = useEditorContext();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [screenMode, setScreenMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const hiddenScreenRef = useRef<HTMLDivElement>(null);
 
   const handlePanelToggle = (panel: PanelType) => {
     setActivePanel((prev) => (prev === panel ? null : panel));
@@ -118,48 +112,50 @@ export function MobileEditorLayout() {
     }, 100);
   }, []);
 
+  const cycleScreen = useCallback(() => {
+    const order: Array<'desktop' | 'tablet' | 'mobile'> = ['desktop', 'tablet', 'mobile'];
+    const btnIndex = { desktop: 4, tablet: 2, mobile: 0 };
+    setScreenMode((prev) => {
+      const next = order[(order.indexOf(prev) + 1) % 3];
+      setTimeout(() => {
+        const btns = hiddenScreenRef.current?.querySelectorAll('button');
+        if (btns && btns[btnIndex[next]]) btns[btnIndex[next]].click();
+      }, 0);
+      return next;
+    });
+  }, []);
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
-      {/* Top toolbar */}
-      <div className="h-12 flex items-center justify-between px-2 border-b border-border/50 bg-background/70 backdrop-blur-xl z-10 shrink-0">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-foreground active:scale-95"
-            title="Dashboard'a dön"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div className="h-5 w-px bg-border/50" />
-          <ChaiUndoRedo />
-        </div>
+      {/* Top toolbar - clean & minimal */}
+      <div className="h-12 flex items-center justify-between px-3 border-b border-border/30 bg-background/95 backdrop-blur-xl z-10 shrink-0 shadow-sm">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="p-2 rounded-xl hover:bg-accent/80 transition-all duration-200 text-foreground active:scale-95"
+          title="Dashboard'a dön"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
+          {/* Hidden SDK screen sizes */}
+          <div ref={hiddenScreenRef} className="chai-screen-hidden">
+            <ChaiScreenSizes openDelay={0} canvas={false} tooltip={false} />
+          </div>
+
           <button
-            onClick={() => setImagePickerOpen(true)}
-            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground active:scale-95"
-            title="Görsel Ara"
+            onClick={cycleScreen}
+            className="p-2 rounded-xl text-muted-foreground hover:bg-accent/80 transition-all duration-200 active:scale-95"
+            title="Ekran boyutu"
           >
-            <ImageIcon className="w-4 h-4" />
+            {screenMode === 'desktop' && <Monitor className="w-4 h-4" />}
+            {screenMode === 'tablet' && <Tablet className="w-4 h-4" />}
+            {screenMode === 'mobile' && <Smartphone className="w-4 h-4" />}
           </button>
-          <ChaiScreenSizes
-            openDelay={0}
-            canvas={false}
-            tooltip={true}
-            buttonClass="p-2 rounded-lg text-muted-foreground hover:bg-accent/80 transition-all"
-            activeButtonClass="p-2 rounded-lg bg-primary/10 text-primary"
-          />
-          <div className="h-5 w-px bg-border/50" />
-          <button
-            onClick={onPreview}
-            className="p-2 rounded-xl hover:bg-accent/80 transition-all text-muted-foreground active:scale-95"
-            title="Önizle"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+
           <button
             onClick={onPublish}
-            className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+            className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
             title="Yayınla"
           >
             <Globe className="w-4 h-4" />
@@ -177,22 +173,17 @@ export function MobileEditorLayout() {
         <Sheet
           key={key}
           open={activePanel === key}
-          onOpenChange={(open) => {
-            if (!open) setActivePanel(null);
-          }}
+          onOpenChange={(open) => { if (!open) setActivePanel(null); }}
         >
           <SheetContent
             side={side}
             className="w-[80vw] max-w-sm p-0 flex flex-col border-border/50 bg-background/95 backdrop-blur-xl"
           >
-            {/* Modern panel header with accent bar */}
             <div className="relative px-5 py-4 border-b border-border/30 shrink-0">
               <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />
               <div className="flex items-center justify-between">
                 <div>
-                  <SheetTitle className="text-base font-semibold tracking-tight">
-                    {label}
-                  </SheetTitle>
+                  <SheetTitle className="text-base font-semibold tracking-tight">{label}</SheetTitle>
                   <p className="text-[11px] text-muted-foreground mt-0.5">{description}</p>
                 </div>
                 {key === 'props' && (
@@ -208,12 +199,8 @@ export function MobileEditorLayout() {
             </div>
             <div className="flex-1 overflow-y-auto p-4 chai-panel-scroll" data-panel={key}>
               {key === 'outline' && <ChaiOutline />}
-              {key === 'add' && (
-                <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />
-              )}
-              {key === 'customize' && (
-                <CustomizePanel onClose={() => setActivePanel(null)} />
-              )}
+              {key === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
+              {key === 'customize' && <CustomizePanel onClose={() => setActivePanel(null)} />}
               {key === 'props' && <ChaiBlockPropsEditor />}
               {key === 'styles' && <ChaiBlockStyleEditor />}
             </div>
@@ -246,12 +233,8 @@ export function MobileEditorLayout() {
                     transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                   />
                 )}
-                <Icon className={`w-5 h-5 relative z-10 transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                }`} />
-                <span className={`text-[10px] font-medium leading-tight relative z-10 transition-colors ${
-                  isActive ? 'text-primary' : 'text-muted-foreground'
-                }`}>{label}</span>
+                <Icon className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className={`text-[10px] font-medium leading-tight relative z-10 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>{label}</span>
                 {isActive && (
                   <motion.div
                     layoutId="activeIndicator"
