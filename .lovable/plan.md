@@ -1,288 +1,118 @@
 
-# UX and Engineering Rules -- Contextual Panel and Regeneration Workflow
+# Prompt 1: Tam Ekran Template Galerisi Overlay Bileseni
 
-This document provides the comprehensive rules, pseudo-APIs, data shapes, and QA plan so that the contextual editing panel and regeneration workflows can be implemented without breaking the existing Customize panel or editor behavior.
+## Ozet
 
----
+"Template Degistir" butonuna basildiginda, URL degismeden tam ekrani kaplayan bir overlay acilir. Mevcut template "Kullanilan" badge'i ile isaretlenir. Diger templateler yatay kayarak goruntulenebilir. Sag ustten X ile kapatilir. Bu asamada sadece gorsel galeri ve UI olusturulur -- Preview ve Apply akislari Prompt 2'de eklenecek.
 
-## 1. Architectural Invariants (Do NOT Break)
+## Goruntulenecek Ekran
 
-### Existing systems that must remain untouched:
-- **Customize Panel** (`CustomizePanel.tsx`): Floating popover from toolbar, 280px, with drill-down sub-menus (Colors, Fonts, Corners, etc.). No code removal or behavioral change.
-- **Editor Context** (`EditorContext.tsx`): Shared context with `projectId`, `projectName`, callbacks. New fields may be added but existing ones must not change signature.
-- **Save Hook** (`useChaiBuilder.ts` > `useChaiBuilderSave`): Single save path via `supabase.from('projects').update({ chai_blocks, chai_theme })`. All save operations must flow through this hook.
-- **SDK Components**: `ChaiBlockPropsEditor`, `ChaiBlockStyleEditor`, `ChaiBuilderCanvas` are black boxes. Cannot modify their internals.
-- **Image Overlay System**: `EditableChaiImage`, `ChaiImageActionOverlay`, `InlineImageSwitcher` remain the primary image editing flow on canvas.
-
-### Stacking order (z-index):
 ```text
-z-30  Left panel (Outline / Add)
-z-40  Right floating edit panel
-z-50  Top toolbar
-z-60  Customize popover
-z-70  RegeneratePopover
-z-80+ Global modals (Publish, Auth, etc.)
++-----------------------------------------------------------------------+
+| [X]  Template Degistir                                     sag ust    |
+|-----------------------------------------------------------------------|
+|                                                                       |
+|  Kullanilan                                                           |
+|  +------------+    +------------+    +------------+    +-------       |
+|  |            |    |            |    |            |    |              |
+|  |  (mevcut)  |    |  Template  |    |  Template  |    |  Temp...    |
+|  |            |    |    2       |    |    3       |    |             |
+|  |  Onizle    |    |  Onizle    |    |  Onizle    |    |             |
+|  |            |    |            |    |            |    |             |
+|  |            |    |            |    |            |    |             |
+|  +------------+    +------------+    +------------+    +-------       |
+|  Modern Prof.      Bold Agency      Elegant Min.                      |
+|  Professional      Creative         Minimal                           |
+|                                                                       |
++-----------------------------------------------------------------------+
 ```
 
-The contextual panel sits at z-40. Image hover overlays on canvas must remain visible when they do not overlap the panel. No z-index changes to existing layers.
+- Kartlar dikey uzun (aspect ratio 3:5 -- siteyi daha genis gosterir)
+- Yatay kaydirma (horizontal scroll) ile templateler arasinda gecis
+- Scroll icin mouse wheel, trackpad ve touch destegi
+- Her kartin altinda template adi ve kategorisi
 
----
+## Teknik Detaylar
 
-## 2. Save / Staging / Undo Rules
-
-### Current behavior (keep as-is):
-The SDK's `onSave` callback fires on explicit save and auto-save (every 5 actions). The `handleSave` in `ChaiBuilderWrapper` calls `saveToSupabase`. This is the **only** persistence path.
-
-### Contextual panel behavior:
-- Edits made through SDK editors (`ChaiBlockPropsEditor`, `ChaiBlockStyleEditor`) inside the contextual panel are **immediately staged in the SDK's internal state** and shown on canvas. This is existing SDK behavior and cannot be intercepted.
-- The SDK's built-in auto-save (`autoSave: true, autoSaveActionsCount: 5`) handles persistence automatically.
-- The "Tamam" (Done) button simply **closes the panel**. It does not trigger an extra save -- the SDK's auto-save handles this.
-- No separate "Save" / "Discard" buttons are needed in this phase because the SDK manages its own changeset internally. Adding a staging layer on top would require intercepting SDK internals, which is not feasible.
-
-### Undo:
-- The SDK provides `ChaiUndoRedo` (already imported but currently hidden). The SDK maintains its own undo stack for block/style changes.
-- For regeneration actions specifically, the `RegeneratePopover` provides a single-level undo via toast notification (already implemented).
-- Keyboard shortcuts (Ctrl/Cmd+Z) are handled by the SDK natively within the canvas.
-
-### Conflict handling:
-- Not applicable in current phase. The app is single-user per project (enforced by RLS `user_id` check). Multi-user concurrent editing is out of scope.
-
----
-
-## 3. Contextual Panel UX Rules
-
-### Opening:
-- Panel opens when `showRight` is true (toggled by `PanelRightClose` button in toolbar).
-- Panel shows SDK editors for whatever block is selected on canvas.
-- If no block is selected, panel shows empty state message.
-
-### Closing:
-- "Tamam" button closes the panel.
-- Escape key closes the panel (already implemented).
-- Clicking outside does NOT close the panel (intentional -- prevents accidental closure during editing).
-
-### Position and size:
-- `absolute right-3 top-3 bottom-3` within the canvas area.
-- Width: 360px fixed.
-- `bg-white rounded-xl shadow-2xl border border-border/40`.
-- Does not push or resize the canvas.
-
-### Animation:
-- Open: `x: 20 -> 0, opacity: 0 -> 1, duration: 180ms, ease: easeOut`
-- Close: `x: 0 -> 20, opacity: 1 -> 0` (handled by AnimatePresence exit)
-
-### Tabs:
-- "Icerik" (Content) tab renders `ChaiBlockPropsEditor`
-- "Stil" (Style) tab renders `ChaiBlockStyleEditor`
-- Default tab on open: "Icerik"
-
----
-
-## 4. Regeneration Workflow Rules
-
-### Text Regeneration (`RegeneratePopover`):
-
-**Trigger:** Sparkles button in the contextual panel header.
-
-**Pseudo-API -- regenerate-content:**
-```text
-INPUT:
-  POST /functions/v1/regenerate-content
-  Authorization: Bearer <user-token>
-  Body: {
-    projectId: string,        // UUID
-    fieldPath: string,         // e.g. "pages.home.hero.title"
-    currentValue?: string,     // existing text to replace
-    variants: 3                // number of alternatives
-  }
-
-OUTPUT (success):
-  {
-    success: true,
-    fieldPath: string,
-    variants: [
-      { text: "Short version", length: "short" },
-      { text: "Medium length version", length: "medium" },
-      { text: "Longer more descriptive version", length: "long" }
-    ]
-  }
-
-OUTPUT (error):
-  { success: false, error: "Error message" }
-
-LATENCY: 800-2000ms typical (Gemini 2.5 Flash)
-```
-
-**UX flow:**
-1. User clicks Sparkles button
-2. Popover opens with 3 skeleton cards (loading state)
-3. API returns -> skeletons replaced with variant cards
-4. User clicks a variant -> popover closes, toast shows "Icerik guncellendi" with "Geri Al" action
-5. "Tekrar Olustur" button at bottom fetches new set
-6. Error state: toast with destructive variant, popover stays open
-
-**Popover specs:**
-- Width: 300px
-- Position: absolute, right-aligned, below trigger button
-- z-index: 70 (above contextual panel)
-- Close: outside click, Escape key, or variant selection
-- Max height: 320px with overflow scroll
-
-### Image Regeneration:
-
-Image replacement continues through the existing canvas-level system:
-1. Hover over image on canvas -> `ChaiImageActionOverlay` appears
-2. "Degistir" opens `InlineImageSwitcher` (Pixabay search)
-3. "Yenile" fetches a random new image from Pixabay
-
-**Pseudo-API -- search-pixabay:**
-```text
-INPUT:
-  POST /functions/v1/search-pixabay
-  Body: {
-    query: string,          // auto-generated from alt text + profession
-    page: number,           // pagination (default 1)
-    perPage: number,        // results per page (default 20)
-    orientation?: string,   // "horizontal" | "vertical" | "all"
-    imageType?: string      // "photo" | "illustration" | "vector"
-  }
-
-OUTPUT:
-  {
-    hits: [
-      {
-        id: number,
-        webformatURL: string,    // 640px preview
-        largeImageURL: string,   // full resolution
-        tags: string,
-        user: string,            // photographer name
-        imageWidth: number,
-        imageHeight: number
-      }
-    ],
-    totalHits: number
-  }
-```
-
-No changes needed to image workflow in this phase.
-
----
-
-## 5. Feature Flag
-
-Wrap the contextual panel behind a simple boolean flag:
+### Yeni Dosya: `src/components/chai-builder/TemplateGalleryOverlay.tsx`
 
 ```typescript
-// In EditorContext or a separate config
-const FEATURE_FLAGS = {
-  contextualPanel: true,  // toggle to false to revert to no right panel
-};
+interface TemplateGalleryOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+  currentTemplateId: string;
+  onPreview: (templateId: string) => void; // Prompt 2'de kullanilacak
+}
 ```
 
-When `contextualPanel` is `false`:
-- `PanelRightClose` button hidden from toolbar
-- Right panel never renders
-- All other editor functionality unchanged
+**Ozellikler:**
+- Tam ekran overlay: `fixed inset-0 z-[80] bg-white`
+- Sag ust kose: X kapatma butonu
+- Sol ust kose: "Template Degistir" basligi
+- Ortada: Yatay kaydirmali template kartlari
+- Her kart: ~280px genislik, 3:5 oran, template preview gorseli
+- Mevcut template: Sol ust kosede `Kullanilan` badge'i (yesil, Check ikonu)
+- Diger templateler: Hover'da `Onizle` butonu belirir (yari saydam overlay)
+- Giris animasyonu: Soldan saga kayarak acilma (x: -100% -> 0, 300ms)
+- Cikis animasyonu: Saga kayarak kapanma (x: 0 -> 100%, 250ms)
+- Escape tusu ile kapanma
+- `getAllTemplates()` fonksiyonundan template listesi alinir
 
-Implementation: Add `featureFlags` to `EditorContext` interface. Check `featureFlags.contextualPanel` before rendering the panel in `DesktopEditorLayout`.
+**Kart hover davranisi:**
+- Mevcut template: Hover'da efekt yok, sadece `Kullanilan` badge'i gorunur
+- Diger templateler: Hover'da koyu overlay + `Onizle` butonu (Eye ikonu)
+- `Onizle` butonuna tiklandiginda `onPreview(templateId)` cagirilir (Prompt 2'de baglanti yapilacak, simdilik sadece console.log)
 
----
+### Degistirilecek Dosya: `src/components/chai-builder/EditorContext.tsx`
 
-## 6. Accessibility Rules
+- `onChangeTemplate` callback'inin tipi `() => void` olarak kaliyor
+- Degisiklik yok -- mevcut callback yeterli
 
-### Keyboard:
-- Tab order within panel: Header (Done, Regenerate) -> Tab buttons -> SDK editor fields
-- Escape closes panel (already implemented)
-- Enter on regenerate variant applies it (add `onKeyDown` handler to variant buttons)
+### Degistirilecek Dosya: `src/components/chai-builder/ChaiBuilderWrapper.tsx`
 
-### ARIA:
-- Panel container: `role="region" aria-label="Bolum duzenleme paneli"`
-- NOT `aria-modal="true"` (panel is non-modal, canvas remains interactive)
-- Regenerate popover: `role="dialog" aria-label="Alternatif icerikler"`
-- Variant buttons: `aria-label="Kisa varyant: [text preview]"`
+- `onChangeTemplate` callback'i artik `TemplateGalleryOverlay`'i acacak
+- `useState` ile `showTemplateGallery` state'i eklenir
+- `TemplateGalleryOverlay` bilesenini JSX'e ekle
+- `currentTemplateId`'yi proje veritabanindan (veya `initialBlocks` meta'sindan) al
 
-### Focus:
-- When panel opens, do NOT auto-focus (would steal focus from canvas selection)
-- When regenerate popover opens, focus first variant or close button
-- Visible focus ring: `focus-visible:ring-2 focus-visible:ring-primary/50` on all interactive elements
+Projenin hangi template'i kullandigini belirlemek icin:
+- Veritabanindan `template_id` alani kontrol edilecek
+- Yoksa varsayilan `temp1` kullanilacak
 
----
+### Degistirilecek Dosya: `src/components/chai-builder/DesktopEditorLayout.tsx`
 
-## 7. Performance Rules
+- Degisiklik yok -- `CustomizePanel` icindeki "Template Degistir" butonu mevcut `onChangeTemplate` callback'ini zaten cagiriyor
 
-- `RegeneratePopover` is already lazily rendered (only mounts when open state is true via AnimatePresence)
-- `PixabayImagePicker` and `InlineImageSwitcher` are already conditionally rendered in `ChaiBuilderWrapper`
-- The SDK editors (`ChaiBlockPropsEditor`, `ChaiBlockStyleEditor`) re-render only when the selected block changes (SDK-managed)
-- The contextual panel uses `AnimatePresence` with `exit` props, ensuring unmount on close
+### Kullanilmayacak Dosya: `src/components/website-preview/ChangeTemplateModal.tsx`
 
-No additional lazy-loading changes needed for current scope.
+- Bu dosya mevcut haliyle kalacak, silinmeyecek (baska yerlerde referans olabilir)
+- Yeni overlay bunun yerini almayacak, cunku farkli bir akis (ChaiBuilder editoru icinde)
 
----
+## Dosya Degisiklikleri Ozeti
 
-## 8. Analytics Events
+| Dosya | Islem | Aciklama |
+|-------|-------|----------|
+| `src/components/chai-builder/TemplateGalleryOverlay.tsx` | Yeni | Tam ekran overlay + yatay kaydirma + kartlar |
+| `src/components/chai-builder/ChaiBuilderWrapper.tsx` | Guncelle | State ekleme + overlay render + callback baglama |
 
-Add these event emissions at the specified code locations:
+## Animasyon Detaylari
 
-| Event | Trigger Location | Data |
-|-------|-----------------|------|
-| `contextual.open` | `showRight` set to `true` in DesktopEditorLayout | `{ timestamp }` |
-| `contextual.close` | `showRight` set to `false` | `{ timestamp, duration_ms }` |
-| `field.regenerate.requested` | `fetchVariants()` in RegeneratePopover | `{ projectId, fieldPath }` |
-| `field.regenerate.applied` | `handleApply()` in RegeneratePopover | `{ projectId, fieldPath, variantLength }` |
-| `field.regenerate.undo` | Undo button click in toast | `{ projectId, fieldPath }` |
-| `image.replace` | Image selected in InlineImageSwitcher | `{ projectId, blockType }` |
-| `image.replace.undo` | Undo in image toast | `{ projectId }` |
+- Overlay acilis: `framer-motion` ile `x: '-100%' -> '0%'`, duration 300ms, ease `[0.32, 0.72, 0, 1]` (Durable benzeri yumusak egrisi)
+- Overlay kapanis: `x: '0%' -> '100%'`, duration 250ms
+- Kart hover: `scale 1 -> 1.02`, `shadow-md -> shadow-xl`, duration 200ms
+- Badge: sabit, animasyonsuz
 
-Implementation: Use the existing `useAnalytics` hook or `supabase.functions.invoke('track-analytics', ...)`.
+## Erisebilirlik (A11y)
 
----
+- Overlay: `role="dialog" aria-modal="true" aria-label="Template galerisi"`
+- X butonu: `aria-label="Kapat"`
+- Kartlar: `role="button" aria-label="[Template adi] template'i"`
+- Mevcut template karti: `aria-current="true"`
+- Escape tusu ile kapatma
+- Acildiginda X butonuna focus
 
-## 9. QA Test Plan
+## Performans
 
-### Test 1: Panel open/close
-- Click PanelRightClose button -> panel slides in from right (180ms)
-- Click "Tamam" -> panel slides out
-- Press Escape -> panel closes
-- Click on canvas (outside panel) -> panel stays open (intentional)
-
-### Test 2: Tab switching
-- Default tab is "Icerik" (Content)
-- Click "Stil" -> shows ChaiBlockStyleEditor
-- Click "Icerik" -> shows ChaiBlockPropsEditor
-- Tab state persists while panel is open
-
-### Test 3: Block selection binding
-- Select Hero block on canvas -> panel shows Hero properties
-- Select Services block -> panel updates to Services properties
-- Deselect all -> panel shows empty/default state
-
-### Test 4: Regenerate text
-- Click Sparkles -> popover opens with 3 skeletons
-- Wait for API -> 3 variant cards appear
-- Click variant -> popover closes, toast appears, text updates
-- Click "Geri Al" in toast -> original text restored
-- Click "Tekrar Olustur" -> new skeletons, new variants
-- Network error -> destructive toast, popover stays open
-
-### Test 5: Coexistence with Customize
-- Open Customize panel (toolbar) -> works normally
-- Open contextual panel (PanelRightClose) -> both visible simultaneously
-- Customize does NOT interfere with contextual panel
-- Close Customize -> contextual panel unaffected
-- Close contextual panel -> Customize unaffected
-
-### Test 6: Image overlay non-interference
-- With contextual panel open, hover image on canvas left side -> overlay appears
-- Hover image behind/under panel -> overlay may be hidden (acceptable)
-- Image replace flow works regardless of panel state
-
-### Test 7: Keyboard accessibility
-- Tab through panel controls
-- Enter on variant button applies it
-- Escape closes popover first, then panel on second press
-
-### Edge cases:
-- Rapidly toggle panel open/close -> no animation glitch
-- Resize browser window -> panel stays positioned correctly
-- Switch screen mode (desktop/tablet/mobile) -> panel remains functional
-- Open left panel (Outline) + right panel simultaneously -> no overlap issues (left panel is 260px, right panel is 360px, canvas fills remaining)
+- `getAllTemplates()` zaten senkron, cache gereksiz
+- Template gorselleri `loading="lazy"` ile yuklenecek
+- Overlay sadece `isOpen=true` oldugunda DOM'a eklenir (AnimatePresence)
