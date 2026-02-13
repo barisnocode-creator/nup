@@ -1,120 +1,109 @@
 
 
-# Regenerate Images -- Pixabay Picker Integration
+# Image Action Box -- Visibility and Behavior Rules
 
-## Overview
+## Analysis of Current State
 
-Wire the "Regenerate" (Wand2) button on the image action box to open the existing `PixabayImagePicker` modal with an auto-generated search query based on the image's context. Selecting an image replaces the original instantly with undo support via a toast action.
+After reviewing the codebase, the existing `EditableImage` implementation already satisfies **most** of the 8 requirements. This plan documents what's already handled and identifies 3 small refinements needed.
 
-## Current State
+## Already Handled (No Changes Needed)
 
-- `PixabayImagePicker` exists at `src/components/chai-builder/PixabayImagePicker.tsx` -- a fully built modal with search, grid results, Pixabay attribution, and suggestion tags
-- `search-pixabay` edge function exists and works with the `PIXABAY_API_KEY` secret
-- `EditableImage` has an `onRegenerate` callback prop already wired to the action box
-- `Project.tsx` currently handles regeneration via `fetch-image-options` edge function (fetches 3 alternatives into the sidebar) -- this is the sidebar flow, separate from the action box
+### 1. Edit Mode Only (Requirement 1 and 2) -- DONE
+The action box is gated by `{isEditable && (...)}` at line 122. The `isEditable` prop is set to `false` in:
+- **Published site** (`PublicWebsite.tsx` line 156): `isEditable={false}`
+- **Preview mode** (`Project.tsx` line 1396): `isEditable={isAuthenticated && !isPreviewMode}`
+- **Unauthenticated visitors** (`Project.tsx`): `isAuthenticated` is false
 
-## Architecture
+No action box, hover border, or cursor change renders outside the editor canvas.
 
-### 1. Auto-Query Generation
+### 2. Smooth Fade In/Out (Requirement 4) -- DONE
+Already uses `transition-all duration-200` with `opacity-0 scale-95` / `opacity-100 scale-100` toggled by `isHovered || isSelected`.
 
-Build the `defaultQuery` for `PixabayImagePicker` from available context, prioritized:
+### 3. No Trigger on Non-Editable Images (Requirement 8) -- DONE
+Background images in CSS (`background-image`) are not `EditableImage` instances and therefore never get hover interactions. Only `<EditableImage>` components with `isEditable={true}` produce hover effects.
+
+### 4. Hover Detection Matches Image Boundaries (Requirement 7 of previous plan) -- DONE
+`onMouseEnter` / `onMouseLeave` on the container div which wraps the image exactly.
+
+## Refinements Needed
+
+### Refinement 1: Z-Index Layer Hierarchy (Requirement 5)
+
+Current z-index stack:
+- `z-10` -- EditableImage container (when editable)
+- `z-20` -- Image action box
+- `z-30` -- EditableSection action box and label badge
+- `z-40` -- Editor sidebar backdrop
+- `z-50` -- Editor sidebar panel, DropdownMenuContent, modals, template preview banner
+
+**Problem**: The DropdownMenuContent inside the image action box uses `z-50`, which is correct for it to appear above the sidebar backdrop (`z-40`). However, the action box container itself at `z-20` may clip behind a sibling section's `z-30` action box if two sections overlap.
+
+**Fix**: Keep current values but ensure the action box parent gets `z-30` (matching section-level actions) so it doesn't get clipped. The dropdown already at `z-50` stays above modals' backdrops.
+
+**Change in `EditableImage.tsx`**: Line 125, change `z-20` to `z-30`.
+
+### Refinement 2: Locked Section Support (Requirement 6)
+
+Currently, `EditableImage` has no concept of a "locked" or "view-only" section. Hero sections are protected from deletion in `EditableSection`, but the image inside can still be interacted with.
+
+**Fix**: Add an optional `isLocked` prop. When `true`:
+- The hover border still shows (so the user knows the element exists)
+- The action box renders with all buttons disabled and a lock icon badge
+- OR simpler: the action box does not render at all, and the hover border uses a muted color (`border-muted-foreground/30` instead of `border-primary`)
+
+The simpler approach is better -- locked sections should feel non-interactive. A subtle gray border on hover communicates "this exists but you can't edit it."
+
+**Changes in `EditableImage.tsx`**:
+- Add `isLocked?: boolean` prop (default `false`)
+- When `isLocked` is true: show muted hover border, hide action box entirely
+- When `isLocked` is false: current behavior
+
+### Refinement 3: Zoomed Editor Scale (Requirement 7)
+
+The editor canvas does not currently use CSS `transform: scale()` for zoom -- it relies on viewport width changes (device switcher changes iframe/container width). Since `top-2 right-2` uses relative spacing and icons are fixed at 14px, the action box already scales correctly with container width changes.
+
+**No change needed** -- the current approach with Tailwind spacing and small fixed icons is inherently scale-safe. If CSS zoom is added in the future, the action box will need `transform-origin: top right` to anchor correctly, but that's not required now.
+
+## Technical Details
+
+### File: `src/components/website-preview/EditableImage.tsx`
+
+**Changes summary:**
+
+1. Add `isLocked?: boolean` prop to interface (line 17 area)
+2. Update hover border: when `isLocked`, use `border-muted-foreground/30` instead of `border-primary`
+3. Gate action box rendering: `{isEditable && !isLocked && (...)}` instead of `{isEditable && (...)}`
+4. Update action box z-index from `z-20` to `z-30`
+5. When `isLocked`, change cursor from `cursor-pointer` to `cursor-default`
+
+### Layer Hierarchy (Final)
 
 ```text
-Priority 1: imageData.altText (e.g., "Modern dental clinic interior")
-Priority 2: Section type mapping (hero -> "professional business", about -> "team office", etc.)
-Priority 3: Project profession from generated_content (e.g., "dental clinic")
-Fallback: "professional business"
+z-10  -- EditableImage container (editable)
+z-30  -- Image action box + EditableSection action box (same level, never overlap)
+z-40  -- Sidebar backdrop overlay
+z-50  -- Sidebar panel, DropdownMenuContent, modals, banners
 ```
 
-Logic lives in a small helper function inside `Project.tsx`:
+This ensures image actions float above the image but below all global UI (sidebars, modals, pickers).
 
-```text
-function buildImageSearchQuery(imageData, content):
-  if imageData.altText and altText is not generic ("Hero", "About Us"):
-    return altText
-  
-  sectionKeywords = {
-    hero: content.businessName + " " + content.profession,
-    about: "team office " + content.profession,
-    gallery: content.profession + " workspace",
-    cta: content.profession + " professional",
-    service: imageData.altText or content.profession + " service"
-  }
-  return sectionKeywords[imageData.type] or "professional business"
-```
+### Mode Detection Summary
 
-### 2. Trigger Flow
+| Context | isEditable | isLocked | Action Box | Hover Border |
+|---------|-----------|----------|------------|--------------|
+| Editor (edit mode) | true | false | Visible on hover | Primary color |
+| Editor (locked section) | true | true | Hidden | Muted gray |
+| Template preview mode | false | -- | Hidden | None |
+| Published site | false | -- | Hidden | None |
+| Unauthenticated view | false | -- | Hidden | None |
 
-```text
-User hovers image
-  -> Action box appears
-    -> User clicks Wand2 (Regenerate)
-      -> onRegenerate callback fires
-        -> Sets pixabayPickerOpen = true
-        -> Sets pixabayDefaultQuery from buildImageSearchQuery()
-        -> PixabayImagePicker auto-searches on open
-      -> User selects image from grid
-        -> onSelect returns largeImageURL
-        -> Image is replaced in generated_content
-        -> Previous URL stored for undo
-        -> Toast shows "Gorsel degistirildi" with "Geri Al" action
-```
+### Transition Animation Behavior (Unchanged)
 
-### 3. File Changes
+- **Hover enter**: `opacity-0 scale-95` to `opacity-100 scale-100` over 200ms ease-out
+- **Hover leave**: Reverse transition, same duration
+- **Selected state**: Action box stays visible (no transition needed, already at full opacity)
+- **Border highlight**: `transition-colors duration-200` for smooth color change
 
-#### A. `src/components/chai-builder/PixabayImagePicker.tsx`
+### Files Changed
 
-- Add `autoSearch` prop (boolean, default false)
-- When `open` becomes true and `autoSearch` is true and `defaultQuery` is non-empty, trigger `searchImages(defaultQuery)` automatically via a `useEffect`
-- Reset state (images, searched, query) when dialog closes so it's fresh on next open
-
-#### B. `src/pages/Project.tsx`
-
-- Add state: `pixabayForRegenerate` (`{ open: boolean; defaultQuery: string; targetImagePath: string; previousUrl: string }`)
-- Update the `onRegenerate` handler passed through templates to open PixabayImagePicker instead of calling `fetch-image-options`
-- Add `handlePixabaySelect` callback that:
-  1. Saves current image URL as `previousUrl`
-  2. Updates `generated_content` with new URL at the correct image path
-  3. Saves to database
-  4. Shows toast with "Geri Al" (Undo) button that restores `previousUrl`
-- Render `PixabayImagePicker` component in Project.tsx JSX
-
-#### C. Template files (no changes needed)
-
-The `onRegenerate` callback is already plumbed from `EditableImage` through templates. The only gap is that templates currently don't pass `onRegenerate` to `EditableImage` -- this needs to be connected in each template's hero/about/gallery sections by passing a callback that calls up to `Project.tsx`.
-
-However, since the regeneration is image-specific and `EditableImage` already receives `onRegenerate` as an optional prop, the wiring happens at the template level. We need to:
-
-- Pass an `onImageRegenerate` callback from `Project.tsx` through `WebsitePreview` to templates
-- Templates pass it as `onRegenerate` to each `EditableImage`, including the `imagePath` so Project.tsx knows which image to replace
-
-This is the same pattern used for `onImageSelect` -- add a parallel `onImageRegenerate?: (imageData: ImageData) => void` prop that flows through `WebsitePreview` -> Template -> Section -> `EditableImage`.
-
-### 4. Undo / Revert Handling
-
-- Before replacing, store `{ imagePath, previousUrl }` in a ref or state
-- Toast with "Geri Al" action button calls a restore function that writes `previousUrl` back to `generated_content` at the same path
-- Toast auto-dismisses after 8 seconds (standard sonner duration)
-- No persistent undo history needed -- single-level undo via toast is sufficient
-
-### 5. Loading States
-
-- `PixabayImagePicker` already has a `Loader2` spinner during search
-- The image grid shows a skeleton/loading state while fetching
-- After selection, the image in the canvas updates instantly (URL swap) -- no additional loading needed since Pixabay URLs are direct CDN links
-
-### 6. Licensing Attribution
-
-- `PixabayImagePicker` already includes Pixabay attribution footer: "Gorseller Pixabay tarafindan saglanmaktadir"
-- Pixabay images are free for commercial use (Pixabay License) -- no per-image attribution required
-- The attribution in the picker modal satisfies Pixabay's API terms of service
-
-## Summary of Changes
-
-| File | Change |
-|------|--------|
-| `PixabayImagePicker.tsx` | Add `autoSearch` prop + useEffect for auto-search on open + reset on close |
-| `Project.tsx` | Add pixabay state, `buildImageSearchQuery` helper, `handlePixabaySelect` with undo toast, render PixabayImagePicker |
-| `WebsitePreview.tsx` | Add `onImageRegenerate` prop passthrough |
-| Template files (temp1 hero, about, gallery, CTA; temp2 hero) | Pass `onRegenerate` to `EditableImage` instances using the new callback |
-
+Only `src/components/website-preview/EditableImage.tsx` -- 5 small modifications within the existing component.
