@@ -136,13 +136,13 @@ export function DesktopEditorLayout() {
           Ekle
         </button>
 
-        <button
-          onClick={onImageSearch}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/80 transition-all">
+        
 
-          <ImageIcon className="w-3.5 h-3.5" />
-          Görsel
-        </button>
+
+
+
+
+
 
         {/* Center: project name */}
         <div className="flex-1 flex items-center justify-center">
