@@ -1,105 +1,109 @@
 
 
-# Prompt 3: Mobil Duyarlilik Iyilestirmeleri ve Animasyon Optimizasyonu
+# Pilates Template Kalite Yukseltmesi - Referans Siteye Uyum
 
-## Ozet
+## Sorun Analizi
 
-Template galerisi overlay'i ve onizleme banner'i su anda sadece masaustu icin optimize edilmis durumda. Bu prompt'ta her iki bileseni mobil ve tablet ekranlar icin uyumlu hale getirecek, animasyonlari performans acisindan iyilestirecek ve dokunmatik etkilesimi gelistirecegiz.
+Mevcut template ile referans site (pilates-circles-by-cult.lovable.app) arasinda ciddi farklar var:
 
-## Degisiklikler
+1. **Sabit kodlanmis renkler**: Tum sectionlarda `#c4775a`, `#2d2420`, `#f5ebe0` dogrudan yazilmis. Tema degistiginde hicbir sey degismiyor
+2. **Statik icerik**: Ogretmenler, testimonial'lar, nav linkleri, galeri basliklari hep ayni sabit degerlerle geliyor - AI'nin urettigi icerik kullanilmiyor
+3. **Eksik ozellikler**: Referans sitedeki sonsuz yatay galeri kaydirmasi, daha rafine glassmorphism efektleri, daha akici animasyonlar yok
+4. **Esneklik yok**: Farkli bir meslek/sektor secildiginde bile site ayni gorunuyor cunku icerik baglantisi yok
 
-### 1. TemplateGalleryOverlay.tsx - Mobil Uyumluluk
+## Cozum: Tum Sectionlari Yeniden Yazmak
 
-**Sorunlar:**
-- Kartlar sabit 280px genislikte, mobilde ekrani tasiriyor
-- Header padding'leri mobilde buyuk
-- Yatay scroll alani mobilde yeterli alan birakmiyar
-- Canli template render (1200px scaled) mobilde gereksiz agir
+### Degisiklik 1: CSS Degiskenleri Kullanimi (Tum Sectionlar)
 
-**Cozumler:**
+Sabit hex kodlari yerine tema degiskenlerine gecis:
 
-- Kart genisligini responsive yap: mobilde ~200px, tablette ~240px, masaustunde 280px
-- Mobilde canli render yerine statik preview gorseli kullan (performans icin)
-- Header padding'lerini responsive yap: `px-4 md:px-6`
-- Kartlar arasi boslugu responsive yap: `gap-3 md:gap-5`
-- Touch scroll icin `-webkit-overflow-scrolling: touch` ekle
-- Kart hover overlay'ini mobilde `opacity-100` yap (hover olmadigi icin her zaman gorunsun, kucuk bir "Onizle" butonu)
-- Mobilde scroll snap ekle: `scroll-snap-type: x mandatory`, her kart `scroll-snap-align: start`
+```text
+Onceki:  bg-[#f5ebe0]  text-[#2d2420]  text-[#c4775a]  bg-[#2d2420]
+Sonraki: bg-background  text-foreground  text-primary    bg-card (koyu varyant)
+```
 
-**Mobil kart davranisi:**
-- Hover yerine, her kartın altindaki bilgi alanina kucuk bir "Onizle" butonu eklenir
-- "Kullanilan" badge'i boyutu kucultulur
+Her section icin renk esleme:
+- `#f5ebe0` (krem arka plan) -> `bg-background`
+- `#2d2420` (koyu metin) -> `text-foreground`
+- `#c4775a` (terracotta vurgu) -> `text-primary`
+- `#6b5e54` (soluk metin) -> `text-muted-foreground`
+- `#e8ddd0` (border) -> `border-border`
+- `#2d2420` (koyu arka plan) -> `bg-secondary` veya ozel koyu section icin gradient
 
-### 2. TemplatePreviewBanner.tsx - Mobil Uyumluluk
+### Degisiklik 2: HeroFullscreen.tsx - Referans Siteye Uyum
 
-**Sorunlar:**
-- Banner icerigi `flex items-center justify-between` ile tek satira sikistiriliyor
-- Mobilde ikon + metin + 2 buton sığmıyor
-- Font boyutlari ve padding'ler buyuk
+- Gradient overlay'i tema renklerine bagla: `from-primary/60 via-primary/30 to-primary/20` yerine sabit hex
+- Form alanlarini tema renklerine bagla
+- "Discover More" metnini Turkce yap ve generated content'ten al
+- Buton rengini `bg-primary text-primary-foreground` yap
 
-**Cozumler:**
+### Degisiklik 3: FeatureCards.tsx - Dinamik Icerik
 
-- Mobilde layout'u dikey yap: ust satir ikon + template adi, alt satir butonlar
-- `flex-wrap` ile tasmayi onle
-- Buton boyutlarini mobilde kucult
-- Eye ikonu mobilde gizle, sadece metin goster
-- `py-2 md:py-3` ve `px-3 md:px-4` responsive padding
+- Arka plan rengini `bg-background` yap
+- Baslik rengini `text-foreground`, aciklama `text-muted-foreground`
+- Servis gorselleri icin `servicesImages` dizisini duzgun kullan
+- Kart hover animasyonlarini iyilestir
 
-### 3. Animasyon Optimizasyonlari
+### Degisiklik 4: TourGallery.tsx - Sonsuz Kaydirma
 
-**Overlay giris/cikis:**
-- Mevcut: `x: '-100%' -> '0%'` (tum sayfa kaydirma, mobilde agir olabilir)
-- Iyilestirme: `will-change: transform` ekle, mobilde `opacity` ile birlikte kullan
-- `transition` suresini mobilde biraz kisalt (250ms)
+- Referans sitedeki gibi galeri gorsellerini ciftleyerek sonsuz yatay kaydirma efekti ekle (CSS animation ile)
+- Koyu arka plan icin `bg-foreground text-background` seklinde ters tema kullan
+- Galeri basliklarini `generated_content`'teki servis adlarindan al
+- `scrollbar-hide` CSS sinifini ekle
 
-**Kart hover:**
-- `group-hover:scale-[1.02]` yerine `transform: translateY(-2px)` kullan (daha hafif)
-- `will-change: transform, box-shadow` ekle
+### Degisiklik 5: TeacherGrid.tsx - Dinamik Ekip Verisi
 
-**Banner:**
-- Banner'a giris animasyonu ekle: yukaridan asagi `translateY(-100%) -> 0` ile 200ms
+Su an 4 sabit ogretmen var. Bunun yerine:
+- `generated_content.pages.about.values` verisinden ekip uyeleri olustur
+- Gorselleri `servicesImages` dizisinden cek
+- Isimleri ve rolleri AI icerigi olan `values` dizisinden map'le
+- Renkleri tema degiskenlerine bagla
 
-### 4. Safe Area ve Touch Destegi
+### Degisiklik 6: Testimonials.tsx - Generated Content Kullanimi
 
-- Overlay: `padding-top: env(safe-area-inset-top)` (notch'lu telefonlar)
-- Scroll alani: `padding-bottom: env(safe-area-inset-bottom)`
-- Kartlara `touch-action: pan-x` ekle (yatay swipe'i kolaylastir)
-- Scroll container'a `overscroll-behavior-x: contain` ekle (sayfa scroll'unu engelle)
+Su an `highlights` prop'u alinip kullanilmiyor. Duzeltme:
+- `highlights` dizisini gercekten testimonial olarak render et
+- Her highlight'in `title`'ini musteri adi, `description`'ini yorum olarak goster
+- Renkleri tema degiskenlerine bagla
+- Koyu section icin ters tema kullan
+
+### Degisiklik 7: ContactSection.tsx - Tema Uyumu
+
+- Form alanlarinin renklerini tema degiskenlerine bagla
+- Buton rengini `bg-primary text-primary-foreground` yap
+- Ikon renklerini `text-primary` yap
+- Border renklerini `border-border` yap
+
+### Degisiklik 8: TemplateHeader.tsx ve TemplateFooter.tsx
+
+- Sabit renkleri tema degiskenlerine cevir
+- Nav item'lari Turkce yap (generated content'ten)
+- Logo rengini tema'ya bagla
+- Footer link renklerini tema'ya bagla
+
+### Degisiklik 9: index.tsx (PilatesTemplate)
+
+- Wrapper `div`'deki sabit `bg-[#f5ebe0] text-[#2d2420]` -> `bg-background text-foreground`
+- `fontFamily` stil override'ini kaldir (tema zaten hallediyor)
 
 ## Dosya Degisiklikleri Ozeti
 
 | Dosya | Islem | Aciklama |
 |-------|-------|----------|
-| `TemplateGalleryOverlay.tsx` | Guncelle | Responsive kart boyutlari, mobil scroll snap, touch destegi, mobilde statik gorsel |
-| `TemplatePreviewBanner.tsx` | Guncelle | Responsive layout, mobilde dikey yigilma, kucuk butonlar |
+| `src/templates/pilates/index.tsx` | Guncelle | Sabit renkleri tema degiskenlerine cevir |
+| `src/templates/pilates/sections/hero/HeroFullscreen.tsx` | Yeniden yaz | Tema renkleri, Turkce metinler, referans site uyumu |
+| `src/templates/pilates/sections/features/FeatureCards.tsx` | Guncelle | Tema renkleri, dinamik gorsel kullanimi |
+| `src/templates/pilates/sections/tour/TourGallery.tsx` | Yeniden yaz | Sonsuz kaydirma, tema renkleri, dinamik basliklar |
+| `src/templates/pilates/sections/teachers/TeacherGrid.tsx` | Yeniden yaz | Dinamik ekip verisi, tema renkleri |
+| `src/templates/pilates/sections/testimonials/Testimonials.tsx` | Yeniden yaz | Generated content kullanimi, tema renkleri |
+| `src/templates/pilates/sections/contact/ContactSection.tsx` | Guncelle | Tema renkleri |
+| `src/templates/pilates/components/TemplateHeader.tsx` | Guncelle | Tema renkleri, Turkce nav |
+| `src/templates/pilates/components/TemplateFooter.tsx` | Guncelle | Tema renkleri |
 
-## Teknik Detaylar
+## Beklenen Sonuc
 
-### TemplateGalleryOverlay.tsx Degisiklikleri
-
-```text
-Responsive kart boyutlari:
-- Mobil (<640px):  CARD_WIDTH = 200, canli render YOK (statik gorsel)
-- Tablet (640-1024px): CARD_WIDTH = 240, canli render VAR
-- Masaustu (>1024px): CARD_WIDTH = 280, canli render VAR
-```
-
-- `useIsMobile()` hook'u import edilecek (mevcut `src/hooks/use-mobile.tsx`)
-- Ek olarak tablet kontrolu icin `window.innerWidth` kullanilacak
-- Mobilde `TemplateCard` icinde `TemplateComponent` yerine `<img src={template.preview}>` render edilecek
-- Scroll container'a `scroll-snap-type: x mandatory` ve kartlara `scroll-snap-align: start` eklenecek
-- Mobilde hover overlay kaldirilacak, bunun yerine kart altina kucuk "Onizle" butonu eklenecek
-
-### TemplatePreviewBanner.tsx Degisiklikleri
-
-```text
-Masaustu:  [Eye] Onizleniyor: Template Adi     [Iptal] [Uygula]
-Mobil:     Onizleniyor: Template Adi
-           [Iptal] [Uygula]
-```
-
-- `flex-col sm:flex-row` ile responsive layout
-- Butonlar: `w-full sm:w-auto` ile mobilde tam genislik
-- `py-2 sm:py-3` responsive padding
-- Eye ikonu: `hidden sm:flex` ile mobilde gizle
+- Tema preset degistirildiginde tum renkler aninda degisecek
+- Farkli meslek/sektor icin farkli AI icerigi uretildiginde, template o icerigi dogru gosterecek
+- Galeri sonsuz kaydirma ile referans siteye yakin gorunecek
+- Her section dinamik olacak, sabit veri kalmayacak
 
