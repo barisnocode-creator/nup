@@ -9,6 +9,7 @@ interface RegenerateRequest {
   projectId: string;
   fieldPath: string;
   currentValue?: string;
+  variants?: number;
 }
 
 // Field type detection for prompt customization
@@ -95,8 +96,8 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    const { projectId, fieldPath, currentValue } = await req.json() as RegenerateRequest;
-
+    const { projectId, fieldPath, currentValue, variants: variantCount } = await req.json() as RegenerateRequest;
+    const wantVariants = (variantCount && variantCount > 1);
     if (!projectId || !fieldPath) {
       throw new Error('Missing required fields: projectId and fieldPath');
     }
@@ -126,21 +127,34 @@ Deno.serve(async (req) => {
     const existingValue = currentValue || getValueFromPath(project.generated_content, fieldPath);
 
     // Build AI prompt
-    const prompt = `You are a professional content writer for a ${project.profession} business website.
-
-Generate ${fieldInfo.description} for a ${project.profession} website.
-
+    const baseInstructions = `You are a professional content writer for a ${project.profession} business website.
 Site name: ${context.siteName}
 Current content: "${existingValue}"
-
 Requirements:
-- Keep approximately the same length as the current content
 - Maintain a professional, ${context.tone} tone
 - Make it different but equally engaging and relevant
-- Do NOT include quotes around your response
+- Do NOT include quotes around your response`;
+
+    let prompt: string;
+    if (wantVariants) {
+      prompt = `${baseInstructions}
+
+Generate 3 alternative versions of this ${fieldInfo.type} (${fieldInfo.description}):
+1. SHORT: Maximum 5 words, punchy
+2. MEDIUM: Similar length to current content
+3. LONG: Slightly longer, more descriptive
+
+Return ONLY a JSON array with exactly 3 strings, no explanation:
+["short version", "medium version", "long version"]`;
+    } else {
+      prompt = `${baseInstructions}
+
+Generate ${fieldInfo.description} for a ${project.profession} website.
+- Keep approximately the same length as the current content
 - Return ONLY the new text, no explanation or additional formatting
 
 Generate a new ${fieldInfo.type}:`;
+    }
 
     console.log('Calling AI Gateway for content regeneration...');
 
@@ -171,23 +185,45 @@ Generate a new ${fieldInfo.type}:`;
     }
 
     const aiResponse = await response.json();
-    const newValue = aiResponse.choices?.[0]?.message?.content?.trim() || '';
+    const rawContent = aiResponse.choices?.[0]?.message?.content?.trim() || '';
 
-    if (!newValue) {
+    if (!rawContent) {
       throw new Error('AI returned empty content');
     }
 
-    console.log(`Generated new content for ${fieldPath}: "${newValue.substring(0, 50)}..."`);
+    if (wantVariants) {
+      // Try to parse as JSON array
+      let variantsArr: string[] = [];
+      try {
+        // Extract JSON array from response (handle markdown code blocks)
+        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          variantsArr = JSON.parse(jsonMatch[0]);
+        }
+      } catch {
+        // Fallback: use as single value
+        variantsArr = [rawContent];
+      }
+
+      const result = variantsArr.map((text: string, i: number) => ({
+        text: text.replace(/^["']|["']$/g, ''),
+        length: i === 0 ? 'short' : i === 1 ? 'medium' : 'long',
+      }));
+
+      console.log(`Generated ${result.length} variants for ${fieldPath}`);
+
+      return new Response(
+        JSON.stringify({ success: true, fieldPath, variants: result }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Single value (backward compatible)
+    console.log(`Generated new content for ${fieldPath}: "${rawContent.substring(0, 50)}..."`);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        fieldPath,
-        newValue,
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ success: true, fieldPath, newValue: rawContent }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
     console.error('Error in regenerate-content:', error);

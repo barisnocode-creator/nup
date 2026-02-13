@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomizePanel } from './CustomizePanel';
+import { RegeneratePopover } from './RegeneratePopover';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -30,7 +31,7 @@ const tools: { key: ToolKey; icon: React.ElementType; label: string }[] = [
 ];
 
 export function DesktopEditorLayout() {
-  const { onDashboard, onPublish } = useEditorContext();
+  const { onDashboard, onPublish, projectId } = useEditorContext();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>(null);
   const [rightTab, setRightTab] = useState<RightTab>('props');
   const [showRight, setShowRight] = useState(true);
@@ -256,12 +257,15 @@ export function DesktopEditorLayout() {
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
                 <span className="text-sm font-semibold text-foreground">Bölüm Düzenle</span>
-                <button
-                  onClick={handleToggleRight}
-                  className="px-3 py-1 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 transition-all duration-200"
-                >
-                  Tamam
-                </button>
+                <div className="flex items-center gap-1">
+                  {projectId && <RegeneratePopover projectId={projectId} />}
+                  <button
+                    onClick={handleToggleRight}
+                    className="px-3 py-1 rounded-lg text-xs font-medium text-primary hover:bg-primary/10 transition-all duration-200"
+                  >
+                    Tamam
+                  </button>
+                </div>
               </div>
 
               {/* Tabs */}
