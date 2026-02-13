@@ -1,121 +1,152 @@
 
-# Esnek Musaitlik ve Calisma Saatleri Yapilandirma Sistemi
+
+# Randevu Talep Formu Sistemi
 
 ## Mevcut Durum
 
-Simdi `appointment_settings` tablosu tum gunler icin **tek bir calisma saati** tutuyor:
-- `working_hours_start` / `working_hours_end` (tek deger)
-- `lunch_break_start` / `lunch_break_end` (tek deger)
-- `working_days` (hangi gunler acik)
-
-Bu yapi **gun bazli farkli saat dilimlerini** desteklemiyor. Ornegin "Pazartesi 09-18, Cumartesi 10-14" yapilamiyor.
+Simdi randevu formu sabit 4 alandan olusuyor: Ad (zorunlu), E-posta (zorunlu), Telefon (opsiyonel), Not (opsiyonel). Hizmet saglayicisi bu alanlari ozellestiremez, yeni alan ekleyemez, sira degistiremez. Gizlilik onayi ve spam korunmasi yok.
 
 ## Yeni Veri Yapisi
 
-### Veritabani Degisikligi: `day_schedules` JSONB Sutunu
-
-`appointment_settings` tablosuna yeni bir `day_schedules` JSONB sutunu eklenecek. Mevcut `working_hours_start/end` ve `lunch_break_start/end` alanlari geriye uyumluluk icin korunacak, yeni alan varsa oncelikli kullanilacak.
+### appointment_settings tablosuna yeni JSONB sutunu: `form_fields`
 
 ```text
-day_schedules yapisi:
+form_fields yapisi:
+[
+  { "id": "client_name", "type": "text", "label": "Adiniz", "required": true, "system": true, "order": 0 },
+  { "id": "client_email", "type": "email", "label": "E-posta", "required": true, "system": true, "order": 1 },
+  { "id": "client_phone", "type": "tel", "label": "Telefon", "required": false, "system": false, "order": 2 },
+  { "id": "subject", "type": "text", "label": "Konu", "required": false, "system": false, "order": 3 },
+  { "id": "client_note", "type": "textarea", "label": "Not", "required": false, "system": false, "order": 4 }
+]
+```
+
+Her alan icin:
+- `id`: Benzersiz anahtar (veritabanina kaydedilirken kullanilir)
+- `type`: text, email, tel, textarea, select, checkbox
+- `label`: Kullaniciya gosterilecek etiket
+- `required`: Zorunlu mu
+- `system`: true ise silinemez (client_name ve client_email)
+- `order`: Siralama
+- `placeholder`: Opsiyonel yer tutucu metin
+- `options`: select tipi icin secenek listesi (ornek: ["Bireysel", "Kurumsal"])
+
+### appointments tablosuna yeni JSONB sutunu: `form_data`
+
+Musterinin doldurdugu tum form verilerini saklar. Sabit alanlar (client_name, client_email, client_phone, client_note) mevcut sutunlarda kalir, ozel alanlar `form_data` JSONB'ye yazilir.
+
+```text
+form_data ornegi:
 {
-  "1": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [{"start": "12:00", "end": "13:00"}] },
-  "2": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [{"start": "12:00", "end": "13:00"}] },
-  "3": { "enabled": true, "start": "09:00", "end": "18:00", "breaks": [] },
-  "4": { "enabled": true, "start": "10:00", "end": "16:00", "breaks": [{"start": "12:30", "end": "13:00"}] },
-  "5": { "enabled": true, "start": "09:00", "end": "17:00", "breaks": [] },
-  "6": { "enabled": true, "start": "10:00", "end": "14:00", "breaks": [] },
-  "0": { "enabled": false, "start": "", "end": "", "breaks": [] }
+  "subject": "Dis beyazlatma",
+  "pre_session_notes": "Onceki tedavim var",
+  "custom_field_1": "Deger"
 }
 ```
 
-Anahtar = haftanin gunu (0=Pazar, 6=Cumartesi). Her gun icin:
-- `enabled`: O gun acik mi
-- `start` / `end`: Calisma saatleri
-- `breaks`: Birden fazla mola destegi (sadece ogle degil, cay molasi vb. de eklenebilir)
+### Gizlilik onayi: `consent_text` ve `consent_required`
 
-### Geriye Uyumluluk
+`appointment_settings` tablosuna 2 alan daha:
+- `consent_text` (text, nullable): "Kisisel verilerinizin islenmesini kabul ediyorum" gibi
+- `consent_required` (boolean, default true): Onay kutusu zorunlu mu
 
-- `day_schedules` NULL ise eski alanlar (`working_hours_start/end`, `working_days`, `lunch_break_start/end`) kullanilir
-- `day_schedules` dolduruldugunda yeni sistem devreye girer
-- Mevcut projeler etkilenmez
+### Anti-spam: Honeypot + zaman kontrolu
 
-## Slot Yeniden Hesaplama Mantigi
+Captcha yerine iki katmanli koruma:
+1. **Honeypot alani**: Gorunmez bir input, botlar doldurursa istek reddedilir
+2. **Zaman kontrolu**: Form acilma suresi 3 saniyeden kisa ise (bot hizi) reddedilir
 
-`book-appointment` edge function guncellenecek:
+## Sektor Bazli Varsayilan Form Alanlari
+
+`auto_provision_appointment_settings` trigger'i guncellenecek. Her sektor icin farkli varsayilan form alanlari olusturulacak:
 
 ```text
-1. day_schedules varsa:
-   - Istenen gun icin schedule'u al (orn: day_schedules["3"])
-   - enabled=false ise slot dondurme
-   - start/end saatlerinden slotlari uret
-   - breaks dizisindeki her mola araligini atla
-2. day_schedules yoksa:
-   - Mevcut mantik aynen calisir (working_hours_start/end + lunch)
-3. Gecmis saat kontrolu:
-   - Bugunun tarihiyse, gecmis slotlari otomatik cikar
+health (doktor/psikolog):
+  + "Sikayet / Belirti" (textarea, zorunlu)
+  + "Onceki tedavi var mi?" (select: Evet/Hayir)
+
+service (danismanlik):
+  + "Konu" (text)
+  + "Sirket Adi" (text)
+
+food (restoran):
+  + "Kisi Sayisi" (select: 1-2, 3-4, 5-6, 7+)
+  + "Ozel Istek" (textarea)
+
+creative (tasarim):
+  + "Proje Turu" (select: Logo, Web, Sosyal Medya, Diger)
+  + "Brifing Notu" (textarea)
+
+technology:
+  + "Konu" (text)
+
+other (varsayilan):
+  + "Konu" (text)
+  + "Not" (textarea)
 ```
-
-## Istisna Gunu Yonetimi (blocked_slots Genisletme)
-
-`blocked_slots` tablosuna yeni alanlar eklenerek tam gun kapatma yerine **saat araligi kapatma** da desteklenecek:
-
-- `block_start_time` (text, nullable): NULL ise tam gun kapali
-- `block_end_time` (text, nullable): NULL ise tam gun kapali
-- `block_type` (text, default 'full_day'): 'full_day', 'time_range', 'vacation'
-
-Boylece:
-- Tam gun kapatma: `blocked_date = '2026-03-15', block_type = 'full_day'`
-- Saat araligi kapatma: `blocked_date = '2026-03-15', block_start_time = '14:00', block_end_time = '16:00'`
-- Tatil: `blocked_date = '2026-03-15', block_type = 'vacation', reason = 'Yillik izin'`
-
-## Timezone Normalizasyonu
-
-- Tum saatler `appointment_settings.timezone` alanina gore saklanir (varsayilan: Europe/Istanbul)
-- Edge function'da slot uretimi ve gecmis saat kontrolu icin sunucu zamani yerine `timezone` degeri kullanilir
-- Musteri tarafinda tarayici timezone'u gosterilir ama backend'e gonderilirken proje timezone'una cevirilir
-
-## UI Degisiklikleri (AppointmentsPanel.tsx - Ayarlar Sekmesi)
-
-Mevcut basit form yerine zengin bir gun bazli yapilandirma ekrani:
-
-### Genel Ayarlar Karti
-- Randevu sistemi acik/kapali (switch)
-- Randevu suresi secimi (15/30/45/60/90/120 dk - select)
-- Tampon sure (0/5/10/15 dk - select)
-- Timezone secimi (select)
-- Maksimum ileri gun (input)
-
-### Gun Bazli Program Karti
-7 gunun her biri icin bir satir:
-```text
-[Pazartesi]  [Acik/Kapali Toggle]  [09:00] - [18:00]  [+ Mola Ekle]
-  Molalar: [12:00-13:00] [x]
-[Sali]       [Acik/Kapali Toggle]  [09:00] - [18:00]  [+ Mola Ekle]
-[Cumartesi]  [Acik/Kapali Toggle]  [10:00] - [14:00]  [+ Mola Ekle]
-[Pazar]      [Kapali]
-```
-
-### Kapali Gunler Karti (Gelistirilmis)
-- Tarih secici (calendar picker)
-- Kapatma tipi: Tam gun / Saat araligi / Tatil
-- Saat araligi secildiginde baslangic-bitis saati girdileri
-- Sebep alani
-- Mevcut kapali gunler listesi (badge ile tip gosterimi)
 
 ## Dosya Degisiklikleri
 
-| Dosya | Degisiklik |
-|---|---|
-| Migration SQL | `appointment_settings` tablosuna `day_schedules` JSONB sutunu ekle; `blocked_slots` tablosuna `block_start_time`, `block_end_time`, `block_type` sutunlari ekle; auto-provision trigger'i guncelle (day_schedules ile varsayilan program olustur) |
-| `supabase/functions/book-appointment/index.ts` | Slot uretim mantigi: `day_schedules` varsa gun bazli program kullan, gecmis saat filtreleme ekle, saat araligi bloklama destegi |
-| `supabase/functions/manage-appointments/index.ts` | PUT'a `day_schedules` alanini ekle, POST'a `block_start_time/end_time/block_type` destegi |
-| `src/components/dashboard/AppointmentsPanel.tsx` | Ayarlar sekmesini tamamen yeniden tasarla: gun bazli program editoru, mola ekleme/cikarma, gelistirilmis kapatma formu |
+### 1. Veritabani (Migration)
 
-## Gelecekte Multi-Staff Destegi Icin Hazirlik
+- `appointment_settings` tablosuna `form_fields` (JSONB), `consent_text` (text), `consent_required` (boolean) ekle
+- `appointments` tablosuna `form_data` (JSONB), `consent_given` (boolean) ekle
+- `auto_provision_appointment_settings` trigger fonksiyonunu guncelle (sektor bazli form_fields)
 
-Mevcut yapi `appointment_settings` -> `project_id` ile baglidir. Gelecekte:
-- `staff_id` sutunu eklenebilir (nullable, NULL = genel ayar)
-- `day_schedules` zaten kisi bazli farkli programlari destekler
-- `appointments` tablosuna `staff_id` eklenerek hangi personele atandigi izlenebilir
-- Simdilik sutunlar eklenmez ama yapi buna uygun tasarlandi
+### 2. book-appointment Edge Function
+
+- POST handler'a `form_data`, `consent_given`, `honeypot`, `form_loaded_at` alanlari ekle
+- Honeypot dolu ise 200 OK dondur (botu yaniltma)
+- `form_loaded_at` ile suanki zaman farki < 3sn ise reddet
+- `consent_required=true` ise `consent_given` kontrolu yap
+- `form_fields` uzerinden zorunlu alan validasyonu yap (required=true olan alanlar bos mu?)
+- Ozel alan verilerini `form_data` JSONB'ye kaydet
+
+### 3. manage-appointments Edge Function
+
+- PUT'a `form_fields`, `consent_text`, `consent_required` alanlari ekle
+- GET appointments ciktisina `form_data` dahil et
+
+### 4. AppointmentBooking.tsx (ChaiBuilder bloku)
+
+- Tarih+saat secildikten sonra formu goster
+- Slot sorgulamayla birlikte `form_fields` verisini de cek (GET response'a ekle)
+- `form_fields` dizisini `order` sirasina gore render et
+- Her alan tipine uygun input bileseni olustur (text, email, tel, textarea, select)
+- Honeypot alani ekle (CSS ile gizli)
+- Form yuklenme zamanini kaydet (hidden field)
+- `consent_required` ise checkbox goster, isaretlenmeden gonderimi engelle
+
+### 5. AppointmentsPanel.tsx (Dashboard)
+
+- Yeni **Form Alanlari** sekmesi ekle
+- Mevcut alanlari listele (surukleme ile siralama - hello-pangea/dnd zaten yuklu)
+- Yeni alan ekleme formu: Label, Tip, Zorunlu, Placeholder, Secenekler
+- Sistem alanlarini (client_name, client_email) silinemez olarak goster
+- Gizlilik metni duzenleyicisi
+- Randevu detayinda `form_data` icerigini goster
+
+### 6. deploy-to-netlify (Yayinlanan site)
+
+- `renderAppointmentBooking` fonksiyonunu guncelle
+- Dinamik form alanlarini render et
+- Honeypot + zaman kontrolu JavaScript'i ekle
+- Gizlilik onay kutusunu ekle
+
+## Uygulama Sirasi
+
+1. Migration: Yeni sutunlar + trigger guncelleme
+2. book-appointment: Form validasyonu + anti-spam + form_data kaydi
+3. manage-appointments: Form alanlari CRUD + consent ayarlari
+4. AppointmentBooking.tsx: Dinamik form render + honeypot + consent
+5. AppointmentsPanel.tsx: Form alanlari yonetim sekmesi + randevu detayinda form_data
+6. deploy-to-netlify: Yayinlanan sitede dinamik form + anti-spam
+
+## Teknik Notlar
+
+- `system: true` alanlari (client_name, client_email) silinemez ve tipi degistirilemez
+- form_fields NULL ise eski sabit form render edilir (geriye uyumluluk)
+- Surukleme ile siralama icin `@hello-pangea/dnd` kullanilir (proje bagimliliginda mevcut)
+- Select tipi alanlar icin `options` dizisi kullanilir
+- Tum form verileri sanitize edilir (max 500 karakter per alan, HTML strip)
+
