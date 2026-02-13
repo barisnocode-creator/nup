@@ -343,3 +343,16 @@ div[data-radix-portal] > div[data-radix-overlay] {
   background: hsl(var(--accent));
   color: hsl(var(--foreground));
 }
+
+/* ===== Screen Size Cycle Button ===== */
+/* Only show the active screen size button, hide others */
+.chai-screen-cycle > div {
+  display: flex;
+  align-items: center;
+}
+.chai-screen-cycle button.chai-screen-btn {
+  display: none !important;
+}
+.chai-screen-cycle button.chai-screen-btn-active {
+  display: inline-flex !important;
+}
