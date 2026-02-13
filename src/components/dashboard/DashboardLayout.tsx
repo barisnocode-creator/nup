@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { NotificationBell } from './NotificationBell';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -35,6 +36,7 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
             <div className="flex-1" />
+            <NotificationBell />
             <Button variant="ghost" size="sm" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Sign Out</span>

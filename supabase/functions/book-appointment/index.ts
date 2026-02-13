@@ -331,6 +331,33 @@ Deno.serve(async (req) => {
         }).select().single();
 
       if (insertErr) return json({ error: "Failed to create appointment" }, 500);
+
+      // Trigger new appointment notification
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${serviceRoleKey}` },
+          body: JSON.stringify({
+            project_id,
+            appointment_id: appointment.id,
+            event_type: "new_appointment",
+            appointment_data: {
+              client_name: sanitize(client_name),
+              client_email: sanitize(client_email),
+              client_phone: client_phone ? sanitize(client_phone) : "",
+              date,
+              start_time,
+              end_time: endTime,
+              status: "pending",
+            },
+          }),
+        });
+      } catch (e) {
+        console.error("Notification trigger failed:", e);
+      }
+
       return json({ success: true, appointment }, 201);
     }
 

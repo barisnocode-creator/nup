@@ -16,6 +16,7 @@ import { SettingsTab } from './SettingsTab';
 import { ScheduleTab } from './ScheduleTab';
 import { BlockedDatesTab } from './BlockedDatesTab';
 import { FormFieldsTab } from './FormFieldsTab';
+import { NotificationsTab } from './NotificationsTab';
 import type { CalendarView, StatusFilter, DaySchedule, FormField } from './types';
 import { DAY_KEYS } from './types';
 
@@ -182,6 +183,7 @@ export function AppointmentsPanel({ projectId }: AppointmentsPanelProps) {
           <TabsTrigger value="settings">Ayarlar</TabsTrigger>
           <TabsTrigger value="schedule">Haftalık Program</TabsTrigger>
           <TabsTrigger value="blocked">Kapalı Günler</TabsTrigger>
+          <TabsTrigger value="notifications">Bildirimler</TabsTrigger>
         </TabsList>
 
         <TabsContent value="calendar" className="space-y-4 mt-4">
@@ -277,6 +279,14 @@ export function AppointmentsPanel({ projectId }: AppointmentsPanelProps) {
             blockedSlots={data.blockedSlots}
             onBlockDate={data.blockDate}
             onUnblockDate={data.unblockDate}
+          />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-4">
+          <NotificationsTab
+            projectId={projectId}
+            settings={data.settings as any}
+            onUpdateSettings={data.updateSettings}
           />
         </TabsContent>
       </Tabs>
