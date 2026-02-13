@@ -4,7 +4,7 @@ import { DashboardSidebar } from './DashboardSidebar';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 
 interface DashboardLayoutProps {
@@ -16,25 +16,29 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, rightPanel, activeProjectId }: DashboardLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Safety reset: force SaaS orange theme by overriding any leftover editor/SDK styles
+  // Safety reset: force SaaS orange theme on every route change
   useLayoutEffect(() => {
     const root = document.documentElement;
-    // Force orange theme values (matching index.css :root)
-    root.style.setProperty('--primary', '24 95% 53%');
-    root.style.setProperty('--ring', '24 95% 53%');
-    root.style.setProperty('--accent', '24 95% 53%');
-    root.style.setProperty('--sidebar-primary', '24 95% 53%');
-    root.style.setProperty('--sidebar-ring', '24 95% 53%');
-    root.style.setProperty('--accent-foreground', '0 0% 100%');
-    root.style.setProperty('--primary-foreground', '0 0% 100%');
-    // Remove project-specific custom properties
-    ['--color-secondary-custom', '--color-accent-custom',
-     '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
-    root.classList.remove('reduce-motion');
-    // Also remove any SDK-injected style tags
-    document.querySelectorAll('style[data-chai], style[data-chaibuilder]').forEach(el => el.remove());
-  }, []);
+    const forceOrange = () => {
+      root.style.setProperty('--primary', '24 95% 53%');
+      root.style.setProperty('--ring', '24 95% 53%');
+      root.style.setProperty('--accent', '24 95% 53%');
+      root.style.setProperty('--sidebar-primary', '24 95% 53%');
+      root.style.setProperty('--sidebar-ring', '24 95% 53%');
+      root.style.setProperty('--accent-foreground', '0 0% 100%');
+      root.style.setProperty('--primary-foreground', '0 0% 100%');
+      ['--color-secondary-custom', '--color-accent-custom',
+       '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
+      root.classList.remove('reduce-motion');
+      document.querySelectorAll('style[data-chai], style[data-chaibuilder]').forEach(el => el.remove());
+    };
+    forceOrange();
+    // Delayed cleanup for async SDK style injections
+    const timer = setTimeout(forceOrange, 100);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   const handleSignOut = async () => {
     await signOut();
