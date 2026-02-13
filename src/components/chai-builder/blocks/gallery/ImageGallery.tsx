@@ -54,7 +54,7 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
 
         <div className={`grid grid-cols-1 ${gridCols[columns]} gap-4`}>
           {images.map((image, index) => (
-            <div key={index} className="relative group overflow-hidden rounded-xl aspect-square">
+            <div key={index} className="relative group rounded-xl aspect-square">
               <EditableChaiImage 
                 src={image || "/placeholder.svg"} 
                 alt={`Galeri ${index + 1}`}
@@ -62,7 +62,7 @@ const ImageGalleryBlock = (props: ChaiBlockComponentProps<ImageGalleryProps>) =>
                 containerClassName="w-full h-full"
                 inBuilder={props.inBuilder}
               />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
             </div>
           ))}
         </div>
