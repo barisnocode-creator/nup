@@ -91,7 +91,7 @@ export function DesktopEditorLayout() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -4, scale: 0.97 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute top-full left-0 mt-2 w-[280px] max-h-[calc(100vh-80px)] bg-popover border border-border/50 rounded-xl shadow-2xl z-[60] overflow-hidden"
+                className="absolute top-full left-0 mt-2 w-[280px] max-h-[calc(100vh-80px)] bg-background border border-border/50 rounded-xl shadow-2xl backdrop-blur-xl z-[60] overflow-hidden"
               >
                 <CustomizePanel onClose={() => setShowCustomize(false)} />
               </motion.div>
