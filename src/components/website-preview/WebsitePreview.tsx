@@ -16,6 +16,8 @@ interface WebsitePreviewProps {
   onDeleteSection?: (sectionId: string) => void;
   // Section style overrides
   sectionStyles?: { [sectionId: string]: SectionStyle };
+  // Image regeneration from action box
+  onImageRegenerate?: (imageData: ImageData) => void;
   // Legacy props
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
@@ -33,6 +35,7 @@ export function WebsitePreview({
   onMoveSection,
   onDeleteSection,
   sectionStyles,
+  onImageRegenerate,
   selectedImage,
   onImageSelect,
 }: WebsitePreviewProps) {
@@ -56,6 +59,7 @@ export function WebsitePreview({
       onMoveSection={onMoveSection}
       onDeleteSection={onDeleteSection}
       sectionStyles={sectionStyles}
+      onImageRegenerate={onImageRegenerate}
       selectedImage={selectedImage}
       onImageSelect={onImageSelect}
     />

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, X, Loader2, ImageIcon, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -19,6 +19,7 @@ interface PixabayImagePickerProps {
   onOpenChange: (open: boolean) => void;
   onSelect: (imageUrl: string) => void;
   defaultQuery?: string;
+  autoSearch?: boolean;
 }
 
 const SUGGESTION_TAGS = [
@@ -39,12 +40,30 @@ export function PixabayImagePicker({
   onOpenChange,
   onSelect,
   defaultQuery = '',
+  autoSearch = false,
 }: PixabayImagePickerProps) {
   const [query, setQuery] = useState(defaultQuery);
   const [images, setImages] = useState<PixabayImage[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  // Reset state when dialog closes, sync query when defaultQuery changes
+  useEffect(() => {
+    if (open) {
+      setQuery(defaultQuery);
+      setImages([]);
+      setSearched(false);
+      setSelectedId(null);
+    }
+  }, [open, defaultQuery]);
+
+  // Auto-search when opening with autoSearch enabled
+  useEffect(() => {
+    if (open && autoSearch && defaultQuery.trim()) {
+      searchImages(defaultQuery.trim());
+    }
+  }, [open, autoSearch, defaultQuery]);
 
   const searchImages = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) return;

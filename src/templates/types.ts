@@ -26,6 +26,8 @@ export interface TemplateProps {
   onDeleteSection?: (sectionId: string) => void;
   // Section style overrides
   sectionStyles?: { [sectionId: string]: SectionStyle };
+  // Image regeneration from action box
+  onImageRegenerate?: (imageData: ImageData) => void;
   // Legacy image-only props (for backward compatibility)
   selectedImage?: ImageData | null;
   onImageSelect?: (data: ImageData) => void;
