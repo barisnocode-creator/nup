@@ -2,10 +2,14 @@ import { createContext, useContext } from 'react';
 
 interface EditorContextValue {
   projectName: string;
+  projectProfession?: string;
   onDashboard: () => void;
   onPublish: () => void;
   onPreview: () => void;
   onImageSearch: () => void;
+  onRegenerateText?: () => void;
+  onRegenerateWebsite?: () => void;
+  onChangeTemplate?: () => void;
 }
 
 const EditorContext = createContext<EditorContextValue | null>(null);
