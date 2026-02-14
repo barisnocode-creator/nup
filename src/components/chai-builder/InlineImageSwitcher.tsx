@@ -139,7 +139,7 @@ export function InlineImageSwitcher({
       <div
         ref={panelRef}
         className={cn(
-          'pointer-events-auto w-[420px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-black/10',
+          'pointer-events-auto w-[calc(100vw-2rem)] max-w-[420px] max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-black/10',
           'flex flex-col overflow-hidden',
           'animate-in fade-in slide-in-from-bottom-4 duration-300',
         )}

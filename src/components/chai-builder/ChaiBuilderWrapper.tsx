@@ -348,21 +348,17 @@ export function ChaiBuilderWrapper({
             }}
           />
 
-          {!isMobileView && (
-            <>
-              <PixabayImagePicker
-                open={imagePickerOpen}
-                onOpenChange={setImagePickerOpen}
-                onSelect={handleImageSelect}
-              />
-              <InlineImageSwitcher
-                isOpen={inlineSwitcherOpen}
-                onClose={() => setInlineSwitcherOpen(false)}
-                onSelect={handleImageSelect}
-                profession={projectProfession}
-              />
-            </>
-          )}
+          <PixabayImagePicker
+            open={imagePickerOpen}
+            onOpenChange={setImagePickerOpen}
+            onSelect={handleImageSelect}
+          />
+          <InlineImageSwitcher
+            isOpen={inlineSwitcherOpen}
+            onClose={() => setInlineSwitcherOpen(false)}
+            onSelect={handleImageSelect}
+            profession={projectProfession}
+          />
 
           <TemplateGalleryOverlay
             isOpen={showTemplateGallery}
