@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Globe, ExternalLink, Edit3, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +14,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 interface Project {
@@ -33,6 +33,7 @@ interface WebsitePreviewCardProps {
 
 export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProps) {
   const navigate = useNavigate();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const getStatusBadge = () => {
     if (project.is_published) {
@@ -104,35 +105,38 @@ export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProp
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
             {getStatusBadge()}
             {onDelete && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-destructive/90 hover:text-destructive-foreground rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Siteyi sil</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      <strong>{project.name}</strong> sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>İptal</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      onClick={() => onDelete(project.id)}
-                    >
-                      Sil
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-destructive/90 hover:text-destructive-foreground rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+                <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Siteyi sil</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        <strong>{project.name}</strong> sitesini silmek istediğinize emin misiniz? Bu işlem geri alınamaz.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>İptal</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => onDelete(project.id)}
+                      >
+                        Sil
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             )}
           </div>
         </div>
