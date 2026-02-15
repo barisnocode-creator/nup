@@ -1,39 +1,67 @@
 
-# Mobilde Edit Butonu Gecikmesi Düzeltmesi
 
-## Sorun
-Edit butonuna tıklandığında sayfa geçişi sırasında `Suspense fallback={null}` kullanıldığı için ekranda hiçbir yükleme göstergesi çıkmıyor. Mobilde JS chunk'ı indirilirken kullanıcı "buton çalışmıyor" sanıyor.
+# Daha Yuksek Kaliteli Sablonlar icin Mimari Iyilestirme Plani
 
-## Çözüm
+## Mevcut Sorun
 
-### 1. Suspense Fallback'e Yükleme Göstergesi Ekle
-**Dosya:** `src/App.tsx`
+Suanki sistemde tum sablonlar 13 jenerik blok tipine (HeroCentered, ServicesGrid, AboutSection vb.) zorla donusturuluyor. Bu donusum sirasinda:
+- Ozel animasyonlar kayboluyor
+- Glassmorphism, ozel fontlar, gradient efektleri siliniyor  
+- Tum sablonlar birbirine benzer gorunuyor
+- Orijinal tasarimin "ruhu" yok oluyor
 
-- `fallback={null}` yerine tam ekran merkezlenmiş bir spinner/loading göstergesi koyulacak
-- Basit bir CSS spinner veya Lucide `Loader2` ikonu kullanılacak
-- Bu sayede Edit'e tıklanınca anında görsel geri bildirim verilecek
+## Cozum Stratejisi
 
-### 2. Silme Butonu Mobil Görünürlük (Bonus)
-**Dosya:** `src/components/dashboard/WebsitePreviewCard.tsx`
+Blok sistemi **kalacak** (editor icin gerekli), ama donusum katmani kaldirilacak. Bunun yerine:
 
-- `opacity-0 group-hover:opacity-100` sınıfına `sm:opacity-0 sm:group-hover:opacity-100` eklenerek mobilde buton her zaman görünür olacak (masaüstünde hover davranışı korunacak)
+### Adim 1: Donusum Katmanini Kaldir
+- `convertGeneratedContentToChaiBlocks()` fonksiyonunu kaldir
+- `convertTemplateToBlocks()` fonksiyonunu kaldir  
+- `src/templates/catalog/definitions.ts` icindeki jenerik section tanimlarini kaldir
+- Her sablon, kendi ozel bloklarini dogrudan uretecek
+
+### Adim 2: Sablon-Ozel Blok Yapisi
+Her premium sablon icin ozel blok tipleri olusturulacak:
+
+```text
+Ornek: "Avukat Sablonu"
++----------------------------------+
+| LawyerHero (ozel animasyonlu)    |
+| LawyerServices (ozel grid)       |
+| LawyerTestimonials (ozel slider) |
+| LawyerContact (ozel form)        |
++----------------------------------+
+```
+
+Bu bloklar ChaiBuilder'a `registerChaiBlock()` ile kaydedilecek ve editor icinde inline duzenleme, siralama, silme tam calisacak.
+
+### Adim 3: Yeni Sablon Ekleme Akisi
+Kullanicinin verdigi template'i sisteme eklemek icin:
+
+1. Template'in HTML/CSS/gorselleri analiz edilir
+2. Her section icin ozel bir React bileşeni yazilir
+3. Bu bilesenler `registerChaiBlock()` ile editore kaydedilir
+4. `deploy-to-netlify` fonksiyonuna eslesen HTML renderer eklenir
 
 ## Teknik Detaylar
 
-```text
-Mevcut:  <Suspense fallback={null}>
-Yeni:    <Suspense fallback={<FullScreenLoader />}>
-```
+### Kaldirilacak Dosyalar/Fonksiyonlar
+- `src/components/chai-builder/utils/convertToChaiBlocks.ts` - tum fonksiyonlar
+- `src/components/chai-builder/utils/templateToBlocks.ts` - tum fonksiyonlar
+- `src/templates/catalog/definitions.ts` - jenerik section tanimlari
 
-`FullScreenLoader` basit bir bileşen olacak:
-- Ekran ortasında dönen bir ikon (Loader2)  
-- Arka plan: bg-background
-- Animasyon: animate-spin
+### Guncellecek Dosyalar
+- `src/pages/Project.tsx` - donusum cagrilarini kaldir, dogrudan blok yukleme
+- `src/components/chai-builder/ChaiBuilderWrapper.tsx` - preview/template degistirme mantigi
+- `src/components/chai-builder/blocks/` - sablon bazli blok klasorleri ekle
 
-Silme butonu sınıf değişikliği:
-```text
-Mevcut:  opacity-0 group-hover:opacity-100
-Yeni:    opacity-100 sm:opacity-0 sm:group-hover:opacity-100
-```
+### Korunacak Yapilar
+- ChaiBuilder SDK entegrasyonu (editor, inline editing, drag-drop)
+- `chai_blocks` ve `chai_theme` veritabani sutunlari
+- Tema preset sistemi
+- Yayinlama (deploy-to-netlify) altyapisi
 
-Bu değişiklikler mevcut tasarımı ve UX'i bozmadan sadece mobil deneyimi iyileştirecek.
+## Sonraki Adim
+
+Plan onaylandiginda, once mevcut donusum katmanini temizleyecegim. Sonra bana vermek istedigin template'i paylasabilirsin - onu birebir ayni sekilde sisteme entegre edecegim.
+
