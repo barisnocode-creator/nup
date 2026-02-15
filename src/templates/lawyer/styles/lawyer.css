@@ -1,0 +1,72 @@
+/* Lawyer Template - Scoped Styles */
+.lawyer-template {
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Inter', sans-serif;
+  --lw-black: #000000;
+  --lw-white: #ffffff;
+  --lw-gray-100: #f7f7f7;
+  --lw-gray-200: #e5e5e5;
+  --lw-gray-300: #d4d4d4;
+  --lw-gray-400: #a3a3a3;
+  --lw-gray-500: #737373;
+  --lw-gray-600: #525252;
+  --lw-gray-700: #404040;
+  --lw-gray-800: #262626;
+  --lw-gray-900: #171717;
+}
+
+.lawyer-template h1,
+.lawyer-template h2,
+.lawyer-template h3,
+.lawyer-template h4 {
+  font-family: var(--font-heading);
+}
+
+.lawyer-template p,
+.lawyer-template span,
+.lawyer-template a,
+.lawyer-template li,
+.lawyer-template input,
+.lawyer-template textarea,
+.lawyer-template button,
+.lawyer-template label {
+  font-family: var(--font-body);
+}
+
+/* Scroll indicator bounce */
+@keyframes lawyer-bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0) translateX(-50%); }
+  40% { transform: translateY(-10px) translateX(-50%); }
+  60% { transform: translateY(-5px) translateX(-50%); }
+}
+
+.lawyer-scroll-indicator {
+  animation: lawyer-bounce 2s infinite;
+}
+
+/* Value card hover */
+.lawyer-value-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.lawyer-value-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Practice area card hover */
+.lawyer-practice-card {
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.lawyer-practice-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--lw-gray-400);
+}
+
+/* FAQ toggle */
+.lawyer-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.lawyer-faq-item summary::marker {
+  display: none;
+  content: '';
+}

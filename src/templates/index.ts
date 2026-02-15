@@ -1,11 +1,13 @@
 import { TemplateConfig, TemplateComponent } from './types';
 import { PilatesTemplate } from './pilates';
+import { LawyerTemplate } from './lawyer';
 import { getAllCatalogTemplates, type TemplateDefinition } from './catalog';
 
-// Import preview image
+// Import preview images
 import templatePilates from '@/assets/template-pilates.jpg';
+import templateLawyer from '@/assets/template-lawyer.jpg';
 
-// Template registry - only pilates1 as live-renderable component
+// Template registry - live-renderable component templates
 const templateRegistry: Record<string, {
   config: TemplateConfig;
   component: TemplateComponent;
@@ -21,6 +23,18 @@ const templateRegistry: Record<string, {
       supportedTones: ['warm', 'elegant', 'premium', 'calm', 'professional', 'friendly', 'bold', 'modern'],
     },
     component: PilatesTemplate,
+  },
+  'lawyer-firm': {
+    config: {
+      id: 'lawyer-firm',
+      name: 'Hukuk Bürosu',
+      description: 'Avukatlar, hukuk büroları ve danışmanlık firmaları için profesyonel siyah-beyaz tasarım',
+      category: 'Hukuk & Danışmanlık',
+      preview: templateLawyer,
+      supportedProfessions: ['lawyer', 'legal', 'law', 'attorney', 'consulting', 'finance', 'corporate'],
+      supportedTones: ['professional', 'elegant', 'premium', 'modern', 'bold'],
+    },
+    component: LawyerTemplate,
   },
 };
 
@@ -81,7 +95,8 @@ export function selectTemplate(
   const key = profession.toLowerCase();
   const mapping: Record<string, string> = {
     wellness: 'wellness-studio', pilates: 'wellness-studio', yoga: 'wellness-studio', fitness: 'wellness-studio', spa: 'wellness-studio',
-    lawyer: 'corporate-services', finance: 'corporate-services', consulting: 'corporate-services', corporate: 'corporate-services',
+    lawyer: 'lawyer-firm', legal: 'lawyer-firm', law: 'lawyer-firm', attorney: 'lawyer-firm',
+    finance: 'corporate-services', consulting: 'corporate-services', corporate: 'corporate-services',
     doctor: 'medical-clinic', dentist: 'medical-clinic', pharmacist: 'medical-clinic', clinic: 'medical-clinic', health: 'medical-clinic',
     creative: 'creative-agency', design: 'creative-agency', marketing: 'creative-agency', agency: 'creative-agency',
     food: 'restaurant-cafe', restaurant: 'restaurant-cafe', cafe: 'restaurant-cafe', bakery: 'restaurant-cafe',

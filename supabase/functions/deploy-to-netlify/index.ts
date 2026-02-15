@@ -920,6 +920,62 @@ function renderBlock(block: ChaiBlock): string {
   }
 }
 
+// ── Lawyer Template Renderers ──
+
+function renderLawyerHeader(siteName: string): string {
+  return `<header id="lawyer-header" style="position:fixed;top:0;left:0;right:0;z-index:50;transition:all 0.5s;background:transparent">
+  <div style="max-width:80rem;margin:0 auto;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-family:'Playfair Display',serif;font-size:1.125rem;color:#fff;font-weight:700">${escapeHtml(siteName)}</span>
+    <nav style="display:flex;align-items:center;gap:2rem">
+      <a href="#about" style="color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;transition:opacity 0.3s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Hakkımızda</a>
+      <a href="#practice" style="color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;transition:opacity 0.3s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Alanlar</a>
+      <a href="#team" style="color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;transition:opacity 0.3s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Ekip</a>
+      <a href="#contact" style="color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;transition:opacity 0.3s" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">İletişim</a>
+    </nav>
+  </div>
+</header>
+<script>
+window.addEventListener('scroll',function(){var h=document.getElementById('lawyer-header');if(window.scrollY>50){h.style.background='rgba(0,0,0,0.85)';h.style.backdropFilter='blur(12px)'}else{h.style.background='transparent';h.style.backdropFilter='none'}});
+<\/script>`;
+}
+
+function renderLawyerFooter(siteName: string): string {
+  return `<footer style="background:#000;padding:4rem 1.5rem;border-top:1px solid #262626">
+  <div style="max-width:72rem;margin:0 auto">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3rem;margin-bottom:3rem">
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.25rem;color:#fff;font-weight:700;margin-bottom:1rem">${escapeHtml(siteName)}</h3>
+        <p style="font-size:0.875rem;color:#737373;line-height:1.6">Adalet ve güven ile 30 yılı aşkın hukuki deneyim.</p>
+      </div>
+      <div>
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#a3a3a3;margin-bottom:1rem">Hızlı Bağlantılar</h4>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <a href="#about" style="font-size:0.875rem;color:#737373;text-decoration:none">Hakkımızda</a>
+          <a href="#practice" style="font-size:0.875rem;color:#737373;text-decoration:none">Uygulama Alanları</a>
+          <a href="#team" style="font-size:0.875rem;color:#737373;text-decoration:none">Ekibimiz</a>
+          <a href="#contact" style="font-size:0.875rem;color:#737373;text-decoration:none">İletişim</a>
+        </div>
+      </div>
+      <div>
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#a3a3a3;margin-bottom:1rem">İletişim</h4>
+        <div style="font-size:0.875rem;color:#737373;display:flex;flex-direction:column;gap:0.5rem">
+          <span>📞 +90 212 555 0000</span>
+          <span>📧 info@chambers.com.tr</span>
+          <span>📍 Levent, İstanbul</span>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid #262626;padding-top:2rem;display:flex;justify-content:space-between;align-items:center">
+      <p style="font-size:0.75rem;color:#525252">© ${new Date().getFullYear()} ${escapeHtml(siteName)}. Tüm hakları saklıdır.</p>
+      <div style="display:flex;gap:1.5rem">
+        <a href="#" style="font-size:0.75rem;color:#525252;text-decoration:none">Gizlilik Politikası</a>
+        <a href="#" style="font-size:0.75rem;color:#525252;text-decoration:none">Kullanım Şartları</a>
+      </div>
+    </div>
+  </div>
+</footer>`;
+}
+
 function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, projectName: string, projectId?: string, templateId?: string): string {
   const themeCssVars = buildThemeCssVars(theme);
   const fontFamily = (theme?.fontFamily as { heading?: string; body?: string });
@@ -927,7 +983,12 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   const bodyFont = fontFamily?.body || "Inter";
   const borderRadius = (theme?.borderRadius as string) || "8px";
   const isPilates = templateId === "pilates1";
-  const allFonts = isPilates ? [...new Set([headingFont, bodyFont, "Playfair Display", "DM Sans"])] : [...new Set([headingFont, bodyFont])];
+  const isLawyer = templateId === "lawyer-firm";
+  const allFonts = isPilates 
+    ? [...new Set([headingFont, bodyFont, "Playfair Display", "DM Sans"])] 
+    : isLawyer
+    ? [...new Set([headingFont, bodyFont, "Playfair Display", "Inter"])]
+    : [...new Set([headingFont, bodyFont])];
   const fontLinks = allFonts.map(f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`).join("\n  ");
 
   let sectionsHtml = blocks.map(b => renderBlock(b)).filter(Boolean).join("\n");
@@ -940,6 +1001,11 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
   if (isPilates) {
     const tagline = "Experience movement in its most authentic form.";
     sectionsHtml = renderPilatesHeader(projectName) + "\n" + sectionsHtml + "\n" + renderPilatesFooter(projectName, tagline);
+  }
+
+  // Add lawyer header/footer if template is lawyer
+  if (isLawyer) {
+    sectionsHtml = renderLawyerHeader(projectName) + "\n" + sectionsHtml + "\n" + renderLawyerFooter(projectName);
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -968,8 +1034,8 @@ document.addEventListener('DOMContentLoaded',function(){var els=document.querySe
   ${fontLinks}
   <style>
     :root { ${themeCssVars}; --radius: ${borderRadius}; }
-    body { font-family: '${isPilates ? "DM Sans" : bodyFont}', sans-serif; background-color: var(--background); color: var(--foreground); margin: 0; padding: 0; }
-    h1, h2, h3, h4, h5, h6 { font-family: '${isPilates ? "Playfair Display" : headingFont}', ${isPilates ? "serif" : "sans-serif"}; }
+    body { font-family: '${isPilates ? "DM Sans" : isLawyer ? "Inter" : bodyFont}', sans-serif; background-color: var(--background); color: var(--foreground); margin: 0; padding: 0; }
+    h1, h2, h3, h4, h5, h6 { font-family: '${isPilates || isLawyer ? "Playfair Display" : headingFont}', ${isPilates || isLawyer ? "serif" : "sans-serif"}; }
     img { max-width: 100%; height: auto; }
     html { scroll-behavior: smooth; }
     ${pilatesStyles}

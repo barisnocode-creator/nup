@@ -797,6 +797,117 @@ export const retailBoutique: TemplateDefinition = {
   ],
 };
 
+export const lawyerFirm: TemplateDefinition = {
+  id: 'lawyer-firm',
+  name: 'Hukuk Bürosu',
+  industry: 'legal',
+  category: 'Hukuk & Danışmanlık',
+  description: 'Avukatlar ve hukuk büroları için profesyonel siyah-beyaz tasarım',
+  preview: '',
+  themePresetKey: 'lawyer-firm',
+  supportedIndustries: ['lawyer', 'legal', 'law', 'attorney', 'consulting', 'finance', 'corporate'],
+  sections: [
+    {
+      type: 'HeroOverlay',
+      required: true,
+      defaultProps: {
+        title: 'Adalet ve Güvenin Adresi',
+        subtitle: 'Hukuk Bürosu',
+        description: 'Deneyimli avukat kadromuz ile haklarınızı en iyi şekilde savunuyoruz.',
+        primaryButtonText: 'İletişime Geçin',
+        primaryButtonLink: '#contact',
+        secondaryButtonText: 'Uygulama Alanları',
+        secondaryButtonLink: '#services',
+      },
+    },
+    {
+      type: 'StatisticsCounter',
+      defaultProps: {
+        stat1Value: '30+', stat1Label: 'Yıl Deneyim',
+        stat2Value: '500+', stat2Label: 'Başarılı Dava',
+        stat3Value: '50+', stat3Label: 'Uzman Avukat',
+        stat4Value: '%100', stat4Label: 'Müvekkil Memnuniyeti',
+      },
+    },
+    {
+      type: 'AboutSection',
+      defaultProps: {
+        title: 'Hakkımızda',
+        subtitle: 'Bizi Tanıyın',
+        description: '30 yılı aşkın deneyimimiz ile hukuki süreçlerinizde güvenilir çözüm ortağınızız.',
+        features: 'Deneyimli Kadro\nSonuç Odaklı\nGizlilik İlkesi\nEtik Yaklaşım',
+        imagePosition: 'right',
+      },
+    },
+    {
+      type: 'ServicesGrid',
+      defaultProps: {
+        sectionTitle: 'Uygulama Alanları',
+        sectionSubtitle: 'Uzmanlık',
+        sectionDescription: 'Geniş yelpazede hukuki danışmanlık ve dava takip hizmeti.',
+        services: [
+          { icon: '🏢', title: 'Şirketler Hukuku', description: 'Kuruluş, birleşme ve ticari sözleşmeler.' },
+          { icon: '⚖️', title: 'Dava & Uyuşmazlık', description: 'Hukuk davaları, tahkim ve arabuluculuk.' },
+          { icon: '🏠', title: 'Gayrimenkul Hukuku', description: 'Alım-satım, kira ve imar işlemleri.' },
+          { icon: '👥', title: 'İş Hukuku', description: 'İşçi-işveren uyuşmazlıkları.' },
+          { icon: '💡', title: 'Fikri Mülkiyet', description: 'Patent, marka tescili ve telif hakları.' },
+          { icon: '📋', title: 'Miras Hukuku', description: 'Vasiyetname ve miras paylaşımı.' },
+        ],
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Müvekkillerimiz Ne Diyor?',
+        sectionSubtitle: 'Referanslar',
+        testimonials: [
+          { name: 'Mehmet Demir', role: 'CEO', content: 'Profesyonel ve güvenilir bir hukuk bürosu.', avatar: '' },
+          { name: 'Ayşe Koç', role: 'Girişimci', content: 'Haklarımızı en iyi şekilde korudular.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'FAQAccordion',
+      defaultProps: {
+        sectionTitle: 'Sıkça Sorulan Sorular',
+        sectionSubtitle: 'SSS',
+        items: [
+          { question: 'İlk görüşme ücretsiz mi?', answer: 'Evet, ilk danışma görüşmemiz ücretsizdir.' },
+          { question: 'Hangi alanlarda hizmet veriyorsunuz?', answer: 'Şirketler, iş, gayrimenkul, fikri mülkiyet ve miras hukuku başta olmak üzere geniş alanda hizmet veriyoruz.' },
+        ],
+      },
+    },
+    {
+      type: 'AppointmentBooking',
+      defaultProps: {
+        sectionTitle: 'Randevu Alın',
+        sectionSubtitle: 'Görüşme',
+        sectionDescription: 'Ücretsiz ilk danışma görüşmeniz için randevu alın.',
+        submitButtonText: 'Randevu Oluştur',
+        successMessage: 'Randevunuz oluşturuldu!',
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Hukuki danışmanlık için bizimle iletişime geçin.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Hukuki Desteğe mi İhtiyacınız Var?',
+        description: 'Deneyimli ekibimiz ile ilk görüşme ücretsizdir.',
+        buttonText: 'Ücretsiz Danışma',
+        buttonLink: '#contact',
+      },
+    },
+  ],
+};
+
 // ─── All Definitions ─────────────────────────────────────────────
 
 export const allDefinitions: TemplateDefinition[] = [
@@ -808,4 +919,5 @@ export const allDefinitions: TemplateDefinition[] = [
   videoStudio,
   modernSaas,
   retailBoutique,
+  lawyerFirm,
 ];
