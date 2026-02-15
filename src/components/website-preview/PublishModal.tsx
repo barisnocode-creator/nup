@@ -88,14 +88,13 @@ export function PublishModal({
   const [domainModalOpen, setDomainModalOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | undefined>();
   const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
-  const [netlifyUrl, setNetlifyUrl] = useState('');
 
   // Fetch project data for domain suggestions
   const fetchProjectData = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('projects')
-        .select('profession, form_data, netlify_url, netlify_custom_domain')
+        .select('profession, form_data, subdomain, custom_domain')
         .eq('id', projectId)
         .single();
 
@@ -104,8 +103,6 @@ export function PublishModal({
         const businessName = formData?.businessName || formData?.extractedData?.businessName || projectName;
         const profession = data.profession || '';
         setDomainSuggestions(generateDomainSuggestions(businessName, profession));
-
-        if (data.netlify_url) setNetlifyUrl(data.netlify_url);
         return data;
       }
     } catch (err) {
@@ -131,9 +128,9 @@ export function PublishModal({
         setShowSuccess(true);
         fetchProjectData().then((data) => {
           if (data) {
-            const url = data.netlify_custom_domain 
-              ? `https://${data.netlify_custom_domain}`
-              : data.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
+            const url = data.custom_domain 
+              ? `https://${data.custom_domain}`
+              : `https://${currentSubdomain}.openlucius.app`;
             setPublishedUrl(url);
           }
         });
@@ -229,31 +226,13 @@ export function PublishModal({
 
       if (error) throw error;
 
-      let deployedNetlifyUrl = '';
-      try {
-        const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
-          body: { projectId },
-        });
-
-        if (!deployError && deployData?.netlifyUrl) {
-          deployedNetlifyUrl = deployData.netlifyUrl;
-          setNetlifyUrl(deployedNetlifyUrl);
-        } else {
-          console.warn('Netlify deploy warning:', deployError || deployData?.error);
-        }
-      } catch (netlifyErr) {
-        console.warn('Netlify deploy failed, site still published on platform:', netlifyErr);
-      }
-
-      const url = deployedNetlifyUrl;
+      const url = `https://${subdomain}.openlucius.app`;
       setPublishedUrl(url);
       setShowSuccess(true);
       
       toast({
-        title: 'Website published!',
-        description: deployedNetlifyUrl 
-          ? 'Your website is now live on Netlify!' 
-          : 'Your website is now live and accessible to everyone.',
+        title: 'Website yayınlandı!',
+        description: 'Web siteniz artık canlı ve herkese açık.',
       });
 
       onPublished?.(subdomain);
@@ -337,12 +316,6 @@ export function PublishModal({
               <p className="font-medium text-orange-600 break-all">{publishedUrl}</p>
             </div>
 
-            {netlifyUrl && netlifyUrl !== publishedUrl && (
-              <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                <p className="text-sm text-gray-500 mb-2">Netlify URL:</p>
-                <p className="font-medium text-orange-600 break-all">{netlifyUrl}</p>
-              </div>
-            )}
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button 
@@ -459,9 +432,9 @@ export function PublishModal({
           {/* Preview URL */}
           {subdomain.length >= 3 && status === 'available' && (
             <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
-              <p className="text-xs text-gray-500 mb-1">Your website will be live at:</p>
+              <p className="text-xs text-gray-500 mb-1">Siteniz bu adreste yayınlanacak:</p>
               <p className="text-sm font-medium text-orange-600">
-                Netlify üzerinden yayınlanacak
+                https://{subdomain}.openlucius.app
               </p>
             </div>
           )}

@@ -250,11 +250,11 @@ export function DomainTab({ projectId, subdomain, customDomain }: DomainTabProps
           <div className="space-y-3 text-sm font-mono bg-background p-3 rounded">
             <div>
               <p className="text-xs text-muted-foreground mb-1">A Kaydı (Root Domain)</p>
-              <p><strong>Type:</strong> A | <strong>Name:</strong> @ | <strong>Value:</strong> 75.2.60.5</p>
+              <p><strong>Type:</strong> A | <strong>Name:</strong> @ | <strong>Value:</strong> 185.158.133.1</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">A Kaydı (WWW)</p>
-              <p><strong>Type:</strong> A | <strong>Name:</strong> www | <strong>Value:</strong> 75.2.60.5</p>
+              <p><strong>Type:</strong> A | <strong>Name:</strong> www | <strong>Value:</strong> 185.158.133.1</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">TXT Kaydı (Doğrulama)</p>
@@ -262,7 +262,7 @@ export function DomainTab({ projectId, subdomain, customDomain }: DomainTabProps
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            🔒 SSL sertifikası Netlify tarafından otomatik olarak sağlanır (Let's Encrypt).
+            🔒 SSL sertifikası otomatik olarak sağlanır (Let's Encrypt).
           </p>
         </CardContent>
       </Card>
