@@ -18,9 +18,9 @@ interface AIChatStepProps {
   onValidityChange: (isValid: boolean) => void;
 }
 
-const TOTAL_QUESTIONS = 3 as const;
+const TOTAL_QUESTIONS = 2 as const;
 
-const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 3 kısa soru sorarak hızlıca harika bir web sitesi oluşturacağım.
+const INITIAL_MESSAGE = `Merhaba! 👋 Ben web sitesi danışmanınızım. Size 2 kısa soru sorarak hızlıca harika bir web sitesi oluşturacağım.
 
 İşletmenizin adı nedir ve ne iş yapıyorsunuz? 🏢`;
 
