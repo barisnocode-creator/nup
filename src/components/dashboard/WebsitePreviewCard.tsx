@@ -102,7 +102,7 @@ export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProp
           </div>
           
           {/* Status Badge + Delete */}
-          <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+          <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-20">
             {getStatusBadge()}
             {onDelete && (
               <>
