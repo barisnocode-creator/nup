@@ -147,7 +147,7 @@ export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProp
             <div className="min-w-0">
               <h3 className="font-semibold text-foreground truncate">{project.name}</h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {project.subdomain ? `${project.subdomain}.lovable.app` : 'Not published yet'}
+                {project.is_published ? 'Published' : 'Not published yet'}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
