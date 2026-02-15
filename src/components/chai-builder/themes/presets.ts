@@ -243,6 +243,36 @@ export const vibrantCreativePreset: Partial<ChaiThemeValues> = {
   },
 };
 
+// Lawyer Firm - Black & White, Playfair Display + Inter
+export const lawyerFirmPreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Playfair Display",
+    body: "Inter",
+  },
+  borderRadius: "0px",
+  colors: {
+    background: ["#ffffff", "#0a0a0a"],
+    foreground: ["#000000", "#fafafa"],
+    primary: ["#000000", "#ffffff"],
+    "primary-foreground": ["#ffffff", "#000000"],
+    secondary: ["#f7f7f7", "#171717"],
+    "secondary-foreground": ["#525252", "#a3a3a3"],
+    muted: ["#f7f7f7", "#171717"],
+    "muted-foreground": ["#737373", "#a3a3a3"],
+    accent: ["#000000", "#ffffff"],
+    "accent-foreground": ["#ffffff", "#000000"],
+    destructive: ["#ef4444", "#f87171"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#e5e5e5", "#262626"],
+    input: ["#e5e5e5", "#262626"],
+    ring: ["#000000", "#ffffff"],
+    card: ["#ffffff", "#0f0f0f"],
+    "card-foreground": ["#000000", "#fafafa"],
+    popover: ["#ffffff", "#0f0f0f"],
+    "popover-foreground": ["#000000", "#fafafa"],
+  },
+};
+
 // Theme presets array for ChaiBuilder - format: Record<string, Partial<ChaiThemeValues>>[]
 export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
   { "Modern Profesyonel": modernProfessionalPreset },
@@ -253,6 +283,7 @@ export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
   { "Modern SaaS": modernSaasPreset },
   { "Video Stüdyo": videoStudioPreset },
   { "Canlı Yaratıcı": vibrantCreativePreset },
+  { "Hukuk Bürosu": lawyerFirmPreset },
 ];
 
 // Default theme
@@ -298,6 +329,7 @@ export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
   "gith2": corporateBluePreset,
   "gith3": minimalDarkPreset,
   "pilates1": wellnessStudioPreset,
+  "lawyer-firm": lawyerFirmPreset,
 };
 
 // Re-export the ChaiThemeValues type from SDK
