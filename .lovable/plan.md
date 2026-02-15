@@ -1,25 +1,23 @@
 
+# Katmanlar Panelini Kaldirma
 
-# Mimari İyileştirme Planı — Durum
+## Yapilacak Degisiklikler
 
-## ✅ Tamamlanan: Adım 1 — Dönüşüm Katmanı Kaldırıldı
+### 1. Desktop Editor (`DesktopEditorLayout.tsx`)
+- `tools` dizisinden `outline` girisi kaldirilacak (satir 29: `{ key: 'outline', icon: Layers, label: 'Sayfalar' }`)
+- `ToolKey` tipinden `'outline'` kaldirilacak
+- Sol paneldeki `leftPanel === 'outline'` kosulu ve `ChaiOutline` renderini kaldirmak
+- `ChaiOutline` importunu kaldirmak
+- Kullanilmayan `Layers` icon importunu kaldirmak
 
-- `convertToChaiBlocks.ts` silindi
-- `templateToBlocks.ts` silindi  
-- Tema fonksiyonları `themeUtils.ts`'ye taşındı
-- Görsel yama fonksiyonları `imagePatching.ts`'ye taşındı
-- `Project.tsx` ve `ChaiBuilderWrapper.tsx` güncellendi
+### 2. Mobile Editor (`MobileEditorLayout.tsx`)
+- `panels` dizisinden `outline` girisi kaldirilacak (satir 39)
+- `PanelType` tipinden `'outline'` kaldirilacak
+- Sheet icerigindeki `key === 'outline'` kosulu ve `ChaiOutline` renderini kaldirmak
+- `ChaiOutline` importunu kaldirmak
+- Kullanilmayan `Layers` icon importunu kaldirmak
 
-## Sırada: Adım 2 — Şablon-Özel Blok Yapısı
-
-Kullanıcının vereceği template analiz edilecek ve:
-1. Her section için özel React bileşeni yazılacak
-2. `registerChaiBlock()` ile editöre kaydedilecek
-3. `deploy-to-netlify` için eşleşen HTML renderer eklenecek
-
-## Korunan Yapılar
-- ChaiBuilder SDK (editor, inline editing, drag-drop)
-- `chai_blocks` ve `chai_theme` DB sütunları
-- Tema preset sistemi
-- Mevcut 13 jenerik blok tipi (fallback olarak)
-- `catalog/definitions.ts` (şablon metadata'sı)
+### Korunacaklar
+- Ozellistir, Ekle, Ozellikler, Stiller panelleri aynen kalacak
+- Toolbar yapisi, animasyonlar, z-index hiyerarsisi degismeyecek
+- Alt navigasyon cubugu (mobil) aynen kalacak, sadece Katmanlar butonu olmayacak
