@@ -65,13 +65,25 @@ export function useAppointmentsData(projectId: string) {
 
   const updateStatus = async (appointmentId: string, status: string) => {
     const headers = await getHeaders();
-    if (!headers) return;
-    const res = await fetch(baseUrl, {
-      method: 'PATCH', headers, body: JSON.stringify({ appointment_id: appointmentId, status }),
-    });
-    if (res.ok) {
-      toast({ title: status === 'confirmed' ? 'Randevu onaylandı' : status === 'cancelled' ? 'Randevu iptal edildi' : 'Durum güncellendi' });
-      fetchData();
+    if (!headers) {
+      toast({ title: 'Oturum süresi dolmuş', description: 'Lütfen sayfayı yenileyip tekrar giriş yapın.', variant: 'destructive' });
+      return;
+    }
+    try {
+      const res = await fetch(baseUrl, {
+        method: 'PATCH', headers, body: JSON.stringify({ appointment_id: appointmentId, status }),
+      });
+      if (res.ok) {
+        toast({ title: status === 'confirmed' ? 'Randevu onaylandı ✓' : status === 'cancelled' ? 'Randevu iptal edildi' : 'Durum güncellendi' });
+        await fetchData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        console.error('updateStatus error:', res.status, errData);
+        toast({ title: 'Durum güncellenemedi', description: errData.error || `Hata kodu: ${res.status}`, variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('updateStatus network error:', err);
+      toast({ title: 'Bağlantı hatası', description: 'Sunucuya ulaşılamadı. İnternet bağlantınızı kontrol edin.', variant: 'destructive' });
     }
   };
 
