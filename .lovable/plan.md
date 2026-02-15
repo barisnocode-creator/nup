@@ -1,34 +1,32 @@
 
 
-# Renk Sorusunu Kaldirma (3 Soru → 2 Soru)
+# Manuel Randevu Modalindaki Bulaniklik ve Seffaflik Duzeltmesi
 
-## Ozet
+## Sorun
 
-AI sohbet asistanindaki 3. soru (tasarim tercihi / renk secimi) kaldirilacak. Kullanici zaten editorde template secerken ve ozellestirirken renkleri kendisi belirleyebildigi icin bu soru gereksiz. Soru sayisi 3'ten 2'ye dusurulecek.
+"Manuel Randevu Olustur" modali acildiginda:
+1. Arka plandaki `backdrop-blur-sm` efekti icerigi bulanik ve okunaksiz yapiyor
+2. Dialog ve dropdown bilesenlerinde `bg-background` / `bg-popover` CSS degiskenleri bazi durumlarda seffaf kalabiliyor, bu da modal iceriginin arkasindaki icerikle karisiyor
 
-## Degisiklikler
+## Cozum
 
-### 1. Edge Function: `supabase/functions/wizard-chat/index.ts`
+### 1. Dialog Bileseninde Duzeltme (`src/components/ui/dialog.tsx`)
 
-Sistem promptunda:
-- "3 KISA soru" ifadesi "2 KISA soru" olarak guncellenecek
-- SORU 3 (Tasarim tercihi) tamamen kaldirilacak
-- "2. sorunun cevabini aldiktan sonra CHAT_COMPLETE yaz" seklinde guncelleme
-- JSON ciktisindaki `colorTone` ve `colorMode` alanlari varsayilan degerlerle ("neutral", "light") sabitlenecek
+- **Overlay**: `backdrop-blur-sm` kaldirilacak, sadece koyu yari-seffaf arka plan (`bg-black/60`) kalacak -- bulaniklik olmayacak
+- **Content**: `bg-background` yerine `bg-white` eklenerek icerik her zaman opak beyaz arka plana sahip olacak
 
-### 2. Frontend: `src/components/wizard/steps/AIChatStep.tsx`
+### 2. Select Dropdown Duzeltme (`src/components/ui/select.tsx`)
 
-- `TOTAL_QUESTIONS` sabiti 3'ten 2'ye dusurulecek
-- Ilk mesajdaki "3 kisa soru" ifadesi "2 kisa soru" olarak guncellenecek
-- Progress bar ve soru sayaci otomatik olarak 2 uzerinden hesaplanacak
+- `SelectContent` bilesenine `bg-white` sinifi eklenerek dropdown menulerin her zaman opak beyaz arka plana sahip olmasi saglanacak
 
-### 3. Varsayilan Renk Degerleri
+### 3. CreateAppointmentModal Duzeltme (`src/components/dashboard/appointments/CreateAppointmentModal.tsx`)
 
-`colorTone` ve `colorMode` alanlari JSON ciktisinda hala mevcut olacak ancak AI'a sorulmayacak -- varsayilan degerler ("neutral" ve "light") kullanilacak. Bu sayede mevcut template esleme mantigi bozulmadan calisacak.
+- `DialogContent` bilesenine acikca `bg-white` sinifi eklenerek modal iceriginin opak beyaz olmasi garanti altina alinacak
 
 ## Teknik Detay
 
-Toplam degisiklik 2 dosyada:
-- `supabase/functions/wizard-chat/index.ts` -- prompt guncelleme
-- `src/components/wizard/steps/AIChatStep.tsx` -- TOTAL_QUESTIONS = 2, mesaj guncelleme
+Toplam 3 dosyada kucuk degisiklikler:
+- `src/components/ui/dialog.tsx` -- overlay'den blur kaldir, content'e `bg-white` ekle
+- `src/components/ui/select.tsx` -- SelectContent'e `bg-white` ekle
+- `src/components/dashboard/appointments/CreateAppointmentModal.tsx` -- DialogContent'e `bg-white` ekle
 
