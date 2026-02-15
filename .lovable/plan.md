@@ -1,98 +1,39 @@
 
-# Lead Yonetim Sistemi
+# Mobilde Edit Butonu Gecikmesi Düzeltmesi
 
-## Ozet
+## Sorun
+Edit butonuna tıklandığında sayfa geçişi sırasında `Suspense fallback={null}` kullanıldığı için ekranda hiçbir yükleme göstergesi çıkmıyor. Mobilde JS chunk'ı indirilirken kullanıcı "buton çalışmıyor" sanıyor.
 
-Web sitesindeki iletisim formlarindan gelen mesajlar (lead'ler) veritabanina kaydedilecek ve dashboard'daki yeni bir "Mesajlar" sayfasinda listelenecek. Su an formlar sadece `alert()` gosteriyor -- bundan sonra gercekten veri kaydedecek.
+## Çözüm
 
-## Yeni Ozellikler
+### 1. Suspense Fallback'e Yükleme Göstergesi Ekle
+**Dosya:** `src/App.tsx`
 
-- Ziyaretciler iletisim formunu doldurduklarinda mesajlari veritabanina kaydedilecek
-- Dashboard sidebar'a "Mesajlar" (inbox ikonu) menüsü eklenecek, okunmamis mesaj sayisi badge olarak gorunecek
-- Mesajlar sayfasinda: liste gorunumu, okundu/okunmadi durumu, detay goruntuleme, silme
-- Yayinlanan sitelerdeki iletisim formlari gercek POST istegi yapacak
+- `fallback={null}` yerine tam ekran merkezlenmiş bir spinner/loading göstergesi koyulacak
+- Basit bir CSS spinner veya Lucide `Loader2` ikonu kullanılacak
+- Bu sayede Edit'e tıklanınca anında görsel geri bildirim verilecek
 
-## Teknik Adimlar
+### 2. Silme Butonu Mobil Görünürlük (Bonus)
+**Dosya:** `src/components/dashboard/WebsitePreviewCard.tsx`
 
-### Adim 1: Veritabani -- `contact_leads` Tablosu
+- `opacity-0 group-hover:opacity-100` sınıfına `sm:opacity-0 sm:group-hover:opacity-100` eklenerek mobilde buton her zaman görünür olacak (masaüstünde hover davranışı korunacak)
+
+## Teknik Detaylar
 
 ```text
-contact_leads
-  id          uuid (PK, default gen_random_uuid())
-  project_id  uuid (NOT NULL)
-  name        text (NOT NULL)
-  email       text (NOT NULL)
-  phone       text (nullable)
-  subject     text (nullable)
-  message     text (NOT NULL)
-  is_read     boolean (default false)
-  created_at  timestamptz (default now())
+Mevcut:  <Suspense fallback={null}>
+Yeni:    <Suspense fallback={<FullScreenLoader />}>
 ```
 
-RLS politikalari:
-- SELECT: Proje sahibi kendi lead'lerini gorebilir (`user_owns_project(project_id)`)
-- INSERT: Herkes ekleyebilir (anonim ziyaretciler form gonderir)
-- UPDATE: Proje sahibi guncelleyebilir (okundu isareti icin)
-- DELETE: Proje sahibi silebilir
+`FullScreenLoader` basit bir bileşen olacak:
+- Ekran ortasında dönen bir ikon (Loader2)  
+- Arka plan: bg-background
+- Animasyon: animate-spin
 
-Realtime etkinlestirilecek (sidebar badge icin).
+Silme butonu sınıf değişikliği:
+```text
+Mevcut:  opacity-0 group-hover:opacity-100
+Yeni:    opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+```
 
-### Adim 2: Edge Function -- `submit-contact-form`
-
-Yeni bir Edge Function:
-- POST istegi alir: `project_id`, `name`, `email`, `phone`, `subject`, `message`
-- Zod ile input validasyonu (email formati, uzunluk limitleri)
-- Service role ile `contact_leads` tablosuna INSERT
-- CORS headers dahil (yayinlanan sitelerden cagirilacak)
-- JWT dogrulamasi yok (anonim ziyaretciler kullanacak)
-- Rate limiting icin basit honeypot alani
-
-### Adim 3: Sidebar Guncelleme
-
-`DashboardSidebar.tsx` dosyasina:
-- "Mesajlar" menu ogesi eklenmesi (Randevular'in altina, `MessageSquare` ikonu)
-- Rota: `/project/:id/leads` (proje varsa) veya `/leads` (yoksa)
-- Okunmamis mesaj sayisi badge olarak gosterilecek (randevu badge'iyla ayni mantik)
-- Realtime subscription ile anlik guncelleme
-
-### Adim 4: Leads Sayfasi -- `src/pages/Leads.tsx`
-
-Yeni sayfa bileseni:
-- `DashboardLayout` icinde render
-- Mesaj listesi (tarih, isim, e-posta, konu, okundu durumu)
-- Tiklandiginda mesaj detayi (sag tarafta veya modal)
-- "Okundu olarak isaretle" ve "Sil" aksiyonlari
-- Filtreleme: Tumu / Okunmamis
-- Bos durum placeholder'i
-
-### Adim 5: App.tsx Rota Ekleme
-
-- `/project/:id/leads` --> `<Leads />` (korunmus rota)
-- `/leads` --> `<Leads />` (proje olmadan erisim)
-
-### Adim 6: Yayinlanan Sitelerdeki Formlari Guncelleme
-
-`deploy-to-netlify` Edge Function'daki `renderContactForm` fonksiyonunda:
-- `onsubmit="alert(...)"` yerine gercek `fetch()` cagrisi
-- Form verileri `submit-contact-form` Edge Function'a POST edilecek
-- Basarili gonderimde kullaniciya "Mesajiniz alindi" geri bildirimi
-- Hata durumunda uygun mesaj
-
-### Adim 7: Editor Icindeki Contact Form Guncelleme
-
-`ContactForm.tsx` (ChaiBuilder bloku) bileseninde:
-- `handleSubmit` fonksiyonu gercek POST istegi yapacak sekilde guncellenecek
-- `inBuilder` modunda devre disi kalacak (mevcut davranis)
-
-## Dosya Degisiklikleri Ozeti
-
-| Dosya | Islem |
-|-------|-------|
-| Veritabani migrasyonu (`contact_leads` tablosu) | Yeni |
-| `supabase/functions/submit-contact-form/index.ts` | Yeni |
-| `src/pages/Leads.tsx` | Yeni |
-| `src/components/dashboard/DashboardSidebar.tsx` | Guncelleme |
-| `src/App.tsx` | Guncelleme (rota ekleme) |
-| `supabase/functions/deploy-to-netlify/index.ts` | Guncelleme (form submit) |
-| `src/components/chai-builder/blocks/contact/ContactForm.tsx` | Guncelleme |
-| `supabase/config.toml` | Guncelleme (yeni fonksiyon JWT ayari) |
+Bu değişiklikler mevcut tasarımı ve UX'i bozmadan sadece mobil deneyimi iyileştirecek.
