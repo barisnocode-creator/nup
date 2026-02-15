@@ -3,14 +3,13 @@ import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
   ChaiBlockStyleEditor,
-  ChaiOutline,
   ChaiAddBlocksPanel,
   ChaiScreenSizes,
   ChaiUndoRedo,
 } from '@chaibuilder/sdk';
 import {
   Home, Paintbrush, Plus, X, PanelRightClose, Globe,
-  Layers, Monitor, Tablet, Smartphone, Settings2,
+  Monitor, Tablet, Smartphone, Settings2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CustomizePanel } from './CustomizePanel';
@@ -20,13 +19,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useEditorContext } from './EditorContext';
 
-type LeftPanel = 'outline' | 'add' | null;
+type LeftPanel = 'add' | null;
 type RightTab = 'props' | 'styles';
 
-type ToolKey = 'customize' | 'outline' | 'add';
+type ToolKey = 'customize' | 'add';
 const tools: { key: ToolKey; icon: React.ElementType; label: string }[] = [
   { key: 'customize', icon: Paintbrush, label: 'Özelleştir' },
-  { key: 'outline', icon: Layers, label: 'Sayfalar' },
   { key: 'add', icon: Plus, label: 'Ekle' },
 ];
 
@@ -219,9 +217,7 @@ export function DesktopEditorLayout() {
             >
               <div className="w-[260px] h-full flex flex-col">
                 <div className="px-4 py-3 border-b border-border/30 flex items-center justify-between">
-                  <span className="text-sm font-semibold">
-                    {leftPanel === 'outline' ? 'Katmanlar' : 'Blok Ekle'}
-                  </span>
+                  <span className="text-sm font-semibold">Blok Ekle</span>
                   <button
                     onClick={() => setLeftPanel(null)}
                     className="p-1 rounded-lg hover:bg-accent/80 text-muted-foreground"
@@ -230,9 +226,8 @@ export function DesktopEditorLayout() {
                   </button>
                 </div>
                 <ScrollArea className="flex-1">
-                  <div className="p-3 chai-panel-scroll" data-panel={leftPanel === 'outline' ? 'outline' : 'add'}>
-                    {leftPanel === 'outline' && <ChaiOutline />}
-                    {leftPanel === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
+                <div className="p-3 chai-panel-scroll" data-panel="add">
+                    <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />
                   </div>
                 </ScrollArea>
               </div>
