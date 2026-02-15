@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -83,12 +84,12 @@ export function AppointmentsPanel({ projectId }: AppointmentsPanelProps) {
   const handleScheduleClick = () => setActiveTab('schedule');
 
   const handleReschedule = async (appointmentId: string, newDate: string, newStartTime: string, newEndTime: string) => {
-    const headers = await data.getHeaders();
-    if (!headers) return;
-    const res = await fetch(data.baseUrl, {
-      method: 'PATCH', headers, body: JSON.stringify({ appointment_id: appointmentId, appointment_date: newDate, start_time: newStartTime, end_time: newEndTime }),
-    });
-    if (res.ok) {
+    const { error } = await supabase
+      .from('appointments')
+      .update({ appointment_date: newDate, start_time: newStartTime, end_time: newEndTime })
+      .eq('id', appointmentId)
+      .eq('project_id', projectId);
+    if (!error) {
       data.fetchData();
     }
   };
