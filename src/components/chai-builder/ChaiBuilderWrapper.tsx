@@ -17,9 +17,8 @@ import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePrev
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { getTemplateConfig } from '@/templates';
-import { convertGeneratedContentToChaiBlocks, getThemeForTemplate } from './utils/convertToChaiBlocks';
-import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
-import { convertTemplateToBlocks } from './utils/templateToBlocks';
+import { getThemeForTemplate } from './utils/themeUtils';
+import { getCatalogTheme } from '@/templates/catalog';
 
 // Register custom blocks
 import './blocks';
@@ -169,18 +168,16 @@ export function ChaiBuilderWrapper({
 
       const content = error ? null : (data?.generated_content as any);
       
-      // Generate new blocks: catalog-aware with fallback chain
+      // Direct block loading — no conversion layer
       let newBlocks: ChaiBlock[];
-      const catalogDef = getCatalogTemplate(selectedTemplateId);
       
-      if (catalogDef && content) {
-        try {
-          newBlocks = convertTemplateToBlocks(catalogDef, content) as ChaiBlock[];
-        } catch {
-          newBlocks = convertTemplateToBlocks(catalogDef) as ChaiBlock[];
-        }
-      } else if (content) {
-        newBlocks = convertGeneratedContentToChaiBlocks(content, selectedTemplateId);
+      if (content) {
+        // Create minimal blocks from content
+        const generateId = () => `block_${Math.random().toString(36).substr(2, 9)}`;
+        newBlocks = [
+          { _id: generateId(), _type: 'HeroCentered', title: content.pages?.home?.hero?.title || 'Hoş Geldiniz', subtitle: content.pages?.home?.hero?.subtitle || '', description: content.pages?.home?.hero?.description || '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: 'Hizmetlerimiz', secondaryButtonLink: '#services', backgroundImage: '' } as ChaiBlock,
+          { _id: generateId(), _type: 'CTABanner', title: 'Hemen Başlayalım', description: 'Sizinle çalışmak için sabırsızlanıyoruz.', buttonText: 'İletişime Geç', buttonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
+        ];
       } else {
         newBlocks = [
           { _id: `preview_hero_${Date.now()}`, _type: 'HeroCentered', title: 'Hoş Geldiniz', subtitle: '', description: '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '' } as ChaiBlock,
@@ -188,7 +185,7 @@ export function ChaiBuilderWrapper({
         ];
       }
 
-      const newTheme = (catalogDef ? getCatalogTheme(selectedTemplateId) : null) || getThemeForTemplate(selectedTemplateId);
+      const newTheme = getCatalogTheme(selectedTemplateId) || getThemeForTemplate(selectedTemplateId);
 
       setPreviewBlocks(newBlocks);
       setPreviewTheme(newTheme);

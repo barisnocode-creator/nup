@@ -24,9 +24,9 @@ import { ToastAction } from '@/components/ui/toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig } from '@/templates';
-import { convertGeneratedContentToChaiBlocks, getThemeForTemplate, getThemeFromColorPreferences, blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/convertToChaiBlocks';
-import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
-import { convertTemplateToBlocks } from '@/components/chai-builder/utils/templateToBlocks';
+import { getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/themeUtils';
+import { blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/imagePatching';
+import { getCatalogTheme } from '@/templates/catalog';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -291,33 +291,10 @@ export default function Project() {
     setIsConvertingBlocks(true);
     
     try {
-      // Catalog-aware block conversion with fallback chain
-      let blocks: any[];
-      const catalogDef = getCatalogTemplate(projectData.template_id || '');
-      
-      if (catalogDef) {
-        // Use catalog template's section order with AI content overlay
-        try {
-          blocks = convertTemplateToBlocks(catalogDef, projectData.generated_content as any);
-        } catch (catalogErr) {
-          console.warn('[Project] Catalog conversion failed, using defaults:', catalogErr);
-          blocks = convertTemplateToBlocks(catalogDef); // Template defaults only
-        }
-      } else {
-        // Legacy path for pilates1 and non-catalog templates
-        blocks = convertGeneratedContentToChaiBlocks(
-          projectData.generated_content,
-          projectData.template_id
-        );
-      }
-      
-      if (!blocks || blocks.length === 0) {
-        // Ultimate fallback
-        blocks = convertGeneratedContentToChaiBlocks(
-          projectData.generated_content,
-          projectData.template_id
-        );
-      }
+      // Direct block creation — no generic conversion layer
+      // Each template will provide its own blocks via registerChaiBlock()
+      // For now, create minimal default blocks from generated content
+      const blocks: any[] = createDefaultBlocks(projectData.generated_content);
       
       // Determine theme: prefer color preferences, then catalog theme, then legacy
       const colorTone = projectData.form_data?.extractedData?.colorTone 
@@ -327,7 +304,7 @@ export default function Project() {
       
       const theme = (colorTone || colorMode)
         ? getThemeFromColorPreferences(colorTone, colorMode)
-        : (catalogDef ? getCatalogTheme(catalogDef.id) || getThemeForTemplate(projectData.template_id) : getThemeForTemplate(projectData.template_id));
+        : (getCatalogTheme(projectData.template_id || '') || getThemeForTemplate(projectData.template_id));
       
       // Save to database
       const { error } = await supabase
@@ -428,6 +405,95 @@ export default function Project() {
     }
   };
 
+const generateBlockId = () => `block_${Math.random().toString(36).substr(2, 9)}`;
+
+/**
+ * Creates default ChaiBlocks directly from generated content.
+ * No template-specific conversion — blocks are created as-is using existing block types.
+ */
+function createDefaultBlocks(content: GeneratedContent): any[] {
+  const blocks: any[] = [];
+  const { pages, images, metadata } = content;
+
+  // Hero
+  if (pages?.home?.hero) {
+    const hero = pages.home.hero;
+    blocks.push({
+      _id: generateBlockId(),
+      _type: 'HeroCentered',
+      title: hero.title || metadata?.siteName || 'Hoş Geldiniz',
+      subtitle: hero.subtitle || '',
+      description: hero.description || '',
+      primaryButtonText: 'İletişime Geç',
+      primaryButtonLink: '#contact',
+      secondaryButtonText: 'Hizmetlerimiz',
+      secondaryButtonLink: '#services',
+      backgroundImage: '',
+    });
+  }
+
+  // Services
+  if (pages?.services?.servicesList || pages?.home?.highlights) {
+    const list = pages?.services?.servicesList || pages?.home?.highlights || [];
+    blocks.push({
+      _id: generateBlockId(),
+      _type: 'ServicesGrid',
+      sectionTitle: pages?.services?.hero?.title || 'Hizmetlerimiz',
+      sectionSubtitle: 'Neler Yapıyoruz',
+      sectionDescription: pages?.services?.intro?.content || '',
+      services: list.slice(0, 6).map((s: any) => ({
+        icon: s.icon || '⭐',
+        title: s.title,
+        description: s.description,
+        image: s.image || '',
+      })),
+    });
+  }
+
+  // About
+  if (pages?.about?.story || pages?.home?.welcome) {
+    blocks.push({
+      _id: generateBlockId(),
+      _type: 'AboutSection',
+      title: pages?.about?.story?.title || pages?.home?.welcome?.title || 'Hakkımızda',
+      subtitle: 'Biz Kimiz?',
+      description: pages?.about?.story?.content || pages?.home?.welcome?.content || '',
+      features: (pages?.about?.values?.slice(0, 4).map((v: any) => v.title) || []).join('\n'),
+      image: '',
+      imagePosition: 'right',
+    });
+  }
+
+  // Contact
+  if (pages?.contact?.info) {
+    blocks.push({
+      _id: generateBlockId(),
+      _type: 'ContactForm',
+      sectionTitle: pages.contact.form?.title || 'Bize Ulaşın',
+      sectionSubtitle: 'İletişim',
+      sectionDescription: pages.contact.form?.subtitle || '',
+      address: pages.contact.info.address || '',
+      phone: pages.contact.info.phone || '',
+      email: pages.contact.info.email || '',
+      submitButtonText: 'Mesaj Gönder',
+    });
+  }
+
+  // CTA
+  blocks.push({
+    _id: generateBlockId(),
+    _type: 'CTABanner',
+    title: 'Hemen Başlayalım',
+    description: 'Sizinle çalışmak için sabırsızlanıyoruz.',
+    buttonText: 'İletişime Geç',
+    buttonLink: '#contact',
+    secondaryButtonText: '',
+    secondaryButtonLink: '',
+    backgroundImage: '',
+  });
+
+  return blocks;
+}
 
   // Deep update helper for nested object paths like "pages.home.hero.title"
   const updateNestedValue = (obj: any, path: string, value: any): any => {
