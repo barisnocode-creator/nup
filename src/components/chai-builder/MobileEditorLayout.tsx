@@ -3,7 +3,6 @@ import {
   ChaiBuilderCanvas,
   ChaiBlockPropsEditor,
   ChaiBlockStyleEditor,
-  ChaiOutline,
   ChaiAddBlocksPanel,
   ChaiScreenSizes,
 } from '@chaibuilder/sdk';
@@ -25,7 +24,7 @@ import { useEditorContext } from './EditorContext';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
-type PanelType = 'outline' | 'add' | 'props' | 'styles' | 'customize' | null;
+type PanelType = 'add' | 'props' | 'styles' | 'customize' | null;
 
 type PanelConfig = {
   key: Exclude<PanelType, null>;
@@ -36,7 +35,6 @@ type PanelConfig = {
 };
 
 const panels: PanelConfig[] = [
-  { key: 'outline', icon: Layers, label: 'Katmanlar', description: 'Sayfa yapısını yönetin', side: 'left' },
   { key: 'add', icon: Plus, label: 'Ekle', description: 'Yeni blok ekleyin', side: 'left' },
   { key: 'customize', icon: Paintbrush, label: 'Özelleştir', description: 'Siteyi özelleştirin', side: 'left' },
   { key: 'props', icon: Settings2, label: 'Özellikler', description: 'Blok içeriğini düzenleyin', side: 'right' },
@@ -200,7 +198,6 @@ export function MobileEditorLayout() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 chai-panel-scroll" data-panel={key}>
-              {key === 'outline' && <ChaiOutline />}
               {key === 'add' && <ChaiAddBlocksPanel showHeading={false} fromSidebar={true} />}
               {key === 'customize' && <CustomizePanel onClose={() => setActivePanel(null)} />}
               {key === 'props' && <ChaiBlockPropsEditor />}
