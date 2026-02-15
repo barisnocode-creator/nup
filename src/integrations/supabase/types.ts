@@ -317,6 +317,42 @@ export type Database = {
           },
         ]
       }
+      contact_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_read: boolean
+          message: string
+          name: string
+          phone: string | null
+          project_id: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_read?: boolean
+          message: string
+          name: string
+          phone?: string | null
+          project_id: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          name?: string
+          phone?: string | null
+          project_id?: string
+          subject?: string | null
+        }
+        Relationships: []
+      }
       custom_domains: {
         Row: {
           created_at: string

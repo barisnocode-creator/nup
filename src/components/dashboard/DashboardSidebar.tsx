@@ -1,4 +1,4 @@
-import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown, Wand2, CalendarCheck } from 'lucide-react';
+import { Home, Globe, BarChart3, Settings, HelpCircle, Sparkles, Crown, Wand2, CalendarCheck, MessageSquare } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import {
   Sidebar,
@@ -27,8 +27,9 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadLeads, setUnreadLeads] = useState(0);
 
-  // Fetch pending appointment count
+  // Fetch pending appointment count & unread leads
   useEffect(() => {
     if (!activeProjectId) return;
     const fetchPending = async () => {
@@ -39,13 +40,24 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
         .eq('status', 'pending');
       setPendingCount(count || 0);
     };
+    const fetchUnreadLeads = async () => {
+      const { count } = await supabase
+        .from('contact_leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', activeProjectId)
+        .eq('is_read', false);
+      setUnreadLeads(count || 0);
+    };
     fetchPending();
+    fetchUnreadLeads();
 
-    // Listen for realtime changes
     const channel = supabase
       .channel('sidebar-appointments')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `project_id=eq.${activeProjectId}` }, () => {
         fetchPending();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_leads', filter: `project_id=eq.${activeProjectId}` }, () => {
+        fetchUnreadLeads();
       })
       .subscribe();
 
@@ -65,6 +77,11 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
       icon: CalendarCheck,
     },
     { title: 'Studio', url: '/studio', icon: Wand2 },
+    { 
+      title: 'Mesajlar', 
+      url: activeProjectId ? `/project/${activeProjectId}/leads` : '/leads', 
+      icon: MessageSquare,
+    },
     { 
       title: 'Analytics', 
       url: activeProjectId ? `/project/${activeProjectId}/analytics` : '/analytics', 
@@ -112,6 +129,11 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
                             {pendingCount > 9 ? '!' : pendingCount}
                           </span>
                         )}
+                        {item.title === 'Mesajlar' && unreadLeads > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                            {unreadLeads > 9 ? '!' : unreadLeads}
+                          </span>
+                        )}
                       </div>
                       {!isCollapsed && (
                         <span className="flex items-center gap-2">
@@ -119,6 +141,11 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
                           {item.title === 'Randevular' && pendingCount > 0 && (
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/10 text-destructive rounded-full">
                               {pendingCount} yeni
+                            </span>
+                          )}
+                          {item.title === 'Mesajlar' && unreadLeads > 0 && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/10 text-destructive rounded-full">
+                              {unreadLeads} yeni
                             </span>
                           )}
                         </span>

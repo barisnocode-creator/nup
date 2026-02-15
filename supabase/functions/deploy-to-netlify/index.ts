@@ -204,7 +204,9 @@ function renderFAQAccordion(b: ChaiBlock): string {
 </section>`;
 }
 
-function renderContactForm(b: ChaiBlock): string {
+function renderContactForm(b: ChaiBlock, projectId?: string): string {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const pid = projectId || "";
   return `<section id="contact" class="py-20" style="background:var(--muted)">
   <div class="max-w-6xl mx-auto px-6">
     ${b.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(b.sectionSubtitle as string)}</p>` : ""}
@@ -216,14 +218,42 @@ function renderContactForm(b: ChaiBlock): string {
         ${b.email ? `<div class="flex items-center gap-3"><span class="text-2xl">📧</span><div><div class="text-sm" style="color:var(--muted-foreground)">E-posta</div><div class="font-medium" style="color:var(--foreground)">${escapeHtml(b.email as string)}</div></div></div>` : ""}
         ${b.address ? `<div class="flex items-center gap-3"><span class="text-2xl">📍</span><div><div class="text-sm" style="color:var(--muted-foreground)">Adres</div><div class="font-medium" style="color:var(--foreground)">${escapeHtml(b.address as string)}</div></div></div>` : ""}
       </div>
-      <form class="space-y-4" onsubmit="event.preventDefault();alert('Mesajınız alındı!')">
-        <input type="text" placeholder="Adınız" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
-        <input type="email" placeholder="E-posta" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
-        <textarea placeholder="Mesajınız" rows="4" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required></textarea>
+      <form class="space-y-4" id="contact-form">
+        <input type="text" name="_hp" style="display:none" tabindex="-1" autocomplete="off" />
+        <input type="text" name="name" placeholder="Adınız" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
+        <input type="email" name="email" placeholder="E-posta" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required />
+        <input type="text" name="subject" placeholder="Konu" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" />
+        <textarea name="message" placeholder="Mesajınız" rows="4" class="w-full px-4 py-3 rounded-lg focus:ring-2 focus:outline-none" style="border:1px solid var(--border);background:var(--background);color:var(--foreground)" required></textarea>
         <button type="submit" class="w-full px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition" style="background:var(--primary);color:var(--primary-foreground)">${escapeHtml((b.submitButtonText as string) || "Gönder")}</button>
+        <div id="contact-msg" class="text-center text-sm hidden"></div>
       </form>
     </div>
   </div>
+  <script>
+  (function(){
+    var f=document.getElementById('contact-form');
+    if(!f)return;
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var btn=f.querySelector('button[type=submit]');
+      btn.disabled=true;btn.textContent='Gönderiliyor...';
+      var d={project_id:'${pid}',name:f.name.value,email:f.email.value,subject:f.subject?f.subject.value:'',message:f.message.value,_hp:f._hp?f._hp.value:''};
+      fetch('${supabaseUrl}/functions/v1/submit-contact-form',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+      .then(function(r){return r.json()})
+      .then(function(r){
+        var msg=document.getElementById('contact-msg');
+        if(r.success){msg.textContent='Mesajınız alındı! Teşekkürler.';msg.style.color='green';msg.classList.remove('hidden');f.reset();}
+        else{msg.textContent=r.error||'Bir hata oluştu.';msg.style.color='red';msg.classList.remove('hidden');}
+        btn.disabled=false;btn.textContent='${escapeHtml((b.submitButtonText as string) || "Gönder")}';
+      })
+      .catch(function(){
+        var msg=document.getElementById('contact-msg');
+        msg.textContent='Bir hata oluştu. Lütfen tekrar deneyin.';msg.style.color='red';msg.classList.remove('hidden');
+        btn.disabled=false;btn.textContent='${escapeHtml((b.submitButtonText as string) || "Gönder")}';
+      });
+    });
+  })();
+  </script>
 </section>`;
 }
 
@@ -874,7 +904,7 @@ function renderPilatesFooter(siteName: string, tagline: string): string {
 
 // ── Main renderer ──
 
-function renderBlock(block: ChaiBlock): string {
+function renderBlock(block: ChaiBlock, projectId?: string): string {
   switch (block._type) {
     case "HeroCentered":
     case "HeroOverlay":
@@ -893,7 +923,7 @@ function renderBlock(block: ChaiBlock): string {
     case "FAQAccordion":
       return renderFAQAccordion(block);
     case "ContactForm":
-      return renderContactForm(block);
+      return renderContactForm(block, projectId);
     case "CTABanner":
       return renderCTABanner(block);
     case "PricingTable":
@@ -991,7 +1021,7 @@ function blocksToHtml(blocks: ChaiBlock[], theme: Record<string, unknown>, proje
     : [...new Set([headingFont, bodyFont])];
   const fontLinks = allFonts.map(f => `<link href="https://fonts.googleapis.com/css2?family=${f.replace(/ /g, '+')}:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">`).join("\n  ");
 
-  let sectionsHtml = blocks.map(b => renderBlock(b)).filter(Boolean).join("\n");
+  let sectionsHtml = blocks.map(b => renderBlock(b, projectId)).filter(Boolean).join("\n");
 
   if (!sectionsHtml.trim()) {
     sectionsHtml = `<section class="min-h-screen flex items-center justify-center" style="background:var(--background)"><div class="text-center"><h1 class="text-4xl font-bold" style="color:var(--foreground)">${escapeHtml(projectName)}</h1><p class="mt-4" style="color:var(--muted-foreground)">Website coming soon</p></div></section>`;
