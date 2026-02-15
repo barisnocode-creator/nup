@@ -262,6 +262,18 @@ export function ChaiBuilderWrapper({
     }
   }, []);
 
+  // Clear forced SaaS orange theme when editor mounts so SDK theme takes effect
+  useEffect(() => {
+    const root = document.documentElement;
+    // Remove inline styles forced by DashboardLayout
+    ['--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
+     '--accent-foreground', '--primary-foreground',
+     '--background', '--foreground', '--muted', '--muted-foreground',
+     '--secondary', '--secondary-foreground', '--border', '--input',
+     '--card', '--card-foreground', '--popover', '--popover-foreground',
+     '--destructive', '--destructive-foreground'].forEach(p => root.style.removeProperty(p));
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => setIsReady(true), 100);
     return () => clearTimeout(timer);
