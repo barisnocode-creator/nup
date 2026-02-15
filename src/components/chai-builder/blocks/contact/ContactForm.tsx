@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { 
   registerChaiBlock,
   StylesProp,
@@ -6,6 +7,8 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 import { builderProp } from "@chaibuilder/sdk/runtime";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export type ContactFormProps = {
   styles: ChaiStyles;
@@ -33,10 +36,40 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
   } = props;
 
   const s = resolveStyles(styleProps);
+  const { id: projectId } = useParams<{ id: string }>();
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inBuilder) return;
+    if (inBuilder || !projectId) return;
+    
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-contact-form`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectId,
+          name: formData.get('name'),
+          email: formData.get('email'),
+          subject: formData.get('subject'),
+          message: formData.get('message'),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success('Mesajınız alındı! Teşekkürler.');
+        form.reset();
+      } else {
+        toast.error(data.error || 'Bir hata oluştu.');
+      }
+    } catch {
+      toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -101,23 +134,23 @@ const ContactFormBlock = (props: ChaiBlockComponentProps<ContactFormProps>) => {
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">Adınız</label>
-                  <input type="text" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Adınızı girin" disabled={inBuilder} />
+                  <input type="text" name="name" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Adınızı girin" disabled={inBuilder} required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">E-posta</label>
-                  <input type="email" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="E-posta adresiniz" disabled={inBuilder} />
+                  <input type="email" name="email" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="E-posta adresiniz" disabled={inBuilder} required />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Konu</label>
-                <input type="text" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Konu başlığı" disabled={inBuilder} />
+                <input type="text" name="subject" className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Konu başlığı" disabled={inBuilder} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Mesajınız</label>
-                <textarea rows={5} className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Mesajınızı yazın..." disabled={inBuilder} />
+                <textarea name="message" rows={5} className="w-full px-4 py-3 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none" placeholder="Mesajınızı yazın..." disabled={inBuilder} required />
               </div>
-              <button type="submit" className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors" disabled={inBuilder}>
-                {submitButtonText}
+              <button type="submit" className="w-full px-6 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors" disabled={inBuilder || submitting}>
+                {submitting ? 'Gönderiliyor...' : submitButtonText}
               </button>
             </form>
           </div>

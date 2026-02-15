@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Help from "./pages/Help";
 import WebsiteDashboard from "./pages/WebsiteDashboard";
 import PublicWebsite from "./pages/PublicWebsite";
+import Leads from "./pages/Leads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Appointments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/project/:id/leads"
+              element={
+                <ProtectedRoute>
+                  <Leads />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leads"
+              element={
+                <ProtectedRoute>
+                  <Leads />
                 </ProtectedRoute>
               }
             />
