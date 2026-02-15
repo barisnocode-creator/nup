@@ -109,7 +109,7 @@ export function WebsitePreviewCard({ project, onDelete }: WebsitePreviewCardProp
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-destructive/90 hover:text-destructive-foreground rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  className="h-7 w-7 bg-background/70 backdrop-blur-sm hover:bg-destructive/90 hover:text-destructive-foreground rounded-lg shadow-sm opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setDeleteOpen(true);
