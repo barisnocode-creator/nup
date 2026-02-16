@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Loader2, Check, X, Trash2, RefreshCw, Crown } from 'lucide-react';
+import { Clock, Loader2, Check, X, Trash2, RefreshCw, Crown, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,6 +24,8 @@ export interface CustomDomain {
   is_primary: boolean;
   created_at: string;
   verified_at: string | null;
+  auto_configured?: boolean;
+  dns_provider?: string | null;
 }
 
 interface DomainListItemProps {
@@ -120,6 +122,12 @@ export function DomainListItem({ domain, onVerify, onRemove, isVerifying = false
               <Badge variant="secondary" className="flex-shrink-0 gap-1">
                 <Crown className="w-3 h-3" />
                 Birincil
+              </Badge>
+            )}
+            {domain.auto_configured && (
+              <Badge variant="outline" className="flex-shrink-0 text-xs">
+                <Zap className="w-3 h-3 mr-0.5" />
+                Otomatik
               </Badge>
             )}
           </div>

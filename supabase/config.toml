@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.submit-contact-form]
 verify_jwt = false
+
+[functions.auto-configure-dns]
+verify_jwt = false
