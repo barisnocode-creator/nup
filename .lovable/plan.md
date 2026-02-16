@@ -1,65 +1,69 @@
 
 
-## Template Temizliği ve Natural Ekleme Planı
+## Natural Template - Orijinal Repo ile Birebir Eslestirme
 
-### Adim 1 - Gereksiz Sablonlari Silme
+Mevcut Natural sablonu orijinal repo'dan cok farkli olusturulmus. Icerik Turkcelesstirilmis, dark mode toggle eksik, makale verileri sadelesstirilmis, footer kategorileri degistirilmis. Asagidaki plan ile orijinal repo'daki tasarimi birebir yansitacak sekilde guncelleme yapilacak.
 
-Silinecek template klasorleri:
-- `src/templates/temp1/` (tum alt dosyalari ile birlikte)
-- `src/templates/temp2/` (Bold Agency)
-- `src/templates/temp3/` (Elegant)
-- `src/templates/temp4-video-studio/` (Video Studio)
-- `src/templates/gith1/` (SaaS)
-- `src/templates/gith2/` (Corporate)
-- `src/templates/gith3/` (Minimal)
+---
 
-Kalacak template klasorleri:
-- `src/templates/pilates/` (Wellness Studio)
-- `src/templates/lawyer/` (Hukuk Burosu)
+### Farklar ve Yapilacaklar
 
-### Adim 2 - Katalog Tanimlari Temizligi
+**1. Header - Dark Mode Toggle Eksik + Icerik Yanlis**
+- Mevcut: Turkce nav linkleri ("Ana Sayfa", "Makaleler", "Hakk1m1zda", "Iletisim"), dark mode yok
+- Orijinal: Ingilizce nav ("Home", "Articles", "Wellness", "Travel", "About"), Moon/Sun dark mode toggle butonu
+- Islem: `NaturalHeader.tsx` tamamen guncellenecek - dark mode toggle eklenecek, nav linkleri orijinal ile eslestirilecek, "Join Now" butonu
 
-`src/templates/catalog/definitions.ts` dosyasinda sadece 2 tanim kalacak:
-- `wellnessStudio`
-- `lawyerFirm`
+**2. HeroSection - Icerik Hardcoded Olmali**
+- Mevcut: Props ile disaridan aliyor (title, description), "Katil" butonu
+- Orijinal: Hardcoded "Journey Through Life's Spectrum" basligi, uzun aciklama metni, "Join Now" butonu
+- Islem: Varsayilan degerler orijinal Ingilizce icerikle guncellenecek, buton metni "Join Now" olacak
 
-Silinecek tanimlar: `corporateServices`, `medicalClinic`, `creativeAgency`, `restaurantCafe`, `videoStudio`, `modernSaas`, `retailBoutique`
+**3. IntroSection - Icerik Hardcoded Olmali**
+- Mevcut: Props aliyor, bos icerik gelirse bosluyor
+- Orijinal: Hardcoded "Perspective is a space for exploring ideas..." basligi ve aciklama
+- Islem: Varsayilan Ingilizce icerik eklenecek
 
-`allDefinitions` dizisi sadece bu 2 kaydi icerecek.
+**4. Articles Data - Tamamen Eksik**
+- Mevcut: Sadece 6 basit kayit (id, title, category, date, image) - subtitle, readTime, author, content, tags yok
+- Orijinal: 6 zengin makale verisi (subtitle, readTime, author bilgileri, tam icerik, tags)
+- Islem: `articles.ts` orijinal repo'daki zengin veriyle tamamen degistirilecek
 
-### Adim 3 - Ana Registry Guncelleme
+**5. ArticleCard - Size Prop Eksik**
+- Mevcut: `div` wrapper, size prop yok
+- Orijinal: `<a>` link wrapper, `size` prop (small/large) ile responsive boyut destegi
+- Islem: `<a>` tag'i ve size prop eklenerek orijinale eslestirilecek
 
-`src/templates/index.ts` dosyasinda:
-- Silinen sablonlara ait import ve mapping kayitlari kaldirilacak
-- `selectTemplate` fonksiyonundaki meslek-sablon eslestirmeleri sadece pilates ve lawyer icin kalacak, diger meslekler varsayilan sablona yonlendirilecek
+**6. NewsletterSection - Icerik Yanlis**
+- Mevcut: Turkce varsayilan metinler ("Ilham alin.", "Abone Ol")
+- Orijinal: "Stay inspired.", "Subscribe" Ingilizce icerik
+- Islem: Varsayilan degerler Ingilizce orijinal ile degistirilecek
 
-### Adim 4 - Kullanilmayan Preview Gorsellerini Koruma
+**7. Footer - Kategoriler ve Icerik Yanlis**
+- Mevcut: Turkce ("Kesfet", "Iletisim", "Takip Et", "Yasal") - 2'ser link
+- Orijinal: Ingilizce ("Explore": Wellness/Travel/Creativity/Growth, "About": Our Story/Authors/Contact, "Resources": Style Guide/Newsletter, "Legal": Privacy/Terms) - daha zengin icerik
+- Islem: `NaturalFooter.tsx` orijinal repo ile eslestirilecek
 
-`src/assets/` altindaki tum preview gorselleri (showcase-*.jpg, template-*.jpg, gith*-preview.jpg) silinmeyecek - galeri sayfasinda kullanilmaya devam edecek.
+**8. CSS - Animasyonlar .natural-template Scope'unda**
+- Mevcut: Tum animasyonlar `.natural-template` prefix ile scoped
+- Orijinal: Global utility class'lar (`@layer utilities` icinde)
+- Islem: CSS dogru calisiyor, scope'lu yaklasim korunacak (proje genelini etkilememek icin daha iyi)
 
-### Adim 5 - Natural Sablonu Ekleme (Kod Bekleniyor)
+**9. FullLandingPage - Icerik Baslik Yanlis**
+- Mevcut: Turkce "One Cikanlar", "Tumunu gor"
+- Orijinal: "Featured Articles", "View all"
+- Islem: Hardcoded metinler Ingilizce orijinale cekilecek
 
-`remix-of-my-perspective-lifestyle` repo'su GitHub'da hala erisime kapali (404). Repo'daki kodlari dogrudan sohbete yapistirmaniz gerekiyor:
-- `src/pages/Index.tsx` (veya ana sayfa dosyasi)
-- `src/components/` altindaki tum bilesenler
-- `src/index.css` (animasyonlar ve ozel stiller)
-
-Kod geldiginde:
-- `src/templates/natural/` klasoru olusturulacak
-- Sablonun tum bilesenleri, animasyonlari ve stilleri entegre edilecek
-- Galeri'de "Natural" ismiyle gorunecek
-- Katalog ve registry dosyalarina kaydedilecek
+---
 
 ### Teknik Detaylar
 
-**Etkilenen dosyalar:**
-- `src/templates/catalog/definitions.ts` - 7 sablon tanimi silinecek
-- `src/templates/catalog/index.ts` - Degisiklik yok (allDefinitions'a bagli)
-- `src/templates/index.ts` - Import'lar ve mapping azaltilacak
-- `src/components/chai-builder/themes/presets.ts` - Kullanilmayan tema preset'leri kalabilir (zarar vermez)
-- 7 template klasoru ve tum alt dosyalari silinecek
-
-**Dikkat edilecekler:**
-- `deploy-to-netlify` edge function'daki renderer mantigi da temizlenecek (silinen sablonlarin HTML render kodlari)
-- Mevcut kullanicilarin silinen sablonlarla olusturulmus siteleri varsa, fallback olarak pilates1'e yonlendirilecek (mevcut davranis zaten bu)
+Duzenlenecek dosyalar:
+1. `src/templates/natural/components/NaturalHeader.tsx` - Dark mode toggle ekleme, Ingilizce nav, "Join Now"
+2. `src/templates/natural/components/NaturalFooter.tsx` - Orijinal Ingilizce footer kategorileri
+3. `src/templates/natural/sections/HeroSection.tsx` - Varsayilan Ingilizce icerik
+4. `src/templates/natural/sections/IntroSection.tsx` - Varsayilan Ingilizce icerik
+5. `src/templates/natural/sections/ArticleCard.tsx` - `<a>` wrapper ve `size` prop
+6. `src/templates/natural/sections/NewsletterSection.tsx` - Ingilizce varsayilanlar
+7. `src/templates/natural/data/articles.ts` - Tam zengin veri (subtitle, author, content, tags)
+8. `src/templates/natural/pages/FullLandingPage.tsx` - "Featured Articles" basligi
 
