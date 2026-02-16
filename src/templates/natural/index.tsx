@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { TemplateProps } from '../types';
 import { NaturalHeader } from './components/NaturalHeader';
 import { NaturalFooter } from './components/NaturalFooter';
@@ -23,6 +23,8 @@ export function NaturalTemplate({
 }: TemplateProps) {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [lockedFeature, setLockedFeature] = useState<string>('');
+  const [isDark, setIsDark] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const handleLockedFeature = (feature: string) => {
     if (onLockedFeature) {
@@ -39,8 +41,15 @@ export function NaturalTemplate({
     }
   };
 
+  const toggleDark = useCallback(() => {
+    setIsDark(prev => !prev);
+  }, []);
+
   return (
-    <div className="natural-template min-h-screen bg-background text-foreground">
+    <div
+      ref={wrapperRef}
+      className={`natural-template min-h-screen bg-background text-foreground${isDark ? ' dark' : ''}`}
+    >
       {isEditable && (
         <div className="sticky top-14 z-20 py-2 px-4 border-b bg-background/95 border-border backdrop-blur-sm">
           <div className="container mx-auto flex items-center justify-between">
@@ -55,6 +64,8 @@ export function NaturalTemplate({
         siteName={content.metadata.siteName}
         isEditable={isEditable}
         onFieldEdit={handleFieldEdit}
+        isDark={isDark}
+        onToggleDark={toggleDark}
       />
 
       <NaturalFullLandingPage
