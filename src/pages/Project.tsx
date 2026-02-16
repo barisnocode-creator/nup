@@ -28,7 +28,7 @@ import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig, isComponentTemplate, getTemplate } from '@/templates';
 import { getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/themeUtils';
 import { blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/imagePatching';
-import { getCatalogTheme } from '@/templates/catalog';
+import { getCatalogTheme, getCatalogTemplate } from '@/templates/catalog';
 
 // Lazy load editors for performance
 const GrapesEditor = lazy(() => import('@/components/grapes-editor/GrapesEditor').then(m => ({ default: m.GrapesEditor })));
@@ -294,10 +294,23 @@ export default function Project() {
     setIsConvertingBlocks(true);
     
     try {
-      // Direct block creation — no generic conversion layer
-      // Each template will provide its own blocks via registerChaiBlock()
-      // For now, create minimal default blocks from generated content
-      const blocks: any[] = createDefaultBlocks(projectData.generated_content);
+      // Check if this template has a catalog definition with custom blocks
+      const catalogDef = getCatalogTemplate(projectData.template_id || '');
+      let blocks: any[];
+      
+      if (catalogDef && catalogDef.sections.length > 0) {
+        // Use catalog template sections as blocks
+        blocks = catalogDef.sections.map((section, index) => ({
+          _id: `${section.type}_${index}_${Date.now()}`,
+          _type: section.type,
+          _position: index,
+          _name: section.type,
+          ...section.defaultProps,
+        }));
+      } else {
+        // Fallback: create blocks from generated content
+        blocks = createDefaultBlocks(projectData.generated_content);
+      }
       
       // Determine theme: prefer color preferences, then catalog theme, then legacy
       const colorTone = projectData.form_data?.extractedData?.colorTone 
