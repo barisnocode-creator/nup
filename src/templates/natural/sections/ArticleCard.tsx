@@ -6,9 +6,10 @@ interface ArticleCardProps {
   category: string;
   date: string;
   image: string;
+  size?: "small" | "large";
 }
 
-export function ArticleCard({ id, title, category, date, image }: ArticleCardProps) {
+export function ArticleCard({ id, title, category, date, image, size = "small" }: ArticleCardProps) {
   const getCategoryClass = (cat: string) => {
     const normalized = cat.toLowerCase();
     if (normalized.includes("financ")) return "tag-financing";
@@ -22,8 +23,8 @@ export function ArticleCard({ id, title, category, date, image }: ArticleCardPro
   };
 
   return (
-    <div className="group relative block rounded-[2.5rem] overflow-hidden card-hover">
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted rounded-[2.5rem]">
+    <a href="#" className="group relative block rounded-[2.5rem] overflow-hidden card-hover">
+      <div className={`relative overflow-hidden bg-muted rounded-[2.5rem] ${size === "large" ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
         <img
           src={image}
           alt={title}
@@ -45,7 +46,7 @@ export function ArticleCard({ id, title, category, date, image }: ArticleCardPro
           <div className="flex items-end justify-between gap-4">
             <div className="flex-1">
               <span className="text-white/50 text-xs font-medium tracking-wider block mb-3">{id}</span>
-              <h3 className="text-white text-xl md:text-2xl lg:text-3xl font-bold leading-tight tracking-tight">
+              <h3 className={`text-white font-bold leading-tight tracking-tight ${size === "large" ? "text-2xl md:text-3xl lg:text-4xl" : "text-xl md:text-2xl lg:text-3xl"}`}>
                 {title}
               </h3>
             </div>
@@ -56,6 +57,6 @@ export function ArticleCard({ id, title, category, date, image }: ArticleCardPro
           <ArrowUpRight className="w-5 h-5" />
         </div>
       </div>
-    </div>
+    </a>
   );
 }

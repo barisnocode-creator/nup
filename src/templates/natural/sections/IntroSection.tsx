@@ -1,9 +1,12 @@
 interface IntroSectionProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
 }
 
-export function IntroSection({ title, description }: IntroSectionProps) {
+export function IntroSection({
+  title = "Perspective is a space for exploring ideas that shape our world",
+  description = "We believe in the power of thoughtful storytelling. Our platform brings together diverse voices and perspectives to create meaningful conversations about life, wellness, creativity, and personal growth.",
+}: IntroSectionProps) {
   return (
     <section id="about" className="max-w-4xl mx-auto py-12 md:py-16 px-4 animate-fade-in">
       <div className="text-center space-y-6">
