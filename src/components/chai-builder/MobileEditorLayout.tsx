@@ -15,6 +15,7 @@ import {
   Layers, Plus, Settings2, Paintbrush,
   ArrowLeft, ImageIcon, Globe,
   Monitor, Tablet, Smartphone,
+  HelpCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PixabayImagePicker } from './PixabayImagePicker';
@@ -244,6 +245,13 @@ export function MobileEditorLayout() {
               </button>
             );
           })}
+          {/* Help button - no action for now */}
+          <button
+            className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all min-w-[52px] min-h-[44px] active:scale-95"
+          >
+            <HelpCircle className="w-5 h-5 relative z-10 text-muted-foreground" />
+            <span className="text-[10px] font-medium leading-tight relative z-10 text-muted-foreground">Yardım</span>
+          </button>
         </div>
       </div>
     </div>
