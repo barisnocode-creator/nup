@@ -244,6 +244,14 @@ export const naturalLifestyle: TemplateDefinition = {
   supportedIndustries: ['blog', 'lifestyle', 'magazine', 'personal', 'creative', 'photography', 'art'],
   sections: [
     {
+      type: 'NaturalHeader',
+      required: true,
+      defaultProps: {
+        siteName: 'Perspective',
+        buttonText: 'Join Now',
+      },
+    },
+    {
       type: 'NaturalHero',
       required: true,
       defaultProps: {
@@ -278,6 +286,13 @@ export const naturalLifestyle: TemplateDefinition = {
         title: 'Stay inspired.',
         description: 'Subscribe to receive our latest articles and insights directly in your inbox.',
         buttonText: 'Subscribe',
+      },
+    },
+    {
+      type: 'NaturalFooter',
+      required: true,
+      defaultProps: {
+        siteName: 'Perspective',
       },
     },
   ],

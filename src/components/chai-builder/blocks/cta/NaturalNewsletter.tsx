@@ -20,8 +20,10 @@ const NaturalNewsletterBlock = (props: ChaiBlockComponentProps<NaturalNewsletter
     <TooltipProvider>
       <section
         {...blockProps}
-        className="natural-block my-20 rounded-[2.5rem] bg-card p-12 md:p-16 text-center"
+        className="natural-block my-20"
       >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-[2.5rem] bg-card p-12 md:p-16 text-center">
         <div className="max-w-2xl mx-auto space-y-8">
           <h2
             className="text-4xl md:text-5xl tracking-tight"
@@ -42,6 +44,8 @@ const NaturalNewsletterBlock = (props: ChaiBlockComponentProps<NaturalNewsletter
               {buttonText}
             </button>
           </div>
+        </div>
+        </div>
         </div>
       </section>
     </TooltipProvider>

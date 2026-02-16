@@ -344,6 +344,11 @@ div[data-radix-portal] > div[data-radix-overlay] {
   color: hsl(var(--foreground));
 }
 
+/* Natural template sayfa arka plani */
+body:has(.natural-block) {
+  background-color: hsl(36 44% 96%);
+}
+
 /* ===== Natural Block Styles ===== */
 .natural-block {
   --background: 36 44% 96%;
