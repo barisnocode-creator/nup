@@ -1,158 +1,83 @@
 
 
-## Otomatik DNS Yapilandirma Sistemi (2 Asamali)
+## Netlify Publish Check & Approve - Stage 2
 
-### Genel Bakis
+### Mevcut Durum
 
-Kullanicilar domain eklerken "Manuel" veya "Otomatik" kurulum secebilecek. Otomatik kurulumda Namecheap, GoDaddy veya Cloudflare API bilgilerini girerek DNS kayitlarini tek tikla yapilandirabilecekler. Sistem iki asamali calisacak: once dry-run (onizleme), sonra gercek uygulama.
+Simdi `verify-domain` Edge Function'i DNS dogrulamasindan sonra basit bir `setNetlifyCustomDomain` cagrisi yapiyor. Ancak SSL sertifikasi durumu kontrol edilmiyor, Netlify domain API'si (POST /sites/{id}/domains) kullanilmiyor, ve otomatik publish tetikleme yok.
 
-### 2 Asamali Akis
+### Yapilacaklar
+
+Mevcut `verify-domain` Edge Function'ini genisletip Netlify entegrasyonunu tam otomatik hale getirmek:
+
+1. DNS dogrulamasi basarili oldugunda Netlify'a domain kaydet (POST /sites/{id}/domains)
+2. SSL sertifikasi durumunu exponential backoff ile kontrol et
+3. Basari durumunda DB'yi guncelle ve opsiyonel olarak publish tetikle
+4. Basarisizlikta tanimlama bilgisi don
+
+### Teknik Detaylar
+
+**Dosya: `supabase/functions/verify-domain/index.ts` - GUNCELLE**
+
+Mevcut `setNetlifyCustomDomain` fonksiyonunu genisletip su adimlari ekle:
+
+1. **Netlify Domain Kaydi**: Mevcut `PUT /sites/{id}` yerine once `GET /sites/{id}/domain_aliases` ile mevcut domainleri kontrol et. Yoksa `POST /sites/{id}/domain_aliases` ile ekle.
+
+2. **SSL Sertifikasi Polling**: Domain eklendikten sonra `GET /sites/{id}/ssl` endpoint'ini exponential backoff ile sorgula (5s, 15s, 60s - toplam 3 deneme). Beklenen durum: `state: "issued"` veya HTTPS aktif.
+
+3. **DNS Uyumluluk Kontrolu**: Netlify'in bekledigiyle gercek DNS kayitlarini karsilastir. A kaydi veya CNAME yonlendirmesinin dogru oldugundan emin ol.
+
+4. **Yanit Zenginlestirme**: Basari durumunda `https_status`, `ssl_state`, `netlify_domain_id` bilgilerini don. Basarisizlikta detayli tanimlama (DNS lookup sonuclari, Netlify API hata mesajlari) don.
+
+5. **Opsiyonel Otomatik Publish**: Eger proje henuz publish edilmemisse veya `allow_publish` parametresi varsa, `deploy-to-netlify` Edge Function'inin yaptigi islemi tetikle (ya da kullaniciya "simdi yayinla" butonu goster).
+
+Yeni `verify-domain` akisi:
 
 ```text
-Asama 1 - Dry Run (Onizleme):
-  1. Kullanici domain + saglayici + API bilgilerini girer
-  2. Sistem saglayici API'sine baglanir
-  3. Mevcut DNS kayitlarini ceker (yedek snapshot)
-  4. Cakisma kontrolu yapar
-  5. Yapilacak degisiklikleri kullaniciya gosterir
-  6. Kullanici onaylar veya iptal eder
-
-Asama 2 - Uygulama + Dogrulama:
-  1. Kullanici onayladiktan sonra DNS kayitlari uygulanir
-  2. Domain veritabanina eklenir
-  3. Eksponansiyel geri cekilme ile DNS dogrulamasi yapilir
-  4. Basarisiz olursa otomatik rollback
-  5. Sonuc kullaniciya bildirilir
+1. Kullanici "Dogrula" butonuna tiklar
+2. DNS TXT dogrulamasi yapilir (mevcut mantik)
+3. Basariliysa:
+   a. DB'de status = "verified" olarak guncelle
+   b. Netlify site'inda domain kaydet (POST domain_aliases)
+   c. SSL sertifikasi durumunu kontrol et (polling)
+   d. SSL basariliysa: status = "active", https_enabled = true
+   e. SSL henuz hazir degilse: status = "verified" (SSL arkaplanda devam eder)
+4. Basarisizsa: mevcut hata yaniti
 ```
 
-### Veritabani Degisiklikleri
+**Dosya: `src/components/website-preview/DomainListItem.tsx` - GUNCELLE**
 
-`custom_domains` tablosuna yeni sutunlar eklenecek:
+- "verified" durumundaki domainler icin SSL durumu gosterimi ekle
+- "active" durumu icin yesil rozet ve HTTPS ikonu
+- Dogrulama sonrasi Netlify baglanti durumunu goster
 
-| Sutun | Tip | Aciklama |
-|-------|-----|----------|
-| dns_provider | text (nullable) | namecheap, godaddy, cloudflare |
-| auto_configured | boolean (default false) | Otomatik mi yoksa manuel mi kuruldu |
-| dns_snapshot | jsonb (nullable) | Islem oncesi DNS kayitlarinin yedegi |
-| action_fingerprint | text (nullable) | Idempotency kontrolu icin |
+**Dosya: `src/components/website-preview/DomainSettingsModal.tsx` - KUCUK GUNCELLE**
 
-### Yeni Edge Function: `auto-configure-dns`
+- `handleVerifyDomain` fonksiyonunda yeni yanit alanlarini isle (ssl_state, https_status)
+- Dogrulama sonrasi basari mesajini SSL durumuna gore ayarla
 
-Tek Edge Function, `dry_run` parametresiyle 2 asamayi yonetir.
+### DB Degisiklikleri
 
-**Giris parametreleri:**
-- projectId, domain
-- provider: "namecheap" | "godaddy" | "cloudflare"
-- credentials: { apiKey, apiUser?, apiSecret? }
-- dry_run: boolean (varsayilan true)
-- domainId: (2. asamada, dry-run sonrasi)
-
-**Saglayici API Entegrasyonlari:**
-
-Namecheap:
-- `namecheap.domains.dns.getHosts` ile mevcut kayitlari al
-- Yedek snapshot olustur
-- Yeni A, TXT (ve varsa CNAME/www) kayitlarini mevcut kayitlara ekle
-- `namecheap.domains.dns.setHosts` ile tum kayitlari gonder
-- Kisitlama: Kullanicinin Namecheap'te API erisimini acmasi ve IP beyaz listesi yapmasi gerekir
-
-GoDaddy:
-- `GET /v1/domains/{domain}/records` ile mevcut kayitlari al
-- Yedek snapshot olustur
-- `PATCH /v1/domains/{domain}/records` ile yeni kayitlari ekle (mevcut kayitlar korunur)
-
-Cloudflare:
-- `GET /zones?name={domain}` ile zone ID al
-- `GET /zones/{zone_id}/dns_records` ile mevcut kayitlari al
-- Yedek snapshot olustur
-- `POST /zones/{zone_id}/dns_records` ile her kaydi ayri ayri ekle
-
-**Eklenecek DNS Kayitlari:**
-- A kaydi: `@` -> `75.2.60.5` (mevcut RPC fonksiyonundaki IP ile tutarli)
-- TXT kaydi: `_lovable` -> `lovable_verify={token}`
-- (Opsiyonel) A kaydi: `www` -> `75.2.60.5`
-
-**Dry-Run Yaniti:**
-```text
-{
-  provider: "godaddy",
-  existing_records: [...],     // snapshot
-  conflicts: [...],            // cakisan kayitlar
-  planned_changes: [...],      // uygulanacak degisiklikler
-  warnings: [...]              // uyarilar (ornekin IP beyaz listesi)
-}
-```
-
-**Uygulama Yaniti:**
-```text
-{
-  domain: "example.com",
-  txt_status: "applied",
-  a_status: "applied",
-  change_log: [...],
-  dns_snapshot_id: "...",
-  domainId: "..."
-}
-```
-
-**Hata ve Rollback:**
-- Her API yaniti kaydedilir
-- Kismi basarisizlikta snapshot'tan geri yukleme denenir
-- Rollback basarisiz olursa kullaniciya manuel adimlar gosterilir
-
-**Idempotency:**
-- (domain + verification_token + provider) kombinasyonu bir fingerprint olusturur
-- Ayni fingerprint ile daha once basarili islem yapildiysa sonuc cache'den doner
-
-### UI Degisiklikleri
-
-**AddDomainForm.tsx - Tamamen Yeniden Yapilandirilacak:**
-
-2 sekmeli tasarim:
-- **Manuel Kurulum** sekmesi: Mevcut form (degisiklik yok)
-- **Otomatik Kurulum** sekmesi:
-  1. Domain adresi girisi
-  2. Saglayici secimi (Namecheap / GoDaddy / Cloudflare dropdown)
-  3. Saglayiciya gore API bilgileri formu:
-     - Namecheap: API Key + Username
-     - GoDaddy: API Key + API Secret
-     - Cloudflare: API Token (veya Email + Global API Key)
-  4. "Onizle (Dry Run)" butonu
-  5. Onizleme sonucu gosterimi:
-     - Mevcut kayitlar listesi
-     - Cakisma uyarilari
-     - Yapilacak degisiklikler
-  6. "Uygula" onay butonu
-  7. Sonuc durumu (basarili/basarisiz/rollback)
-
-**DomainSettingsModal.tsx - Kucuk Guncelleme:**
-- Otomatik kurulum sonrasi durum mesajlarini gosterecek sekilde guncelleme
-- `auto_configured` olan domainlerde "Otomatik kuruldu" etiketi
-
-### Guvenlik
-
-- API anahtarlari veritabaninda SAKLANMAYACAK
-- Yalnizca Edge Function icinde tek seferlik kullanilacak
-- HTTPS uzerinden iletilecek
-- Edge Function icinde kullanici kimlik dogrulamasi zorunlu
-- Tum API yanitlari loglanirken anahtarlar maskelenecek
+Ek migration gerekmez. Mevcut `custom_domains` tablosundaki `status` alani yeterli - "active" durumunu SSL tamamlandiginda kullanacagiz. Mevcut durumlar: pending, verifying, verified, failed. Yeni durum: "active" (SSL dahil tam aktif).
 
 ### Dosya Degisiklikleri Ozeti
 
-| Dosya | Islem |
-|-------|-------|
-| `supabase/functions/auto-configure-dns/index.ts` | YENI - Tum saglayici entegrasyonlari |
-| `supabase/config.toml` | GUNCELLE - verify_jwt = false |
-| DB migration | YENI - custom_domains tablosuna 4 yeni sutun |
-| `src/components/website-preview/AddDomainForm.tsx` | GUNCELLE - 2 sekmeli tasarim |
-| `src/components/website-preview/DomainSettingsModal.tsx` | GUNCELLE - Otomatik durum destegi |
-| `src/components/website-preview/DomainListItem.tsx` | GUNCELLE - "Otomatik kuruldu" etiketi |
+| Dosya | Islem | Aciklama |
+|-------|-------|----------|
+| `supabase/functions/verify-domain/index.ts` | GUNCELLE | Netlify domain kaydi + SSL polling + zengin yanit |
+| `src/components/website-preview/DomainListItem.tsx` | GUNCELLE | SSL durumu gosterimi, "active" rozeti |
+| `src/components/website-preview/DomainSettingsModal.tsx` | GUNCELLE | Yeni yanit alanlarini isle |
 
-### Kisitlamalar ve Uyarilar
+### Guvenlik
 
-- **Namecheap**: Kullanicinin Namecheap panelinde API erisimini acmasi ve Edge Function IP'sini beyaz listeye almasi gerekir. Bu kisitlama UI'da acikca gosterilecek.
-- **GoDaddy**: Production API Key gerekir (test key calismaz). UI'da bu bilgi verilecek.
-- **Cloudflare**: "Edit zone DNS" izni olan bir API Token gerekir.
-- **DNS Yayilimi**: Otomatik kurulum sonrasi dogrulama 5-120 saniye icinde yapilir; ancak tam yayilim 48 saate kadar surabilir.
-- **Timeout**: Toplam islem limiti 10 dakika, tek API cagrisi limiti 30 saniye.
+- NETLIFY_API_TOKEN zaten secrets'ta mevcut
+- Kullanici kimlik dogrulamasi mevcut verify-domain akisinda korunuyor
+- Proje sahipligi kontrolu mevcut RLS politikalariyla saglanir
+
+### Edge Case'ler
+
+- Netlify site'i henuz olusturulmamissa (netlify_site_id null): domain kaydini atla, kullaniciya "once yayinlayin" mesaji goster
+- SSL sertifikasi timeout icinde tamamlanmazsa: domain'i "verified" olarak birak, kullaniciya "SSL isleniyor, birkaç dakika icinde aktif olacak" mesaji goster
+- Domain zaten Netlify'da kayitliysa: atlayip SSL kontrolune gec
+- Netlify API hatasi: domain DB'de "verified" kalir, kullaniciya Netlify baglanti hatasini bildir
 
