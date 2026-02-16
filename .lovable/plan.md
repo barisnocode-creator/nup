@@ -1,128 +1,110 @@
 
-## Natural Template - Tam Uyumluluk Iyilestirmesi
+## Natural Template Duzeltmesi: Editing + Proje Icerigine Uyarlama
 
-### Mevcut Durum
+### Sorun 1: Editing Paneli Bos Gorunuyor
 
-Editorde 4 blok (NaturalHero, NaturalIntro, NaturalArticleGrid, NaturalNewsletter) render ediliyor. Ancak orijinal template ile karsilastirildiginda sorunlar var:
+ChaiBuilder SDK'nin ozellik paneli (`ChaiBlockPropsEditor`) bos gorunuyor. Bu durum, `blockProps` icindeki `className` degerinin blok bilesenleri tarafindan ezilmesinden (override) kaynaklanmaktadir.
 
-1. **Container eksik** - Orijinal template tum icerigi `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8` icinde sariyordu. Bloklar su an tam genislikte render ediliyor, orijinalden farkli gorunuyor.
-2. **Header blogu yok** - Orijinalin kendine ozgu pill-nav header'i (Perspective logosu, Home/Articles/Wellness/Travel/About nav linkleri, Join Now butonu) eksik.
-3. **Footer blogu yok** - Orijinalin 4 kolonlu footer'i (Explore, About, Resources, Legal) eksik.
-4. **Arka plan rengi** - Sayfa genelinde krem/bej arka plan uygulanmiyor, bloklar izole renk icerisinde ama aralar beyaz kaliyor.
-
-### Cozum Plani
-
----
-
-### Adim 1: NaturalHeader Bloku Olustur
-
-**Dosya:** `src/components/chai-builder/blocks/hero/NaturalHeader.tsx` (YENI)
-
-Orijinal `NaturalHeader.tsx`'in ChaiBuilder blok versiyonu:
-- Pill-shape navigation bar (rounded-full, blur arka plan)
-- Site logosu (ilk harf + site adi)
-- 5 navigasyon linki (Home, Articles, Wellness, Travel, About)
-- Join Now butonu
-- Mobil hamburger menu
-- Props: siteName, navItems (veya sabit)
-- Bu blok `required: true` olacak, silinemeyecek
-
----
-
-### Adim 2: NaturalFooter Bloku Olustur
-
-**Dosya:** `src/components/chai-builder/blocks/contact/NaturalFooter.tsx` (YENI)
-
-Orijinal `NaturalFooter.tsx`'in ChaiBuilder blok versiyonu:
-- 4 kolonlu link grid (Explore, About, Resources, Legal)
-- Alt kisimda copyright metni
-- border-top ayirici
-- Props: siteName
-- Bu blok `required: true` olacak
-
----
-
-### Adim 3: Mevcut Bloklara Container Padding Ekle
-
-Tum mevcut Natural bloklarin icerigini `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8` container icine al:
-
-- **NaturalHero** - Zaten kendi padding'i var (p-6/p-12/p-16), sadece max-w-7xl ve mx-auto ekle
-- **NaturalIntro** - max-w-4xl mx-auto zaten var, uyumlu
-- **NaturalArticleGrid** - max-w-7xl mx-auto px-4 ekle
-- **NaturalNewsletter** - max-w-7xl mx-auto px-4 ekle
-
----
-
-### Adim 4: Sayfa Arka Plan Rengini Ayarla
-
-`.natural-block` CSS'ine ek olarak, tum bloklar arasindaki bosluga da krem renk uygulanmasi icin `chaibuilder.tailwind.css` dosyasinda body-level bir kural ekle:
-
-```css
-/* Natural template sayfa arka plani */
-body:has(.natural-block) {
-  background-color: hsl(36 44% 96%);
-}
+Tum Natural bloklarda su hata mevcut:
+```jsx
+<section {...blockProps} className="natural-block ...">
 ```
 
----
+Bu soz diziminde, `blockProps` icindeki SDK tarafindan eklenen `className` (secim/hover isaretcileri, data attributeleri iceren) tamamen eziliyor. Cozum:
 
-### Adim 5: Catalog Definition Guncelle
-
-**Dosya:** `src/templates/catalog/definitions.ts`
-
-naturalLifestyle sections dizisini guncelle - basa NaturalHeader, sona NaturalFooter ekle:
-
-```
-sections: [
-  { type: 'NaturalHeader', required: true, defaultProps: { siteName: 'Perspective' } },
-  { type: 'NaturalHero', required: true, defaultProps: { ... } },
-  { type: 'NaturalIntro', defaultProps: { ... } },
-  { type: 'NaturalArticleGrid', defaultProps: { ... } },
-  { type: 'NaturalNewsletter', defaultProps: { ... } },
-  { type: 'NaturalFooter', required: true, defaultProps: { siteName: 'Perspective' } },
-]
+```jsx
+<section {...blockProps} className={cn(blockProps.className, "natural-block ...")}>
 ```
 
----
+`cn()` (tailwind-merge) ile SDK'nin siniflarini koruyarak kendi siniflarimizi eklememiz gerekiyor.
 
-### Adim 6: Blok Registry Guncelle
+**Etkilenen dosyalar:**
+- `NaturalHeader.tsx` — header elementinde
+- `NaturalHero.tsx` — section elementinde
+- `NaturalIntro.tsx` — section elementinde
+- `NaturalArticleGrid.tsx` — section elementinde
+- `NaturalNewsletter.tsx` — section elementinde
+- `NaturalFooter.tsx` — footer elementinde
 
-**Dosya:** `src/components/chai-builder/blocks/index.ts`
-
-Yeni bloklari import et:
-```
-import './hero/NaturalHeader';
-import './contact/NaturalFooter';
-```
+Her dosyada `cn` import edilip, `blockProps.className` mevcut siniflarla birlestirilecek.
 
 ---
 
-### Adim 7: Veritabanini Sifirla (Test icin)
+### Sorun 2: Icerik Projeye Uygun Degil
 
-Mevcut projenin `chai_blocks`'unu NULL yaparak yeni bloklarin (6 blok) otomatik olusturulmasini tetikle.
+Proje: **Yakut Hukuki Danismanlik ve Avukatlik Burosu** (hukuk burosu, Turkiye, Turkce, profesyonel ton)
+
+Ancak Natural template icerigi Ingilizce "Perspective" lifestyle blog iceriginde. Natural sablonunu hukuk burosuna uyarlamak icin `definitions.ts` iceriginin guncellenmesi gerekiyor:
+
+| Blok | Mevcut | Yeni |
+|------|--------|------|
+| NaturalHeader | siteName: "Perspective", Join Now | siteName: "Yakut Hukuk", Randevu Al |
+| NaturalHero | "Journey Through Life's Spectrum" | "Haklarinizi Kararliliklailk Savunuyoruz" |
+| NaturalIntro | Lifestyle blog aciklamasi | Hukuk burosu tanitimi |
+| NaturalArticleGrid | Lifestyle makaleler (Wellness, Travel...) | Hukuk alanlari (Is Hukuku, Ceza Hukuku, Aile Hukuku...) |
+| NaturalNewsletter | "Stay inspired" | "Ucretsiz Hukuki Danismanlik" |
+| NaturalFooter | siteName: "Perspective" | siteName: "Yakut Hukuk" |
+
+Ancak onemli bir karar: Bu sablon **genel catalog taniminda** mi degismeli yoksa **sadece bu projeye ozel** mi olmali?
+
+- Catalog tanimini degistirirsek, bundan sonra natural template secen herkes Yakut Hukuk icerigi gorecek — bu yanlis olur.
+- Dogru yaklasim: Catalog tanimini genel/sektore uyarlanabilir birakip, **mevcut projenin `chai_blocks` veritabanindan direkt guncellenmesi** (SQL ile).
+
+Bu nedenle:
+1. `definitions.ts`'deki varsayilan icerik sektore bagli olarak dinamik hale getirilecek (opsiyonel)
+2. Mevcut projenin bloklari Turkce hukuk icerigine uyarlanarak veritabaninda guncellenecek
 
 ---
 
-### Dosya Listesi
+### Teknik Uygulama Plani
 
-| Dosya | Islem |
-|-------|-------|
-| `src/components/chai-builder/blocks/hero/NaturalHeader.tsx` | YENI |
-| `src/components/chai-builder/blocks/contact/NaturalFooter.tsx` | YENI |
-| `src/components/chai-builder/blocks/hero/NaturalHero.tsx` | GUNCELLE (container padding) |
-| `src/components/chai-builder/blocks/gallery/NaturalArticleGrid.tsx` | GUNCELLE (container padding) |
-| `src/components/chai-builder/blocks/cta/NaturalNewsletter.tsx` | GUNCELLE (container padding) |
-| `src/components/chai-builder/blocks/index.ts` | GUNCELLE (2 import ekle) |
-| `src/templates/catalog/definitions.ts` | GUNCELLE (header/footer sections ekle) |
-| `src/styles/chaibuilder.tailwind.css` | GUNCELLE (body arka plan rengi) |
+**Adim 1: className birlesim duzeltmesi (6 dosya)**
 
-Toplam 2 yeni dosya, 6 guncelleme. Editore (ChaiBuilderWrapper, DesktopEditorLayout, Project.tsx) dokunulmuyor.
+Her Natural blogun JSX'inde `cn` import edip className birlesimi yapilacak:
 
-### Beklenen Sonuc
+```tsx
+// Oncesi:
+<section {...blockProps} className="natural-block ...">
 
-- Orijinal template'deki pill-nav header gorunecek
-- Tum icerik max-w-7xl container icinde ortalanacak
-- Krem/bej arka plan tum sayfaya uygulanacak
-- 4 kolonlu footer gorunecek
-- Toplam 6 blok: Header + Hero + Intro + ArticleGrid + Newsletter + Footer
-- Editorde tum bloklar secilip duzenlenebilecek
+// Sonrasi:
+<section {...blockProps} className={cn(blockProps.className, "natural-block ...")}>
+```
+
+Dosyalar:
+- `src/components/chai-builder/blocks/hero/NaturalHeader.tsx`
+- `src/components/chai-builder/blocks/hero/NaturalHero.tsx`
+- `src/components/chai-builder/blocks/about/NaturalIntro.tsx`
+- `src/components/chai-builder/blocks/gallery/NaturalArticleGrid.tsx`
+- `src/components/chai-builder/blocks/cta/NaturalNewsletter.tsx`
+- `src/components/chai-builder/blocks/contact/NaturalFooter.tsx`
+
+**Adim 2: Proje icerigini Turkce hukuk burosuna uyarlama (SQL)**
+
+Veritabanindaki `chai_blocks` alani dogrudan guncellenerek her blogun props'u Turkce hukuk burosu icerigine cevrilecek:
+
+- Header: siteName="Yakut Hukuk", buttonText="Randevu Al"
+- Hero: title="Haklarinizi Kararliliklailk Savunuyoruz", Turkce aciklama
+- Intro: Hukuk burosu tanitim metni
+- ArticleGrid: 6 hukuk alani (Is Hukuku, Ceza Hukuku, Aile Hukuku, Gayrimenkul, Icra-Iflas, Ticaret Hukuku) uygun gorsellerle
+- Newsletter: "Ucretsiz Ilk Gorusme", "Hukuki sorulariniz icin hemen bize ulasin"
+- Footer: siteName="Yakut Hukuk"
+
+**Adim 3: Veritabani sifirlama**
+
+Guncellenmis chai_blocks JSON'i dogrudan SQL UPDATE ile kaydedilecek.
+
+---
+
+### Dosya Degisiklikleri
+
+| Dosya | Islem | Aciklama |
+|-------|-------|----------|
+| `blocks/hero/NaturalHeader.tsx` | GUNCELLE | cn import + className birlesimi |
+| `blocks/hero/NaturalHero.tsx` | GUNCELLE | cn import + className birlesimi |
+| `blocks/about/NaturalIntro.tsx` | GUNCELLE | cn import + className birlesimi |
+| `blocks/gallery/NaturalArticleGrid.tsx` | GUNCELLE | cn import + className birlesimi |
+| `blocks/cta/NaturalNewsletter.tsx` | GUNCELLE | cn import + className birlesimi |
+| `blocks/contact/NaturalFooter.tsx` | GUNCELLE | cn import + className birlesimi |
+| Veritabani (projects.chai_blocks) | SQL UPDATE | Turkce hukuk burosu icerigi |
+
+Editore (ChaiBuilderWrapper, DesktopEditorLayout, Project.tsx) dokunulmuyor. Toplam 6 dosya guncelleme + 1 SQL sorgusu.
