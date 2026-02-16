@@ -1,1 +1,0 @@
-export { AboutProcess } from './AboutProcess';

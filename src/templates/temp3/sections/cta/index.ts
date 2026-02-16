@@ -1,1 +1,0 @@
-export { CTAElegant } from './CTAElegant';

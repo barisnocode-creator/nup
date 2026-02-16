@@ -94,15 +94,8 @@ export function selectTemplate(
 ): string {
   const key = profession.toLowerCase();
   const mapping: Record<string, string> = {
-    wellness: 'wellness-studio', pilates: 'wellness-studio', yoga: 'wellness-studio', fitness: 'wellness-studio', spa: 'wellness-studio',
+    wellness: 'pilates1', pilates: 'pilates1', yoga: 'pilates1', fitness: 'pilates1', spa: 'pilates1',
     lawyer: 'lawyer-firm', legal: 'lawyer-firm', law: 'lawyer-firm', attorney: 'lawyer-firm',
-    finance: 'corporate-services', consulting: 'corporate-services', corporate: 'corporate-services',
-    doctor: 'medical-clinic', dentist: 'medical-clinic', pharmacist: 'medical-clinic', clinic: 'medical-clinic', health: 'medical-clinic',
-    creative: 'creative-agency', design: 'creative-agency', marketing: 'creative-agency', agency: 'creative-agency',
-    food: 'restaurant-cafe', restaurant: 'restaurant-cafe', cafe: 'restaurant-cafe', bakery: 'restaurant-cafe',
-    video: 'video-production', film: 'video-production', media: 'video-production',
-    software: 'saas-platform', saas: 'saas-platform', startup: 'saas-platform', technology: 'saas-platform',
-    retail: 'retail-boutique', shop: 'retail-boutique', store: 'retail-boutique', boutique: 'retail-boutique',
   };
   
   if (mapping[key]) return mapping[key];
