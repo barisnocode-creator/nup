@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -6,20 +6,12 @@ interface NaturalHeaderProps {
   siteName: string;
   isEditable?: boolean;
   onFieldEdit?: (fieldPath: string, newValue: string) => void;
+  isDark?: boolean;
+  onToggleDark?: () => void;
 }
 
-export function NaturalHeader({ siteName, isEditable, onFieldEdit }: NaturalHeaderProps) {
+export function NaturalHeader({ siteName, isEditable, onFieldEdit, isDark = false, onToggleDark }: NaturalHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [isDark]);
 
   return (
     <header className="sticky top-0 z-50 py-2 sm:py-4">
@@ -50,13 +42,15 @@ export function NaturalHeader({ siteName, isEditable, onFieldEdit }: NaturalHead
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <button
-              onClick={() => setIsDark(!isDark)}
-              className="p-2 rounded-full hover:bg-muted/60 transition-all"
-              aria-label="Toggle dark mode"
-            >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
+            {onToggleDark && (
+              <button
+                onClick={onToggleDark}
+                className="p-2 rounded-full hover:bg-muted/60 transition-all"
+                aria-label="Toggle dark mode"
+              >
+                {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+            )}
 
             <Button className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-2 hover:scale-105 transition-all">
               Join Now

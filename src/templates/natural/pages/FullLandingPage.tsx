@@ -6,6 +6,18 @@ import { ArticleCard } from '../sections/ArticleCard';
 import { NewsletterSection } from '../sections/NewsletterSection';
 import { defaultArticles } from '../data/articles';
 
+// Default English content for the Natural template
+const DEFAULT_HERO_TITLE = "Journey Through Life's Spectrum";
+const DEFAULT_HERO_DESC = "Explore wellness, creativity, travel, and personal growth through thoughtful articles and inspiring stories that help you live with more intention and joy.";
+const DEFAULT_INTRO_TITLE = "Perspective is a space for exploring ideas that shape how we live, think, and grow.";
+const DEFAULT_INTRO_DESC = "We believe in the power of thoughtful content to inspire meaningful change. Our articles blend practical wisdom with creative inspiration, covering everything from mindful living to adventurous travel.";
+
+// Check if content is generic/demo or template-mismatched
+function isGenericContent(title: string): boolean {
+  const generic = ['Hoş Geldiniz', 'Hos Geldiniz', 'Profesyonel Hizmet', 'Welcome'];
+  return !title || title.length < 10 || generic.some(g => title.includes(g));
+}
+
 interface NaturalFullLandingPageProps {
   content: GeneratedContent;
   isEditable?: boolean;
@@ -28,24 +40,19 @@ export function NaturalFullLandingPage({
   const heroContent = content.pages.home.hero;
   const aboutContent = content.pages.about;
 
+  const useDefaults = isGenericContent(heroContent.title);
+
+  const heroTitle = useDefaults ? DEFAULT_HERO_TITLE : heroContent.title;
+  const heroDesc = useDefaults ? DEFAULT_HERO_DESC : heroContent.description;
+  const introTitle = useDefaults ? DEFAULT_INTRO_TITLE : (aboutContent.story?.title || aboutContent.hero?.title || DEFAULT_INTRO_TITLE);
+  const introDesc = useDefaults ? DEFAULT_INTRO_DESC : (aboutContent.story?.content || aboutContent.hero?.subtitle || DEFAULT_INTRO_DESC);
+
   const renderSection = (sectionId: string) => {
     switch (sectionId) {
       case 'hero':
-        return (
-          <HeroSection
-            key="hero"
-            title={heroContent.title}
-            description={heroContent.description}
-          />
-        );
+        return <HeroSection key="hero" title={heroTitle} description={heroDesc} />;
       case 'intro':
-        return (
-          <IntroSection
-            key="intro"
-            title={aboutContent.story?.title || aboutContent.hero?.title || ''}
-            description={aboutContent.story?.content || aboutContent.hero?.subtitle || ''}
-          />
-        );
+        return <IntroSection key="intro" title={introTitle} description={introDesc} />;
       case 'articles':
         return (
           <section key="articles" id="articles" className="py-12">
