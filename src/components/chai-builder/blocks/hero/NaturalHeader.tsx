@@ -41,11 +41,10 @@ const NaturalHeaderBlock = (props: ChaiBlockComponentProps<NaturalHeaderProps>) 
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
-            <a href={inBuilder ? "#" : "#hero"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Home</a>
-            <a href={inBuilder ? "#" : "#articles"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Articles</a>
-            <a href={inBuilder ? "#" : "#about"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Wellness</a>
-            <a href={inBuilder ? "#" : "#contact"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Travel</a>
-            <a href={inBuilder ? "#" : "#about"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">About</a>
+            <a href={inBuilder ? "#" : "#hero"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Ana Sayfa</a>
+            <a href={inBuilder ? "#" : "#articles"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Hizmetler</a>
+            <a href={inBuilder ? "#" : "#about"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Hakkımızda</a>
+            <a href={inBuilder ? "#" : "#contact"} className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">İletişim</a>
           </nav>
 
           {/* Actions */}
@@ -70,11 +69,10 @@ const NaturalHeaderBlock = (props: ChaiBlockComponentProps<NaturalHeaderProps>) 
         {isMenuOpen && !inBuilder && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in mt-2 rounded-2xl bg-background/80 backdrop-blur-md px-4">
             <nav className="flex flex-col gap-4">
-              <a href="#hero" className="text-sm font-medium hover:text-accent transition-colors">Home</a>
-              <a href="#articles" className="text-sm font-medium hover:text-accent transition-colors">Articles</a>
-              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">Wellness</a>
-              <a href="#contact" className="text-sm font-medium hover:text-accent transition-colors">Travel</a>
-              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">About</a>
+              <a href="#hero" className="text-sm font-medium hover:text-accent transition-colors">Ana Sayfa</a>
+              <a href="#articles" className="text-sm font-medium hover:text-accent transition-colors">Hizmetler</a>
+              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">Hakkımızda</a>
+              <a href="#contact" className="text-sm font-medium hover:text-accent transition-colors">İletişim</a>
               <a
                 href="#contact"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-full text-center py-3 text-sm font-medium"
