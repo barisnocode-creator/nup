@@ -5,6 +5,7 @@ import {
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export type NaturalIntroProps = {
   styles: ChaiStyles;
@@ -19,7 +20,7 @@ const NaturalIntroBlock = (props: ChaiBlockComponentProps<NaturalIntroProps>) =>
     <TooltipProvider>
       <section
         {...blockProps}
-        className="natural-block max-w-4xl mx-auto py-12 md:py-16 px-4"
+        className={cn(blockProps.className, "natural-block max-w-4xl mx-auto py-12 md:py-16 px-4")}
       >
         <div className="text-center space-y-6">
           <h2

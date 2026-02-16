@@ -7,6 +7,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { EditableChaiImage } from "../shared/EditableChaiImage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Instagram, Facebook, Linkedin } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type NaturalHeroProps = {
   styles: ChaiStyles;
@@ -23,7 +24,7 @@ const NaturalHeroBlock = (props: ChaiBlockComponentProps<NaturalHeroProps>) => {
     <TooltipProvider>
       <section
         {...blockProps}
-        className="natural-block relative rounded-[2.5rem] overflow-hidden bg-muted my-12 max-w-7xl mx-auto"
+        className={cn(blockProps.className, "natural-block relative rounded-[2.5rem] overflow-hidden bg-muted my-12 max-w-7xl mx-auto")}
       >
         <div className="grid md:grid-cols-2 gap-6 md:gap-12 p-6 md:p-12 lg:p-16">
           {/* Left - Image */}

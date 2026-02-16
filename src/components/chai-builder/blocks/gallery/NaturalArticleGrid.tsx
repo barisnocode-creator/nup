@@ -7,6 +7,7 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { EditableChaiImage } from "../shared/EditableChaiImage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type NaturalArticleGridProps = {
   styles: ChaiStyles;
@@ -96,7 +97,7 @@ const NaturalArticleGridBlock = (props: ChaiBlockComponentProps<NaturalArticleGr
 
   return (
     <TooltipProvider>
-      <section {...blockProps} className="natural-block py-12">
+      <section {...blockProps} className={cn(blockProps.className, "natural-block py-12")}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-12">
           <h2

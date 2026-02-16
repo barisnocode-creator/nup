@@ -5,6 +5,7 @@ import {
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 export type NaturalNewsletterProps = {
   styles: ChaiStyles;
@@ -20,7 +21,7 @@ const NaturalNewsletterBlock = (props: ChaiBlockComponentProps<NaturalNewsletter
     <TooltipProvider>
       <section
         {...blockProps}
-        className="natural-block my-20"
+        className={cn(blockProps.className, "natural-block my-20")}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="rounded-[2.5rem] bg-card p-12 md:p-16 text-center">
