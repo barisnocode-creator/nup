@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { getTemplateConfig, isComponentTemplate } from '@/templates';
+import { getTemplateConfig } from '@/templates';
 import { getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/themeUtils';
 import { blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/imagePatching';
 import { getCatalogTheme } from '@/templates/catalog';
@@ -249,10 +249,8 @@ export default function Project() {
       }
       
       // If project has generated_content but empty chai_blocks, convert and await
-      // Skip for component-based templates (Natural, Lawyer, Pilates) — they use their own React components
       if (projectData.generated_content && 
-          (!projectData.chai_blocks || (Array.isArray(projectData.chai_blocks) && projectData.chai_blocks.length === 0)) &&
-          !isComponentTemplate(projectData.template_id || '')) {
+          (!projectData.chai_blocks || (Array.isArray(projectData.chai_blocks) && projectData.chai_blocks.length === 0))) {
         await convertAndSaveChaiBlocks(projectData);
       }
       // Migrate base64 images to storage, then patch blocks
@@ -1323,156 +1321,7 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
     }
   };
 
-  // Component-based templates (Natural, Lawyer, Pilates): render with legacy editor
-  // This ensures these templates show their actual React components, not generic ChaiBuilder blocks
-  if (USE_CHAI_BUILDER && isAuthenticated && project && isComponentTemplate(project.template_id || '')) {
-    return (
-      <div className="relative min-h-screen">
-        {/* Template Preview Banner */}
-        {isPreviewMode && (
-          <TemplatePreviewBanner
-            templateName={previewTemplateName}
-            onApply={handleApplyPreviewTemplate}
-            onCancel={handleCancelPreview}
-            isApplying={isApplyingTemplate}
-          />
-        )}
-
-        {/* Editor Toolbar */}
-        {!isPreviewMode && (
-          <EditorToolbar
-            projectName={project.name}
-            currentSection={currentSection}
-            onNavigate={handleNavigate}
-            onCustomize={() => setCustomizeSidebarOpen(true)}
-            onAddSection={() => setAddContentSidebarOpen(true)}
-            onPageSettings={handleOpenPageSettings}
-            onPageEditor={handleOpenPageEditor}
-            onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
-            onPublish={() => setPublishModalOpen(true)}
-            onDashboard={() => navigate('/dashboard')}
-            isPublished={project.is_published}
-            existingPages={['home', 'about', 'services', 'contact', 'blog']}
-          />
-        )}
-
-        {/* Website Preview with original template component */}
-        <div className={`${!isPreviewMode ? 'pt-14' : ''}`}>
-          {project.generated_content && (
-            <WebsitePreview
-              content={project.generated_content}
-              colorPreference={colorPreference}
-              templateId={activeTemplateId}
-              isEditable={!isPreviewMode}
-              onFieldEdit={handleFieldEdit}
-              editorSelection={editorSelection}
-              onEditorSelect={handleEditorSelect}
-              sectionOrder={sectionOrder}
-              onMoveSection={handleMoveSection}
-              onDeleteSection={handleDeleteSection}
-              sectionStyles={project.generated_content?.sectionStyles}
-              onImageRegenerate={handleImageRegenerateFromActionBox}
-            />
-          )}
-        </div>
-
-        {/* Editor Sidebar */}
-        <EditorSidebar
-          isOpen={!!editorSelection}
-          onClose={handleEditorClose}
-          selection={editorSelection}
-          onFieldUpdate={handleFieldEdit}
-          onRegenerateField={handleRegenerateField}
-          onImageRegenerate={handleImageRegenerate}
-          onImageChange={handleImageChange}
-          onUpdateAltText={handleUpdateAltText}
-          onUpdatePosition={handleUpdateImagePosition}
-          isRegenerating={isRegeneratingImage}
-          isRegeneratingField={isRegeneratingField}
-          isDark={isDark}
-          currentHeroVariant={project.generated_content?.sectionVariants?.hero || 'overlay'}
-          onHeroVariantChange={handleHeroVariantChange}
-          imageOptions={imageOptions}
-          isLoadingImageOptions={isLoadingImageOptions}
-          onSelectImageOption={handleSelectImageOption}
-          currentSectionStyle={editorSelection?.sectionId ? project.generated_content?.sectionStyles?.[editorSelection.sectionId] : undefined}
-          onStyleChange={handleSectionStyleChange}
-        />
-
-        {/* Publish Modal */}
-        <PublishModal
-          isOpen={publishModalOpen}
-          onClose={() => setPublishModalOpen(false)}
-          projectId={id || ''}
-          projectName={project.name}
-          currentSubdomain={project.subdomain}
-          isPublished={project.is_published}
-          onPublished={(subdomain) => {
-            setProject(prev => prev ? { ...prev, subdomain, is_published: true } : null);
-          }}
-        />
-
-        {/* Customize Sidebar */}
-        <CustomizeSidebar
-          isOpen={customizeSidebarOpen}
-          onClose={() => setCustomizeSidebarOpen(false)}
-          currentColors={{
-            primary: project.generated_content?.siteSettings?.colors?.primary || '#3b82f6',
-            secondary: project.generated_content?.siteSettings?.colors?.secondary || '#6366f1',
-            accent: project.generated_content?.siteSettings?.colors?.accent || '#f59e0b',
-          }}
-          currentFonts={{
-            heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
-            body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
-          }}
-          currentCorners={project.generated_content?.siteSettings?.corners || 'rounded'}
-          currentAnimations={project.generated_content?.siteSettings?.animations !== false}
-          onColorChange={(colorType, value) => {
-            handleSiteSettingsChange({
-              ...project.generated_content?.siteSettings,
-              colors: { ...project.generated_content?.siteSettings?.colors, [colorType]: value },
-            });
-          }}
-          onFontChange={(fontType, value) => {
-            handleSiteSettingsChange({
-              ...project.generated_content?.siteSettings,
-              fonts: { ...project.generated_content?.siteSettings?.fonts, [fontType]: value },
-            });
-          }}
-          onCornersChange={(corners) => {
-            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, corners });
-          }}
-          onAnimationsChange={(animations) => {
-            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, animations });
-          }}
-          onRegenerateText={handleRegenerateAllText}
-          onRegenerateWebsite={handleRegenerateWebsite}
-          onEditBackground={handleEditHeroBackground}
-          onChangeTemplate={() => setChangeTemplateModalOpen(true)}
-        />
-
-        {/* Change Template Modal */}
-        <ChangeTemplateModal
-          isOpen={changeTemplateModalOpen}
-          onClose={() => setChangeTemplateModalOpen(false)}
-          currentTemplateId={project.template_id || 'temp1'}
-          onSelectTemplate={handleTemplateChange}
-          onPreview={handleTemplatePreview}
-        />
-
-        {/* Pixabay Image Picker */}
-        <PixabayImagePicker
-          open={pixabayForRegenerate.open}
-          onOpenChange={(open) => setPixabayForRegenerate(prev => ({ ...prev, open }))}
-          onSelect={handlePixabayRegenerateSelect}
-          defaultQuery={pixabayForRegenerate.defaultQuery}
-          autoSearch
-        />
-      </div>
-    );
-  }
-
-  // ChaiBuilder SDK Editor - new modern editor (for catalog/non-component templates)
+  // ChaiBuilder SDK Editor - new modern editor
   if (USE_CHAI_BUILDER && isAuthenticated && project) {
     // Show loading screen while blocks are being converted
     const hasBlocks = project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
