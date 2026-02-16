@@ -5,9 +5,11 @@
 import './hero/HeroSplit';
 import './hero/HeroCentered';
 import './hero/HeroOverlay';
+import './hero/NaturalHero';
 
 // About blocks
 import './about/AboutSection';
+import './about/NaturalIntro';
 
 // Services blocks
 import './services/ServicesGrid';
@@ -17,6 +19,7 @@ import './statistics/StatisticsCounter';
 
 // Gallery blocks
 import './gallery/ImageGallery';
+import './gallery/NaturalArticleGrid';
 
 // Pricing blocks
 import './pricing/PricingTable';
@@ -29,6 +32,7 @@ import './contact/ContactForm';
 
 // CTA blocks
 import './cta/CTABanner';
+import './cta/NaturalNewsletter';
 
 // FAQ blocks
 import './faq/FAQAccordion';

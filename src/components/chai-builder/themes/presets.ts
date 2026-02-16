@@ -273,19 +273,6 @@ export const lawyerFirmPreset: Partial<ChaiThemeValues> = {
   },
 };
 
-// Theme presets array for ChaiBuilder - format: Record<string, Partial<ChaiThemeValues>>[]
-export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
-  { "Modern Profesyonel": modernProfessionalPreset },
-  { "Cesur Ajans": boldAgencyPreset },
-  { "Zarif Minimal": elegantMinimalPreset },
-  { "Kurumsal Mavi": corporateBluePreset },
-  { "Minimal Koyu": minimalDarkPreset },
-  { "Modern SaaS": modernSaasPreset },
-  { "Video Stüdyo": videoStudioPreset },
-  { "Canlı Yaratıcı": vibrantCreativePreset },
-  { "Hukuk Bürosu": lawyerFirmPreset },
-];
-
 // Default theme
 export const defaultTheme: Partial<ChaiThemeValues> = modernProfessionalPreset;
 
@@ -348,6 +335,20 @@ export const naturalLifestylePreset: Partial<ChaiThemeValues> = {
     "popover-foreground": ["#2e2e2e", "#f5f0e8"],
   },
 };
+
+// Theme presets array for ChaiBuilder
+export const themePresets: Record<string, Partial<ChaiThemeValues>>[] = [
+  { "Modern Profesyonel": modernProfessionalPreset },
+  { "Cesur Ajans": boldAgencyPreset },
+  { "Zarif Minimal": elegantMinimalPreset },
+  { "Kurumsal Mavi": corporateBluePreset },
+  { "Minimal Koyu": minimalDarkPreset },
+  { "Modern SaaS": modernSaasPreset },
+  { "Video Stüdyo": videoStudioPreset },
+  { "Canlı Yaratıcı": vibrantCreativePreset },
+  { "Hukuk Bürosu": lawyerFirmPreset },
+  { "Natural Lifestyle": naturalLifestylePreset },
+];
 
 // Export template ID to preset mapping
 export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {

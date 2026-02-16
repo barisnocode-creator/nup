@@ -344,6 +344,65 @@ div[data-radix-portal] > div[data-radix-overlay] {
   color: hsl(var(--foreground));
 }
 
+/* ===== Natural Block Styles ===== */
+.natural-block {
+  --background: 36 44% 96%;
+  --foreground: 0 0% 18%;
+  --primary: 0 0% 18%;
+  --primary-foreground: 36 44% 96%;
+  --muted: 33 30% 88%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 140 20% 50%;
+  --accent-foreground: 36 44% 96%;
+  --card: 33 40% 94%;
+  --card-foreground: 0 0% 18%;
+  --border: 33 25% 85%;
+  --input: 33 25% 85%;
+  --ring: 0 0% 18%;
+}
+
+.natural-block h1,
+.natural-block h2,
+.natural-block h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.025em;
+}
+
+.natural-card-hover {
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 20px -4px hsl(0 0% 18% / 0.1);
+}
+.natural-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px -10px hsl(0 0% 18% / 0.15);
+}
+
+.natural-floating-button {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: hsl(40 40% 90% / 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(0 0% 18%);
+  box-shadow: 0 4px 12px -2px hsl(0 0% 18% / 0.15);
+  transition: all 0.3s ease;
+}
+.natural-floating-button:hover {
+  background: hsl(40 40% 90%);
+  transform: scale(1.1);
+}
+
+.natural-tag-financing { background: hsl(210 50% 75%); color: hsl(0 0% 18%); }
+.natural-tag-lifestyle { background: hsl(140 20% 70%); color: hsl(0 0% 18%); }
+.natural-tag-community { background: hsl(25 35% 60%); color: hsl(0 0% 18%); }
+.natural-tag-wellness { background: hsl(280 30% 75%); color: hsl(0 0% 18%); }
+.natural-tag-travel { background: hsl(195 50% 70%); color: hsl(0 0% 18%); }
+.natural-tag-creativity { background: hsl(330 40% 75%); color: hsl(0 0% 18%); }
+.natural-tag-growth { background: hsl(50 45% 70%); color: hsl(0 0% 18%); }
+
 /* ===== Hidden SDK Screen Sizes ===== */
 .chai-screen-hidden {
   position: absolute;
