@@ -6,6 +6,7 @@ import './hero/HeroSplit';
 import './hero/HeroCentered';
 import './hero/HeroOverlay';
 import './hero/NaturalHero';
+import './hero/NaturalHeader';
 
 // About blocks
 import './about/AboutSection';
@@ -29,6 +30,7 @@ import './testimonials/TestimonialsCarousel';
 
 // Contact blocks
 import './contact/ContactForm';
+import './contact/NaturalFooter';
 
 // CTA blocks
 import './cta/CTABanner';

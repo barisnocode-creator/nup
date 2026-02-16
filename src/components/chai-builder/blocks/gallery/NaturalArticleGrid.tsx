@@ -97,6 +97,7 @@ const NaturalArticleGridBlock = (props: ChaiBlockComponentProps<NaturalArticleGr
   return (
     <TooltipProvider>
       <section {...blockProps} className="natural-block py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-12">
           <h2
             className="text-3xl md:text-4xl tracking-tight"
@@ -119,6 +120,7 @@ const NaturalArticleGridBlock = (props: ChaiBlockComponentProps<NaturalArticleGr
           {articles.slice(3, 6).map((a) => (
             <ArticleCard key={a.id} {...a} size="small" inBuilder={inBuilder} />
           ))}
+        </div>
         </div>
       </section>
     </TooltipProvider>

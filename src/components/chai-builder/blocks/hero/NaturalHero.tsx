@@ -23,7 +23,7 @@ const NaturalHeroBlock = (props: ChaiBlockComponentProps<NaturalHeroProps>) => {
     <TooltipProvider>
       <section
         {...blockProps}
-        className="natural-block relative rounded-[2.5rem] overflow-hidden bg-muted my-12"
+        className="natural-block relative rounded-[2.5rem] overflow-hidden bg-muted my-12 max-w-7xl mx-auto"
       >
         <div className="grid md:grid-cols-2 gap-6 md:gap-12 p-6 md:p-12 lg:p-16">
           {/* Left - Image */}
