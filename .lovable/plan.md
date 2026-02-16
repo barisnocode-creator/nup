@@ -1,129 +1,149 @@
 
 
-## Natural Template - Birebir Calisir Hale Getirme (4 Adimli Plan)
+## Natural Template - Editorde Tam Calisan Hale Getirme (5 Asamali Plan)
 
-Temel sorun: Natural sablonu secildiginde veya onizlendiginde, sistem gercek `NaturalTemplate` React bilesenini **gostermiyor**. Bunun yerine `ChaiBuilderWrapper.handlePreviewTemplate` (satir 154-199) jenerik ChaiBuilder bloklari (`HeroCentered` + `CTABanner`) uretiyor ve bunlari ChaiBuilder editoru icinde render ediyor. Sonuc: ekranda sadece 2 jenerik blok gorunuyor, Natural sablonunun header'i, makale kartlari, newsletter bolumu, footer'i hic yok.
+### Mevcut Durum ve Temel Sorunlar
 
-Ikinci sorun: CSS degiskenleri orijinal repo ile eslesmiyor. Orijinal repo'da `--primary: 0 0% 18%` (siyah), `--background: 36 44% 96%` (sicak krem), `--accent: 140 20% 50%` (yesil) iken, mevcut Natural CSS'de `--primary: 30 25% 35%` (kahverengi) gibi farkli degerler var.
+Natural sablonu editorde su anda calismama nedeni: `Project.tsx` satir 1325-1403'te ChaiBuilder editor'u render ediliyor. Ama `handleApplyTemplate` Natural icin `chai_blocks: []` (bos dizi) kaydediyor. Sonra sayfa yenilendiginde `hasBlocks` kontrol ediliyor (satir 1327) ve bos oldugu icin `convertAndSaveChaiBlocks` cagriliyor. Bu fonksiyon (satir 288-350) Natural'a ozel bir sey yapmiyor - jenerik `HeroCentered`, `ServicesGrid`, `AboutSection`, `ContactForm`, `CTABanner` bloklari uretiyor. Yani Natural sablonunun kendi bilesenleri (HeroSection, ArticleCard, NewsletterSection, NaturalHeader/Footer) hic render edilmiyor.
+
+**Iki yol var:**
+1. Natural'i ChaiBuilder icinde gostermek (karmasik, SDK'nin iframe'i icinde custom bilesen render etmek gerekiyor)
+2. Natural secildiginde ChaiBuilder yerine dogrudan React bilesenini render etmek (basit ve etkili)
+
+2. yol dogru yaklasim cunku Natural, Lawyer, Pilates gibi sablonlar zaten tam React bilesenleri. ChaiBuilder'in jenerik blok sistemi bu sablonlarin ruhunu olduruyor.
 
 ---
 
-### Adim 1: ChaiBuilderWrapper'da Bilesen Tabanli Sablon Onizleme
+### Asama 1: Project.tsx - Bilesen Tabanli Sablon Render Ayirimi
 
-**Dosya:** `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+**Dosya:** `src/pages/Project.tsx`
 
-**Sorun:** `handlePreviewTemplate` fonksiyonu TUM sablonlar icin jenerik bloklar uretiyor. Natural, Lawyer, Pilates gibi kendi React bileseni olan sablonlar icin bu yanlis.
+**Sorun:** Satir 1325'te `USE_CHAI_BUILDER && isAuthenticated && project` kontrol ediliyor ve TUM sablonlar ChaiBuilder'a yonlendiriliyor. Natural icin bu yanlis.
 
-**Cozum:**
-- `src/templates/index.ts`'ye `isComponentTemplate(id: string): boolean` fonksiyonu ekle - template registry'de bilesen var mi kontrol eder
-- `ChaiBuilderWrapper`'a yeni state ekle: `previewComponentTemplate: string | null`
-- `handlePreviewTemplate` icinde: eger `isComponentTemplate(selectedTemplateId)` true ise, blok uretme, sadece `previewComponentTemplate` state'ini set et
-- Ana render alaninda: `previewComponentTemplate` aktifse, `ChaiBuilderEditor` yerine dogrudan `TemplateComponent`'i goster (preview banner ile birlikte)
-- `handleApplyTemplate` icinde: bilesen tabanli sablonlar icin blok kaydi yerine sadece `template_id` ve `chai_theme` guncelle, `chai_blocks`'u bos dizi olarak ayarla (boylece sayfa yenilendiginde `convertAndSaveChaiBlocks` tetiklenir)
+**Cozum:** ChaiBuilder render blogunun ONCESINE bir kontrol ekle:
 
-Render mantigi:
 ```text
-previewComponentTemplate set mi?
-  EVET -> ChaiBuilderEditor GIZLE, TemplateComponent'i tam ekran goster
-         + Preview banner (Uygula / Iptal)
-  HAYIR -> Normal ChaiBuilderEditor gorunumu
+if (USE_CHAI_BUILDER && isAuthenticated && project) {
+  // YENI: Bilesen tabanli sablonlar icin ChaiBuilder KULLANMA
+  if (isComponentTemplate(project.template_id || '')) {
+    // NaturalTemplate / LawyerTemplate / PilatesTemplate'i dogrudan render et
+    // Toolbar + sidebar'lar korunacak (customize, page settings vb.)
+    return (
+      <div className="relative min-h-screen">
+        <EditorToolbar ... />
+        <div className="pt-14">
+          <TemplateComponent
+            content={project.generated_content}
+            colorPreference={colorPreference}
+            isEditable={true}
+            onFieldEdit={handleFieldEdit}
+            ...
+          />
+        </div>
+        {/* Sidebar'lar, modaller aynen korunacak */}
+      </div>
+    );
+  }
+  
+  // Mevcut ChaiBuilder mantigi aynen devam eder
+  const hasBlocks = ...
+}
 ```
 
+Bu degisiklikle Natural sablonu secildiginde ChaiBuilder yerine kendi React bileseni render edilecek. Editor toolbar'i, sidebar'lar, publish modal hepsi korunacak.
+
 ---
 
-### Adim 2: CSS Degiskenlerini Orijinal Repo ile Birebir Eslestirme
+### Asama 2: Natural Template Icerik Guncelleme
+
+**Sorun:** `defaultDemoContent` (ChaiBuilderWrapper satir 35-45) Natural icin dogru calisiyor ama `TemplateGalleryOverlay`'deki `defaultDemoContent` (satir 17-55) hala Turkce is yeri icerigi kullaniyor. Galeri kartinda Natural hala "Hos Geldiniz" gosteriyor.
+
+**Dosya:** `src/components/chai-builder/TemplateGalleryOverlay.tsx`
+
+**Cozum:** `TemplateCard` bileseninde Natural sablonuna ozel demo content kullan:
+- Natural icin `metadata.siteName = 'Perspective'`, `metadata.tagline = "Journey Through Life's Spectrum"`
+- `FullLandingPage.tsx`'deki `isGenericContent` fallback mantigi zaten bunu yakalayacak ama galeri karti icin daha temiz bir cozum: Natural'a gonderilen content'e uygun baslik ver
+
+**Dosyalar (icerik duzeltmeleri):**
+- `src/templates/natural/sections/HeroSection.tsx` - Mevcut hali dogru, degisiklik yok
+- `src/templates/natural/sections/IntroSection.tsx` - Mevcut hali dogru, degisiklik yok
+- `src/templates/natural/sections/NewsletterSection.tsx` - Mevcut hali dogru, degisiklik yok
+- `src/templates/natural/data/articles.ts` - Mevcut hali dogru, degisiklik yok
+
+---
+
+### Asama 3: CSS Degiskenleri Izolasyonu Guclendir
 
 **Dosya:** `src/templates/natural/styles/natural.css`
 
-Orijinal repo'daki renk paletini birebir kopyala:
+**Sorun:** CSS degiskenleri `.natural-template` icinde tanimli ama Tailwind'in `bg-background`, `text-foreground` gibi siniflari `:root` deki degiskenleri kullaniyor olabilir. Dashboard'un turuncu temasi (DashboardLayout'da `:root`'a enjekte edilen `--primary: 24 95% 53%`) Natural'in renklerini ezebilir.
 
-- Light mod:
-  - `--background: 36 44% 96%` (sicak krem - orijinal)
-  - `--foreground: 0 0% 18%` (koyu siyah)
-  - `--primary: 0 0% 18%` (siyah - butonlar ve vurgular icin)
-  - `--primary-foreground: 36 44% 96%`
-  - `--card: 33 40% 94%`
-  - `--muted: 33 30% 88%`
-  - `--muted-foreground: 0 0% 40%`
-  - `--accent: 140 20% 50%` (yesil ton)
-  - `--accent-foreground: 36 44% 96%`
-  - `--border: 33 25% 85%`
-  - `--ring: 0 0% 18%`
-  - Ozel tokenlar: `--cream: 40 40% 90%`, `--surface-elevated: 36 44% 98%`
+**Cozum:** Natural CSS'de `!important` kullanmak yerine, `NaturalTemplate` bileseninin wrapper div'ine inline style ile CSS degiskenlerini zorla:
 
-- Dark mod (`.natural-template.dark`):
-  - `--background: 0 0% 10%`
-  - `--foreground: 36 44% 96%`
-  - `--primary: 36 44% 96%`
-  - `--primary-foreground: 0 0% 18%`
-  - `--card: 0 0% 14%`
-  - `--muted: 0 0% 20%`
-  - `--muted-foreground: 0 0% 60%`
-  - `--accent: 140 20% 45%`
-  - `--border: 0 0% 20%`
+```tsx
+// src/templates/natural/index.tsx
+<div
+  ref={wrapperRef}
+  className={`natural-template min-h-screen${isDark ? ' dark' : ''}`}
+  style={{
+    '--background': '36 44% 96%',
+    '--foreground': '0 0% 18%',
+    '--primary': '0 0% 18%',
+    // ... tum degiskenler
+  } as React.CSSProperties}
+>
+```
 
-Ayrica `h1, h2, h3, h4, h5, h6` icin `font-serif tracking-tight` stilleri `.natural-template` scope'u icine ekle.
+Bu, CSS spesifiklik sorunlarini tamamen ortadan kaldirir cunku inline style her zaman kazanir.
 
 ---
 
-### Adim 3: Icerik ve Bilesen Duzeltmeleri
+### Asama 4: Editor Toolbar Entegrasyonu
 
-**3a. HeroSection.tsx** - Orijinal repo'daki hardcoded aciklama metni farkli:
-- Mevcut: "Explore the vibrant tapestry of modern living..."
-- Orijinal: "Welcome to Perspective's Blog: A Realm of Reflection, Inspiration, and Discovery. Where Words Illuminate Paths of Meaning and Thoughts Unravel the Mysteries of Life's Spectrum."
-- Duzelt
+**Dosya:** `src/pages/Project.tsx`
 
-**3b. IntroSection.tsx** - Orijinal repo'daki metin farkli:
-- Mevcut: "Perspective is a space for exploring ideas that shape our world"
-- Orijinal: "Perspective is a space for exploring ideas, finding inspiration, and discovering new ways of seeing the world."
-- Aciklama metni de farkli - duzelt
+Natural template dogrudan render edildiginde, editor toolbar'in su ozellikleri calismali:
+- **Dashboard** butonu: navigate('/dashboard') - mevcut, calisiyor
+- **Yayinla** butonu: publishModalOpen - mevcut, calisiyor
+- **Ozellestir**: customizeSidebarOpen - renk/font degisiklikleri Natural icin CSS degiskenlerini guncellemeli
+- **Sablon Degistir**: changeTemplateModalOpen -> galeri acilir, baska sablon secilebilir
 
-**3c. ArticleCard.tsx** - Orijinal repo'da `aspect-ratio` sabit `aspect-[4/3]` (size prop yok):
-- Mevcut kodda `size === "large" ? "aspect-[3/4]" : "aspect-[4/3]"` var
-- Orijinal: sadece `aspect-[4/3]` ve `size === "large"` durumunda ek col-span sinifi
-- Kucuk fark ama duzeltilecek
+Natural icin ChaiBuilder'a ozel ozellikler (blok ekleme, blok silme, AI asistan) devre disi birakilacak. Bunun yerine basit metin duzenleme (inline contentEditable) aktif kalacak.
 
-**3d. articles.ts** - Orijinal repo'daki makale verileri cok farkli:
-- Makale ID'leri: "001", "002", "003", "W001", "T001", "G001" (orijinal)
-- Mevcut: "001"-"006" 
-- Basliklar: "Whispers of Wisdom", "Ink-Stained Insights", "Musings in Grayscale", "Finding Balance...", "The Art of Slow Travel...", "Minimalist Living..." (orijinal)
-- Mevcut: "Whispers of Wisdom", "The Art of Slow Living", "Building Bridges", ... (farkli)
-- Gorseller de farkli URL'ler
-- Orijinal `content` yapisi farkli: `{ introduction, sections[], conclusion }` vs mevcut basit `string`
-- Tamamen orijinal veriyle degistirilecek
-
-**3e. FullLandingPage.tsx** - Newsletter bolumu orijinalde ayri bilesen degil, inline:
-- Orijinal: Newsletter dogrudan `<section>` olarak Index.tsx icinde
-- Mevcut: `NewsletterSection` bilesen olarak ayri dosyada - bu sorun degil, ayni kalabilir
-- Ama `NewsletterSection`'daki aciklama metni farkli:
-  - Orijinal: "Subscribe to receive our latest articles and insights directly in your inbox."
-  - Mevcut: "Get the latest articles and insights delivered straight to your inbox."
-  - Duzelt
+Toolbar'daki "Ekle" ve "Sayfalar" butonlari Natural moddayken gizlenecek veya devre disi birakilacak.
 
 ---
 
-### Adim 4: Template Uygulama (Apply) Sonrasi Sayfa Yukleme
+### Asama 5: Sablon Degistirme Akisi
 
-**Dosya:** `src/components/chai-builder/ChaiBuilderWrapper.tsx`
+**Dosya:** `src/pages/Project.tsx` ve `src/components/chai-builder/ChaiBuilderWrapper.tsx`
 
-Bilesen tabanli sablon uygulandiginda:
-1. DB'de `template_id = 'natural'`, `chai_blocks = []`, `chai_theme = naturalTheme` olarak guncelle
-2. Sayfa yeniden yuklensin (`window.location.reload()` veya state reset)
-3. `Project.tsx`'deki `convertAndSaveChaiBlocks` tetiklenecek ama bilesen tabanli sablonlar icin bu fonksiyonun davranisi kontrol edilmeli
+Natural'dan baska bir sablona gecis yapildiginda:
+1. Galeri overlay acilir
+2. Yeni sablon secilir (ornegin Pilates)
+3. `template_id` DB'de guncellenir
+4. Sayfa yenilenir -> yeni sablon render edilir
 
-**Dosya:** `src/templates/index.ts`
-- `isComponentTemplate(id)` fonksiyonu ekle
+Baska bir sablondan Natural'a gecis yapildiginda:
+1. ChaiBuilder icindeki galeri overlay'dan Natural secilir
+2. `handleApplyTemplate` cagirilir -> `template_id = 'natural'`, `chai_blocks = []`
+3. Sayfa yenilenir -> `Project.tsx` artik `isComponentTemplate('natural') = true` oldugu icin dogrudan NaturalTemplate render eder
 
 ---
 
 ### Teknik Detaylar - Duzenlenecek Dosyalar
 
-1. `src/templates/index.ts` - `isComponentTemplate()` yardimci fonksiyon
-2. `src/components/chai-builder/ChaiBuilderWrapper.tsx` - Bilesen tabanli onizleme render modu, apply mantigi
-3. `src/templates/natural/styles/natural.css` - Orijinal repo ile birebir CSS degiskenleri
-4. `src/templates/natural/sections/HeroSection.tsx` - Orijinal aciklama metni
-5. `src/templates/natural/sections/IntroSection.tsx` - Orijinal baslik ve aciklama
-6. `src/templates/natural/sections/ArticleCard.tsx` - aspect-ratio ve col-span duzeltmesi
-7. `src/templates/natural/sections/NewsletterSection.tsx` - Orijinal aciklama metni
-8. `src/templates/natural/data/articles.ts` - Orijinal repo'daki 6 makale verisi (farkli basliklar, ID'ler, gorseller, zengin content yapisi)
+1. **`src/pages/Project.tsx`** - Bilesen tabanli sablonlar icin ChaiBuilder bypass mantigi, toolbar entegrasyonu
+2. **`src/templates/natural/index.tsx`** - Inline CSS degisken enjeksiyonu (izolasyon guclendirme)
+3. **`src/components/chai-builder/TemplateGalleryOverlay.tsx`** - Natural icin demo content duzeltmesi
+4. **`src/components/chai-builder/ChaiBuilderWrapper.tsx`** - Degisiklik yok, mevcut apply mantigi yeterli
+
+### Beklenen Sonuc
+
+- Natural sablonu editorde tam olarak orijinal haliyle gorunecek (header, hero, intro, makale kartlari, newsletter, footer)
+- Animasyonlar calisacak (fade-in, slide-up, scale-in, stagger)
+- Dark mode toggle calisacak
+- Krem/bej renk paleti korunacak
+- Toolbar uzerinden yayinlama ve sablon degistirme calisacak
+- Galeri kartinda dogru onizleme gorunecek
 
