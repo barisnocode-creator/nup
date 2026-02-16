@@ -96,10 +96,15 @@ export function DomainSettingsModal({ isOpen, onClose, projectId, initialDomain 
 
       if (error) throw error;
 
-      if (data.status === 'verified') {
+      if (data.status === 'active') {
         toast({
-          title: 'Domain Doğrulandı! 🎉',
-          description: 'Özel domain\'iniz artık aktif.',
+          title: 'Domain Aktif! 🎉',
+          description: data.message || 'Domain doğrulandı, Netlify\'a bağlandı ve SSL aktif!',
+        });
+      } else if (data.status === 'verified') {
+        toast({
+          title: 'Domain Doğrulandı! ✅',
+          description: data.message || 'SSL sertifikası işleniyor, birkaç dakika içinde aktif olacak.',
         });
       } else {
         toast({
