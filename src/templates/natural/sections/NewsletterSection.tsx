@@ -5,9 +5,9 @@ interface NewsletterSectionProps {
 }
 
 export function NewsletterSection({
-  title = "İlham alın.",
-  description = "En son makalelerimizi ve içgörülerimizi doğrudan gelen kutunuza alın.",
-  buttonText = "Abone Ol",
+  title = "Stay inspired.",
+  description = "Get the latest articles and insights delivered straight to your inbox.",
+  buttonText = "Subscribe",
 }: NewsletterSectionProps) {
   return (
     <section id="contact" className="my-20 rounded-[2.5rem] bg-card p-12 md:p-16 text-center animate-scale-in">
@@ -17,7 +17,7 @@ export function NewsletterSection({
         <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
           <input
             type="email"
-            placeholder="E-posta adresiniz"
+            placeholder="Your email address"
             className="flex-1 px-6 py-4 rounded-full border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-all"
           />
           <button className="px-10 py-4 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 hover:scale-105 transition-all">

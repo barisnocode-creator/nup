@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NaturalHeaderProps {
@@ -10,6 +10,16 @@ interface NaturalHeaderProps {
 
 export function NaturalHeader({ siteName, isEditable, onFieldEdit }: NaturalHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [isDark]);
 
   return (
     <header className="sticky top-0 z-50 py-2 sm:py-4">
@@ -31,16 +41,25 @@ export function NaturalHeader({ siteName, isEditable, onFieldEdit }: NaturalHead
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
-            <a href="#hero" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Ana Sayfa</a>
-            <a href="#articles" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Makaleler</a>
-            <a href="#about" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Hakkımızda</a>
-            <a href="#contact" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">İletişim</a>
+            <a href="#hero" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Home</a>
+            <a href="#articles" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Articles</a>
+            <a href="#about" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Wellness</a>
+            <a href="#contact" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">Travel</a>
+            <a href="#about" className="text-sm font-medium hover:bg-muted/60 rounded-full px-4 py-2 transition-all">About</a>
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="p-2 rounded-full hover:bg-muted/60 transition-all"
+              aria-label="Toggle dark mode"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
             <Button className="hidden md:flex bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-2 hover:scale-105 transition-all">
-              Katıl
+              Join Now
             </Button>
 
             <button
@@ -56,12 +75,13 @@ export function NaturalHeader({ siteName, isEditable, onFieldEdit }: NaturalHead
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <nav className="flex flex-col gap-4 px-4">
-              <a href="#hero" className="text-sm font-medium hover:text-accent transition-colors">Ana Sayfa</a>
-              <a href="#articles" className="text-sm font-medium hover:text-accent transition-colors">Makaleler</a>
-              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">Hakkımızda</a>
-              <a href="#contact" className="text-sm font-medium hover:text-accent transition-colors">İletişim</a>
+              <a href="#hero" className="text-sm font-medium hover:text-accent transition-colors">Home</a>
+              <a href="#articles" className="text-sm font-medium hover:text-accent transition-colors">Articles</a>
+              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">Wellness</a>
+              <a href="#contact" className="text-sm font-medium hover:text-accent transition-colors">Travel</a>
+              <a href="#about" className="text-sm font-medium hover:text-accent transition-colors">About</a>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-full">
-                Katıl
+                Join Now
               </Button>
             </nav>
           </div>

@@ -2,8 +2,8 @@ import { Instagram, Facebook, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
-  title: string;
-  description: string;
+  title?: string;
+  description?: string;
   buttonText?: string;
   image?: string;
   isEditable?: boolean;
@@ -11,9 +11,9 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({
-  title,
-  description,
-  buttonText = "Katıl",
+  title = "Journey Through Life's Spectrum",
+  description = "Explore the vibrant tapestry of modern living through our curated collection of stories, insights, and perspectives that inspire meaningful connections and personal growth.",
+  buttonText = "Join Now",
   image = "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=1920&q=80",
 }: HeroSectionProps) {
   return (
