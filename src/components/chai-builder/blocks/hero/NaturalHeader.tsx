@@ -6,6 +6,7 @@ import {
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type NaturalHeaderProps = {
   styles: ChaiStyles;
@@ -18,7 +19,7 @@ const NaturalHeaderBlock = (props: ChaiBlockComponentProps<NaturalHeaderProps>) 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header {...blockProps} className="natural-block sticky top-0 z-50 py-2 sm:py-4">
+    <header {...blockProps} className={cn(blockProps.className, "natural-block sticky top-0 z-50 py-2 sm:py-4")}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 rounded-full bg-background/80 backdrop-blur-md border border-border/50 px-4 sm:px-6 shadow-sm">
           {/* Logo */}
