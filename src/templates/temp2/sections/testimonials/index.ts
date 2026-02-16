@@ -1,1 +1,0 @@
-export { BoldTestimonialsSection } from './TestimonialsSection';

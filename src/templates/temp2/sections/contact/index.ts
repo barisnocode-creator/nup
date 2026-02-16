@@ -1,1 +1,0 @@
-export { BoldContactSection } from './ContactSection';
