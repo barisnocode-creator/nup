@@ -16,7 +16,7 @@ import { TemplateGalleryOverlay } from './TemplateGalleryOverlay';
 import { TemplatePreviewBanner } from '@/components/website-preview/TemplatePreviewBanner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
-import { getTemplateConfig } from '@/templates';
+import { getTemplateConfig, getTemplate, isComponentTemplate } from '@/templates';
 import { getThemeForTemplate } from './utils/themeUtils';
 import { getCatalogTheme } from '@/templates/catalog';
 
@@ -30,6 +30,19 @@ loadWebBlocks();
 import { themePresets, defaultTheme } from './themes';
 
 const MIN_EDITOR_WIDTH = 768;
+
+// Default demo content for component-based template preview
+const defaultDemoContent = {
+  metadata: { siteName: 'Perspective', tagline: 'Journey Through Life\'s Spectrum', profession: 'blog' },
+  pages: {
+    home: { hero: { title: '', description: '', subtitle: '' }, features: [], cta: { title: '', description: '' } },
+    about: { hero: { title: '', subtitle: '' }, story: { title: '', content: '' }, values: [], team: [] },
+    services: { hero: { title: '', subtitle: '' }, list: [] },
+    contact: { hero: { title: '', subtitle: '' }, formFields: [], info: { address: '', phone: '', email: '' } },
+  },
+  theme: { primaryColor: '#2D2D2D', secondaryColor: '#F5EFE6', fontFamily: 'Georgia' },
+  seo: { title: 'Perspective', description: '' },
+};
 
 interface ChaiBuilderWrapperProps {
   projectId: string;
@@ -69,19 +82,22 @@ export function ChaiBuilderWrapper({
   const [previewTemplateIdState, setPreviewTemplateIdState] = useState<string | null>(null);
   const [isApplyingTemplate, setIsApplyingTemplate] = useState(false);
 
+  // Component-based template preview state
+  const [previewComponentTemplateId, setPreviewComponentTemplateId] = useState<string | null>(null);
+
   // Backup original blocks/theme
   const originalBlocksRef = useRef<ChaiBlock[]>(initialBlocks);
   const originalThemeRef = useRef<Partial<ChaiThemeValues> | undefined>(initialTheme);
 
   // Keep refs in sync when initialBlocks/initialTheme change (e.g. after DB reload)
   useEffect(() => {
-    if (!previewBlocks) {
+    if (!previewBlocks && !previewComponentTemplateId) {
       originalBlocksRef.current = initialBlocks;
       originalThemeRef.current = initialTheme;
     }
-  }, [initialBlocks, initialTheme, previewBlocks]);
+  }, [initialBlocks, initialTheme, previewBlocks, previewComponentTemplateId]);
+
   const handleImageSelect = useCallback((url: string) => {
-    // Use the global callback from EditableChaiImage if available
     if (window.__chaiImageCallback?.setter) {
       window.__chaiImageCallback.setter(url);
       window.__chaiImageCallback = undefined;
@@ -89,7 +105,6 @@ export function ChaiBuilderWrapper({
       return;
     }
 
-    // Fallback: try DOM injection for legacy cases
     const allInputs = document.querySelectorAll('input[type="text"]');
     let injected = false;
     for (const input of allInputs) {
@@ -130,14 +145,12 @@ export function ChaiBuilderWrapper({
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
-  // Listen for inline image switcher events from EditableChaiImage blocks
   useEffect(() => {
     const handler = () => setInlineSwitcherOpen(true);
     window.addEventListener('chai-open-inline-image-switcher', handler);
     return () => window.removeEventListener('chai-open-inline-image-switcher', handler);
   }, []);
 
-  // Listen for legacy image picker open events
   useEffect(() => {
     const handler = () => setImagePickerOpen(true);
     window.addEventListener('chai-open-image-picker', handler);
@@ -145,10 +158,9 @@ export function ChaiBuilderWrapper({
   }, []);
 
   const handleSave = useCallback(async (data: { blocks: ChaiBlock[]; theme?: any; autoSave?: boolean }): Promise<boolean> => {
-    // Prevent auto-save during preview mode
-    if (previewBlocks) return true;
+    if (previewBlocks || previewComponentTemplateId) return true;
     return await saveToSupabase({ blocks: data.blocks, theme: data.theme });
-  }, [saveToSupabase, previewBlocks]);
+  }, [saveToSupabase, previewBlocks, previewComponentTemplateId]);
 
   // Template preview handler
   const handlePreviewTemplate = useCallback(async (selectedTemplateId: string) => {
@@ -158,8 +170,18 @@ export function ChaiBuilderWrapper({
       return;
     }
 
+    // Component-based template — render the actual React component
+    if (isComponentTemplate(selectedTemplateId)) {
+      setPreviewComponentTemplateId(selectedTemplateId);
+      setPreviewTemplateName(config.name);
+      setPreviewTemplateIdState(selectedTemplateId);
+      setPreviewBlocks(null);
+      setPreviewTheme(null);
+      setShowTemplateGallery(false);
+      return;
+    }
+
     try {
-      // Fetch generated_content from DB
       const { data, error } = await supabase
         .from('projects')
         .select('generated_content')
@@ -168,11 +190,9 @@ export function ChaiBuilderWrapper({
 
       const content = error ? null : (data?.generated_content as any);
       
-      // Direct block loading — no conversion layer
       let newBlocks: ChaiBlock[];
       
       if (content) {
-        // Create minimal blocks from content
         const generateId = () => `block_${Math.random().toString(36).substr(2, 9)}`;
         newBlocks = [
           { _id: generateId(), _type: 'HeroCentered', title: content.pages?.home?.hero?.title || 'Hoş Geldiniz', subtitle: content.pages?.home?.hero?.subtitle || '', description: content.pages?.home?.hero?.description || '', primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: 'Hizmetlerimiz', secondaryButtonLink: '#services', backgroundImage: '' } as ChaiBlock,
@@ -191,6 +211,7 @@ export function ChaiBuilderWrapper({
       setPreviewTheme(newTheme);
       setPreviewTemplateName(config.name);
       setPreviewTemplateIdState(selectedTemplateId);
+      setPreviewComponentTemplateId(null);
       setShowTemplateGallery(false);
     } catch (err) {
       console.error('Preview error:', err);
@@ -200,17 +221,48 @@ export function ChaiBuilderWrapper({
 
   // Apply template handler
   const handleApplyTemplate = useCallback(async () => {
-    if (!previewBlocks || !previewTheme || !previewTemplateIdState) return;
+    if (!previewTemplateIdState) return;
 
     setIsApplyingTemplate(true);
     try {
+      // Component-based template — save template_id, clear blocks
+      if (previewComponentTemplateId) {
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            template_id: previewComponentTemplateId,
+            chai_blocks: [],
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', projectId);
+
+        if (error) {
+          toast.error('Template kaydedilemedi. Lütfen tekrar deneyin.');
+          console.error('Apply component template error:', error);
+          return;
+        }
+
+        // Clear all preview state
+        setPreviewComponentTemplateId(null);
+        setPreviewBlocks(null);
+        setPreviewTheme(null);
+        setPreviewTemplateName(null);
+        setPreviewTemplateIdState(null);
+
+        toast.success('Template uygulandı! Sayfa yenileniyor...');
+        setTimeout(() => window.location.reload(), 500);
+        return;
+      }
+
+      // Block-based template — existing logic
+      if (!previewBlocks || !previewTheme) return;
+
       const saved = await saveToSupabase({ blocks: previewBlocks, theme: previewTheme });
       if (!saved) {
         toast.error('Template kaydedilemedi. Lütfen tekrar deneyin.');
         return;
       }
 
-      // Update template_id in DB
       const { error } = await supabase
         .from('projects')
         .update({ template_id: previewTemplateIdState, updated_at: new Date().toISOString() })
@@ -220,11 +272,9 @@ export function ChaiBuilderWrapper({
         console.error('Template ID update error:', error);
       }
 
-      // Update refs to new blocks/theme
       originalBlocksRef.current = previewBlocks;
       originalThemeRef.current = previewTheme;
 
-      // Clear preview state
       setPreviewBlocks(null);
       setPreviewTheme(null);
       setPreviewTemplateName(null);
@@ -237,7 +287,7 @@ export function ChaiBuilderWrapper({
     } finally {
       setIsApplyingTemplate(false);
     }
-  }, [previewBlocks, previewTheme, previewTemplateIdState, saveToSupabase, projectId]);
+  }, [previewBlocks, previewTheme, previewTemplateIdState, previewComponentTemplateId, saveToSupabase, projectId]);
 
   // Cancel preview handler
   const handleCancelPreview = useCallback(() => {
@@ -245,6 +295,7 @@ export function ChaiBuilderWrapper({
     setPreviewTheme(null);
     setPreviewTemplateName(null);
     setPreviewTemplateIdState(null);
+    setPreviewComponentTemplateId(null);
   }, []);
 
   const handleAskAi = useCallback(async (type: 'styles' | 'content', prompt: string, blocks: ChaiBlock[], lang: string) => {
@@ -262,7 +313,6 @@ export function ChaiBuilderWrapper({
   // Clear forced SaaS orange theme when editor mounts so SDK theme takes effect
   useEffect(() => {
     const root = document.documentElement;
-    // Remove inline styles forced by DashboardLayout
     ['--primary', '--ring', '--accent', '--sidebar-primary', '--sidebar-ring',
      '--accent-foreground', '--primary-foreground',
      '--background', '--foreground', '--muted', '--muted-foreground',
@@ -295,7 +345,6 @@ export function ChaiBuilderWrapper({
       toast.info('Site yeniden oluşturuluyor...', { duration: 2000 });
     },
     onChangeTemplate: async () => {
-      // Fetch generated_content for live preview
       try {
         const { data } = await supabase.from('projects').select('generated_content').eq('id', projectId).single();
         setGalleryContent(data?.generated_content || null);
@@ -312,6 +361,45 @@ export function ChaiBuilderWrapper({
           <p className="text-muted-foreground">Editör yükleniyor...</p>
         </div>
       </div>
+    );
+  }
+
+  // Render component-based template preview
+  if (previewComponentTemplateId) {
+    const TemplateComponent = getTemplate(previewComponentTemplateId);
+    return (
+      <TooltipProvider>
+        <EditorProvider value={editorContextValue}>
+          <div className="h-screen w-screen overflow-hidden relative flex flex-col">
+            {/* Preview Banner */}
+            <div className="flex-shrink-0 z-[90]">
+              <TemplatePreviewBanner
+                templateName={previewTemplateName || ''}
+                onApply={handleApplyTemplate}
+                onCancel={handleCancelPreview}
+                isApplying={isApplyingTemplate}
+              />
+            </div>
+
+            {/* Template Component - full render */}
+            <div className="flex-1 overflow-auto">
+              <TemplateComponent
+                content={defaultDemoContent as any}
+                colorPreference=""
+                isEditable={false}
+              />
+            </div>
+
+            <TemplateGalleryOverlay
+              isOpen={showTemplateGallery}
+              onClose={() => setShowTemplateGallery(false)}
+              currentTemplateId={previewComponentTemplateId || currentTemplateId}
+              onPreview={handlePreviewTemplate}
+              generatedContent={galleryContent}
+            />
+          </div>
+        </EditorProvider>
+      </TooltipProvider>
     );
   }
 

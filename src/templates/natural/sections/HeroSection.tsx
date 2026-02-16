@@ -12,7 +12,7 @@ interface HeroSectionProps {
 
 export function HeroSection({
   title = "Journey Through Life's Spectrum",
-  description = "Explore the vibrant tapestry of modern living through our curated collection of stories, insights, and perspectives that inspire meaningful connections and personal growth.",
+  description = "Welcome to Perspective's Blog: A Realm of Reflection, Inspiration, and Discovery. Where Words Illuminate Paths of Meaning and Thoughts Unravel the Mysteries of Life's Spectrum.",
   buttonText = "Join Now",
   image = "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=1920&q=80",
 }: HeroSectionProps) {
