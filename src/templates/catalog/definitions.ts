@@ -233,9 +233,52 @@ export const lawyerFirm: TemplateDefinition = {
   ],
 };
 
+export const naturalLifestyle: TemplateDefinition = {
+  id: 'natural',
+  name: 'Natural',
+  industry: 'lifestyle',
+  category: 'Yaşam & Blog',
+  description: 'Sıcak tonlarda, modern ve doğal hissiyatlı yaşam tarzı blog şablonu',
+  preview: '',
+  themePresetKey: 'natural',
+  supportedIndustries: ['blog', 'lifestyle', 'magazine', 'personal', 'creative', 'photography', 'art'],
+  sections: [
+    {
+      type: 'HeroCentered',
+      required: true,
+      defaultProps: {
+        title: 'Hayatın Perspektifi',
+        subtitle: 'Natural Blog',
+        description: 'İlham veren yazılar, keşifler ve yeni bakış açıları.',
+        primaryButtonText: 'Keşfet',
+        primaryButtonLink: '#articles',
+      },
+    },
+    {
+      type: 'AboutSection',
+      defaultProps: {
+        title: 'Hakkımızda',
+        subtitle: 'Bizi Tanıyın',
+        description: 'Perspektif, fikirleri keşfetmek, ilham bulmak ve dünyayı yeni yollarla görmenin alanıdır.',
+        imagePosition: 'right',
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Sorularınız için bizimle iletişime geçin.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+  ],
+};
+
 // ─── All Definitions ─────────────────────────────────────────────
 
 export const allDefinitions: TemplateDefinition[] = [
   wellnessStudio,
   lawyerFirm,
+  naturalLifestyle,
 ];

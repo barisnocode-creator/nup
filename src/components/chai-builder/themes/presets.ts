@@ -319,6 +319,36 @@ export const wellnessStudioPreset: Partial<ChaiThemeValues> = {
   },
 };
 
+// Natural Lifestyle - Warm cream/beige tones
+export const naturalLifestylePreset: Partial<ChaiThemeValues> = {
+  fontFamily: {
+    heading: "Playfair Display",
+    body: "Inter",
+  },
+  borderRadius: "16px",
+  colors: {
+    background: ["#f5f0e8", "#1a1a1a"],
+    foreground: ["#2e2e2e", "#f5f0e8"],
+    primary: ["#2e2e2e", "#f5f0e8"],
+    "primary-foreground": ["#f5f0e8", "#2e2e2e"],
+    secondary: ["#c4956a", "#3d2e1f"],
+    "secondary-foreground": ["#2e2e2e", "#f5f0e8"],
+    muted: ["#e8ddd0", "#333333"],
+    "muted-foreground": ["#666666", "#999999"],
+    accent: ["#5a8a6a", "#5a8a6a"],
+    "accent-foreground": ["#f5f0e8", "#f5f0e8"],
+    destructive: ["#dc3545", "#fc8181"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#ddd3c5", "#333333"],
+    input: ["#ddd3c5", "#333333"],
+    ring: ["#2e2e2e", "#f5f0e8"],
+    card: ["#ede5d8", "#242424"],
+    "card-foreground": ["#2e2e2e", "#f5f0e8"],
+    popover: ["#f5f0e8", "#1a1a1a"],
+    "popover-foreground": ["#2e2e2e", "#f5f0e8"],
+  },
+};
+
 // Export template ID to preset mapping
 export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
   "temp1": modernProfessionalPreset,
@@ -330,6 +360,7 @@ export const templateToPreset: Record<string, Partial<ChaiThemeValues>> = {
   "gith3": minimalDarkPreset,
   "pilates1": wellnessStudioPreset,
   "lawyer-firm": lawyerFirmPreset,
+  "natural": naturalLifestylePreset,
 };
 
 // Re-export the ChaiThemeValues type from SDK
