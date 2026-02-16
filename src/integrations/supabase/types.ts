@@ -355,7 +355,11 @@ export type Database = {
       }
       custom_domains: {
         Row: {
+          action_fingerprint: string | null
+          auto_configured: boolean
           created_at: string
+          dns_provider: string | null
+          dns_snapshot: Json | null
           domain: string
           id: string
           is_primary: boolean
@@ -365,7 +369,11 @@ export type Database = {
           verified_at: string | null
         }
         Insert: {
+          action_fingerprint?: string | null
+          auto_configured?: boolean
           created_at?: string
+          dns_provider?: string | null
+          dns_snapshot?: Json | null
           domain: string
           id?: string
           is_primary?: boolean
@@ -375,7 +383,11 @@ export type Database = {
           verified_at?: string | null
         }
         Update: {
+          action_fingerprint?: string | null
+          auto_configured?: boolean
           created_at?: string
+          dns_provider?: string | null
+          dns_snapshot?: Json | null
           domain?: string
           id?: string
           is_primary?: boolean

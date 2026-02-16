@@ -204,6 +204,8 @@ export function DomainSettingsModal({ isOpen, onClose, projectId, initialDomain 
                   onCancel={() => setShowAddForm(false)}
                   isLoading={isAdding}
                   initialValue={initialDomain}
+                  projectId={projectId}
+                  onAutoSuccess={() => { setShowAddForm(false); fetchDomains(); }}
                 />
               ) : (
                 <Button
