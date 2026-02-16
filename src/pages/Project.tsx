@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { usePageView } from '@/hooks/usePageView';
 import { useThemeColors } from '@/hooks/useThemeColors';
-import { getTemplateConfig } from '@/templates';
+import { getTemplateConfig, isComponentTemplate, getTemplate } from '@/templates';
 import { getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/themeUtils';
 import { blocksNeedImageRefresh, patchBlocksWithImages } from '@/components/chai-builder/utils/imagePatching';
 import { getCatalogTheme } from '@/templates/catalog';
@@ -288,6 +288,8 @@ export default function Project() {
   const convertAndSaveChaiBlocks = async (projectData: Project) => {
     if (!projectData.generated_content || !projectData.id) return;
     
+    // Skip conversion for component-based templates — they render directly
+    if (isComponentTemplate(projectData.template_id || '')) return;
     setIsConvertingBlocks(true);
     
     try {
@@ -1321,7 +1323,134 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
     }
   };
 
-  // ChaiBuilder SDK Editor - new modern editor
+  // Component-based templates (Natural, Lawyer, Pilates) render directly — bypass ChaiBuilder
+  if (USE_CHAI_BUILDER && isAuthenticated && project && isComponentTemplate(project.template_id || '')) {
+    const TemplateComp = getTemplate(project.template_id || 'pilates1');
+    const templateContent = project.generated_content || {
+      pages: { home: { hero: { title: '', subtitle: '', description: '' } }, about: { hero: { title: '', subtitle: '' } }, services: { hero: { title: '', subtitle: '' } }, contact: { hero: { title: '', subtitle: '' }, info: {} } },
+      metadata: { siteName: project.name, tagline: '' },
+    } as GeneratedContent;
+
+    return (
+      <div className="relative min-h-screen">
+        {/* Template Preview Banner */}
+        {isPreviewMode && (
+          <TemplatePreviewBanner
+            templateName={previewTemplateName}
+            onApply={handleApplyPreviewTemplate}
+            onCancel={handleCancelPreview}
+            isApplying={isApplyingTemplate}
+          />
+        )}
+
+        {/* Editor Toolbar */}
+        {!isPreviewMode && (
+          <EditorToolbar
+            projectName={project.name}
+            currentSection={currentSection}
+            onNavigate={handleNavigate}
+            onCustomize={() => setCustomizeSidebarOpen(true)}
+            onAddSection={() => {}}
+            onPageSettings={handleOpenPageSettings}
+            onPageEditor={handleOpenPageEditor}
+            onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
+            onPublish={() => setPublishModalOpen(true)}
+            onDashboard={() => navigate('/dashboard')}
+            isPublished={project.is_published}
+            existingPages={['home']}
+          />
+        )}
+
+        {/* Template rendered directly as React component */}
+        <div className={!isPreviewMode ? 'pt-14' : ''}>
+          <TemplateComp
+            content={templateContent}
+            colorPreference={colorPreference}
+            isEditable={!isPreviewMode}
+            onFieldEdit={handleFieldEdit}
+            editorSelection={editorSelection}
+            onEditorSelect={handleEditorSelect}
+            sectionOrder={sectionOrder}
+            onMoveSection={handleMoveSection}
+            onDeleteSection={handleDeleteSection}
+            sectionStyles={project.generated_content?.sectionStyles}
+            selectedImage={editorSelection?.imageData || null}
+            onImageSelect={(data) => handleEditorSelect({ type: 'image', title: 'Image', sectionId: 'hero', imageData: data, fields: [] })}
+          />
+        </div>
+
+        {/* Publish Modal */}
+        <PublishModal
+          isOpen={publishModalOpen}
+          onClose={() => setPublishModalOpen(false)}
+          projectId={id || ''}
+          projectName={project.name}
+          currentSubdomain={project.subdomain}
+          isPublished={project.is_published}
+          onPublished={(subdomain) => {
+            setProject(prev => prev ? { ...prev, subdomain, is_published: true } : null);
+          }}
+        />
+
+        {/* Customize Sidebar */}
+        <CustomizeSidebar
+          isOpen={customizeSidebarOpen}
+          onClose={() => setCustomizeSidebarOpen(false)}
+          currentColors={{
+            primary: project.generated_content?.siteSettings?.colors?.primary || '#3b82f6',
+            secondary: project.generated_content?.siteSettings?.colors?.secondary || '#6366f1',
+            accent: project.generated_content?.siteSettings?.colors?.accent || '#f59e0b',
+          }}
+          currentFonts={{
+            heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
+            body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
+          }}
+          currentCorners={project.generated_content?.siteSettings?.corners || 'rounded'}
+          currentAnimations={project.generated_content?.siteSettings?.animations !== false}
+          onColorChange={(colorType, value) => {
+            handleSiteSettingsChange({
+              ...project.generated_content?.siteSettings,
+              colors: { ...project.generated_content?.siteSettings?.colors, [colorType]: value },
+            });
+          }}
+          onFontChange={(fontType, value) => {
+            handleSiteSettingsChange({
+              ...project.generated_content?.siteSettings,
+              fonts: { ...project.generated_content?.siteSettings?.fonts, [fontType]: value },
+            });
+          }}
+          onCornersChange={(corners) => {
+            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, corners });
+          }}
+          onAnimationsChange={(animations) => {
+            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, animations });
+          }}
+          onRegenerateText={handleRegenerateAllText}
+          onRegenerateWebsite={handleRegenerateWebsite}
+          onEditBackground={handleEditHeroBackground}
+          onChangeTemplate={() => setChangeTemplateModalOpen(true)}
+        />
+
+        {/* Change Template Modal */}
+        <ChangeTemplateModal
+          isOpen={changeTemplateModalOpen}
+          onClose={() => setChangeTemplateModalOpen(false)}
+          currentTemplateId={project.template_id || 'natural'}
+          onSelectTemplate={handleTemplateChange}
+          onPreview={handleTemplatePreview}
+        />
+
+        {/* Upgrade Modal */}
+        <UpgradeModal
+          isOpen={upgradeModalOpen}
+          onClose={() => setUpgradeModalOpen(false)}
+          feature={lockedFeature}
+        />
+      </div>
+    );
+  }
+
+  // ChaiBuilder SDK Editor - for block-based templates
   if (USE_CHAI_BUILDER && isAuthenticated && project) {
     // Show loading screen while blocks are being converted
     const hasBlocks = project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
@@ -1339,7 +1468,6 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
     }
 
     if (!hasBlocks && project.generated_content) {
-      // Auto-trigger conversion if blocks are missing but content exists
       convertAndSaveChaiBlocks(project);
       return (
         <div className="h-screen w-screen flex items-center justify-center bg-background">
