@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Loader2, Check, X, Trash2, RefreshCw, Crown, Zap } from 'lucide-react';
+import { Clock, Loader2, Check, X, Trash2, RefreshCw, Crown, Zap, ShieldCheck, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -57,6 +57,11 @@ const statusConfig = {
     label: 'Doğrulandı',
     icon: Check,
     className: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+  },
+  active: {
+    label: 'Aktif',
+    icon: ShieldCheck,
+    className: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
   },
   failed: {
     label: 'Başarısız',
@@ -128,6 +133,12 @@ export function DomainListItem({ domain, onVerify, onRemove, isVerifying = false
               <Badge variant="outline" className="flex-shrink-0 text-xs">
                 <Zap className="w-3 h-3 mr-0.5" />
                 Otomatik
+              </Badge>
+            )}
+            {domain.status === 'active' && (
+              <Badge variant="outline" className="flex-shrink-0 text-xs bg-emerald-500/10 text-emerald-700 border-emerald-500/30">
+                <Lock className="w-3 h-3 mr-0.5" />
+                HTTPS
               </Badge>
             )}
           </div>
