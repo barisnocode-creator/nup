@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react'
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowLeft, Loader2, BarChart3 } from 'lucide-react';
+import { Sparkles, ArrowLeft, Loader2, BarChart3, Home, Palette, Globe } from 'lucide-react';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { EditorToolbar } from '@/components/website-preview/EditorToolbar';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
@@ -22,6 +22,8 @@ import { GeneratedContent, SectionStyle } from '@/types/generated-website';
 import { useToast } from '@/hooks/use-toast';
 import { ToastAction } from '@/components/ui/toast';
 import { usePageView } from '@/hooks/usePageView';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { getTemplateConfig, isComponentTemplate, getTemplate } from '@/templates';
 import { getThemeForTemplate, getThemeFromColorPreferences } from '@/components/chai-builder/utils/themeUtils';
@@ -1332,7 +1334,7 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
     } as GeneratedContent;
 
     return (
-      <div className="relative min-h-screen">
+      <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
         {/* Template Preview Banner */}
         {isPreviewMode && (
           <TemplatePreviewBanner
@@ -1343,26 +1345,48 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
           />
         )}
 
-        {/* Editor Toolbar */}
+        {/* ChaiBuilder-style Toolbar */}
         {!isPreviewMode && (
-          <EditorToolbar
-            projectName={project.name}
-            currentSection={currentSection}
-            onNavigate={handleNavigate}
-            onCustomize={() => setCustomizeSidebarOpen(true)}
-            onAddSection={() => {}}
-            onPageSettings={handleOpenPageSettings}
-            onPageEditor={handleOpenPageEditor}
-            onPreview={() => window.open(`/site/${project.subdomain}`, '_blank')}
-            onPublish={() => setPublishModalOpen(true)}
-            onDashboard={() => navigate('/dashboard')}
-            isPublished={project.is_published}
-            existingPages={['home']}
-          />
+          <div className="h-14 shrink-0 flex items-center border-b border-border/30 bg-background/95 backdrop-blur-xl z-50 px-3 shadow-sm">
+            {/* Left: Home + Özelleştir */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="p-2 rounded-xl text-muted-foreground hover:bg-accent/80 hover:text-foreground transition-all duration-200 active:scale-95"
+                title="Dashboard'a dön"
+              >
+                <Home className="w-4 h-4" />
+              </button>
+              <div className="h-5 w-px bg-border/40" />
+              <div className="relative flex items-center gap-0.5 p-1 rounded-xl bg-muted/50">
+                <button
+                  onClick={() => setCustomizeSidebarOpen(prev => !prev)}
+                  className={cn(
+                    'relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.97] z-10',
+                    customizeSidebarOpen ? 'text-foreground bg-background shadow-sm border border-border/50' : 'text-muted-foreground hover:text-foreground/80'
+                  )}
+                >
+                  <Palette className="w-3.5 h-3.5" />
+                  <span>Özelleştir</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1" />
+            {/* Right: Yayınla */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPublishModalOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 active:scale-95 shadow-md shadow-primary/20"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                Yayınla
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Template rendered directly as React component */}
-        <div className={!isPreviewMode ? 'pt-14' : ''}>
+        <div className="flex-1 overflow-auto">
           <TemplateComp
             content={templateContent}
             colorPreference={colorPreference}
@@ -1392,44 +1416,56 @@ function createDefaultBlocks(content: GeneratedContent): any[] {
           }}
         />
 
-        {/* Customize Sidebar */}
-        <CustomizeSidebar
-          isOpen={customizeSidebarOpen}
-          onClose={() => setCustomizeSidebarOpen(false)}
-          currentColors={{
-            primary: project.generated_content?.siteSettings?.colors?.primary || '#3b82f6',
-            secondary: project.generated_content?.siteSettings?.colors?.secondary || '#6366f1',
-            accent: project.generated_content?.siteSettings?.colors?.accent || '#f59e0b',
-          }}
-          currentFonts={{
-            heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
-            body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
-          }}
-          currentCorners={project.generated_content?.siteSettings?.corners || 'rounded'}
-          currentAnimations={project.generated_content?.siteSettings?.animations !== false}
-          onColorChange={(colorType, value) => {
-            handleSiteSettingsChange({
-              ...project.generated_content?.siteSettings,
-              colors: { ...project.generated_content?.siteSettings?.colors, [colorType]: value },
-            });
-          }}
-          onFontChange={(fontType, value) => {
-            handleSiteSettingsChange({
-              ...project.generated_content?.siteSettings,
-              fonts: { ...project.generated_content?.siteSettings?.fonts, [fontType]: value },
-            });
-          }}
-          onCornersChange={(corners) => {
-            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, corners });
-          }}
-          onAnimationsChange={(animations) => {
-            handleSiteSettingsChange({ ...project.generated_content?.siteSettings, animations });
-          }}
-          onRegenerateText={handleRegenerateAllText}
-          onRegenerateWebsite={handleRegenerateWebsite}
-          onEditBackground={handleEditHeroBackground}
-          onChangeTemplate={() => setChangeTemplateModalOpen(true)}
-        />
+        {/* Customize Sidebar - floating popover style */}
+        <AnimatePresence>
+          {customizeSidebarOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.97 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="fixed top-16 left-3 w-[280px] max-h-[calc(100vh-80px)] bg-white border border-border/50 rounded-xl shadow-2xl z-[60] overflow-hidden"
+            >
+              <CustomizeSidebar
+                isOpen={true}
+                onClose={() => setCustomizeSidebarOpen(false)}
+                currentColors={{
+                  primary: project.generated_content?.siteSettings?.colors?.primary || '#3b82f6',
+                  secondary: project.generated_content?.siteSettings?.colors?.secondary || '#6366f1',
+                  accent: project.generated_content?.siteSettings?.colors?.accent || '#f59e0b',
+                }}
+                currentFonts={{
+                  heading: project.generated_content?.siteSettings?.fonts?.heading || 'Inter',
+                  body: project.generated_content?.siteSettings?.fonts?.body || 'Inter',
+                }}
+                currentCorners={project.generated_content?.siteSettings?.corners || 'rounded'}
+                currentAnimations={project.generated_content?.siteSettings?.animations !== false}
+                onColorChange={(colorType, value) => {
+                  handleSiteSettingsChange({
+                    ...project.generated_content?.siteSettings,
+                    colors: { ...project.generated_content?.siteSettings?.colors, [colorType]: value },
+                  });
+                }}
+                onFontChange={(fontType, value) => {
+                  handleSiteSettingsChange({
+                    ...project.generated_content?.siteSettings,
+                    fonts: { ...project.generated_content?.siteSettings?.fonts, [fontType]: value },
+                  });
+                }}
+                onCornersChange={(corners) => {
+                  handleSiteSettingsChange({ ...project.generated_content?.siteSettings, corners });
+                }}
+                onAnimationsChange={(animations) => {
+                  handleSiteSettingsChange({ ...project.generated_content?.siteSettings, animations });
+                }}
+                onRegenerateText={handleRegenerateAllText}
+                onRegenerateWebsite={handleRegenerateWebsite}
+                onEditBackground={handleEditHeroBackground}
+                onChangeTemplate={() => setChangeTemplateModalOpen(true)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Change Template Modal */}
         <ChangeTemplateModal
