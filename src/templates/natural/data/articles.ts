@@ -33,8 +33,8 @@ export const defaultArticles: NaturalArticle[] = [
   },
   {
     id: "002",
-    title: "The Art of Slow Living",
-    subtitle: "Finding beauty in life's unhurried moments",
+    title: "Ink-Stained Insights",
+    subtitle: "Where words meet the rhythm of everyday life",
     category: "Lifestyle",
     date: "Oct 14, 2024",
     readTime: "4 min read",
@@ -49,8 +49,8 @@ export const defaultArticles: NaturalArticle[] = [
   },
   {
     id: "003",
-    title: "Building Bridges, Not Walls",
-    subtitle: "How communities thrive through connection and understanding",
+    title: "Musings in Grayscale",
+    subtitle: "Exploring the subtle shades between black and white thinking",
     category: "Community",
     date: "Oct 12, 2024",
     readTime: "6 min read",
@@ -64,7 +64,7 @@ export const defaultArticles: NaturalArticle[] = [
     tags: ["community", "social", "connection"],
   },
   {
-    id: "004",
+    id: "W001",
     title: "Finding Balance in a Digital World",
     subtitle: "Navigating the intersection of technology and well-being",
     category: "Wellness",
@@ -80,8 +80,8 @@ export const defaultArticles: NaturalArticle[] = [
     tags: ["wellness", "technology", "balance"],
   },
   {
-    id: "005",
-    title: "Wanderlust Chronicles",
+    id: "T001",
+    title: "The Art of Slow Travel",
     subtitle: "Stories from the road less traveled",
     category: "Travel",
     date: "Oct 8, 2024",
@@ -96,8 +96,8 @@ export const defaultArticles: NaturalArticle[] = [
     tags: ["travel", "adventure", "culture"],
   },
   {
-    id: "006",
-    title: "The Creative Spark",
+    id: "G001",
+    title: "Minimalist Living",
     subtitle: "Igniting innovation through artistic expression",
     category: "Creativity",
     date: "Oct 6, 2024",

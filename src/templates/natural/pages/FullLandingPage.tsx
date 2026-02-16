@@ -8,9 +8,9 @@ import { defaultArticles } from '../data/articles';
 
 // Default English content for the Natural template
 const DEFAULT_HERO_TITLE = "Journey Through Life's Spectrum";
-const DEFAULT_HERO_DESC = "Explore wellness, creativity, travel, and personal growth through thoughtful articles and inspiring stories that help you live with more intention and joy.";
-const DEFAULT_INTRO_TITLE = "Perspective is a space for exploring ideas that shape how we live, think, and grow.";
-const DEFAULT_INTRO_DESC = "We believe in the power of thoughtful content to inspire meaningful change. Our articles blend practical wisdom with creative inspiration, covering everything from mindful living to adventurous travel.";
+const DEFAULT_HERO_DESC = "Welcome to Perspective's Blog: A Realm of Reflection, Inspiration, and Discovery. Where Words Illuminate Paths of Meaning and Thoughts Unravel the Mysteries of Life's Spectrum.";
+const DEFAULT_INTRO_TITLE = "Perspective is a space for exploring ideas, finding inspiration, and discovering new ways of seeing the world.";
+const DEFAULT_INTRO_DESC = "We believe in the power of thoughtful storytelling. Our platform brings together diverse voices and perspectives to create meaningful conversations about life, wellness, creativity, and personal growth.";
 
 // Check if content is generic/demo or template-mismatched
 function isGenericContent(title: string): boolean {
@@ -63,8 +63,15 @@ export function NaturalFullLandingPage({
               </a>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {defaultArticles.map((article, index) => (
+              {defaultArticles.slice(0, 3).map((article, index) => (
                 <div key={article.id} className={`animate-slide-up stagger-${Math.min(index + 1, 6)}`}>
+                  <ArticleCard {...article} size="large" />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+              {defaultArticles.slice(3, 6).map((article, index) => (
+                <div key={article.id} className={`animate-slide-up stagger-${Math.min(index + 4, 6)}`}>
                   <ArticleCard {...article} />
                 </div>
               ))}

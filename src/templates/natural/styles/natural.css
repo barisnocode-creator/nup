@@ -2,58 +2,69 @@
 
 /* ── Scoped CSS variables (light mode) ── */
 .natural-template {
-  --background: 40 30% 96%;
-  --foreground: 30 10% 15%;
-  --primary: 30 25% 35%;
-  --primary-foreground: 40 30% 96%;
-  --secondary: 35 20% 90%;
-  --secondary-foreground: 30 10% 20%;
-  --muted: 35 15% 92%;
-  --muted-foreground: 30 8% 45%;
-  --accent: 30 25% 35%;
-  --accent-foreground: 40 30% 96%;
-  --card: 40 25% 97%;
-  --card-foreground: 30 10% 15%;
-  --popover: 40 25% 97%;
-  --popover-foreground: 30 10% 15%;
-  --border: 35 15% 85%;
-  --input: 35 15% 85%;
-  --ring: 30 25% 35%;
+  --background: 36 44% 96%;
+  --foreground: 0 0% 18%;
+  --primary: 0 0% 18%;
+  --primary-foreground: 36 44% 96%;
+  --secondary: 33 30% 90%;
+  --secondary-foreground: 0 0% 20%;
+  --muted: 33 30% 88%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 140 20% 50%;
+  --accent-foreground: 36 44% 96%;
+  --card: 33 40% 94%;
+  --card-foreground: 0 0% 18%;
+  --popover: 33 40% 94%;
+  --popover-foreground: 0 0% 18%;
+  --border: 33 25% 85%;
+  --input: 33 25% 85%;
+  --ring: 0 0% 18%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
   --radius: 0.75rem;
 
   /* Custom tokens */
-  --surface-elevated: 40 25% 97%;
-  --shadow-soft: 30 10% 15%;
-  --cream: 40 30% 96%;
-  --cream-foreground: 30 10% 15%;
+  --surface-elevated: 36 44% 98%;
+  --shadow-soft: 0 0% 18%;
+  --cream: 40 40% 90%;
+  --cream-foreground: 0 0% 18%;
 }
 
 /* ── Dark mode (scoped to .natural-template.dark) ── */
 .natural-template.dark {
-  --background: 30 10% 10%;
-  --foreground: 40 20% 90%;
-  --primary: 35 30% 65%;
-  --primary-foreground: 30 10% 10%;
-  --secondary: 30 10% 18%;
-  --secondary-foreground: 40 20% 85%;
-  --muted: 30 8% 16%;
-  --muted-foreground: 35 10% 55%;
-  --accent: 35 30% 65%;
-  --accent-foreground: 30 10% 10%;
-  --card: 30 10% 13%;
-  --card-foreground: 40 20% 90%;
-  --popover: 30 10% 13%;
-  --popover-foreground: 40 20% 90%;
-  --border: 30 8% 22%;
-  --input: 30 8% 22%;
-  --ring: 35 30% 65%;
+  --background: 0 0% 10%;
+  --foreground: 36 44% 96%;
+  --primary: 36 44% 96%;
+  --primary-foreground: 0 0% 10%;
+  --secondary: 0 0% 18%;
+  --secondary-foreground: 36 44% 90%;
+  --muted: 0 0% 20%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 140 20% 45%;
+  --accent-foreground: 36 44% 96%;
+  --card: 0 0% 14%;
+  --card-foreground: 36 44% 96%;
+  --popover: 0 0% 14%;
+  --popover-foreground: 36 44% 96%;
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 36 44% 96%;
 
-  --surface-elevated: 30 10% 13%;
+  --surface-elevated: 0 0% 14%;
   --shadow-soft: 0 0% 0%;
-  --cream: 30 10% 13%;
-  --cream-foreground: 40 20% 90%;
+  --cream: 0 0% 14%;
+  --cream-foreground: 36 44% 96%;
+}
+
+/* Serif headings */
+.natural-template h1,
+.natural-template h2,
+.natural-template h3,
+.natural-template h4,
+.natural-template h5,
+.natural-template h6 {
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.025em;
 }
 
 .natural-template .pill-nav {

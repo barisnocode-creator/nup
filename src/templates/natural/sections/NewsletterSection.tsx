@@ -6,7 +6,7 @@ interface NewsletterSectionProps {
 
 export function NewsletterSection({
   title = "Stay inspired.",
-  description = "Get the latest articles and insights delivered straight to your inbox.",
+  description = "Subscribe to receive our latest articles and insights directly in your inbox.",
   buttonText = "Subscribe",
 }: NewsletterSectionProps) {
   return (

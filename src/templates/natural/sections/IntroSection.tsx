@@ -4,7 +4,7 @@ interface IntroSectionProps {
 }
 
 export function IntroSection({
-  title = "Perspective is a space for exploring ideas that shape our world",
+  title = "Perspective is a space for exploring ideas, finding inspiration, and discovering new ways of seeing the world.",
   description = "We believe in the power of thoughtful storytelling. Our platform brings together diverse voices and perspectives to create meaningful conversations about life, wellness, creativity, and personal growth.",
 }: IntroSectionProps) {
   return (

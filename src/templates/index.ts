@@ -126,5 +126,10 @@ export type { TemplateConfig };
 // Export catalog types for consumers
 export type { TemplateDefinition };
 
+// Check if a template ID has a live React component (not just catalog data)
+export function isComponentTemplate(templateId: string): boolean {
+  return templateId in templateRegistry;
+}
+
 // Export the default template ID
 export const DEFAULT_TEMPLATE_ID = 'pilates1';
