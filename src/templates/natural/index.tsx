@@ -45,10 +45,35 @@ export function NaturalTemplate({
     setIsDark(prev => !prev);
   }, []);
 
+  const cssVars = {
+    '--background': isDark ? '0 0% 10%' : '36 44% 96%',
+    '--foreground': isDark ? '36 44% 96%' : '0 0% 18%',
+    '--primary': isDark ? '36 44% 96%' : '0 0% 18%',
+    '--primary-foreground': isDark ? '0 0% 10%' : '36 44% 96%',
+    '--secondary': isDark ? '0 0% 18%' : '33 30% 90%',
+    '--secondary-foreground': isDark ? '36 44% 90%' : '0 0% 20%',
+    '--muted': isDark ? '0 0% 20%' : '33 30% 88%',
+    '--muted-foreground': isDark ? '0 0% 60%' : '0 0% 40%',
+    '--accent': isDark ? '140 20% 45%' : '140 20% 50%',
+    '--accent-foreground': '36 44% 96%',
+    '--card': isDark ? '0 0% 14%' : '33 40% 94%',
+    '--card-foreground': isDark ? '36 44% 96%' : '0 0% 18%',
+    '--popover': isDark ? '0 0% 14%' : '33 40% 94%',
+    '--popover-foreground': isDark ? '36 44% 96%' : '0 0% 18%',
+    '--border': isDark ? '0 0% 20%' : '33 25% 85%',
+    '--input': isDark ? '0 0% 20%' : '33 25% 85%',
+    '--ring': isDark ? '36 44% 96%' : '0 0% 18%',
+    '--surface-elevated': isDark ? '0 0% 14%' : '36 44% 98%',
+    '--shadow-soft': isDark ? '0 0% 0%' : '0 0% 18%',
+    '--cream': isDark ? '0 0% 14%' : '40 40% 90%',
+    '--cream-foreground': isDark ? '36 44% 96%' : '0 0% 18%',
+  } as React.CSSProperties;
+
   return (
     <div
       ref={wrapperRef}
       className={`natural-template min-h-screen bg-background text-foreground${isDark ? ' dark' : ''}`}
+      style={cssVars}
     >
       {isEditable && (
         <div className="sticky top-14 z-20 py-2 px-4 border-b bg-background/95 border-border backdrop-blur-sm">
