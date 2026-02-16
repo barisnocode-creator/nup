@@ -290,8 +290,7 @@ export default function Project() {
   const convertAndSaveChaiBlocks = async (projectData: Project) => {
     if (!projectData.generated_content || !projectData.id) return;
     
-    // Skip conversion for component-based templates — they render directly
-    if (isComponentTemplate(projectData.template_id || '')) return;
+    // All templates now use ChaiBuilder — no bypass
     setIsConvertingBlocks(true);
     
     try {
