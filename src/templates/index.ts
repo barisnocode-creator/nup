@@ -1,11 +1,13 @@
 import { TemplateConfig, TemplateComponent } from './types';
 import { PilatesTemplate } from './pilates';
 import { LawyerTemplate } from './lawyer';
+import { NaturalTemplate } from './natural';
 import { getAllCatalogTemplates, type TemplateDefinition } from './catalog';
 
 // Import preview images
 import templatePilates from '@/assets/template-pilates.jpg';
 import templateLawyer from '@/assets/template-lawyer.jpg';
+import templateNatural from '@/assets/template-natural.jpg';
 
 // Template registry - live-renderable component templates
 const templateRegistry: Record<string, {
@@ -35,6 +37,18 @@ const templateRegistry: Record<string, {
       supportedTones: ['professional', 'elegant', 'premium', 'modern', 'bold'],
     },
     component: LawyerTemplate,
+  },
+  natural: {
+    config: {
+      id: 'natural',
+      name: 'Natural',
+      description: 'Sıcak tonlarda, modern ve doğal hissiyatlı yaşam tarzı blog şablonu',
+      category: 'Yaşam & Blog',
+      preview: templateNatural,
+      supportedProfessions: ['blog', 'lifestyle', 'magazine', 'personal', 'creative', 'photography', 'art'],
+      supportedTones: ['warm', 'elegant', 'calm', 'modern', 'friendly'],
+    },
+    component: NaturalTemplate,
   },
 };
 
@@ -96,6 +110,7 @@ export function selectTemplate(
   const mapping: Record<string, string> = {
     wellness: 'pilates1', pilates: 'pilates1', yoga: 'pilates1', fitness: 'pilates1', spa: 'pilates1',
     lawyer: 'lawyer-firm', legal: 'lawyer-firm', law: 'lawyer-firm', attorney: 'lawyer-firm',
+    blog: 'natural', lifestyle: 'natural', magazine: 'natural', personal: 'natural', photography: 'natural',
   };
   
   if (mapping[key]) return mapping[key];

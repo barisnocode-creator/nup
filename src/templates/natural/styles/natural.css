@@ -1,0 +1,90 @@
+/* Natural template custom styles — scoped under .natural-template */
+
+.natural-template .pill-nav {
+  border-radius: 9999px;
+  background: hsl(var(--surface-elevated));
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+.natural-template .card-hover {
+  transition: all 0.5s ease;
+  box-shadow: 0 4px 20px -4px hsl(var(--shadow-soft) / 0.1);
+}
+
+.natural-template .card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px -10px hsl(var(--shadow-soft) / 0.15);
+}
+
+.natural-template .floating-button {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 9999px;
+  background: hsl(var(--cream) / 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--cream-foreground));
+  box-shadow: 0 4px 12px -2px hsl(var(--shadow-soft) / 0.15);
+  transition: all 0.3s ease;
+}
+
+.natural-template .floating-button:hover {
+  background: hsl(var(--cream));
+  transform: scale(1.1);
+}
+
+/* Animations */
+.natural-template .animate-fade-in {
+  animation: naturalFadeIn 0.5s ease-out;
+}
+
+.natural-template .animate-slide-up {
+  animation: naturalSlideUp 0.6s ease-out;
+}
+
+.natural-template .animate-slide-down {
+  animation: naturalSlideDown 0.6s ease-out;
+}
+
+.natural-template .animate-scale-in {
+  animation: naturalScaleIn 0.5s ease-out;
+}
+
+@keyframes naturalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes naturalSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes naturalSlideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes naturalScaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.natural-template .stagger-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; }
+.natural-template .stagger-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; }
+.natural-template .stagger-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; }
+.natural-template .stagger-4 { animation-delay: 0.4s; opacity: 0; animation-fill-mode: forwards; }
+.natural-template .stagger-5 { animation-delay: 0.5s; opacity: 0; animation-fill-mode: forwards; }
+.natural-template .stagger-6 { animation-delay: 0.6s; opacity: 0; animation-fill-mode: forwards; }
+
+/* Tag colors */
+.natural-template .tag-financing { background: hsl(210 50% 75%); color: hsl(var(--primary)); }
+.natural-template .tag-lifestyle { background: hsl(140 20% 70%); color: hsl(var(--primary)); }
+.natural-template .tag-community { background: hsl(25 35% 60%); color: hsl(var(--primary)); }
+.natural-template .tag-wellness { background: hsl(280 30% 75%); color: hsl(var(--primary)); }
+.natural-template .tag-travel { background: hsl(195 50% 70%); color: hsl(var(--primary)); }
+.natural-template .tag-creativity { background: hsl(330 40% 75%); color: hsl(var(--primary)); }
+.natural-template .tag-growth { background: hsl(50 45% 70%); color: hsl(var(--primary)); }
