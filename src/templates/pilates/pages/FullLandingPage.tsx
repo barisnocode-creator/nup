@@ -34,11 +34,11 @@ export function PilatesFullLandingPage({
   selectedImage,
   onImageSelect,
 }: PilatesFullLandingPageProps) {
-  const heroContent = content.pages.home.hero;
-  const servicesContent = content.pages.services;
-  const contactInfo = content.pages.contact.info;
-  const aboutContent = content.pages.about;
-  const highlights = content.pages.home.highlights || [];
+  const heroContent = content?.pages?.home?.hero ?? { title: '', subtitle: '', description: '' };
+  const servicesContent = content?.pages?.services ?? { intro: { title: '', content: '' }, servicesList: [], hero: { title: '', subtitle: '' } };
+  const contactInfo = content?.pages?.contact?.info ?? { address: '', phone: '', email: '', hours: '' };
+  const aboutContent = content?.pages?.about ?? { team: { title: '', description: '' }, values: [], hero: { title: '', subtitle: '' }, story: { title: '', content: '' } };
+  const highlights = content?.pages?.home?.highlights || [];
 
   const renderSection = (sectionId: string) => {
     switch (sectionId) {
