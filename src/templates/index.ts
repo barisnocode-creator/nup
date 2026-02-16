@@ -126,9 +126,11 @@ export type { TemplateConfig };
 // Export catalog types for consumers
 export type { TemplateDefinition };
 
-// Check if a template ID has a live React component (not just catalog data)
+// Templates that should bypass ChaiBuilder and render directly as React components
+const DIRECT_RENDER_TEMPLATES = new Set(['natural']);
+
 export function isComponentTemplate(templateId: string): boolean {
-  return templateId in templateRegistry;
+  return DIRECT_RENDER_TEMPLATES.has(templateId);
 }
 
 // Export the default template ID
