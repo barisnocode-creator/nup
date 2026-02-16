@@ -1,57 +1,190 @@
 
 
-## Editoru Eski Haline Dondurme + Natural Template Uyumlulugu
+## Natural Template - ChaiBuilder'a Ozel Blok Olusturma Plani
 
-### Sorun Analizi
+### Neden Gerekli?
 
-Projenizin `template_id` degeri `natural` olarak ayarlanmis (muhtemelen test sirasinda degisti). Bu yuzden `Project.tsx` satir 1329'daki `isComponentTemplate('natural') === true` kontrolune giriyor ve ChaiBuilder editoru tamamen bypass ediliyor. Yerine yazilan ozel toolbar ("Ozellestir" / "Yayinla") eski editorden tamamen farkli.
+Mevcut jenerik bloklar (HeroCentered, ServicesGrid, AboutSection) Natural template'in tasarimini yansitamiyor. Natural'in kendine ozgu bilesenleri var: split hero, makale kartlari, newsletter, pill-nav header. Bu bilesenlerin ChaiBuilder bloku olarak yeniden yazilmasi gerekiyor.
 
-**Asil sorun:** `isComponentTemplate()` fonksiyonu `'natural'` icin `true` donuyor ve bu da eski ChaiBuilder editoru yerine basit bir React render modu aciyor.
+### Yaklasim
 
-### Cozum (2 Adim)
-
----
-
-### Adim 1: isComponentTemplate'i Devre Disi Birak
-
-**Dosya:** `src/templates/index.ts`
-
-`DIRECT_RENDER_TEMPLATES` setini bosalt. Boylece hicbir sablon ChaiBuilder'i bypass etmez ve tum projeler eski editoru kullanir.
-
-```
-// Mevcut (satir 130):
-const DIRECT_RENDER_TEMPLATES = new Set(['natural']);
-
-// Yeni:
-const DIRECT_RENDER_TEMPLATES = new Set<string>();
-```
-
-Bu tek degisiklikle `isComponentTemplate()` her zaman `false` donecek ve `Project.tsx` satir 1329'daki if blogu hic calisayacak. Eski ChaiBuilder editoru aynen yuklenir.
+Editore hic dokunmuyoruz. Sadece yeni blok tipleri olusturup, Natural template definition'ini bu bloklari kullanacak sekilde guncelliyoruz.
 
 ---
 
-### Adim 2: convertAndSaveChaiBlocks Natural icin Bloklari Uretsin
+### Adim 1: NaturalHero Bloku
 
-**Dosya:** `src/pages/Project.tsx`
+**Dosya:** `src/components/chai-builder/blocks/hero/NaturalHero.tsx`
 
-Satir 293-294'te Natural icin blok donusumu atlaniyordu:
+Mevcut `HeroSection.tsx`'in ChaiBuilder blok versiyonu. registerChaiBlock ile kaydedilecek.
 
+- 2 kolonlu split layout (sol: gorsel, sag: baslik + aciklama)
+- Sosyal medya ikonlari (Instagram, Facebook, LinkedIn)
+- Yuvarlak koseli gorsel alani (rounded-2rem)
+- "Join Now" butonu
+- Serif font basliklar
+- Animasyonlar (scale-in, slide-down, slide-up)
+- Props: title, description, buttonText, image
+- inlineEditProps: title, description, buttonText
+
+```text
+Blok Yapisi:
++----------------------------------+
+|  [Gorsel]  |  Baslik            |
+|  rounded   |  Aciklama          |
+|  4/3 ratio |  [Button] [Icons]  |
++----------------------------------+
 ```
-if (isComponentTemplate(projectData.template_id || '')) return;
-```
-
-Adim 1 ile `isComponentTemplate` artik `false` donecegi icin bu satir zaten atlanacak. Ama guvenlik icin bu erken return'u de kaldiralim.
 
 ---
 
-### Beklenen Sonuc
+### Adim 2: NaturalIntro Bloku
 
-- Eski ChaiBuilder editoru geri gelecek (SDK toolbar, blok sistemi, sidebar'lar)
-- Natural template projesi ChaiBuilder icinde jenerik bloklar olarak gorunecek (HeroCentered, ServicesGrid vb.)
-- Toolbar'da "Published", "Ozellestir" gibi eski butonlar aynen korunacak
-- Hicbir baska dosya degismeyecek
+**Dosya:** `src/components/chai-builder/blocks/about/NaturalIntro.tsx`
 
-### Not
+Basit ortalanmis metin blogu. Mevcut `IntroSection.tsx`'in birebir kopyasi.
 
-Natural template'in orijinal React haliyle birebir gosterimi ileride ayri bir adimda ele alinabilir ama oncelik editoru eski calisir haline dondermektir.
+- Ortalanmis baslik ve aciklama
+- max-w-4xl container
+- Props: title, description
+- inlineEditProps: title, description
+
+---
+
+### Adim 3: NaturalArticleGrid Bloku
+
+**Dosya:** `src/components/chai-builder/blocks/gallery/NaturalArticleGrid.tsx`
+
+Mevcut `ArticleCard.tsx` + `FullLandingPage.tsx` articles section'inin birlesitirilmis hali.
+
+- 3+3 grid layout (ilk satir large, ikinci satir normal)
+- Her kart: gorsel, gradient overlay, kategori etiketi, tarih badge, baslik
+- Floating arrow butonu
+- 6 ayri gorsel ve baslik prop'u
+- Props: article1Title, article1Image, article1Category, article1Date, ... (x6)
+- Yuvarlak koseli kartlar (rounded-2.5rem)
+- Hover efekti (scale 1.02, shadow)
+
+```text
+Blok Yapisi:
++--------+--------+--------+
+| Card 1 | Card 2 | Card 3 |
+| large  | large  | large  |
++--------+--------+--------+
+| Card 4 | Card 5 | Card 6 |
+| normal | normal | normal |
++--------+--------+--------+
+```
+
+---
+
+### Adim 4: NaturalNewsletter Bloku
+
+**Dosya:** `src/components/chai-builder/blocks/cta/NaturalNewsletter.tsx`
+
+Mevcut `NewsletterSection.tsx`'in ChaiBuilder blok versiyonu.
+
+- Yuvarlak koseli kart (rounded-2.5rem)
+- bg-card arka plan
+- Baslik, aciklama, email input + subscribe butonu
+- Props: title, description, buttonText
+- inlineEditProps: title, description, buttonText
+
+---
+
+### Adim 5: Natural CSS'in ChaiBuilder iframe'ine Enjeksiyonu
+
+**Dosya:** `src/styles/chaibuilder.tailwind.css`
+
+Natural template'in ozel stilleri (krem renkler, serif fontlar, animasyonlar, kart hover efektleri, tag renkleri) ChaiBuilder'in tailwind CSS dosyasina eklenmeli. Tum stiller `.natural-block` scope'u altinda olacak (`.natural-template` yerine) boylece sadece Natural bloklari etkiler.
+
+Eklenecek stiller:
+- Krem/bej renk paleti (CSS degiskenleri)
+- Serif font kurallar
+- Animasyonlar (fadeIn, slideUp, slideDown, scaleIn)
+- Stagger gecikmeleri
+- Kart hover efektleri
+- Tag renkleri (financing, lifestyle, community, wellness, travel, creativity)
+- Floating button stili
+- Pill-nav stili (header icin degil, ama referans olarak)
+
+---
+
+### Adim 6: Template Definition Guncelleme
+
+**Dosya:** `src/templates/catalog/definitions.ts`
+
+`naturalLifestyle` tanimini yeni blok tiplerini kullanacak sekilde guncelle:
+
+```text
+sections: [
+  { type: 'NaturalHero', required: true, defaultProps: { ... } },
+  { type: 'NaturalIntro', defaultProps: { ... } },
+  { type: 'NaturalArticleGrid', defaultProps: { ... (6 makale verisi) } },
+  { type: 'NaturalNewsletter', defaultProps: { ... } },
+]
+```
+
+---
+
+### Adim 7: Blok Registry Guncelleme
+
+**Dosya:** `src/components/chai-builder/blocks/index.ts`
+
+Yeni bloklari import et:
+
+```text
+import './hero/NaturalHero';
+import './about/NaturalIntro';
+import './gallery/NaturalArticleGrid';
+import './cta/NaturalNewsletter';
+```
+
+---
+
+### Adim 8: Theme Preset Ekleme
+
+**Dosya:** `src/components/chai-builder/themes/presets.ts`
+
+Natural icin tema preset'i ekle veya guncelle:
+- Font: Georgia, serif
+- Primary: koyu gri (#2D2D2D)
+- Background: krem (#F5EFE6)
+- Accent: yesil (#6B9080)
+- Border radius: 0.75rem
+
+---
+
+### Sinirlamalar ve Beklentiler
+
+**Tam korunacaklar:**
+- Krem/bej renk paleti
+- Serif baslik fontlari
+- 2 kolonlu hero layout
+- Makale kartlarinin gorsel tasarimi (gradient overlay, kategori etiketleri, tarih badges)
+- Newsletter kart tasarimi
+- Hover animasyonlari
+
+**Korunamayacaklar (ChaiBuilder sinirlamalari):**
+- NaturalHeader (pill-nav): ChaiBuilder kendi header sistemini kullanir, ozel header blogu desteklenmez. Header editorden bagimsiz calisir.
+- NaturalFooter: Ayni sekilde footer ChaiBuilder disinda kalir.
+- Dark mode toggle: ChaiBuilder icinde calistirilabilir ama ek karmasiklik getirir.
+- Stagger animasyonlari: Kismen korunabilir ama ChaiBuilder'in iframe'i icinde farkli davranabilir.
+
+**Sonuc:** Natural template'in govde iceriginin ~%85-90'i orijinal haline sadik kalacak. Header/footer ve dark mode eksik kalacak ama ana icerik (hero, intro, makaleler, newsletter) orijinal tasarima cok yakin olacak.
+
+---
+
+### Dosya Listesi
+
+1. `src/components/chai-builder/blocks/hero/NaturalHero.tsx` - YENI
+2. `src/components/chai-builder/blocks/about/NaturalIntro.tsx` - YENI
+3. `src/components/chai-builder/blocks/gallery/NaturalArticleGrid.tsx` - YENI
+4. `src/components/chai-builder/blocks/cta/NaturalNewsletter.tsx` - YENI
+5. `src/components/chai-builder/blocks/index.ts` - GUNCELLE (4 import ekle)
+6. `src/templates/catalog/definitions.ts` - GUNCELLE (naturalLifestyle sections)
+7. `src/styles/chaibuilder.tailwind.css` - GUNCELLE (natural-block stilleri ekle)
+8. `src/components/chai-builder/themes/presets.ts` - GUNCELLE (natural tema)
+
+Toplam 4 yeni dosya, 4 guncelleme. Editore (ChaiBuilderWrapper, DesktopEditorLayout, MobileEditorLayout, Project.tsx) hic dokunulmuyor.
 
