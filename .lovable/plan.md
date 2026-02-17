@@ -9,8 +9,8 @@ Konsol hatasi: **`Tooltip must be used within TooltipProvider`**
 ChaiBuilder SDK, bir bloga tiklandiginda dahili tooltip bilesenleri kullaniyor. Eger blok `TooltipProvider` ile sarilmamissa, React hata sinirini (error boundary) asarak tum uygulamayi beyaz ekrana ceviriyor.
 
 2 blok bu sarmalama olmadan kayitli:
-- `NaturalHeader` (src/components/chai-builder/blocks/hero/NaturalHeader.tsx)
-- `NaturalFooter` (src/components/chai-builder/blocks/contact/NaturalFooter.tsx)
+- `NaturalHeader` (`src/components/chai-builder/blocks/hero/NaturalHeader.tsx`)
+- `NaturalFooter` (`src/components/chai-builder/blocks/contact/NaturalFooter.tsx`)
 
 ### Cozum
 
