@@ -6,16 +6,18 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalNewsletterProps = {
   styles: ChaiStyles;
   title: string;
   description: string;
   buttonText: string;
-};
+} & CommonStyleProps;
 
 const NaturalNewsletterBlock = (props: ChaiBlockComponentProps<NaturalNewsletterProps>) => {
-  const { blockProps, title, description, buttonText } = props;
+  const { blockProps, title, description, buttonText, ...styleProps } = props;
+  const s = resolveStyles(styleProps);
 
   return (
     <TooltipProvider>
@@ -24,15 +26,15 @@ const NaturalNewsletterBlock = (props: ChaiBlockComponentProps<NaturalNewsletter
         className={cn(blockProps.className, "natural-block my-20")}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2.5rem] bg-card p-12 md:p-16 text-center">
+        <div className={cn("rounded-[2.5rem] p-12 md:p-16", s.bgColor === "bg-transparent" ? "bg-card" : s.bgColor, `text-${s.textAlign}`)}>
         <div className="max-w-2xl mx-auto space-y-8">
           <h2
-            className="text-4xl md:text-5xl tracking-tight"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}
+            className={cn(s.titleSize(), s.titleWeight, s.titleColor, "tracking-tight")}
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             {title}
           </h2>
-          <p className="text-xl text-muted-foreground leading-relaxed">
+          <p className={cn(s.descSize, s.descColor, "leading-relaxed")}>
             {description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
@@ -78,6 +80,7 @@ registerChaiBlock(NaturalNewsletterBlock, {
         title: "Buton Metni",
         default: "Subscribe",
       }),
+      ...commonStyleSchemaProps({ bgColor: "card", textAlign: "center", titleSize: "3xl" }),
     },
   },
 });

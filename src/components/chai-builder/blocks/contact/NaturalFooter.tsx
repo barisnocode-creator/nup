@@ -6,19 +6,21 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalFooterProps = {
   styles: ChaiStyles;
   siteName: string;
-};
+} & CommonStyleProps;
 
 const NaturalFooterBlock = (props: ChaiBlockComponentProps<NaturalFooterProps>) => {
-  const { blockProps, siteName, inBuilder } = props;
+  const { blockProps, siteName, inBuilder, ...styleProps } = props;
+  const s = resolveStyles(styleProps);
 
   return (
     <TooltipProvider>
-    <footer {...blockProps} className={cn(blockProps.className, "natural-block border-t border-border mt-16")}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer {...blockProps} className={cn(blockProps.className, "natural-block border-t border-border mt-16", s.bgColor, s.sectionPadding)}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="font-semibold mb-4" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>Explore</h3>
@@ -75,6 +77,7 @@ registerChaiBlock(NaturalFooterBlock, {
         title: "Site Adı",
         default: "Perspective",
       }),
+      ...commonStyleSchemaProps({ bgColor: "transparent", sectionPadding: "sm" }),
     },
   },
 });

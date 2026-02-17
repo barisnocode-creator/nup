@@ -8,6 +8,7 @@ import { EditableChaiImage } from "../shared/EditableChaiImage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalArticleGridProps = {
   styles: ChaiStyles;
@@ -18,7 +19,7 @@ export type NaturalArticleGridProps = {
   article4Title: string; article4Image: string; article4Category: string; article4Date: string;
   article5Title: string; article5Image: string; article5Category: string; article5Date: string;
   article6Title: string; article6Image: string; article6Category: string; article6Date: string;
-};
+} & CommonStyleProps;
 
 const getCategoryClass = (cat: string) => {
   const n = cat.toLowerCase();
@@ -48,7 +49,8 @@ const ArticleCard = ({ id, title, category, date, image, size, inBuilder }: Card
       <EditableChaiImage
         src={image}
         alt={title}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        className="w-full h-full object-cover transition-transform duration-500"
+        containerClassName={`${size === "large" ? "aspect-[3/4]" : "aspect-[4/3]"} rounded-[2.5rem] overflow-hidden`}
         inBuilder={inBuilder}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
@@ -85,6 +87,7 @@ const ArticleCard = ({ id, title, category, date, image, size, inBuilder }: Card
 
 const NaturalArticleGridBlock = (props: ChaiBlockComponentProps<NaturalArticleGridProps>) => {
   const { blockProps, inBuilder, sectionTitle, ...rest } = props;
+  const s = resolveStyles(rest);
 
   const articles = [
     { id: "001", title: rest.article1Title, image: rest.article1Image, category: rest.article1Category, date: rest.article1Date },
@@ -97,12 +100,12 @@ const NaturalArticleGridBlock = (props: ChaiBlockComponentProps<NaturalArticleGr
 
   return (
     <TooltipProvider>
-      <section {...blockProps} className={cn(blockProps.className, "natural-block py-12")}>
+      <section {...blockProps} className={cn(blockProps.className, "natural-block", s.bgColor, s.sectionPadding)}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-12">
           <h2
-            className="text-3xl md:text-4xl tracking-tight"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}
+            className={cn(s.titleSize(), s.titleWeight, s.titleColor, "tracking-tight")}
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             {sectionTitle}
           </h2>
@@ -162,6 +165,7 @@ registerChaiBlock(NaturalArticleGridBlock, {
       article6Image: builderProp({ type: "string", title: "Makale 6 Görsel", default: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80", ui: { "ui:widget": "image" } }),
       article6Category: builderProp({ type: "string", title: "Makale 6 Kategori", default: "Creativity" }),
       article6Date: builderProp({ type: "string", title: "Makale 6 Tarih", default: "Oct 6, 2024" }),
+      ...commonStyleSchemaProps({ bgColor: "transparent", textAlign: "left", sectionPadding: "sm" }),
     },
   },
 });
