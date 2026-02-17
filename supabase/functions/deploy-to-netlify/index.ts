@@ -1216,7 +1216,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: `openlucius-${project.subdomain || projectId.slice(0, 8)}`,
+          name: `openlucius-${project.subdomain || projectId.slice(0, 8)}-${Date.now().toString(36)}`,
         }),
       });
 
