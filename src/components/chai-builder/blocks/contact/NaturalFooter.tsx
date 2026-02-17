@@ -5,6 +5,7 @@ import {
 } from "@chaibuilder/sdk/runtime";
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export type NaturalFooterProps = {
   styles: ChaiStyles;
@@ -15,6 +16,7 @@ const NaturalFooterBlock = (props: ChaiBlockComponentProps<NaturalFooterProps>) 
   const { blockProps, siteName, inBuilder } = props;
 
   return (
+    <TooltipProvider>
     <footer {...blockProps} className={cn(blockProps.className, "natural-block border-t border-border mt-16")}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
@@ -55,6 +57,7 @@ const NaturalFooterBlock = (props: ChaiBlockComponentProps<NaturalFooterProps>) 
         </div>
       </div>
     </footer>
+    </TooltipProvider>
   );
 };
 
