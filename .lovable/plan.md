@@ -1,37 +1,48 @@
 
 
-## Editorde Beyaz Ekran Hatasi Duzeltmesi
+## Editorde Pembe/Beyaz Ekran Hatasinin Koek Nedeni ve Cozumu
 
-### Sorunun Kaynagi
+### Sorunun Gercek Kaynagi
 
-Konsol hatasi: **`Tooltip must be used within TooltipProvider`**
+Onceki duzeltmelerde tum bloklar `TooltipProvider` ile sarildi, ancak hata devam ediyor. Bunun sebebi cok daha derinde:
 
-ChaiBuilder SDK, bir bloga tiklandiginda dahili tooltip bilesenleri kullaniyor. Eger blok `TooltipProvider` ile sarilmamissa, React hata sinirini (error boundary) asarak tum uygulamayi beyaz ekrana ceviriyor.
+**ChaiBuilder SDK, kendi `@radix-ui/react-tooltip` kopyasini iceriyor.** Vite bundler iki ayri kopya olusturuyor - biri bizim uygulamamiz icin, digeri SDK icin. Bu iki kopya farkli React Context nesneleri yaratiyor. Bizim `TooltipProvider` bilesenimiz yalnizca bizim kopyamizin context'ini sagliyor; SDK'nin dahili Tooltip bilesenleri ise kendi kopyasinin context'ini ariyor ve bulamiyor.
 
-2 blok bu sarmalama olmadan kayitli:
-- `NaturalHeader` (`src/components/chai-builder/blocks/hero/NaturalHeader.tsx`)
-- `NaturalFooter` (`src/components/chai-builder/blocks/contact/NaturalFooter.tsx`)
+Sonuc: SDK icerisinden tetiklenen herhangi bir Tooltip, `TooltipProvider` bulamadigindan React crash veriyor.
 
 ### Cozum
 
-Her iki bloga `TooltipProvider` sarmasi eklenmesi yeterli. Diger tum bloklar zaten bu sarmayi kullaniyor.
+`vite.config.ts` dosyasindaki `resolve.dedupe` dizisine `@radix-ui/react-tooltip` ve diger paylasilan Radix paketlerini eklemek. Bu, Vite'a "bu paketlerden yalnizca tek bir kopya kullan" demek anlamina gelir.
 
 ### Dosya Degisiklikleri
 
-| Dosya | Islem |
-|-------|-------|
-| `src/components/chai-builder/blocks/hero/NaturalHeader.tsx` | `TooltipProvider` import ve sarma ekle |
-| `src/components/chai-builder/blocks/contact/NaturalFooter.tsx` | `TooltipProvider` import ve sarma ekle |
+| Dosya | Islem | Aciklama |
+|-------|-------|----------|
+| `vite.config.ts` | GUNCELLE | `dedupe` dizisine Radix paketlerini ekle |
 
 ### Teknik Detay
 
-**NaturalHeader.tsx:**
-- `import { TooltipProvider } from "@/components/ui/tooltip";` ekle
-- Return icindeki `<header>` elementini `<TooltipProvider>` ile sar
+**vite.config.ts** - `resolve.dedupe` dizisine su paketler eklenecek:
+- `@radix-ui/react-tooltip` (hatayi dogrudan cozen paket)
+- `@radix-ui/react-popover`
+- `@radix-ui/react-dialog`
+- `@radix-ui/react-dropdown-menu`
+- `@radix-ui/react-select`
+- `@radix-ui/react-tabs`
+- `@radix-ui/react-accordion`
+- `@radix-ui/react-context-menu`
+- `@radix-ui/react-scroll-area`
+- `@radix-ui/react-slot`
+- `framer-motion`
 
-**NaturalFooter.tsx:**
-- `import { TooltipProvider } from "@/components/ui/tooltip";` ekle
-- Return icindeki `<footer>` elementini `<TooltipProvider>` ile sar
+Bu, SDK ile uygulama arasinda paylasilan tum Radix bilesenlerinin tek bir React Context ornegini kullanmasini garanti eder. Ayni sorunun gelecekte baska Radix bilesenlerinde de cikmasini engeller.
 
-Bu degisiklik mevcut mimari kurala (tum ozel blokler TooltipProvider ile sarilmali) uyumludur ve baska hicbir dosyayi etkilemez.
+### Neden Blok Bazli TooltipProvider Yeterli Degil?
 
+Bloklar `TooltipProvider` ile sarildikca, bloklarin **kendi icindeki** Tooltip kullanimlari calisir. Ancak SDK'nin dahili arayuz bilesenleri (blok secim cizgileri, aksiyon butonlari, tasinma tutamaclar) da Tooltip kullaniyor ve bunlar bizim bloklarimizin icinde degil - SDK'nin kendi render agacinda. Bu dahili bilesenler SDK'nin kendi Tooltip kopyasini kullaniyor.
+
+### Risk Analizi
+
+- Degisiklik yalnizca build konfigurasyonunu etkiler
+- Calisma zamani davranisi degismez, yalnizca paket cozumleme birlestirilir
+- Tum Radix bilesenleri zaten ayni versiyonlari kullaniyor, uyumsuzluk riski yok
