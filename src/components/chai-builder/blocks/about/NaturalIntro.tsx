@@ -6,30 +6,32 @@ import {
 import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalIntroProps = {
   styles: ChaiStyles;
   title: string;
   description: string;
-};
+} & CommonStyleProps;
 
 const NaturalIntroBlock = (props: ChaiBlockComponentProps<NaturalIntroProps>) => {
-  const { blockProps, title, description } = props;
+  const { blockProps, title, description, ...styleProps } = props;
+  const s = resolveStyles(styleProps);
 
   return (
     <TooltipProvider>
       <section
         {...blockProps}
-        className={cn(blockProps.className, "natural-block max-w-4xl mx-auto py-12 md:py-16 px-4")}
+        className={cn(blockProps.className, "natural-block max-w-4xl mx-auto px-4", s.bgColor, s.sectionPadding)}
       >
-        <div className="text-center space-y-6">
+        <div className={cn("space-y-6", `text-${s.textAlign}`)}>
           <h2
-            className="text-3xl md:text-4xl leading-tight"
-            style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}
+            className={cn(s.titleSize(), s.titleWeight, s.titleColor, "leading-tight")}
+            style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
           >
             {title}
           </h2>
-          <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
+          <p className={cn(s.descSize, s.descColor, "leading-relaxed max-w-3xl mx-auto")}>
             {description}
           </p>
         </div>
@@ -59,6 +61,7 @@ registerChaiBlock(NaturalIntroBlock, {
         default: "We believe in the power of thoughtful storytelling. Our platform brings together diverse voices and perspectives to create meaningful conversations about life, wellness, creativity, and personal growth.",
         ui: { "ui:widget": "textarea" },
       }),
+      ...commonStyleSchemaProps({ bgColor: "transparent", textAlign: "center", sectionPadding: "sm" }),
     },
   },
 });

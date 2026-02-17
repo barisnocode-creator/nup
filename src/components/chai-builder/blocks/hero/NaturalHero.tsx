@@ -8,6 +8,7 @@ import { EditableChaiImage } from "../shared/EditableChaiImage";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Instagram, Facebook, Linkedin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { heroTitleSizeMap, resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalHeroProps = {
   styles: ChaiStyles;
@@ -15,24 +16,26 @@ export type NaturalHeroProps = {
   description: string;
   buttonText: string;
   image: string;
-};
+} & CommonStyleProps;
 
 const NaturalHeroBlock = (props: ChaiBlockComponentProps<NaturalHeroProps>) => {
-  const { blockProps, title, description, buttonText, image, inBuilder } = props;
+  const { blockProps, title, description, buttonText, image, inBuilder, ...styleProps } = props;
+  const s = resolveStyles(styleProps);
 
   return (
     <TooltipProvider>
       <section
         {...blockProps}
-        className={cn(blockProps.className, "natural-block relative rounded-[2.5rem] overflow-hidden bg-muted my-12 max-w-7xl mx-auto")}
+        className={cn(blockProps.className, "natural-block relative rounded-[2.5rem] overflow-hidden my-12 max-w-7xl mx-auto", s.bgColor === "bg-transparent" ? "bg-muted" : s.bgColor)}
       >
         <div className="grid md:grid-cols-2 gap-6 md:gap-12 p-6 md:p-12 lg:p-16">
           {/* Left - Image */}
-          <div className="relative aspect-[4/3] md:aspect-auto rounded-[2rem] overflow-hidden">
+          <div className="relative rounded-[2rem] overflow-hidden">
             <EditableChaiImage
               src={image || "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=1920&q=80"}
               alt={title}
-              className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+              className="w-full h-full object-cover"
+              containerClassName="aspect-[4/3] md:aspect-auto rounded-[2rem] overflow-hidden"
               inBuilder={inBuilder}
             />
           </div>
@@ -41,12 +44,12 @@ const NaturalHeroBlock = (props: ChaiBlockComponentProps<NaturalHeroProps>) => {
           <div className="flex flex-col justify-center space-y-6 md:space-y-8">
             <div className="space-y-4 md:space-y-6">
               <h1
-                className="text-4xl md:text-5xl lg:text-7xl leading-[1.1] tracking-tight"
-                style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 700 }}
+                className={cn(s.titleSize(heroTitleSizeMap), s.titleWeight, s.titleColor, "leading-[1.1] tracking-tight")}
+                style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}
               >
                 {title}
               </h1>
-              <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-xl">
+              <p className={cn(s.descSize, s.descColor, "leading-relaxed max-w-xl")}>
                 {description}
               </p>
             </div>
@@ -60,25 +63,13 @@ const NaturalHeroBlock = (props: ChaiBlockComponentProps<NaturalHeroProps>) => {
               </a>
 
               <div className="flex items-center gap-4">
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110"
-                  aria-label="Instagram"
-                >
+                <a href="#" className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110" aria-label="Instagram">
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110"
-                  aria-label="Facebook"
-                >
+                <a href="#" className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110" aria-label="Facebook">
                   <Facebook className="w-5 h-5" />
                 </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110"
-                  aria-label="LinkedIn"
-                >
+                <a href="#" className="w-12 h-12 rounded-full border-2 border-border hover:border-primary hover:bg-muted transition-all flex items-center justify-center hover:scale-110" aria-label="LinkedIn">
                   <Linkedin className="w-5 h-5" />
                 </a>
               </div>
@@ -121,6 +112,7 @@ registerChaiBlock(NaturalHeroBlock, {
         default: "https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=1920&q=80",
         ui: { "ui:widget": "image" },
       }),
+      ...commonStyleSchemaProps({ bgColor: "muted", textAlign: "left", titleSize: "3xl" }),
     },
   },
 });

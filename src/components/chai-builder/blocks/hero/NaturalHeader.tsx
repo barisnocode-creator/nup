@@ -8,20 +8,22 @@ import type { ChaiBlockComponentProps, ChaiStyles } from "@chaibuilder/sdk/types
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { resolveStyles, commonStyleSchemaProps, type CommonStyleProps } from "../shared/styleUtils";
 
 export type NaturalHeaderProps = {
   styles: ChaiStyles;
   siteName: string;
   buttonText: string;
-};
+} & CommonStyleProps;
 
 const NaturalHeaderBlock = (props: ChaiBlockComponentProps<NaturalHeaderProps>) => {
-  const { blockProps, siteName, buttonText, inBuilder } = props;
+  const { blockProps, siteName, buttonText, inBuilder, ...styleProps } = props;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const s = resolveStyles(styleProps);
 
   return (
     <TooltipProvider>
-    <header {...blockProps} className={cn(blockProps.className, "natural-block sticky top-0 z-50 py-2 sm:py-4")}>
+    <header {...blockProps} className={cn(blockProps.className, "natural-block sticky top-0 z-50 py-2 sm:py-4", s.bgColor === "bg-background" ? "" : s.bgColor)}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 rounded-full bg-background/80 backdrop-blur-md border border-border/50 px-4 sm:px-6 shadow-sm">
           {/* Logo */}
@@ -109,6 +111,7 @@ registerChaiBlock(NaturalHeaderBlock, {
         title: "Buton Metni",
         default: "Join Now",
       }),
+      ...commonStyleSchemaProps({ bgColor: "transparent", sectionPadding: "sm" }),
     },
   },
 });
