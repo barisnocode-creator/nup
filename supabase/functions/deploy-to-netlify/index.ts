@@ -1186,7 +1186,7 @@ Deno.serve(async (req) => {
     }
 
     // Deploy
-    const deployRes = await fetch(
+    let deployRes = await fetch(
       `https://api.netlify.com/api/v1/sites/${netlifySiteId}/deploys`,
       {
         method: "POST",
@@ -1197,6 +1197,59 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ files: { "/index.html": sha1 } }),
       }
     );
+
+    // Self-healing: if site was deleted/lost, create a new one and retry
+    if (deployRes.status === 404) {
+      console.warn("Netlify site not found (404), creating a new site...");
+      
+      // Clear old site data
+      await supabaseAdmin
+        .from("projects")
+        .update({ netlify_site_id: null, netlify_url: null })
+        .eq("id", projectId);
+
+      // Create new site
+      const createRes = await fetch("https://api.netlify.com/api/v1/sites", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${NETLIFY_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `openlucius-${project.subdomain || projectId.slice(0, 8)}`,
+        }),
+      });
+
+      if (!createRes.ok) {
+        const errText = await createRes.text();
+        console.error("Netlify re-create site error:", errText);
+        return new Response(
+          JSON.stringify({ error: "Failed to re-create Netlify site", details: errText }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const newSiteData = await createRes.json();
+      netlifySiteId = newSiteData.id;
+
+      await supabaseAdmin
+        .from("projects")
+        .update({ netlify_site_id: netlifySiteId, netlify_url: newSiteData.ssl_url || newSiteData.url })
+        .eq("id", projectId);
+
+      // Retry deploy on new site
+      deployRes = await fetch(
+        `https://api.netlify.com/api/v1/sites/${netlifySiteId}/deploys`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${NETLIFY_API_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ files: { "/index.html": sha1 } }),
+        }
+      );
+    }
 
     if (!deployRes.ok) {
       const errText = await deployRes.text();
