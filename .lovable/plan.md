@@ -1,40 +1,48 @@
 
-## Yayinlama Hatasinin Duzeltilmesi
 
-### Sorunun Kaynagi
+## Natural Template Bloklarinin Diger Templatelerle Esitlenmesi
 
-Netlify sitesi artik mevcut degil (silinmis veya erisim kaybi). Veritabaninda kayitli `netlify_site_id` (`01ef82f4-...`) gecersiz oldugu icin deploy islemi `404 Not Found` hatasi aliyor.
+### Sorun
 
-Mevcut kodda `netlify_site_id` varsa yeni site olusturulmuyor, dogrudan deploy edilmeye calisiliyor. Eski site bulunamadiginda hata veriyor ve kurtarma mekanizmasi yok.
+Natural template'in 6 blogu (NaturalHeader, NaturalHero, NaturalIntro, NaturalArticleGrid, NaturalNewsletter, NaturalFooter), diger template bloklarinda (HeroSplit, HeroOverlay, ServicesGrid vb.) bulunan **stil ozellestirme seceneklerinden** yoksun. Bu durum:
+
+1. **Gorsel duzensizlik**: Gorseller `containerClassName` olmadan render ediliyor, boyut/konum kontrolu zayif
+2. **Stil paneli eksik**: Baslik boyutu, kalinligi, rengi, arka plan, bosluklari gibi ayarlar Natural bloklarda yok
+3. **Tutarsizlik**: Diger templateler `commonStyleSchemaProps` ve `resolveStyles` kullaniyor, Natural bloklar kullanmiyor
 
 ### Cozum
 
-`deploy-to-netlify` fonksiyonuna **otomatik kurtarma** (self-healing) mekanizmasi eklenecek. Deploy islemi 404 donerse, eski site ID temizlenip yeni bir Netlify sitesi olusturulacak.
+Natural template'in tum bloklarini, diger template bloklarinin kullandigi standart stil sistemine (`commonStyleSchemaProps` + `resolveStyles`) entegre etmek.
 
 ### Dosya Degisiklikleri
 
 | Dosya | Islem |
 |-------|-------|
-| `supabase/functions/deploy-to-netlify/index.ts` | Deploy 404 hatasinda otomatik yeni site olusturma |
+| `src/components/chai-builder/blocks/hero/NaturalHero.tsx` | `commonStyleSchemaProps` ve `resolveStyles` eklenmesi, gorsel `containerClassName` duzeltmesi |
+| `src/components/chai-builder/blocks/hero/NaturalHeader.tsx` | `commonStyleSchemaProps` eklenmesi (arka plan, bosluklari) |
+| `src/components/chai-builder/blocks/about/NaturalIntro.tsx` | `commonStyleSchemaProps` ve `resolveStyles` eklenmesi |
+| `src/components/chai-builder/blocks/gallery/NaturalArticleGrid.tsx` | `commonStyleSchemaProps` eklenmesi, gorsel `containerClassName` duzeltmesi, `hover:scale-110` kaldirilmasi |
+| `src/components/chai-builder/blocks/cta/NaturalNewsletter.tsx` | `commonStyleSchemaProps` ve `resolveStyles` eklenmesi |
+| `src/components/chai-builder/blocks/contact/NaturalFooter.tsx` | `commonStyleSchemaProps` eklenmesi (arka plan, bosluklari) |
 
 ### Teknik Detay
 
-Deploy API cagrisindan `404` donerse:
-1. `netlifySiteId` degiskeni `null` yapilir
-2. Veritabanindaki `netlify_site_id` ve `netlify_url` alanlari temizlenir
-3. Yeni bir Netlify sitesi olusturulur (mevcut "site yoksa olustur" mantigi tekrar calisir)
-4. Deploy islemi yeni site uzerinde tekrarlanir
+Her Natural blokta yapilacak degisiklikler:
 
-Boylece kullanici hic bir sey yapmadan "Yayinla" butonuna bastiginda site otomatik olarak yeniden olusturulup yayinlanir.
+1. **Import**: `resolveStyles`, `commonStyleSchemaProps`, `CommonStyleProps` import edilecek
+2. **Props tipi**: `& CommonStyleProps` eklenerek stil proplari desteklenecek
+3. **Schema**: `...commonStyleSchemaProps({ bgColor: "...", textAlign: "..." })` eklenerek editorde stil secenekleri gorunecek
+4. **Render**: Sabit CSS siniflari yerine `resolveStyles` ile dinamik siniflar kullanilacak (baslik boyutu, rengi, arka plan vb.)
+5. **Gorseller**: `EditableChaiImage` bilesenine `containerClassName` eklenerek gorsel alanlari duzenlenecek (orn. `containerClassName="aspect-[4/3] rounded-2xl overflow-hidden"`)
 
-### Degisiklik Detayi (satirlar ~1188-1208 arasi)
+Bu degisiklikler sonrasinda Natural template bloklari, editordeki "Stil" sekmesinde ayni ozellestirme seceneklerini sunacak:
+- Baslik Boyutu (Buyuk / Cok Buyuk / Dev / En Buyuk)
+- Baslik Kalinligi (Normal / Orta / Kalin / Ekstra Kalin)
+- Baslik Rengi (Varsayilan / Ana Renk / Beyaz vb.)
+- Metin Hizalama (Sola / Ortala / Saga)
+- Aciklama Boyutu ve Rengi
+- Arka Plan Rengi (Seffaf / Varsayilan / Kart vb.)
+- Bolum Boslugu (Dar / Normal / Genis / Cok Genis)
 
-Mevcut deploy cagrisinin hata kontrolune 404 ozel durumu eklenecek:
+Ayni standart, bundan sonra eklenecek tum yeni template bloklari icin de uygulanacak.
 
-```text
-Deploy -> 404 mu?
-  Evet -> netlify_site_id'yi temizle -> Yeni site olustur -> Tekrar deploy et
-  Hayir -> Mevcut hata davranisi (500 don)
-```
-
-Bu tek dosya degisikligidir ve mevcut akisi bozmaz. Diger tum durumlarda (basarili deploy, farkli hatalar) davranis ayni kalir.
