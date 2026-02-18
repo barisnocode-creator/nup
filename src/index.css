@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '../src/styles/section-animations.css';
+
 /* Open Lucius Design System - Minimalist & Professional (Durable Style) */
 
 @layer base {

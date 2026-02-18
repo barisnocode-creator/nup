@@ -423,7 +423,7 @@ export function ChaiBuilderWrapper({
             pageId={projectId}
             blocks={previewBlocks || initialBlocks}
             theme={(previewTheme || initialTheme || defaultTheme) as ChaiThemeValues}
-            themePresets={themePresets}
+            themePresets={themePresets as any}
             onSave={handleSave}
             autoSave={true}
             autoSaveActionsCount={5}

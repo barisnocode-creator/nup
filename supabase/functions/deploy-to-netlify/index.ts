@@ -1146,10 +1146,25 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Prefer site_sections, fallback to chai_blocks
+    const siteSections = (project.site_sections as Array<{ id: string; type: string; props: Record<string, unknown>; style?: Record<string, unknown> }>) || [];
+    const siteTheme = (project.site_theme as Record<string, unknown>) || {};
     const chaiBlocks = (project.chai_blocks as ChaiBlock[]) || [];
     const chaiTheme = (project.chai_theme as Record<string, unknown>) || {};
 
-    const html = blocksToHtml(chaiBlocks, chaiTheme, project.name, projectId, project.template_id || undefined);
+    let html: string;
+    if (siteSections.length > 0) {
+      // Convert site_sections to ChaiBlock format for existing renderers
+      const blocksFromSections: ChaiBlock[] = siteSections.map(s => ({
+        _id: s.id,
+        _type: s.type.includes('-') ? s.type.split('-').map((w, i) => i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w.charAt(0).toUpperCase() + w.slice(1)).join('') : s.type,
+        ...s.props,
+      }));
+      const theme = Object.keys(siteTheme).length > 0 ? siteTheme : chaiTheme;
+      html = blocksToHtml(blocksFromSections, theme, project.name, projectId, project.template_id || undefined);
+    } else {
+      html = blocksToHtml(chaiBlocks, chaiTheme, project.name, projectId, project.template_id || undefined);
+    }
     const { sha1, content } = await createDeployPayload(html);
 
     let netlifySiteId = project.netlify_site_id;
