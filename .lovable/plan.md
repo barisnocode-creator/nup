@@ -1,126 +1,136 @@
 
+## Template Sadakatini Koruma ve Kalan Fazlarin Tamamlanmasi
 
-## Kalan Isler: Ozel Editor ve SDK Temizligi
+### Temel Sorun
 
-Faz 2 (bolum bilesenleri, registry, SectionRenderer) tamamlandi. Simdi kalan fazlar:
+Mevcut `src/components/sections/` altindaki yeni bilesenler (ornegin `HeroCentered`, `ServicesGrid`, `HeroOverlay`) basitlesilmis, jenerik versiyonlar. Ancak eski template'lerdeki zengin bilesenler cok daha detayli:
 
-### Faz 3: Ozel Editor Bilesenleri
+- **Pilates**: `HeroFullscreen` (glassmorphic form overlay, parallax bg, gradient katmanlari), `FeatureCards` (IntersectionObserver ile staggered fade-in, hover:scale-110 gorsel efekti), `TourGallery` (sonsuz yatay scroll animasyonu `@keyframes scrollGallery`)
+- **Lawyer**: `HeroLawyer` (framer-motion ile sirali fade+slide animasyonlari, parallax `backgroundAttachment: fixed`, scroll indicator bounce), `ValuesGrid` (framer-motion `whileInView`, `lawyer-value-card` hover-lift efekti)
+- **Natural**: `NaturalHero` (rounded-[2.5rem] containerlar, serif tipografi, sosyal medya ikonlari), `NaturalArticleGrid` (category-tagged gradient overlay kartlar, `natural-card-hover`, `natural-floating-button`)
 
-Yeni `src/components/editor/` klasoru altinda:
+Bu zenginlikler yeni section bilesenlerine tasinmali.
 
-**useEditorState.ts** - Editor state hook'u
-- `sections`, `selectedSectionId`, `theme` state'leri
-- `selectSection`, `updateSectionProps`, `updateSectionStyle`, `addSection`, `removeSection`, `moveSectionUp/Down` aksiyonlari
-- Undo/redo destegi (basit: onceki state'i tut)
+### Cozum: Template-Aware Section Bilesenleri
 
-**useSiteSave.ts** - Otomatik kaydetme
-- 2 saniye debounce ile `site_sections` ve `site_theme`'i Supabase'e kaydet
-- `isSaving` ve `hasUnsavedChanges` flag'leri
+Her template icin ayri bilesen yazmak yerine, mevcut section bilesenlerini **template_id bazli varyantlarla** zenginlestirecegiz. Ancak bu karmasikligi onlemek icin daha iyi bir yaklasim: **template-spesifik CSS ve animasyonlari yeni bilesenlere tasimak**.
 
-**SiteEditor.tsx** - Ana editor bileseni
-- `useEditorState` ve `useSiteSave` hook'larini kullanir
-- Uc katman: EditorToolbar (ust), EditorCanvas (orta), SectionEditPanel (sag floating)
-- Ilk yukleme: Supabase'den `site_sections` ve `site_theme` okur; bos ise `chai_blocks`'dan migration yapar
+### Faz A: Section Bilesenlerini Zenginlestirme
 
-**EditorToolbar.tsx** - Ust toolbar
-- Sol: Dashboard'a don (ok ikonu), proje adi
-- Orta: Onizleme/Duzenle toggle
-- Sag: Ozelestir butonu, Yayinla butonu, kaydetme durumu gostergesi
+**1. HeroCentered.tsx - Pilates kalitesine yukseltme**
+- IntersectionObserver ile fade-in animasyonu ekle
+- Glassmorphic blur efekti ve gradient katmanlari ekle
+- `animate-fade-in` CSS class'ini kullan
 
-**EditorCanvas.tsx** - Ana canvas alani
-- `SectionRenderer`'i sarar, her bolume tiklanabilir overlay ekler
-- Hover'da: ince mavi border + sag ustte bolum adi etiketi
-- Secimde: kalin mavi border + sag ustte aksiyon kutucugu (yukari/asagi/sil)
-- Locked bolumlerde sil butonu gizlenir
-- Bolumler arasinda "+" butonu -> AddSectionPanel'i acar
+**2. HeroOverlay.tsx - Lawyer kalitesine yukseltme**
+- `framer-motion` ile sirali text animasyonlari (delay 0.2, 0.4, 0.6, 0.8)
+- Parallax `backgroundAttachment: fixed` efekti
+- Scroll indicator bounce animasyonu
+- Tracking-wider uppercase subtitle stili
 
-**SectionEditPanel.tsx** - Sag floating panel (360px)
-- Secili bolum olmadigi zaman gizli
-- Icerik sekmesi: bolum tipi bazli dinamik form alanlari (input, textarea, select)
-- Stil sekmesi: baslik boyutu, agirlik, renk, arka plan, padding secenekleri
-- Gorsel alanlari icin Pixabay butonu
-- Animasyonlu acilis (sag -> sol slide)
-- "Tamam" butonu ile kapatma
+**3. ServicesGrid.tsx - FeatureCards kalitesine yukseltme**
+- IntersectionObserver ile staggered fade-in (her kart 200ms gecikme)
+- Gorsel hover efekti (scale-110, 700ms transition)
+- Gradient overlay alt kisimda
+- `aspect-[4/5]` gorsel orani
 
-**AddSectionPanel.tsx** - Sol panel (bolum ekleme)
-- `sectionCatalog`'dan kategorilere gore gruplu liste
-- Tiklandiginda varsayilan props ile yeni section ekler
-- Overlay/modal olarak acilir
+**4. StatisticsCounter.tsx - Sayi sayma animasyonu**
+- IntersectionObserver tetiklemeli counter animasyonu
+- Staggered giris efekti
 
-**CustomizePanel.tsx** - Tema ozellestirme paneli
-- Toolbar'daki "Ozelestir" butonundan acilir
-- Renkler: primary, background, foreground vb. color picker
-- Fontlar: heading + body font secimi
-- Koselerin yuvarlaklik seviyesi
-- Degisiklikler aninda CSS degiskenlerine yansir
+**5. TestimonialsCarousel.tsx - Zenginlestirme**
+- Fade-in animasyonu
+- Alinti ikonu (") dekorasyon
+- Avatar gorsel destegi
 
-### Faz 4: Project.tsx Yeniden Yapilandirma
+**6. NaturalArticleGrid.tsx - Mevcut hali zaten iyi**
+- `natural-card-hover`, `natural-floating-button`, `natural-tag-*` CSS class'larini korumak icin `natural.css` stillerini `index.css` veya ayri bir dosyaya tasi
 
-- `USE_CHAI_BUILDER` ve `USE_GRAPES_EDITOR` flag'leri kaldirilir
-- `ChaiBuilderWrapper` lazy import kaldirilir
-- `GrapesEditor` lazy import kaldirilir
-- `convertAndSaveChaiBlocks` fonksiyonu -> `convertToSiteSections` olarak yeniden yazilir
-- Render: `SiteEditor` bileseni kullanilir
-- Mevcut `EditorSidebar`, `CustomizeSidebar` vb. eski sidebar'lar kaldirilir (yeni editorde icsel)
-- `PixabayImagePicker` import'u `@/components/chai-builder/` yerine `@/components/editor/` altina tasiniror
+**7. NaturalHero.tsx - Mevcut hali zaten iyi**
+- Serif tipografi, rounded containerlar korunuyor
 
-### Faz 5: PublicWebsite.tsx Guncelleme
+**8. ImageGallery.tsx - TourGallery kalitesinde yeniden yaz**
+- Sonsuz yatay scroll animasyonu (`@keyframes scrollGallery`)
+- Koyu arka plan (bg-foreground)
+- Gorsel hover scale efekti
+- Caption overlay
 
-- `import { RenderChaiBlocks } from '@chaibuilder/sdk/render'` kaldirilir
-- `import { SectionRenderer } from '@/components/sections/SectionRenderer'` eklenir
-- Oncelik: `site_sections` varsa `SectionRenderer` ile render et
-- Fallback: `chai_blocks` varsa `SectionRenderer` ile uyumlu formata donustur ve render et
-- Son fallback: `generated_content` varsa eski `WebsitePreview` ile render et
+### Faz B: Template CSS Dosyalarinin Tasimmasi
 
-### Faz 6: deploy-to-netlify Guncelleme
+Template-spesifik CSS dosyalari yeni bilesenlerin de kullanabilmesi icin tasiyalim:
 
-- Veri okuma: `site_sections` varsa kullan, yoksa `chai_blocks`'a fallback
-- `site_sections` icin yeni bir `sectionsToHtml()` fonksiyonu: her section.type'a gore mevcut `renderX()` fonksiyonlarini cagir
-- Tema: `site_theme` varsa kullan, yoksa `chai_theme`'e fallback
-- Bu sayede hem eski hem yeni projeler sorunsuz yayinlanir
+| Kaynak | Hedef | Icerik |
+|--------|-------|--------|
+| `src/templates/lawyer/styles/lawyer.css` | `src/styles/lawyer-sections.css` | Lawyer-spesifik animasyonlar ve hover efektleri |
+| `src/templates/natural/styles/natural.css` | `src/styles/natural-sections.css` | Natural tag renkleri, card-hover, floating-button |
+| Yeni | `src/styles/section-animations.css` | IntersectionObserver, staggered fade-in, scroll gallery keyframes |
 
-### Faz 7: Template Catalog Guncelleme
+Bu CSS dosyalari `index.css` icerisinden import edilecek.
+
+### Faz C: Template Katalog Guncelleme (Faz 7)
 
 `src/templates/catalog/index.ts`:
 - `import type { ChaiThemeValues } from '@chaibuilder/sdk'` kaldirilir
-- `ChaiThemeValues` yerine basit `Record<string, any>` veya yeni `SiteTheme` tipi kullanilir
-- `templateToPreset` import'u `presets.ts`'den alindi; `presets.ts` guncellenir (ChaiBuilder tip referanslari temizlenir)
+- `getCatalogTheme` fonksiyonu `Record<string, any>` dondurur
+- `templateToPreset` import'u kaldrilir; tema preset verileri dogrudan `definitions.ts` icine taslinir veya basitlesilmis bir `siteThemePresets` dosyasi olusturulur
 
-### Faz 8: Migration Hook
+### Faz D: deploy-to-netlify Guncelleme (Faz 6)
 
-`src/hooks/useMigrateSections.ts`:
-- Proje ilk acildiginda `site_sections` bos ise `chai_blocks`'dan donusturucu calistirir
-- `chai_blocks._type` -> `site_sections.type` esleme tablosu
-- `chai_blocks` icindeki flat prop'lari `section.props` icine toplar
-- Theme: `chai_theme` -> `site_theme` basit kopyalama
-- Donusum sonrasi Supabase'e kaydet
-- Sadece 1 kez calisir (site_sections dolu ise atlar)
+`supabase/functions/deploy-to-netlify/index.ts`:
+- Mevcut `renderHeroCentered(b: ChaiBlock)` vb. fonksiyonlar zaten var ve `site_sections` ile de ayni prop yapisi kullanilir
+- Ana `Deno.serve` handler'inda: `site_sections` varsa kullan, yoksa `chai_blocks`'a fallback
+- Yeni `sectionsToHtml(sections, theme)` fonksiyonu ekle:
+  ```
+  sections.map(s => {
+    switch(s.type) {
+      case 'hero-centered': return renderHeroCentered(s.props);
+      case 'hero-overlay': return renderHeroOverlay(s.props);
+      ...
+    }
+  }).join('')
+  ```
+- `renderX` fonksiyonlarindaki animasyon CSS'lerini HTML `<style>` blogu icine ekle
 
-### Faz 9: Temizlik
+### Faz E: Temizlik (Faz 9)
 
-Silinecek dosya/klasorler:
-- `src/components/chai-builder/` (tum klasor)
-- `src/components/grapes-editor/` (tum klasor)
+Silinecek dosya ve klasorler:
+- `src/components/chai-builder/` (tum klasor - ~25 dosya)
+- `src/components/grapes-editor/` (tum klasor - ~10 dosya)
 - `src/styles/chaibuilder.tailwind.css`
 - `tailwind.chaibuilder.config.ts`
-- `src/components/website-preview/` altindaki eski sidebar dosyalari (EditorSidebar, CustomizeSidebar, HomeEditorSidebar, AddContentSidebar, PageSettingsSidebar vb.)
 
-`package.json`'dan kaldirilacak paketler:
+Kaldirilacak paketler (`package.json`):
 - `@chaibuilder/sdk`
 - `grapesjs`
 - `grapesjs-blocks-basic`
 - `grapesjs-plugin-forms`
 - `grapesjs-preset-webpage`
 
+### Faz F: Template Kaynaklarinin Korunmasi
+
+Eski `src/templates/` klasoru silinmeyecek, referans olarak tutulacak (ya da silinecekse once tum gorsel kalite yeni bilesenlere tasinmis olmali).
+
 ### Uygulama Sirasi
 
-1. Faz 3 -> Editor bilesenleri olustur (en buyuk is parcasi)
-2. Faz 8 -> Migration hook yaz
-3. Faz 4 -> Project.tsx'i yeniden yaz
-4. Faz 5 -> PublicWebsite.tsx'i guncelle
-5. Faz 6 -> deploy-to-netlify'i guncelle
-6. Faz 7 -> Template catalog temizle
-7. Faz 9 -> Eski dosyalari sil, paketleri kaldir
+1. **Faz A** - Section bilesenlerini zenginlestir (en kritik: animasyonlar, efektler)
+2. **Faz B** - CSS dosyalarini tasi ve import et
+3. **Faz C** - Template catalog'dan ChaiBuilder tiplerini temizle
+4. **Faz D** - deploy-to-netlify'i site_sections destegi ekle
+5. **Faz E** - Eski ChaiBuilder/GrapesJS dosyalarini ve paketleri sil
 
-Her faz sonunda test yapilabilir. En kritik nokta: Faz 4 ve 5 tamamlanmadan site bozulabilir, bu yuzden 3-4-5 birlikte uygulanmalidir.
+### Teknik Detaylar
 
+**Animasyon Stratejisi:**
+- `framer-motion` zaten yuklu, `motion.div` ile `whileInView` animasyonlari kullanilacak
+- Alternatif olarak IntersectionObserver + CSS animasyonlari (daha hafif, mevcut Pilates pattern'i)
+- Her iki yontem de bilesenler arasinda tutarli olacak
+
+**CSS Sinif Oneki:**
+- Natural bloklari: `natural-*` (natural-card-hover, natural-floating-button, natural-tag-*)
+- Lawyer bloklari: `lawyer-*` (lawyer-value-card, lawyer-practice-card, lawyer-scroll-indicator)
+- Genel animasyonlar: `section-fade-in`, `section-stagger-*`
+
+**Props Uyumu:**
+- Yeni section bilesnlerinin `SectionComponentProps` arayuzu korunur
+- Eski template bilesenlerindeki zengin gorsel efektler, ayni `props` ve `style` uzerinden kontrol edilir
+- Ornegin `ImageGallery` icin: `props.galleryImages`, `props.captions` vb.
