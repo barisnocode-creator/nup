@@ -4,8 +4,7 @@
  */
 
 import { allDefinitions, type TemplateDefinition, type TemplateSectionDef } from './definitions';
-import { templateToPreset } from '@/components/chai-builder/themes/presets';
-import type { ChaiThemeValues } from '@chaibuilder/sdk';
+import { templateToPreset, type ThemePresetValues } from '@/components/chai-builder/themes/presets';
 
 // Re-export types
 export type { TemplateDefinition, TemplateSectionDef };
@@ -31,7 +30,7 @@ export function getTemplatesForIndustry(industry: string): TemplateDefinition[] 
 }
 
 /** Resolve the theme preset for a catalog template */
-export function getCatalogTheme(templateId: string): Partial<ChaiThemeValues> | null {
+export function getCatalogTheme(templateId: string): ThemePresetValues | null {
   const def = getCatalogTemplate(templateId);
   if (!def) return null;
   return templateToPreset[def.themePresetKey] || null;
