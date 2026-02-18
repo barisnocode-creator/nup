@@ -1,136 +1,109 @@
 
-## Template Sadakatini Koruma ve Kalan Fazlarin Tamamlanmasi
+## Editor UI/UX Iyilestirme ve Template Degistirme Ozelligi
 
-### Temel Sorun
+### Mevcut Sorunlar (Ekran Goruntusunden Tespit Edilen)
 
-Mevcut `src/components/sections/` altindaki yeni bilesenler (ornegin `HeroCentered`, `ServicesGrid`, `HeroOverlay`) basitlesilmis, jenerik versiyonlar. Ancak eski template'lerdeki zengin bilesenler cok daha detayli:
+1. **Template degistirme ozelligi yok** - Editorde "Ozelestir" butonuna basildiginda sadece renk/font paneli aciliyor, template secme/degistirme secenegi yok
+2. **Seffaf/eksik UI elemanlari** - Paneller, butonlar ve overlay'ler seffaf gorunuyor, arka plan renkleri eksik
+3. **SectionEditPanel** basliklari ham tip adlarini gosteriyor ("services-grid" gibi teknik isimler)
+4. **Genel UI tutarsizligi** - Editor bilesenleri arasinda stil farkliliklari var
 
-- **Pilates**: `HeroFullscreen` (glassmorphic form overlay, parallax bg, gradient katmanlari), `FeatureCards` (IntersectionObserver ile staggered fade-in, hover:scale-110 gorsel efekti), `TourGallery` (sonsuz yatay scroll animasyonu `@keyframes scrollGallery`)
-- **Lawyer**: `HeroLawyer` (framer-motion ile sirali fade+slide animasyonlari, parallax `backgroundAttachment: fixed`, scroll indicator bounce), `ValuesGrid` (framer-motion `whileInView`, `lawyer-value-card` hover-lift efekti)
-- **Natural**: `NaturalHero` (rounded-[2.5rem] containerlar, serif tipografi, sosyal medya ikonlari), `NaturalArticleGrid` (category-tagged gradient overlay kartlar, `natural-card-hover`, `natural-floating-button`)
+### Cozum Plani
 
-Bu zenginlikler yeni section bilesenlerine tasinmali.
+#### 1. CustomizePanel'e Template Degistirme Bolumu Ekleme
 
-### Cozum: Template-Aware Section Bilesenleri
+`src/components/editor/CustomizePanel.tsx` dosyasinda:
+- Panel basina **"Sablon Degistir"** bolumu eklenir
+- Mevcut template'leri gosteren kucuk onizleme kartlari
+- Tiklandiginda `ChangeTemplateModal` acilir
+- Template secildiginde `site_sections` ve `site_theme` guncellenir
 
-Her template icin ayri bilesen yazmak yerine, mevcut section bilesenlerini **template_id bazli varyantlarla** zenginlestirecegiz. Ancak bu karmasikligi onlemek icin daha iyi bir yaklasim: **template-spesifik CSS ve animasyonlari yeni bilesenlere tasimak**.
+#### 2. SiteEditor'a Template Degistirme Akisi Ekleme
 
-### Faz A: Section Bilesenlerini Zenginlestirme
+`src/components/editor/SiteEditor.tsx` dosyasinda:
+- `ChangeTemplateModal` entegrasyonu
+- `onChangeTemplate` callback'i: secilen template'in catalog tanimini yükler, sections ve theme'i gunceller
+- Template degistiginde mevcut icerik korunup yeni yapiya aktarilir (baslik, aciklama vb.)
 
-**1. HeroCentered.tsx - Pilates kalitesine yukseltme**
-- IntersectionObserver ile fade-in animasyonu ekle
-- Glassmorphic blur efekti ve gradient katmanlari ekle
-- `animate-fade-in` CSS class'ini kullan
+#### 3. EditorToolbar'a Template Butonu Ekleme
 
-**2. HeroOverlay.tsx - Lawyer kalitesine yukseltme**
-- `framer-motion` ile sirali text animasyonlari (delay 0.2, 0.4, 0.6, 0.8)
-- Parallax `backgroundAttachment: fixed` efekti
-- Scroll indicator bounce animasyonu
-- Tracking-wider uppercase subtitle stili
+`src/components/editor/EditorToolbar.tsx` dosyasinda:
+- "Ozelestir" butonunun yanina veya altina "Sablon" butonu eklenir
+- Veya "Ozelestir" tiklandiginda acilan panelde ilk sirada template secimi olur
 
-**3. ServicesGrid.tsx - FeatureCards kalitesine yukseltme**
-- IntersectionObserver ile staggered fade-in (her kart 200ms gecikme)
-- Gorsel hover efekti (scale-110, 700ms transition)
-- Gradient overlay alt kisimda
-- `aspect-[4/5]` gorsel orani
+#### 4. Panel ve UI Seffaflik Duzeltmeleri
 
-**4. StatisticsCounter.tsx - Sayi sayma animasyonu**
-- IntersectionObserver tetiklemeli counter animasyonu
-- Staggered giris efekti
+**CustomizePanel.tsx:**
+- `bg-background` yerine `bg-card` veya solid beyaz arka plan
+- Tum `backdrop-blur`'larin altinda solid bg katmani
+- `border` renklerini belirginlestir
+- Select/dropdown'larin z-index ve arka plan renklerini duzelt
 
-**5. TestimonialsCarousel.tsx - Zenginlestirme**
-- Fade-in animasyonu
-- Alinti ikonu (") dekorasyon
-- Avatar gorsel destegi
+**SectionEditPanel.tsx:**
+- Ayni seffaflik duzeltmeleri
+- `section.type` yerine Turkce etiket gosterimi (ornegin "services-grid" -> "Hizmetler")
+- Input ve textarea alanlarinin arka plan renklerini solid yap
 
-**6. NaturalArticleGrid.tsx - Mevcut hali zaten iyi**
-- `natural-card-hover`, `natural-floating-button`, `natural-tag-*` CSS class'larini korumak icin `natural.css` stillerini `index.css` veya ayri bir dosyaya tasi
+**EditorCanvas.tsx:**
+- Secim overlay'lerinin solid arka planli olmasi
+- Action butonlarinin arka plan renklerini net yap
+- Section tip etiketinin okunakliligi arttirilir
 
-**7. NaturalHero.tsx - Mevcut hali zaten iyi**
-- Serif tipografi, rounded containerlar korunuyor
+**AddSectionPanel.tsx:**
+- Solid arka plan ve net border
+- Hover efektlerinin belirgin olmasi
+- Kategori basliklarinin ayirt edilebilir olmasi
 
-**8. ImageGallery.tsx - TourGallery kalitesinde yeniden yaz**
-- Sonsuz yatay scroll animasyonu (`@keyframes scrollGallery`)
-- Koyu arka plan (bg-foreground)
-- Gorsel hover scale efekti
-- Caption overlay
+#### 5. Genel UI Iyilestirmeleri
 
-### Faz B: Template CSS Dosyalarinin Tasimmasi
+**EditorToolbar.tsx:**
+- `bg-background/95 backdrop-blur-xl` yerine `bg-white dark:bg-gray-950 border-b border-gray-200`
+- Toggle butonlarinin daha belirgin ve tiklanabilir gorunmesi
+- "Yayinla" butonunun daha gorse olmasi
 
-Template-spesifik CSS dosyalari yeni bilesenlerin de kullanabilmesi icin tasiyalim:
+**Tum panellerde:**
+- `bg-background` CSS degiskeni yerine dogrudan solid renk kullanimina gecis (editorde tema degiskenleri sitenin renkleriyle cakisabiliyor)
+- `bg-white dark:bg-zinc-900` gibi sabit renkler
+- `shadow-2xl` yerine daha kontrollü golge (`shadow-lg`)
+- z-index hiyerarsisi duzeltmesi: toolbar z-50, panels z-40, overlays z-30
 
-| Kaynak | Hedef | Icerik |
-|--------|-------|--------|
-| `src/templates/lawyer/styles/lawyer.css` | `src/styles/lawyer-sections.css` | Lawyer-spesifik animasyonlar ve hover efektleri |
-| `src/templates/natural/styles/natural.css` | `src/styles/natural-sections.css` | Natural tag renkleri, card-hover, floating-button |
-| Yeni | `src/styles/section-animations.css` | IntersectionObserver, staggered fade-in, scroll gallery keyframes |
+#### 6. Template Degistirme Mantigi
 
-Bu CSS dosyalari `index.css` icerisinden import edilecek.
-
-### Faz C: Template Katalog Guncelleme (Faz 7)
-
-`src/templates/catalog/index.ts`:
-- `import type { ChaiThemeValues } from '@chaibuilder/sdk'` kaldirilir
-- `getCatalogTheme` fonksiyonu `Record<string, any>` dondurur
-- `templateToPreset` import'u kaldrilir; tema preset verileri dogrudan `definitions.ts` icine taslinir veya basitlesilmis bir `siteThemePresets` dosyasi olusturulur
-
-### Faz D: deploy-to-netlify Guncelleme (Faz 6)
-
-`supabase/functions/deploy-to-netlify/index.ts`:
-- Mevcut `renderHeroCentered(b: ChaiBlock)` vb. fonksiyonlar zaten var ve `site_sections` ile de ayni prop yapisi kullanilir
-- Ana `Deno.serve` handler'inda: `site_sections` varsa kullan, yoksa `chai_blocks`'a fallback
-- Yeni `sectionsToHtml(sections, theme)` fonksiyonu ekle:
-  ```
-  sections.map(s => {
-    switch(s.type) {
-      case 'hero-centered': return renderHeroCentered(s.props);
-      case 'hero-overlay': return renderHeroOverlay(s.props);
-      ...
-    }
-  }).join('')
-  ```
-- `renderX` fonksiyonlarindaki animasyon CSS'lerini HTML `<style>` blogu icine ekle
-
-### Faz E: Temizlik (Faz 9)
-
-Silinecek dosya ve klasorler:
-- `src/components/chai-builder/` (tum klasor - ~25 dosya)
-- `src/components/grapes-editor/` (tum klasor - ~10 dosya)
-- `src/styles/chaibuilder.tailwind.css`
-- `tailwind.chaibuilder.config.ts`
-
-Kaldirilacak paketler (`package.json`):
-- `@chaibuilder/sdk`
-- `grapesjs`
-- `grapesjs-blocks-basic`
-- `grapesjs-plugin-forms`
-- `grapesjs-preset-webpage`
-
-### Faz F: Template Kaynaklarinin Korunmasi
-
-Eski `src/templates/` klasoru silinmeyecek, referans olarak tutulacak (ya da silinecekse once tum gorsel kalite yeni bilesenlere tasinmis olmali).
-
-### Uygulama Sirasi
-
-1. **Faz A** - Section bilesenlerini zenginlestir (en kritik: animasyonlar, efektler)
-2. **Faz B** - CSS dosyalarini tasi ve import et
-3. **Faz C** - Template catalog'dan ChaiBuilder tiplerini temizle
-4. **Faz D** - deploy-to-netlify'i site_sections destegi ekle
-5. **Faz E** - Eski ChaiBuilder/GrapesJS dosyalarini ve paketleri sil
+`useEditorState.ts`'e yeni fonksiyon:
+```text
+applyTemplate(templateId: string)
+  -> getCatalogTemplate(templateId) ile tanimlari al
+  -> Mevcut icerik degerlerini koru (baslik, aciklama, telefon vb.)
+  -> Yeni section yapisi olustur, eski degerleri eslestir
+  -> Theme'i template preset'inden guncelle
+  -> sections ve theme state'ini set et
+```
 
 ### Teknik Detaylar
 
-**Animasyon Stratejisi:**
-- `framer-motion` zaten yuklu, `motion.div` ile `whileInView` animasyonlari kullanilacak
-- Alternatif olarak IntersectionObserver + CSS animasyonlari (daha hafif, mevcut Pilates pattern'i)
-- Her iki yontem de bilesenler arasinda tutarli olacak
+**Dosya Degisiklikleri:**
 
-**CSS Sinif Oneki:**
-- Natural bloklari: `natural-*` (natural-card-hover, natural-floating-button, natural-tag-*)
-- Lawyer bloklari: `lawyer-*` (lawyer-value-card, lawyer-practice-card, lawyer-scroll-indicator)
-- Genel animasyonlar: `section-fade-in`, `section-stagger-*`
+| Dosya | Degisiklik |
+|-------|-----------|
+| `src/components/editor/CustomizePanel.tsx` | Template degistir bolumu + solid arka planlar |
+| `src/components/editor/SiteEditor.tsx` | ChangeTemplateModal entegrasyonu + template degistirme akisi |
+| `src/components/editor/EditorToolbar.tsx` | Solid renkler, iyilestirilmis butonlar |
+| `src/components/editor/SectionEditPanel.tsx` | Turkce etiketler + solid arka planlar |
+| `src/components/editor/EditorCanvas.tsx` | Solid overlay'ler + belirgin aksiyon butonlari |
+| `src/components/editor/AddSectionPanel.tsx` | Solid arka plan + cafe kategorisi etiketi |
+| `src/components/editor/useEditorState.ts` | `applyTemplate` fonksiyonu eklenir |
+| `src/components/website-preview/ChangeTemplateModal.tsx` | Turkce metinler + iyilestirilmis UI |
 
-**Props Uyumu:**
-- Yeni section bilesnlerinin `SectionComponentProps` arayuzu korunur
-- Eski template bilesenlerindeki zengin gorsel efektler, ayni `props` ve `style` uzerinden kontrol edilir
-- Ornegin `ImageGallery` icin: `props.galleryImages`, `props.captions` vb.
+**Onemli Tasarim Karari:**
+Editor panellerinde CSS degiskenleri (`bg-background`, `text-foreground` vb.) site temasinin renklerine gore degisebiliyor. Bu nedenle editor UI'da **sabit Tailwind renkleri** (`bg-white`, `text-gray-900`, `border-gray-200` vb.) kullanilacak. Boylece site temasinin editoru bozmasinin onune gecilecek.
+
+### Uygulama Sirasi
+
+1. `useEditorState.ts` -> `applyTemplate` fonksiyonu
+2. `CustomizePanel.tsx` -> Template degistir + solid renkler
+3. `SiteEditor.tsx` -> ChangeTemplateModal entegrasyonu
+4. `EditorToolbar.tsx` -> Solid renkler
+5. `SectionEditPanel.tsx` -> Turkce etiketler + solid renkler
+6. `EditorCanvas.tsx` -> Solid overlay'ler
+7. `AddSectionPanel.tsx` -> Solid renkler + cafe kategorisi
+8. `ChangeTemplateModal.tsx` -> Turkce metinler
