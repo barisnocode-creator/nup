@@ -583,6 +583,8 @@ export type Database = {
           netlify_url: string | null
           profession: string
           published_at: string | null
+          site_sections: Json | null
+          site_theme: Json | null
           status: string
           subdomain: string | null
           template_id: string | null
@@ -605,6 +607,8 @@ export type Database = {
           netlify_url?: string | null
           profession: string
           published_at?: string | null
+          site_sections?: Json | null
+          site_theme?: Json | null
           status?: string
           subdomain?: string | null
           template_id?: string | null
@@ -627,6 +631,8 @@ export type Database = {
           netlify_url?: string | null
           profession?: string
           published_at?: string | null
+          site_sections?: Json | null
+          site_theme?: Json | null
           status?: string
           subdomain?: string | null
           template_id?: string | null
@@ -744,6 +750,8 @@ export type Database = {
           name: string | null
           profession: string | null
           published_at: string | null
+          site_sections: Json | null
+          site_theme: Json | null
           subdomain: string | null
           template_id: string | null
         }
@@ -757,6 +765,8 @@ export type Database = {
           name?: string | null
           profession?: string | null
           published_at?: string | null
+          site_sections?: Json | null
+          site_theme?: Json | null
           subdomain?: string | null
           template_id?: string | null
         }
@@ -770,6 +780,8 @@ export type Database = {
           name?: string | null
           profession?: string | null
           published_at?: string | null
+          site_sections?: Json | null
+          site_theme?: Json | null
           subdomain?: string | null
           template_id?: string | null
         }

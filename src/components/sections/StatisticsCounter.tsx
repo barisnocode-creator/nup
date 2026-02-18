@@ -1,0 +1,34 @@
+import { resolveStyles } from './styleUtils';
+import type { SectionComponentProps } from './types';
+
+export function StatisticsCounter({ section }: SectionComponentProps) {
+  const { props, style } = section;
+  const s = resolveStyles({ ...style });
+  const stats = [
+    { value: props.stat1Value, label: props.stat1Label },
+    { value: props.stat2Value, label: props.stat2Label },
+    { value: props.stat3Value, label: props.stat3Label },
+    { value: props.stat4Value, label: props.stat4Label },
+  ].filter(st => st.value && st.label);
+
+  return (
+    <section className={`${s.sectionPadding} ${s.bgColor} text-primary-foreground`}>
+      <div className="container mx-auto px-6">
+        {(props.title || props.subtitle) && (
+          <div className={`text-${s.textAlign} mb-12`}>
+            {props.subtitle && <span className={`inline-block px-4 py-2 bg-primary-foreground/10 rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>{props.subtitle}</span>}
+            {props.title && <h2 className={`${s.titleSize()} ${s.titleWeight}`}>{props.title}</h2>}
+          </div>
+        )}
+        <div className={`grid grid-cols-2 md:grid-cols-${stats.length} gap-8 text-center`}>
+          {stats.map((stat, index) => (
+            <div key={index} className="space-y-2">
+              <div className="text-4xl md:text-5xl lg:text-6xl font-bold">{stat.value}</div>
+              <div className="text-primary-foreground/80 text-sm md:text-base">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
