@@ -2,6 +2,7 @@ import type { SectionComponentProps } from './types';
 import { HeroCentered } from './HeroCentered';
 import { HeroSplit } from './HeroSplit';
 import { HeroOverlay } from './HeroOverlay';
+import { HeroCafe } from './HeroCafe';
 import { ServicesGrid } from './ServicesGrid';
 import { AboutSection } from './AboutSection';
 import { StatisticsCounter } from './StatisticsCounter';
@@ -12,12 +13,10 @@ import { FAQAccordion } from './FAQAccordion';
 import { ImageGallery } from './ImageGallery';
 import { PricingTable } from './PricingTable';
 import { AppointmentBooking } from './AppointmentBooking';
-import { NaturalHeader } from './NaturalHeader';
-import { NaturalHero } from './NaturalHero';
-import { NaturalIntro } from './NaturalIntro';
-import { NaturalArticleGrid } from './NaturalArticleGrid';
-import { NaturalNewsletter } from './NaturalNewsletter';
-import { NaturalFooter } from './NaturalFooter';
+import { MenuShowcase } from './MenuShowcase';
+import { CafeStory } from './CafeStory';
+import { CafeFeatures } from './CafeFeatures';
+import { CafeGallery } from './CafeGallery';
 
 type SectionComponent = React.ComponentType<SectionComponentProps>;
 
@@ -28,6 +27,8 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'hero-split': HeroSplit,
   'HeroOverlay': HeroOverlay,
   'hero-overlay': HeroOverlay,
+  'HeroCafe': HeroCafe,
+  'hero-cafe': HeroCafe,
   'ServicesGrid': ServicesGrid,
   'services-grid': ServicesGrid,
   'AboutSection': AboutSection,
@@ -48,18 +49,14 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'pricing-table': PricingTable,
   'AppointmentBooking': AppointmentBooking,
   'appointment-booking': AppointmentBooking,
-  'NaturalHeader': NaturalHeader,
-  'natural-header': NaturalHeader,
-  'NaturalHero': NaturalHero,
-  'natural-hero': NaturalHero,
-  'NaturalIntro': NaturalIntro,
-  'natural-intro': NaturalIntro,
-  'NaturalArticleGrid': NaturalArticleGrid,
-  'natural-article-grid': NaturalArticleGrid,
-  'NaturalNewsletter': NaturalNewsletter,
-  'natural-newsletter': NaturalNewsletter,
-  'NaturalFooter': NaturalFooter,
-  'natural-footer': NaturalFooter,
+  'MenuShowcase': MenuShowcase,
+  'menu-showcase': MenuShowcase,
+  'CafeStory': CafeStory,
+  'cafe-story': CafeStory,
+  'CafeFeatures': CafeFeatures,
+  'cafe-features': CafeFeatures,
+  'CafeGallery': CafeGallery,
+  'cafe-gallery': CafeGallery,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
@@ -77,6 +74,7 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'hero-centered', label: 'Hero - Ortalanmış', category: 'hero' },
   { type: 'hero-split', label: 'Hero - İki Kolon', category: 'hero' },
   { type: 'hero-overlay', label: 'Hero - Overlay', category: 'hero' },
+  { type: 'hero-cafe', label: 'Hero - Cafe', category: 'hero' },
   { type: 'services-grid', label: 'Hizmetler', category: 'content' },
   { type: 'about-section', label: 'Hakkımızda', category: 'content' },
   { type: 'statistics-counter', label: 'İstatistikler', category: 'content' },
@@ -87,10 +85,8 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'image-gallery', label: 'Görsel Galeri', category: 'content' },
   { type: 'pricing-table', label: 'Fiyatlandırma', category: 'content' },
   { type: 'appointment-booking', label: 'Randevu Formu', category: 'contact' },
-  { type: 'natural-header', label: 'Natural Header', category: 'natural' },
-  { type: 'natural-hero', label: 'Natural Hero', category: 'natural' },
-  { type: 'natural-intro', label: 'Natural Intro', category: 'natural' },
-  { type: 'natural-article-grid', label: 'Natural Makale Grid', category: 'natural' },
-  { type: 'natural-newsletter', label: 'Natural Newsletter', category: 'natural' },
-  { type: 'natural-footer', label: 'Natural Footer', category: 'natural' },
+  { type: 'menu-showcase', label: 'Menü Vitrini', category: 'cafe' },
+  { type: 'cafe-story', label: 'Cafe Hikayesi', category: 'cafe' },
+  { type: 'cafe-features', label: 'Cafe Özellikleri', category: 'cafe' },
+  { type: 'cafe-gallery', label: 'Cafe Galeri', category: 'cafe' },
 ];
