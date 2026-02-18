@@ -1,11 +1,12 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { SectionRenderer } from '@/components/sections/SectionRenderer';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
-import { RenderChaiBlocks } from '@chaibuilder/sdk/render';
 import { GeneratedContent } from '@/types/generated-website';
 import { Loader2, Globe } from 'lucide-react';
 import { usePageView } from '@/hooks/usePageView';
+import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface PublicProject {
   id: string;
@@ -15,10 +16,12 @@ interface PublicProject {
   generated_content: GeneratedContent | null;
   chai_blocks?: any[];
   chai_theme?: any;
+  site_sections?: SiteSection[];
+  site_theme?: SiteTheme;
   template_id?: string;
 }
 
-// Extract theme color (light mode = index 0)
+// Extract theme color (for legacy chai_theme format: [light, dark] arrays)
 function extractColor(colors: Record<string, any> | undefined, key: string, fallback: string): string {
   if (!colors) return fallback;
   const val = colors[key];
@@ -58,23 +61,15 @@ export default function PublicWebsite() {
 
   useEffect(() => {
     async function fetchProject() {
-      if (!subdomain) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
+      if (!subdomain) { setNotFound(true); setLoading(false); return; }
 
       const { data, error } = await supabase
         .from('public_projects')
-        .select('id, name, profession, subdomain, generated_content, chai_blocks, chai_theme, template_id')
+        .select('id, name, profession, subdomain, generated_content, chai_blocks, chai_theme, site_sections, site_theme, template_id')
         .eq('subdomain', subdomain)
         .maybeSingle();
 
-      if (error || !data) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
+      if (error || !data) { setNotFound(true); setLoading(false); return; }
 
       const projectData = data as unknown as PublicProject;
       setProject(projectData);
@@ -89,7 +84,7 @@ export default function PublicWebsite() {
 
   usePageView(project?.id || null, '/public');
 
-  // Set project globals for appointment booking block
+  // Set project globals for appointment booking
   useEffect(() => {
     if (project?.id) {
       (window as any).__PROJECT_ID__ = project.id;
@@ -97,13 +92,14 @@ export default function PublicWebsite() {
     }
   }, [project?.id]);
 
-  // Inject theme CSS variables
+  // Determine which theme to use: site_theme > chai_theme
+  const activeTheme = project?.site_theme || project?.chai_theme;
   const themeStyleTag = useMemo(() => {
-    if (!project?.chai_theme) return null;
-    const cssVars = buildThemeStyle(project.chai_theme);
+    if (!activeTheme) return null;
+    const cssVars = buildThemeStyle(activeTheme);
     if (!cssVars) return null;
     return <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />;
-  }, [project?.chai_theme]);
+  }, [activeTheme]);
 
   if (loading) {
     return (
@@ -137,29 +133,49 @@ export default function PublicWebsite() {
     );
   }
 
-  const colorPreference = 'light';
-  const hasChaiBlocks = project.chai_blocks && project.chai_blocks.length > 0;
+  // Priority 1: site_sections
+  const siteSections = project.site_sections as SiteSection[] | undefined;
+  const hasSiteSections = siteSections && Array.isArray(siteSections) && siteSections.length > 0;
+
+  // Priority 2: chai_blocks (convert inline for display)
+  const hasChaiBlocks = !hasSiteSections && project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
+
+  // Convert chai_blocks to SiteSection format for rendering
+  const convertedSections = useMemo(() => {
+    if (!hasChaiBlocks || !project.chai_blocks) return [];
+    const typeMap: Record<string, string> = {
+      HeroCentered: 'hero-centered', HeroSplit: 'hero-split', HeroOverlay: 'hero-overlay',
+      ServicesGrid: 'services-grid', AboutSection: 'about-section', StatisticsCounter: 'statistics-counter',
+      TestimonialsCarousel: 'testimonials-carousel', ContactForm: 'contact-form', CTABanner: 'cta-banner',
+      FAQAccordion: 'faq-accordion', ImageGallery: 'image-gallery', PricingTable: 'pricing-table',
+      AppointmentBooking: 'appointment-booking', NaturalHeader: 'natural-header', NaturalHero: 'natural-hero',
+      NaturalIntro: 'natural-intro', NaturalArticleGrid: 'natural-article-grid', NaturalNewsletter: 'natural-newsletter',
+      NaturalFooter: 'natural-footer',
+    };
+    const skip = new Set(['_id', '_type', '_position', '_name', 'styles', 'blockProps', 'inBuilder', 'containerClassName']);
+    return project.chai_blocks.map((b: any, i: number) => {
+      const props: Record<string, any> = {};
+      for (const [k, v] of Object.entries(b)) { if (!skip.has(k)) props[k] = v; }
+      return { id: b._id || `s_${i}`, type: typeMap[b._type] || b._type, locked: i === 0, props } as SiteSection;
+    });
+  }, [hasChaiBlocks, project.chai_blocks]);
+
+  const sectionsToRender = hasSiteSections ? siteSections! : hasChaiBlocks ? convertedSections : [];
 
   return (
     <>
       {themeStyleTag}
 
-      {hasChaiBlocks ? (
-        <div className="min-h-screen">
-          <RenderChaiBlocks blocks={project.chai_blocks || []} />
-        </div>
+      {sectionsToRender.length > 0 ? (
+        <SectionRenderer sections={sectionsToRender} />
       ) : (
         project.generated_content && (
-          <WebsitePreview 
-            content={project.generated_content} 
-            colorPreference={colorPreference}
-            isEditable={false}
-          />
+          <WebsitePreview content={project.generated_content} colorPreference="light" isEditable={false} />
         )
       )}
 
       <div className="fixed bottom-4 right-4 z-50">
-        <a 
+        <a
           href="/"
           target="_blank"
           rel="noopener noreferrer"
