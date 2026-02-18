@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
+import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
 
 interface EditorState {
   sections: SiteSection[];
@@ -133,6 +134,54 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     setTheme(prev => ({ ...prev, ...updates }));
   }, [pushUndo]);
 
+  const applyTemplate = useCallback((templateId: string) => {
+    const def = getCatalogTemplate(templateId);
+    if (!def) return;
+    pushUndo();
+
+    // Build new sections from template definition, preserving matching content
+    const oldProps: Record<string, Record<string, any>> = {};
+    sections.forEach(s => { oldProps[s.type] = s.props || {}; });
+
+    const newSections: SiteSection[] = def.sections.map((secDef, i) => {
+      const mergedProps = { ...secDef.defaultProps };
+      // If old site had same section type, carry over text content
+      if (oldProps[secDef.type]) {
+        const old = oldProps[secDef.type];
+        for (const key of ['title', 'subtitle', 'description', 'sectionTitle', 'sectionSubtitle', 'sectionDescription', 'phone', 'email', 'address', 'siteName']) {
+          if (old[key]) mergedProps[key] = old[key];
+        }
+      }
+      return {
+        id: `${secDef.type}_${Date.now()}_${i}`,
+        type: secDef.type,
+        props: mergedProps,
+        locked: secDef.required,
+      };
+    });
+
+    setSections(newSections);
+
+    // Apply theme preset
+    const preset = getCatalogTheme(templateId);
+    if (preset) {
+      const lightColors: Record<string, string> = {};
+      if (preset.colors) {
+        Object.entries(preset.colors).forEach(([key, vals]) => {
+          if (Array.isArray(vals) && vals.length > 0) lightColors[key] = vals[0];
+        });
+      }
+      setTheme({
+        colors: lightColors,
+        fonts: {
+          heading: preset.fontFamily?.heading || 'Inter',
+          body: preset.fontFamily?.body || 'Inter',
+        },
+        borderRadius: preset.borderRadius || '0.5rem',
+      });
+    }
+  }, [sections, pushUndo]);
+
   const openAddPanel = useCallback((insertIndex?: number) => {
     setAddInsertIndex(insertIndex ?? null);
     setAddPanelOpen(true);
@@ -163,6 +212,7 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     moveSectionUp,
     moveSectionDown,
     updateTheme,
+    applyTemplate,
     openAddPanel,
     undo,
     canUndo,

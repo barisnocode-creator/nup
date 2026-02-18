@@ -13,44 +13,31 @@ const categoryLabels: Record<string, string> = {
   contact: 'İletişim',
   cta: 'Aksiyon',
   natural: 'Natural',
+  cafe: 'Cafe',
 };
 
 // Default props for each section type
 const defaultPropsMap: Record<string, Record<string, any>> = {
   'hero-centered': {
-    title: 'Başlığınız',
-    subtitle: 'Alt başlık',
-    description: 'Açıklama metniniz buraya gelecek.',
-    primaryButtonText: 'İletişime Geç',
-    primaryButtonLink: '#contact',
-    secondaryButtonText: '',
-    secondaryButtonLink: '',
-    backgroundImage: '',
+    title: 'Başlığınız', subtitle: 'Alt başlık', description: 'Açıklama metniniz buraya gelecek.',
+    primaryButtonText: 'İletişime Geç', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '',
   },
   'hero-split': {
-    title: 'Başlığınız',
-    subtitle: 'Alt başlık',
-    description: 'Açıklama metniniz buraya gelecek.',
-    primaryButtonText: 'Başlayın',
-    primaryButtonLink: '#contact',
-    secondaryButtonText: '',
-    secondaryButtonLink: '',
-    image: '',
+    title: 'Başlığınız', subtitle: 'Alt başlık', description: 'Açıklama metniniz buraya gelecek.',
+    primaryButtonText: 'Başlayın', primaryButtonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', image: '',
   },
   'hero-overlay': {
-    title: 'Başlığınız',
-    subtitle: 'Alt başlık',
-    description: 'Açıklama metniniz buraya gelecek.',
-    primaryButtonText: 'Keşfedin',
-    primaryButtonLink: '#services',
-    secondaryButtonText: '',
-    secondaryButtonLink: '',
-    backgroundImage: '',
+    title: 'Başlığınız', subtitle: 'Alt başlık', description: 'Açıklama metniniz buraya gelecek.',
+    primaryButtonText: 'Keşfedin', primaryButtonLink: '#services', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '',
+  },
+  'HeroCafe': {
+    badge: 'Specialty Coffee', title: 'Where Every Cup Tells a Story',
+    description: 'A specialty cafe in the heart of the city.',
+    primaryButtonText: 'Menümüzü Keşfedin', primaryButtonLink: '#menu',
+    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80',
   },
   'services-grid': {
-    sectionTitle: 'Hizmetlerimiz',
-    sectionSubtitle: 'Neler Yapıyoruz',
-    sectionDescription: '',
+    sectionTitle: 'Hizmetlerimiz', sectionSubtitle: 'Neler Yapıyoruz', sectionDescription: '',
     services: [
       { icon: '⭐', title: 'Hizmet 1', description: 'Açıklama', image: '' },
       { icon: '🎯', title: 'Hizmet 2', description: 'Açıklama', image: '' },
@@ -58,76 +45,66 @@ const defaultPropsMap: Record<string, Record<string, any>> = {
     ],
   },
   'about-section': {
-    title: 'Hakkımızda',
-    subtitle: 'Biz Kimiz?',
-    description: 'Şirketiniz hakkında bilgi.',
-    features: 'Deneyim\nKalite\nGüven',
-    image: '',
-    imagePosition: 'right',
+    title: 'Hakkımızda', subtitle: 'Biz Kimiz?', description: 'Şirketiniz hakkında bilgi.',
+    features: 'Deneyim\nKalite\nGüven', image: '', imagePosition: 'right',
   },
   'statistics-counter': {
-    stat1Value: '10+', stat1Label: 'Yıl Deneyim',
-    stat2Value: '500+', stat2Label: 'Mutlu Müşteri',
-    stat3Value: '100+', stat3Label: 'Proje',
-    stat4Value: '%99', stat4Label: 'Memnuniyet',
+    stat1Value: '10+', stat1Label: 'Yıl Deneyim', stat2Value: '500+', stat2Label: 'Mutlu Müşteri',
+    stat3Value: '100+', stat3Label: 'Proje', stat4Value: '%99', stat4Label: 'Memnuniyet',
   },
   'testimonials-carousel': {
-    sectionTitle: 'Müşteri Yorumları',
-    sectionSubtitle: 'Referanslar',
-    testimonials: [
-      { name: 'Müşteri', role: 'CEO', content: 'Harika bir deneyim.', avatar: '' },
-    ],
+    sectionTitle: 'Müşteri Yorumları', sectionSubtitle: 'Referanslar',
+    testimonials: [{ name: 'Müşteri', role: 'CEO', content: 'Harika bir deneyim.', avatar: '' }],
   },
   'contact-form': {
-    sectionTitle: 'İletişim',
-    sectionSubtitle: 'Bize Ulaşın',
-    sectionDescription: '',
-    address: '',
-    phone: '',
-    email: '',
-    submitButtonText: 'Mesaj Gönder',
+    sectionTitle: 'İletişim', sectionSubtitle: 'Bize Ulaşın', sectionDescription: '',
+    address: '', phone: '', email: '', submitButtonText: 'Mesaj Gönder',
   },
   'cta-banner': {
-    title: 'Hemen Başlayalım',
-    description: 'Sizinle çalışmak için sabırsızlanıyoruz.',
-    buttonText: 'İletişime Geç',
-    buttonLink: '#contact',
-    secondaryButtonText: '',
-    secondaryButtonLink: '',
-    backgroundImage: '',
+    title: 'Hemen Başlayalım', description: 'Sizinle çalışmak için sabırsızlanıyoruz.',
+    buttonText: 'İletişime Geç', buttonLink: '#contact', secondaryButtonText: '', secondaryButtonLink: '', backgroundImage: '',
   },
   'faq-accordion': {
-    sectionTitle: 'Sıkça Sorulan Sorular',
-    sectionSubtitle: 'SSS',
-    items: [
-      { question: 'Soru 1?', answer: 'Cevap 1.' },
-      { question: 'Soru 2?', answer: 'Cevap 2.' },
-    ],
+    sectionTitle: 'Sıkça Sorulan Sorular', sectionSubtitle: 'SSS',
+    items: [{ question: 'Soru 1?', answer: 'Cevap 1.' }, { question: 'Soru 2?', answer: 'Cevap 2.' }],
   },
-  'image-gallery': {
-    sectionTitle: 'Galeri',
-    sectionSubtitle: 'Çalışmalarımız',
-    images: [],
-  },
+  'image-gallery': { sectionTitle: 'Galeri', sectionSubtitle: 'Çalışmalarımız', images: [] },
   'pricing-table': {
-    sectionTitle: 'Fiyatlandırma',
-    sectionSubtitle: 'Planlar',
+    sectionTitle: 'Fiyatlandırma', sectionSubtitle: 'Planlar',
     plans: [
       { name: 'Başlangıç', price: '₺99/ay', features: ['Özellik 1', 'Özellik 2'], highlighted: false },
       { name: 'Profesyonel', price: '₺199/ay', features: ['Özellik 1', 'Özellik 2', 'Özellik 3'], highlighted: true },
     ],
   },
   'appointment-booking': {
-    sectionTitle: 'Randevu Alın',
-    sectionSubtitle: 'Randevu',
-    sectionDescription: 'Size uygun tarih ve saati seçin.',
-    submitButtonText: 'Randevu Oluştur',
-    successMessage: 'Randevunuz oluşturuldu!',
+    sectionTitle: 'Randevu Alın', sectionSubtitle: 'Randevu', sectionDescription: 'Size uygun tarih ve saati seçin.',
+    submitButtonText: 'Randevu Oluştur', successMessage: 'Randevunuz oluşturuldu!',
+  },
+  'MenuShowcase': {
+    subtitle: 'Menümüz', title: 'Özel Seçkiler', description: 'En sevilen içecek ve lezzetlerimiz',
+    items: [
+      { name: 'Espresso', description: 'Zengin ve yoğun', price: '₺45', image: '', category: 'Kahve' },
+      { name: 'Cappuccino', description: 'Buharlanmış süt ve espresso', price: '₺55', image: '', category: 'Kahve' },
+    ],
+  },
+  'CafeStory': {
+    subtitle: 'Hikayemiz', title: 'Tutkuyla Başladı',
+    description: 'Kahve tutkumuz bir hayalle başladı.', features: 'El Yapımı\nYerel\nSürdürülebilir',
+    image: '', buttonText: 'Daha Fazla', buttonLink: '#about',
+  },
+  'CafeFeatures': {
+    subtitle: 'Neden Biz', title: 'Özenle Hazırlanır',
+    features: [
+      { icon: '☕', title: 'Single Origin', description: 'Özenle seçilmiş çekirdekler' },
+      { icon: '🌿', title: 'Organik', description: '%100 organik malzemeler' },
+    ],
+  },
+  'CafeGallery': {
+    subtitle: 'Galeri', title: 'Mekanımız', images: [],
   },
 };
 
 export function AddSectionPanel({ onAdd, onClose }: AddSectionPanelProps) {
-  // Group by category
   const grouped = sectionCatalog.reduce<Record<string, typeof sectionCatalog>>((acc, item) => {
     if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
@@ -140,12 +117,12 @@ export function AddSectionPanel({ onAdd, onClose }: AddSectionPanelProps) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="fixed top-14 left-0 bottom-0 w-[280px] bg-background border-r border-border shadow-2xl z-30 flex flex-col overflow-hidden"
+      className="fixed top-14 left-0 bottom-0 w-[280px] bg-white dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-700 shadow-lg z-30 flex flex-col overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-        <h3 className="text-sm font-semibold text-foreground">Bölüm Ekle</h3>
-        <button onClick={onClose} className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-700 shrink-0">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Bölüm Ekle</h3>
+        <button onClick={onClose} className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-colors">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -154,7 +131,7 @@ export function AddSectionPanel({ onAdd, onClose }: AddSectionPanelProps) {
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {Object.entries(grouped).map(([category, items]) => (
           <div key={category}>
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
               {categoryLabels[category] || category}
             </h4>
             <div className="space-y-1">
@@ -162,7 +139,7 @@ export function AddSectionPanel({ onAdd, onClose }: AddSectionPanelProps) {
                 <button
                   key={item.type}
                   onClick={() => onAdd(item.type, defaultPropsMap[item.type] || {})}
-                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm hover:bg-muted transition-colors text-foreground"
+                  className="w-full text-left px-3 py-2.5 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors text-gray-900 dark:text-white"
                 >
                   {item.label}
                 </button>
