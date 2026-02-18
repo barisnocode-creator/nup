@@ -1,1 +1,0 @@
-export { FAQAccordionBlock } from './FAQAccordion';

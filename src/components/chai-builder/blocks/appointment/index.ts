@@ -1,1 +1,0 @@
-export { AppointmentBookingBlock } from './AppointmentBooking';

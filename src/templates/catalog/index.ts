@@ -4,7 +4,7 @@
  */
 
 import { allDefinitions, type TemplateDefinition, type TemplateSectionDef } from './definitions';
-import { templateToPreset, type ThemePresetValues } from '@/components/chai-builder/themes/presets';
+import { templateToPreset, type ThemePresetValues } from '@/themes/presets';
 
 // Re-export types
 export type { TemplateDefinition, TemplateSectionDef };

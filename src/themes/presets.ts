@@ -1,5 +1,4 @@
-// Theme Presets - Design System
-// Standalone types (no SDK dependency)
+// Theme Presets - Design System (standalone, no SDK dependency)
 
 export interface ThemePresetValues {
   fontFamily?: { heading?: string; body?: string };
@@ -34,7 +33,6 @@ export const modernProfessionalPreset: ThemePresetValues = {
   },
 };
 
-// Bold Agency (temp2)
 export const boldAgencyPreset: ThemePresetValues = {
   fontFamily: { heading: "Space Grotesk", body: "Inter" },
   borderRadius: "0px",
@@ -51,7 +49,6 @@ export const boldAgencyPreset: ThemePresetValues = {
   },
 };
 
-// Elegant Minimal (temp3)
 export const elegantMinimalPreset: ThemePresetValues = {
   fontFamily: { heading: "Playfair Display", body: "Lora" },
   borderRadius: "4px",
@@ -68,7 +65,6 @@ export const elegantMinimalPreset: ThemePresetValues = {
   },
 };
 
-// Corporate Blue (gith2)
 export const corporateBluePreset: ThemePresetValues = {
   fontFamily: { heading: "Poppins", body: "Open Sans" },
   borderRadius: "6px",
@@ -85,7 +81,6 @@ export const corporateBluePreset: ThemePresetValues = {
   },
 };
 
-// Minimal Dark (gith3)
 export const minimalDarkPreset: ThemePresetValues = {
   fontFamily: { heading: "Space Grotesk", body: "Inter" },
   borderRadius: "0px",
@@ -102,7 +97,6 @@ export const minimalDarkPreset: ThemePresetValues = {
   },
 };
 
-// Modern SaaS (gith1)
 export const modernSaasPreset: ThemePresetValues = {
   fontFamily: { heading: "Inter", body: "Inter" },
   borderRadius: "12px",
@@ -119,7 +113,6 @@ export const modernSaasPreset: ThemePresetValues = {
   },
 };
 
-// AI Video Studio (temp4-video-studio)
 export const videoStudioPreset: ThemePresetValues = {
   fontFamily: { heading: "Space Grotesk", body: "Inter" },
   borderRadius: "8px",
@@ -136,7 +129,6 @@ export const videoStudioPreset: ThemePresetValues = {
   },
 };
 
-// Vibrant Creative
 export const vibrantCreativePreset: ThemePresetValues = {
   fontFamily: { heading: "Sora", body: "Inter" },
   borderRadius: "16px",
@@ -153,7 +145,6 @@ export const vibrantCreativePreset: ThemePresetValues = {
   },
 };
 
-// Lawyer Firm
 export const lawyerFirmPreset: ThemePresetValues = {
   fontFamily: { heading: "Playfair Display", body: "Inter" },
   borderRadius: "0px",
@@ -170,10 +161,6 @@ export const lawyerFirmPreset: ThemePresetValues = {
   },
 };
 
-// Default theme
-export const defaultTheme: ThemePresetValues = modernProfessionalPreset;
-
-// Wellness Studio (pilates1)
 export const wellnessStudioPreset: ThemePresetValues = {
   fontFamily: { heading: "Playfair Display", body: "DM Sans" },
   borderRadius: "8px",
@@ -190,7 +177,6 @@ export const wellnessStudioPreset: ThemePresetValues = {
   },
 };
 
-// Natural Lifestyle
 export const naturalLifestylePreset: ThemePresetValues = {
   fontFamily: { heading: "Playfair Display", body: "Inter" },
   borderRadius: "16px",
@@ -207,7 +193,8 @@ export const naturalLifestylePreset: ThemePresetValues = {
   },
 };
 
-// Theme presets array
+export const defaultTheme: ThemePresetValues = modernProfessionalPreset;
+
 export const themePresets: Record<string, ThemePresetValues>[] = [
   { "Modern Profesyonel": modernProfessionalPreset },
   { "Cesur Ajans": boldAgencyPreset },
@@ -221,7 +208,6 @@ export const themePresets: Record<string, ThemePresetValues>[] = [
   { "Natural Lifestyle": naturalLifestylePreset },
 ];
 
-// Export template ID to preset mapping
 export const templateToPreset: Record<string, ThemePresetValues> = {
   "temp1": modernProfessionalPreset,
   "temp2": boldAgencyPreset,

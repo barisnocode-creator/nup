@@ -1,1 +1,0 @@
-export { ContactFormBlock } from './ContactForm';

@@ -32,7 +32,7 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
       ['--color-secondary-custom', '--color-accent-custom',
        '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
       root.classList.remove('reduce-motion');
-      document.querySelectorAll('style[data-chai], style[data-chaibuilder]').forEach(el => el.remove());
+      document.querySelectorAll('style[data-chai]').forEach(el => el.remove());
     };
     forceOrange();
     // Delayed cleanup for async SDK style injections
