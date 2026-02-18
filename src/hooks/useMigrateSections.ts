@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
-// Map ChaiBuilder block _type to section type
+// Map legacy block _type to section type
 const typeMap: Record<string, string> = {
   HeroCentered: 'hero-centered',
   HeroSplit: 'hero-split',
@@ -25,7 +25,7 @@ const typeMap: Record<string, string> = {
   NaturalFooter: 'natural-footer',
 };
 
-// Internal ChaiBuilder props to exclude
+// Internal legacy props to exclude
 const internalProps = new Set([
   '_id', '_type', '_position', '_name', 'styles', 'blockProps',
   'inBuilder', 'containerClassName',
@@ -56,7 +56,7 @@ function convertTheme(chaiTheme: any): SiteTheme {
   const colors: Record<string, any> = {};
   if (chaiTheme.colors) {
     for (const [key, val] of Object.entries(chaiTheme.colors)) {
-      // ChaiBuilder stores colors as [light, dark] arrays
+      // Legacy format stores colors as [light, dark] arrays
       colors[key] = Array.isArray(val) ? val[0] : val;
     }
   }

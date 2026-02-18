@@ -1,1 +1,0 @@
-export { PricingTableBlock } from './PricingTable';

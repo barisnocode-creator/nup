@@ -126,7 +126,6 @@ export type { TemplateConfig };
 // Export catalog types for consumers
 export type { TemplateDefinition };
 
-// Templates that should bypass ChaiBuilder and render directly as React components
 const DIRECT_RENDER_TEMPLATES = new Set<string>();
 
 export function isComponentTemplate(templateId: string): boolean {

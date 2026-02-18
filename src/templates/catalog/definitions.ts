@@ -1,7 +1,7 @@
 /**
  * Schema-driven template definitions.
  * Each template is pure data — no components, no renderers.
- * Templates resolve to ChaiBlock[] arrays at creation time via convertTemplateToBlocks().
+ * Templates resolve to SiteSection[] arrays at creation time.
  */
 
 export interface TemplateSectionDef {
