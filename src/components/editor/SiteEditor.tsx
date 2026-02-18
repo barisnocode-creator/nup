@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useEditorState } from './useEditorState';
 import { useSiteSave } from './useSiteSave';
@@ -8,7 +8,7 @@ import { SectionEditPanel } from './SectionEditPanel';
 import { AddSectionPanel } from './AddSectionPanel';
 import { CustomizePanel } from './CustomizePanel';
 import { PublishModal } from '@/components/website-preview/PublishModal';
-import { useState } from 'react';
+import { ChangeTemplateModal } from '@/components/website-preview/ChangeTemplateModal';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface SiteEditorProps {
@@ -22,21 +22,15 @@ interface SiteEditorProps {
 }
 
 export function SiteEditor({
-  projectId,
-  projectName,
-  initialSections,
-  initialTheme,
-  subdomain,
-  isPublished,
-  onPublished,
+  projectId, projectName, initialSections, initialTheme,
+  subdomain, isPublished, onPublished,
 }: SiteEditorProps) {
   const editor = useEditorState(initialSections, initialTheme);
   const { isSaving, hasUnsavedChanges, forceSave } = useSiteSave({
-    projectId,
-    sections: editor.sections,
-    theme: editor.theme,
+    projectId, sections: editor.sections, theme: editor.theme,
   });
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
 
   // Sync initial data when it changes (e.g., after migration)
   useEffect(() => {
@@ -76,8 +70,13 @@ export function SiteEditor({
     setPublishModalOpen(true);
   };
 
+  const handleApplyTemplate = (templateId: string) => {
+    editor.applyTemplate(templateId);
+    setTemplateModalOpen(false);
+  };
+
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-background">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950">
       <EditorToolbar
         projectName={projectName}
         isEditing={editor.isEditing}
@@ -105,7 +104,6 @@ export function SiteEditor({
           onAddAt={(index) => editor.openAddPanel(index)}
         />
 
-        {/* Floating panels */}
         <AnimatePresence>
           {editor.selectedSection && editor.isEditing && (
             <SectionEditPanel
@@ -133,10 +131,22 @@ export function SiteEditor({
               theme={editor.theme}
               onUpdateTheme={editor.updateTheme}
               onClose={() => editor.setCustomizePanelOpen(false)}
+              onOpenTemplateModal={() => {
+                editor.setCustomizePanelOpen(false);
+                setTemplateModalOpen(true);
+              }}
             />
           )}
         </AnimatePresence>
       </div>
+
+      <ChangeTemplateModal
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        currentTemplateId="specialty-cafe"
+        onSelectTemplate={handleApplyTemplate}
+        onPreview={(id) => handleApplyTemplate(id)}
+      />
 
       <PublishModal
         isOpen={publishModalOpen}
@@ -145,9 +155,7 @@ export function SiteEditor({
         projectName={projectName}
         currentSubdomain={subdomain}
         isPublished={isPublished}
-        onPublished={(sub) => {
-          onPublished?.(sub);
-        }}
+        onPublished={(sub) => { onPublished?.(sub); }}
       />
     </div>
   );
