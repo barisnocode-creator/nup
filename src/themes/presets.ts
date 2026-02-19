@@ -118,6 +118,23 @@ export const corporateBluePreset: ThemePresetValues = {
   },
 };
 
+// Dental Clinic — sky-blue tones
+export const dentalClinicPreset: ThemePresetValues = {
+  fontFamily: { heading: "Sora", body: "Inter" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#f0f9ff", "#0c1a2e"], foreground: ["#0c4a6e", "#e0f2fe"],
+    primary: ["#0284c7", "#38bdf8"], "primary-foreground": ["#ffffff", "#0c1a2e"],
+    secondary: ["#e0f2fe", "#1e3a5f"], "secondary-foreground": ["#0369a1", "#bae6fd"],
+    muted: ["#e0f2fe", "#1e3a5f"], "muted-foreground": ["#64748b", "#94a3b8"],
+    accent: ["#0284c7", "#38bdf8"], "accent-foreground": ["#ffffff", "#0c1a2e"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#bae6fd", "#2d4a6f"], input: ["#bae6fd", "#2d4a6f"], ring: ["#0284c7", "#38bdf8"],
+    card: ["#ffffff", "#152238"], "card-foreground": ["#0c4a6e", "#e0f2fe"],
+    popover: ["#ffffff", "#152238"], "popover-foreground": ["#0c4a6e", "#e0f2fe"],
+  },
+};
+
 export const defaultTheme: ThemePresetValues = specialtyCafePreset;
 
 export const themePresets: Record<string, ThemePresetValues>[] = [
@@ -133,10 +150,12 @@ export const namedPresets: { name: string; preset: ThemePresetValues }[] = [
   { name: "Pastel Zarif", preset: pastelElegantPreset },
   { name: "Canlı Cesur", preset: vibrantBoldPreset },
   { name: "Kurumsal Mavi", preset: corporateBluePreset },
+  { name: "Dental Klinik", preset: dentalClinicPreset },
 ];
 
 export const templateToPreset: Record<string, ThemePresetValues> = {
   "specialty-cafe": specialtyCafePreset,
+  "dental-clinic": dentalClinicPreset,
   "temp1": modernProfessionalPreset,
   "pilates1": specialtyCafePreset,
   "lawyer-firm": specialtyCafePreset,

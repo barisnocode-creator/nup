@@ -17,6 +17,10 @@ import { MenuShowcase } from './MenuShowcase';
 import { CafeStory } from './CafeStory';
 import { CafeFeatures } from './CafeFeatures';
 import { CafeGallery } from './CafeGallery';
+import { HeroDental } from './HeroDental';
+import { DentalServices } from './DentalServices';
+import { DentalTips } from './DentalTips';
+import { DentalBooking } from './DentalBooking';
 
 type SectionComponent = React.ComponentType<SectionComponentProps>;
 
@@ -29,8 +33,12 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'hero-overlay': HeroOverlay,
   'HeroCafe': HeroCafe,
   'hero-cafe': HeroCafe,
+  'HeroDental': HeroDental,
+  'hero-dental': HeroDental,
   'ServicesGrid': ServicesGrid,
   'services-grid': ServicesGrid,
+  'DentalServices': DentalServices,
+  'dental-services': DentalServices,
   'AboutSection': AboutSection,
   'about-section': AboutSection,
   'StatisticsCounter': StatisticsCounter,
@@ -57,6 +65,10 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'cafe-features': CafeFeatures,
   'CafeGallery': CafeGallery,
   'cafe-gallery': CafeGallery,
+  'DentalTips': DentalTips,
+  'dental-tips': DentalTips,
+  'DentalBooking': DentalBooking,
+  'dental-booking': DentalBooking,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
@@ -75,7 +87,9 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'hero-split', label: 'Hero - İki Kolon', category: 'hero' },
   { type: 'hero-overlay', label: 'Hero - Overlay', category: 'hero' },
   { type: 'hero-cafe', label: 'Hero - Cafe', category: 'hero' },
+  { type: 'hero-dental', label: 'Hero - Dental', category: 'hero' },
   { type: 'services-grid', label: 'Hizmetler', category: 'content' },
+  { type: 'dental-services', label: 'Dental Hizmetler', category: 'dental' },
   { type: 'about-section', label: 'Hakkımızda', category: 'content' },
   { type: 'statistics-counter', label: 'İstatistikler', category: 'content' },
   { type: 'testimonials-carousel', label: 'Müşteri Yorumları', category: 'content' },
@@ -89,4 +103,6 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'cafe-story', label: 'Cafe Hikayesi', category: 'cafe' },
   { type: 'cafe-features', label: 'Cafe Özellikleri', category: 'cafe' },
   { type: 'cafe-gallery', label: 'Cafe Galeri', category: 'cafe' },
+  { type: 'dental-tips', label: 'Sağlık İpuçları', category: 'dental' },
+  { type: 'dental-booking', label: 'Adımlı Randevu', category: 'dental' },
 ];

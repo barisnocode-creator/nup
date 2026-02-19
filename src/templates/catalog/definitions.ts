@@ -149,8 +149,110 @@ export const specialtyCafe: TemplateDefinition = {
   ],
 };
 
+// ─── Dental Clinic Template ──────────────────────────────────────
+
+export const dentalClinic: TemplateDefinition = {
+  id: 'dental-clinic',
+  name: 'Dental Clinic',
+  industry: 'health',
+  category: 'Sağlık',
+  description: 'Modern, sky-blue tonlarında diş kliniği tasarımı. Animasyonlu hero, hizmet kartları ve adımlı randevu formu.',
+  preview: '',
+  themePresetKey: 'dental-clinic',
+  supportedIndustries: ['doctor', 'dentist', 'dental', 'clinic', 'health', 'hospital', 'medical', 'veterinary', 'physiotherapy', 'optometry'],
+  sections: [
+    {
+      type: 'HeroDental',
+      required: true,
+      defaultProps: {
+        badge: 'Diş Kliniği',
+        title: 'Sağlıklı Gülüşler İçin Profesyonel Bakım',
+        description: 'Uzman diş hekimlerimiz ve modern teknolojimizle, ailenizin ağız ve diş sağlığını güvenle emanet edebilirsiniz.',
+        buttonText: 'Randevu Alın',
+        buttonLink: '#appointment',
+        image: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&q=80',
+      },
+    },
+    {
+      type: 'DentalServices',
+      defaultProps: {
+        subtitle: 'Uzman Bakım',
+        title: 'Hizmetlerimiz',
+        description: 'Modern ekipman ve deneyimli kadromuzla kapsamlı diş sağlığı hizmetleri sunuyoruz.',
+        services: [
+          { icon: 'Smile', title: 'Estetik Diş Hekimliği', description: 'Gülüş tasarımı, beyazlatma ve veneer uygulamalarıyla hayalinizdeki gülüşe kavuşun.' },
+          { icon: 'Sparkles', title: 'Diş Temizliği', description: 'Profesyonel diş taşı temizliği ve parlatma ile ağız sağlığınızı koruyun.' },
+          { icon: 'ScanLine', title: 'Dijital Röntgen', description: '3D görüntüleme teknolojisi ile hassas tanı ve tedavi planlaması.' },
+          { icon: 'Shield', title: 'İmplant Tedavisi', description: 'Kayıp dişlerinizi doğal görünümlü, dayanıklı implantlarla tamamlayın.' },
+        ],
+      },
+    },
+    {
+      type: 'AboutSection',
+      defaultProps: {
+        sectionTitle: 'Hakkımızda',
+        sectionSubtitle: 'Bizi Tanıyın',
+        description: '20 yılı aşkın deneyimimizle, en son teknolojiyi kullanarak hastalarımıza konforlu ve güvenilir tedavi sunuyoruz. Uzman kadromuz, her hastaya özel tedavi planları oluşturur.',
+        image: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=800&q=80',
+      },
+    },
+    {
+      type: 'DentalTips',
+      defaultProps: {
+        subtitle: 'Bilmeniz Gerekenler',
+        title: 'Ağız Sağlığı İpuçları',
+        tips: [
+          { icon: 'Droplets', title: 'Doğru Fırçalama', content: 'Günde en az 2 kez, 2 dakika boyunca yumuşak kıllı fırçayla 45 derece açıyla fırçalayın.' },
+          { icon: 'Clock', title: 'Düzenli Kontrol', content: 'Altı ayda bir diş hekiminizi ziyaret edin. Erken teşhis tedavi süresini azaltır.' },
+          { icon: 'Apple', title: 'Sağlıklı Beslenme', content: 'Şekerli ve asitli yiyeceklerden kaçının. Kalsiyum zengin besinler diş sağlığını destekler.' },
+          { icon: 'ShieldCheck', title: 'Koruyucu Tedaviler', content: 'Fissür örtücü ve flor uygulamaları ile dişlerinizi çürüklere karşı koruyun.' },
+        ],
+      },
+    },
+    {
+      type: 'DentalBooking',
+      defaultProps: {
+        subtitle: 'Hemen Başlayın',
+        title: 'Online Randevu',
+        description: 'Birkaç adımda kolayca randevunuzu oluşturun.',
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Hastalarımız Ne Diyor?',
+        sectionSubtitle: 'Değerlendirmeler',
+        testimonials: [
+          { name: 'Ayşe Yıldız', role: 'Hasta', content: 'İmplant tedavim mükemmel sonuçlandı. Doktorlar çok ilgili ve profesyonel.', avatar: '' },
+          { name: 'Mehmet Kaya', role: 'Hasta', content: 'Diş beyazlatma sonucundan çok memnunum. Kliniğin hijyen standartları üst düzey.', avatar: '' },
+          { name: 'Fatma Demir', role: 'Hasta', content: 'Çocuğumun diş korkusunu yendiler. Çok sabırlı ve şefkatli bir ekip.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Sorularınız için bize yazın, en kısa sürede dönüş yapalım.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Sağlıklı Gülüşünüze Bugün Başlayın',
+        description: 'İlk muayeneniz ücretsiz! Hemen randevu alın.',
+        buttonText: 'Randevu Al',
+        buttonLink: '#appointment',
+      },
+    },
+  ],
+};
+
 // ─── All Definitions ─────────────────────────────────────────────
 
 export const allDefinitions: TemplateDefinition[] = [
   specialtyCafe,
+  dentalClinic,
 ];
