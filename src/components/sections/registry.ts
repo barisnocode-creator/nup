@@ -1,6 +1,18 @@
 import type { SectionComponentProps } from './types';
 import { HeroCentered } from './HeroCentered';
 import { HeroSplit } from './HeroSplit';
+// Addable sections
+import { AppointmentSection } from './addable/AppointmentSection';
+import { FAQSection as AddableFAQSection } from './addable/FAQSection';
+import { MessageFormSection } from './addable/MessageFormSection';
+import { WorkingHoursMapSection } from './addable/WorkingHoursMapSection';
+import { OnlineConsultationSection } from './addable/OnlineConsultationSection';
+import { InsuranceSection } from './addable/InsuranceSection';
+import { MenuHighlightsSection } from './addable/MenuHighlightsSection';
+import { RoomAvailabilitySection } from './addable/RoomAvailabilitySection';
+import { CaseEvaluationSection } from './addable/CaseEvaluationSection';
+import { BeforeAfterSection } from './addable/BeforeAfterSection';
+import { PetRegistrationSection } from './addable/PetRegistrationSection';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroCafe } from './HeroCafe';
 import { ServicesGrid } from './ServicesGrid';
@@ -96,6 +108,18 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'project-showcase': ProjectShowcase,
   'SkillsGrid': SkillsGrid,
   'skills-grid': SkillsGrid,
+  // Addable sections
+  'AddableAppointment': AppointmentSection,
+  'AddableFAQ': AddableFAQSection,
+  'AddableMessageForm': MessageFormSection,
+  'AddableWorkingHours': WorkingHoursMapSection,
+  'AddableOnlineConsultation': OnlineConsultationSection,
+  'AddableInsurance': InsuranceSection,
+  'AddableMenuHighlights': MenuHighlightsSection,
+  'AddableRoomAvailability': RoomAvailabilitySection,
+  'AddableCaseEvaluation': CaseEvaluationSection,
+  'AddableBeforeAfter': BeforeAfterSection,
+  'AddablePetRegistration': PetRegistrationSection,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {

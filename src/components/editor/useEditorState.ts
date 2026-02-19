@@ -3,6 +3,21 @@ import type { SiteSection, SiteTheme } from '@/components/sections/types';
 import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
 import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
 
+// Map of addable section keys to their section type and default props
+const addableSectionConfig: Record<string, { type: string; defaultProps: Record<string, any> }> = {
+  appointment: { type: 'AddableAppointment', defaultProps: {} },
+  faq: { type: 'AddableFAQ', defaultProps: {} },
+  messageForm: { type: 'AddableMessageForm', defaultProps: {} },
+  workingHours: { type: 'AddableWorkingHours', defaultProps: {} },
+  onlineConsultation: { type: 'AddableOnlineConsultation', defaultProps: {} },
+  insurance: { type: 'AddableInsurance', defaultProps: {} },
+  menuHighlights: { type: 'AddableMenuHighlights', defaultProps: {} },
+  roomAvailability: { type: 'AddableRoomAvailability', defaultProps: {} },
+  caseEvaluation: { type: 'AddableCaseEvaluation', defaultProps: {} },
+  beforeAfter: { type: 'AddableBeforeAfter', defaultProps: {} },
+  petRegistration: { type: 'AddablePetRegistration', defaultProps: {} },
+};
+
 interface EditorState {
   sections: SiteSection[];
   theme: SiteTheme;
@@ -25,7 +40,7 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
   const [addPanelOpen, setAddPanelOpen] = useState(false);
   const [customizePanelOpen, setCustomizePanelOpen] = useState(false);
   const [addInsertIndex, setAddInsertIndex] = useState<number | null>(null);
-
+  const [addableSections, setAddableSections] = useState<Record<string, boolean>>({});
   // Simple undo: store previous snapshot
   const undoStack = useRef<UndoSnapshot[]>([]);
 
@@ -191,6 +206,31 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     setAddPanelOpen(true);
   }, []);
 
+  const toggleAddableSection = useCallback((key: string) => {
+    setAddableSections(prev => {
+      const isOn = !prev[key];
+      const config = addableSectionConfig[key];
+      if (!config) return prev;
+
+      if (isOn) {
+        // Add section at end
+        pushUndo();
+        const newSection: SiteSection = {
+          id: `${config.type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          type: config.type,
+          props: { ...config.defaultProps },
+        };
+        setSections(p => [...p, newSection]);
+      } else {
+        // Remove all sections of this addable type
+        pushUndo();
+        setSections(p => p.filter(s => s.type !== config.type));
+      }
+
+      return { ...prev, [key]: isOn };
+    });
+  }, [pushUndo]);
+
   const selectedSection = sections.find(s => s.id === selectedSectionId) || null;
 
   return {
@@ -218,6 +258,8 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     updateTheme,
     applyTemplate,
     openAddPanel,
+    toggleAddableSection,
+    addableSections,
     undo,
     canUndo,
   };

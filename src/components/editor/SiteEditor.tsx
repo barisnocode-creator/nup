@@ -154,6 +154,9 @@ export function SiteEditor({
           onDuplicate={editor.duplicateSection}
           onAddAt={(index) => editor.openAddPanel(index)}
           previewDevice={previewDevice}
+          sector={projectData?.sector}
+          addableSections={editor.addableSections}
+          onToggleAddableSection={editor.toggleAddableSection}
         />
 
         <AnimatePresence>

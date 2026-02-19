@@ -4,6 +4,7 @@
  */
 import type { TemplateSectionDef } from '../definitions';
 import type { ProjectData } from '../contentMapper';
+import { getSectorProfile } from '../sectorProfiles';
 
 import { mapHeroSection, compatibleSectors as heroSectors } from './mapHeroSection';
 import { mapServicesSection, compatibleSectors as servicesSectors } from './mapServicesSection';
@@ -52,6 +53,43 @@ register(['CTABanner'], mapCtaSection, ctaSectors);
 register(['ChefShowcase'], mapTeamSection, teamSectors);
 
 /**
+ * Generic label replacements based on sector profile.
+ * Replaces template-specific labels with sector-appropriate ones.
+ */
+const genericLabels = [
+  'menümüz', 'menü', 'our menu', 'şeflerimiz', 'chef team',
+  'odalarımız', 'rooms', 'tedavilerimiz', 'treatments',
+];
+
+function applySectorLabels(
+  props: Record<string, any>,
+  projectData: ProjectData
+): Record<string, any> {
+  const profile = getSectorProfile(projectData.sector);
+  if (!profile) return props;
+
+  const result = { ...props };
+  const labels = profile.sectionLabels;
+
+  // Check title/sectionTitle for generic labels and replace
+  for (const key of ['title', 'sectionTitle']) {
+    const val = result[key];
+    if (typeof val === 'string') {
+      const lower = val.toLowerCase().trim();
+      if (genericLabels.some(g => lower.includes(g))) {
+        // Determine which label to use based on context
+        if (lower.includes('menü') || lower.includes('menu')) result[key] = labels.services;
+        else if (lower.includes('şef') || lower.includes('chef') || lower.includes('ekip') || lower.includes('team')) result[key] = labels.team;
+        else if (lower.includes('oda') || lower.includes('room')) result[key] = labels.services;
+        else if (lower.includes('tedavi') || lower.includes('treatment')) result[key] = labels.services;
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Maps project data onto template section definitions.
  * Unknown section types are returned untouched.
  */
@@ -63,16 +101,23 @@ export function mapSections(
 
   return sections.map(sec => {
     const entry = mapperRegistry[sec.type];
-    if (!entry) return sec; // unknown type — leave as-is
+    let mappedProps = { ...sec.defaultProps };
 
-    // Sector compatibility check
-    if (entry.compatibleSectors.length > 0 && sector) {
-      if (!entry.compatibleSectors.includes(sector)) {
-        return sec; // incompatible sector — skip mapping
+    if (entry) {
+      // Sector compatibility check
+      if (entry.compatibleSectors.length > 0 && sector) {
+        if (!entry.compatibleSectors.includes(sector)) {
+          // Still apply sector labels even for incompatible mappers
+          mappedProps = applySectorLabels(mappedProps, projectData);
+          return { ...sec, defaultProps: mappedProps };
+        }
       }
+      mappedProps = entry.fn(mappedProps, projectData);
     }
 
-    const mappedProps = entry.fn({ ...sec.defaultProps }, projectData);
+    // Post-process: apply sector label adaptation
+    mappedProps = applySectorLabels(mappedProps, projectData);
+
     return { ...sec, defaultProps: mappedProps };
   });
 }
