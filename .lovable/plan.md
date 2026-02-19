@@ -1,78 +1,60 @@
 
 
-## DentalBooking: Editorde Calisir Hale Getirme + Premium Saat Secimi UI
+## Dental Template Gorsellerine "Degistir" Ozelligini Ekleme
 
-### Sorun 1: Editorde Calismasi
+### Mevcut Durum
 
-`DentalBooking` ve `AppointmentBooking` bilesenlerinde `isEditing` modunda statik demo goruntusu gosteriliyor. Bunun nedeni `window.__PROJECT_ID__` ve `window.__SUPABASE_URL__` degiskenlerinin sadece `PublicWebsite.tsx` icerisinde ayarlanmasi. `Project.tsx` (editor sayfasi) bu degiskenleri set etmiyor, dolayisiyla editordeki randevu bilesenleri backend'e ulasamiyor.
+Projede `EditableImage` adinda hazir bir bilesen var (`src/components/website-preview/EditableImage.tsx`). Bu bilesen, gorselin uzerine gelindiginde "Stili Degistir" ve "Yeniden Olustur" gibi aksiyonlar gosteren bir action toolbar iceriyor. Ancak bu bilesen sadece eski template sisteminde (`website-preview/`) tanimli — yeni native section'larda (`src/components/sections/`) hic kullanilmiyor.
 
-**Cozum:** `src/pages/Project.tsx` icerisinde proje verisi yuklendiginde `window.__PROJECT_ID__` ve `window.__SUPABASE_URL__` set edilecek. Ayrica `DentalBooking` icerisindeki `isEditing` kontrolu kaldirilacak — editorde de gercek backend akisi calisacak.
+Dental template'deki section'lardan gorsel iceren tek bilesen **HeroDental** (hero goeseli). `DentalServices` sadece ikon kullanir, `DentalTips` gorsel icermez, `DentalBooking` bir form bilesenidir.
 
-### Sorun 2: Saat Secimi UI Yenileme
+### Yapilacaklar
 
-Mevcut saat secimi basit bir grid/liste gorunumunde. Daha premium bir Calendly/Cal.com tarzinda yeniden tasarlanacak:
+#### 1. HeroDental'a EditableImage Entegrasyonu
 
-- **Sabah/Ogle/Aksam gruplama** — Saatler "Sabah", "Ogle", "Aksam" kategorilerine ayrilacak, her kategori kendi basligina sahip
-- **Pill-style slot butonlari** — Yuvarlak koseli, hover'da gradient kenarlk, secimde dolgu + glowing shadow
-- **Slot suresi gostergesi** — Her slotun altinda kucuk "30 dk" etiketi yerine, secilen slotun zaman araligini gosteren bir mini-bar
-- **Secim animasyonu** — Tiklandiginda `layoutId` ile morphing gecis (framer-motion shared layout)
-- **Bos durum iyilestirmesi** — "Musait saat yok" yerine ikonlu, aciklamali bir empty state
+**`src/components/sections/HeroDental.tsx`**
 
-### Yapilacak Degisiklikler
-
-#### 1. `src/pages/Project.tsx`
-
-Proje verisi yuklendiginde window degiskenlerini set et:
+Mevcut duz `<img>` etiketini `EditableImage` ile degistir. `isEditing` true oldugunda hover'da "Gorseli Degistir" aksiyonu gorunecek. Tiklandiginda `onImageChange` callback'i tetiklenecek.
 
 ```text
-useEffect icinde, project.id ayarlandiginda:
-  (window as any).__PROJECT_ID__ = project.id;
-  (window as any).__SUPABASE_URL__ = import.meta.env.VITE_SUPABASE_URL;
+Onceki:
+  <img src={image} alt={title} className="..." />
 
-Cleanup'ta:
-  delete (window as any).__PROJECT_ID__;
-  delete (window as any).__SUPABASE_URL__;
+Sonraki:
+  isEditing ?
+    <EditableImage
+      src={image}
+      alt={title}
+      type="hero"
+      imagePath="image"
+      className="..."
+      isEditable={true}
+      onSelect={(data) => onImageChange?.("image", data.currentUrl)}
+      actions={[{ id: 'change', icon: Paintbrush, label: 'Görseli Değiştir', onClick: openPixabayPicker, group: 'primary' }]}
+    />
+  :
+    <img src={image} alt={title} className="..." />
 ```
 
-#### 2. `src/components/sections/DentalBooking.tsx`
+#### 2. Pixabay Arama Paneli Ekleme (Inline Image Switcher)
 
-**isEditing kontrolu degisikligi:**
-- `isEditing` true oldugunda da gercek backend akisi calisacak (artik `__PROJECT_ID__` mevcut)
-- Sadece `isEditing` modunda form submit edildiginde gercekten randevu olusturmak yerine bir "demo" toast gosterilecek (kullanicinin test verisi olusturmasini onlemek icin)
+HeroDental icerisine basit bir Pixabay arama paneli ekle. Gorsele tiklandiginda acilan, arama yapip sonuclari gosteren kucuk bir floating panel:
 
-**Saat secimi UI yeniden tasarimi:**
+- Arama input'u (debounce 500ms)
+- `search-pixabay` edge function'a istek
+- Sonuclari 3x2 grid'de goster
+- Bir gorsele tiklandiginda `onUpdate?.({ image: selectedUrl })` ile prop'u guncelle
+- Panel disina tiklandiginda kapanir
 
-Step 1 (Time Selection) tamamen yeniden yazilacak:
+#### 3. SectionComponentProps Genisletme (Opsiyonel)
 
-```text
-+------------------------------------------+
-|  Musait Saatler  |  19 Ocak Pazar         |
-+------------------------------------------+
-|                                          |
-|  SABAH                                   |
-|  [09:00] [09:30] [10:00] [10:30] [11:00] |
-|                                          |
-|  OGLE                                    |
-|  [13:00] [13:30] [14:00] [14:30]         |
-|                                          |
-|  AKSAM                                   |
-|  [17:00] [17:30] [18:00]                 |
-|                                          |
-|  Secilen: 09:30 - 10:00 (30 dk)          |
-+------------------------------------------+
-```
+`SectionComponentProps` uzerindeki mevcut `onImageChange` callback'i zaten tanimli. `EditorCanvas` bu callback'i `onUpdate` uzerinden calistirabilir — gorsel URL'si degistiginde section props guncellenir.
 
-Tasarim ozellikleri:
-- Slot'lar sabah (06-12), ogle (12-17), aksam (17+) olarak gruplanir
-- Her grup basliginin solunda ikon: Sunrise, Sun, Sunset (lucide-react)
-- Slot butonlari `rounded-full` pill gorunumde
-- Secilmemis: `border border-border bg-background hover:border-primary/60 hover:shadow-sm`
-- Secili: `bg-primary text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]` (glow efekti)
-- Hover: `scale-[1.03]` spring animasyonu
-- Secim gecisi: `framer-motion layoutId="selected-slot"` ile morphing
-- Secilen slotun altinda ozet satiri: tarih + saat araligi gosterilir
-- Bos grup gizlenir (ornegin aksam slotu yoksa "Aksam" basligi gorunmez)
-- Bos state: `CalendarX2` ikonu + "Bu tarihte musait saat bulunmuyor" + "Baska bir gun secmeyi deneyin" alt metni
+#### 4. EditorCanvas ve SectionEditPanel'e Image Prop Destegi
+
+`SectionEditPanel` zaten `image` prop'unu bir Input olarak gosteriyor (labelMap'te var). Ek olarak:
+- Image prop'unun yanina kucuk bir "Pixabay'da Ara" butonu ekle
+- Bu buton tiklandiginda ayni Pixabay arama panelini ac
 
 ### Teknik Detaylar
 
@@ -80,12 +62,26 @@ Tasarim ozellikleri:
 
 | Dosya | Degisiklik |
 |-------|-----------|
-| `src/pages/Project.tsx` | `window.__PROJECT_ID__` ve `__SUPABASE_URL__` set etme (useEffect + cleanup) |
-| `src/components/sections/DentalBooking.tsx` | isEditing engelini kaldirma + saat secimi UI tamamen yeniden tasarim (sabah/ogle/aksam gruplama, pill butonlar, glow efekt, empty state) |
+| `src/components/sections/HeroDental.tsx` | `EditableImage` + inline Pixabay picker ekleme |
+| `src/components/sections/types.ts` | Degisiklik yok (onImageChange zaten var) |
+| `src/components/editor/EditorCanvas.tsx` | Degisiklik yok (onUpdate zaten calisiyor) |
 
-**Animasyon detaylari:**
-- Grup basliklar: `whileInView={{ opacity: 1, y: 0 }}` fade-in
-- Slot butonlar: `whileHover={{ scale: 1.03 }}` + `whileTap={{ scale: 0.97 }}`
-- Secim gecisi: `layout` prop ile smooth morph
-- Ozet satiri: `AnimatePresence` ile giris/cikis
+**Pixabay Entegrasyonu:**
+- `search-pixabay` edge function zaten mevcut ve calisir durumda
+- Arama sonuclari: `largeImageURL` veya `webformatURL` kullanilacak
+- Her gorsel icin `tags` bilgisi tooltip olarak gosterilecek
+
+**Kullanici Akisi:**
+1. Editorde HeroDental section'indaki gorselin uzerine gel
+2. "Gorseli Degistir" butonu belirir (ImageActionBox ile)
+3. Tikla -> Pixabay arama paneli acilir
+4. Anahtar kelime yaz (ornegin "dental clinic")
+5. Sonuclardan birini sec
+6. Gorsel aninda degisir (onUpdate ile props guncellenir)
+7. Panel kapanir
+
+**Animasyonlar:**
+- Panel acilis: `framer-motion` ile `initial={{ opacity: 0, scale: 0.95 }}` -> `animate={{ opacity: 1, scale: 1 }}`
+- Gorsel secimi: secilen gorselin etrafinda `ring-2 ring-primary` efekti
+- Gorsel degisimi: `crossfade` gecis animasyonu
 
