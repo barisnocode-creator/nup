@@ -15,11 +15,13 @@ interface EditorToolbarProps {
   onUndo: () => void;
   previewDevice: 'desktop' | 'tablet' | 'mobile';
   onChangeDevice: (device: 'desktop' | 'tablet' | 'mobile') => void;
+  activeTemplateName?: string;
 }
 
 export function EditorToolbar({
   projectName, isEditing, onToggleEdit, onOpenCustomize, customizePanelOpen,
   onPublish, isSaving, hasUnsavedChanges, canUndo, onUndo, previewDevice, onChangeDevice,
+  activeTemplateName,
 }: EditorToolbarProps) {
   const navigate = useNavigate();
 
@@ -37,6 +39,11 @@ export function EditorToolbar({
           <ArrowLeft className="w-4 h-4" />
         </button>
         <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[160px]">{projectName}</span>
+        {activeTemplateName && (
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-[10px] font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+            {activeTemplateName}
+          </span>
+        )}
         <div className="h-5 w-px bg-gray-200 dark:bg-zinc-700" />
         {canUndo && (
           <button onClick={onUndo} className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200 active:scale-95" title="Geri Al">
