@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PixabayImage {
   id: number;
@@ -24,8 +24,8 @@ export function PixabayImagePicker({ isOpen, onClose, onSelect, defaultQuery = '
   const [query, setQuery] = useState(defaultQuery);
   const [images, setImages] = useState<PixabayImage[]>([]);
   const [loading, setLoading] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const debounceRef = { current: null as ReturnType<typeof setTimeout> | null };
 
   const searchImages = useCallback(async (q: string) => {
     if (!q.trim()) return;
@@ -44,14 +44,13 @@ export function PixabayImagePicker({ isOpen, onClose, onSelect, defaultQuery = '
     }
   }, []);
 
-  // Initial search
   useEffect(() => {
     if (isOpen) {
+      setSelectedId(null);
       searchImages(defaultQuery);
     }
   }, [isOpen, defaultQuery, searchImages]);
 
-  // Debounced search
   useEffect(() => {
     if (!isOpen) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -61,89 +60,149 @@ export function PixabayImagePicker({ isOpen, onClose, onSelect, defaultQuery = '
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, isOpen, searchImages]);
 
-  // Click outside to close
+  // ESC key
   useEffect(() => {
     if (!isOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
+
+  const handleSelect = (img: PixabayImage) => {
+    setSelectedId(img.id);
+    setTimeout(() => {
+      onSelect(img.largeImageURL);
+      onClose();
+    }, 300);
+  };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          ref={panelRef}
-          initial={{ opacity: 0, scale: 0.95, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 8 }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="absolute top-full left-0 right-0 mt-3 z-50 bg-background border border-border rounded-xl shadow-2xl p-4 max-h-[420px] overflow-hidden flex flex-col"
-          onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Görsel ara..."
-                className="pl-9 h-9 text-sm"
-                autoFocus
-              />
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          />
+
+          {/* Panel */}
+          <motion.div
+            className="relative z-10 w-full max-w-2xl bg-background border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 40 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Görsel Seç</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Pixabay'dan ücretsiz yüksek kaliteli görseller</p>
+              </div>
+              <motion.button
+                onClick={onClose}
+                className="p-2 rounded-lg hover:bg-muted transition-colors"
+                whileHover={{ rotate: 90 }}
+                transition={{ duration: 0.2 }}
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </motion.button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
 
-          {/* Results */}
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            {/* Search */}
+            <div className="px-6 pb-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Görsel ara..."
+                  className="pl-9 h-10 text-sm"
+                  autoFocus
+                />
               </div>
-            ) : images.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-8">Sonuç bulunamadı</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {images.map((img) => (
-                  <motion.button
-                    key={img.id}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      onSelect(img.largeImageURL);
-                      onClose();
-                    }}
-                    className="relative aspect-[4/3] rounded-lg overflow-hidden border border-border hover:border-primary hover:ring-2 hover:ring-primary/30 transition-all group"
-                    title={img.tags}
-                  >
-                    <img
-                      src={img.previewURL}
-                      alt={img.tags}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                  </motion.button>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Footer */}
-          <p className="text-[10px] text-muted-foreground text-center mt-2 pt-2 border-t border-border">
-            Pixabay üzerinden ücretsiz görseller
-          </p>
+            {/* Results */}
+            <div className="flex-1 overflow-y-auto px-6 pb-4">
+              {loading ? (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <Skeleton key={i} className="aspect-[4/3] rounded-lg" />
+                  ))}
+                </div>
+              ) : images.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Search className="w-10 h-10 mb-3 opacity-40" />
+                  <p className="text-sm">Sonuç bulunamadı</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  {images.map((img, index) => (
+                    <motion.button
+                      key={img.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05, duration: 0.3 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleSelect(img)}
+                      className="relative aspect-[4/3] rounded-xl overflow-hidden border-2 border-transparent hover:border-primary hover:shadow-lg transition-all group focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <img
+                        src={img.previewURL}
+                        alt={img.tags}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                      {/* Tag overlay on hover */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-[10px] text-white truncate">{img.tags}</p>
+                      </div>
+                      {/* Selection checkmark */}
+                      <AnimatePresence>
+                        {selectedId === img.id && (
+                          <motion.div
+                            className="absolute inset-0 bg-primary/30 flex items-center justify-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                          >
+                            <motion.div
+                              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring', damping: 15 }}
+                            >
+                              <Check className="w-5 h-5 text-primary-foreground" />
+                            </motion.div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-border">
+              <p className="text-[10px] text-muted-foreground text-center">
+                Pixabay üzerinden ücretsiz görseller · ESC ile kapat
+              </p>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
