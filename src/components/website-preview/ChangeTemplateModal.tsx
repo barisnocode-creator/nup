@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { RefreshCw, ArrowLeft, LayoutGrid, Eye, Sparkles } from 'lucide-react';
+import { ArrowLeft, LayoutGrid, Eye, Sparkles } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
@@ -88,28 +88,28 @@ export function ChangeTemplateModal({
     const previewTemplate = templates.find(t => t.id === previewTemplateId);
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="w-[90vw] max-w-[1200px] h-[85vh] overflow-hidden flex flex-col bg-background border-border p-0">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
+        <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-hidden flex flex-col bg-white p-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => setPreviewTemplateId(null)} className="gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setPreviewTemplateId(null)} className="gap-2 text-gray-700 hover:text-gray-900">
                 <ArrowLeft className="w-4 h-4" />
                 Geri
               </Button>
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm font-medium text-gray-900">
                 {previewTemplate?.name || previewTemplateId} — Önizleme
               </span>
             </div>
-            <Button size="sm" onClick={() => { onSelectTemplate(previewTemplateId); onClose(); }} className="gap-2">
+            <Button size="sm" onClick={() => { onSelectTemplate(previewTemplateId); onClose(); }} className="gap-2 bg-orange-500 hover:bg-orange-600 text-white border-0">
               <LayoutGrid className="w-4 h-4" />
               Bu Şablonu Kullan
             </Button>
           </div>
-          <div className="px-4 py-2 bg-muted/50 border-b border-border flex-shrink-0">
-            <p className="text-xs text-muted-foreground">
+          <div className="px-4 py-2 bg-orange-50 border-b border-orange-100 flex-shrink-0">
+            <p className="text-xs text-orange-700">
               Metin içerikleri işletme verilerinizi göstermektedir. Görseller şablon varsayılanlarını kullanır.
             </p>
           </div>
-          <div className="flex-1 overflow-y-auto bg-background">
+          <div className="flex-1 overflow-y-auto bg-white">
             <div className="max-w-[1200px] mx-auto">
               <SectionRenderer sections={previewSections} />
             </div>
@@ -124,33 +124,34 @@ export function ChangeTemplateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[90vw] max-w-[1200px] h-[85vh] overflow-hidden flex flex-col bg-background border-border p-0">
+      <DialogContent className="w-screen h-screen max-w-none m-0 rounded-none overflow-hidden flex flex-col bg-white p-0">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 flex-shrink-0">
+        <div className="flex items-start justify-between px-8 pt-6 pb-4 flex-shrink-0 bg-gray-50 border-b border-gray-200">
           <div>
             <DialogHeader className="space-y-0 p-0">
-              <DialogTitle className="text-2xl font-bold text-foreground">Şablon Değiştir</DialogTitle>
-              <DialogDescription className="text-sm text-muted-foreground mt-1.5">
+              <DialogTitle className="text-2xl font-bold text-gray-900">Şablon Değiştir</DialogTitle>
+              <DialogDescription className="text-sm text-gray-500 mt-1.5">
                 Mevcut görsel ve metinleriniz korunur, yeni düzene uyarlanır.
               </DialogDescription>
             </DialogHeader>
           </div>
-          <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-2 flex-shrink-0 mt-1">
+          <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-2 flex-shrink-0 mt-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700">
             <Sparkles className="w-4 h-4" />
             Karıştır
           </Button>
         </div>
 
         {/* Carousel */}
-        <div className="flex-1 min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col bg-white">
           {sector && (
-            <p className="text-xs text-muted-foreground px-8 pb-2">
+            <p className="text-xs text-gray-500 px-8 pt-4 pb-1">
               İşletme türünüze özel şablonlar gösteriliyor
             </p>
           )}
           <div
             ref={scrollRef}
-            className="flex-1 flex flex-row gap-4 overflow-x-auto overflow-y-hidden px-8 pb-6 pt-2"
+            data-carousel-scroll
+            className="flex-1 flex flex-row gap-5 overflow-x-auto overflow-y-hidden px-8 py-6 items-start"
             style={{
               scrollSnapType: 'x mandatory',
               scrollBehavior: 'smooth',
@@ -167,10 +168,10 @@ export function ChangeTemplateModal({
                 <div
                   key={template.id}
                   className={cn(
-                    'relative w-[340px] h-[560px] flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 group',
-                    isSelected && !isCurrent && 'border-2 border-primary',
-                    isCurrent && 'border-2 border-primary/50',
-                    !isSelected && !isCurrent && 'border-2 border-transparent hover:border-border',
+                    'relative w-[340px] h-[560px] flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 group shadow-sm hover:shadow-lg',
+                    isSelected && !isCurrent && 'ring-3 ring-orange-500 border-2 border-orange-500',
+                    isCurrent && 'ring-2 ring-orange-400/60 border-2 border-orange-400',
+                    !isSelected && !isCurrent && 'border-2 border-gray-200 hover:border-gray-300',
                   )}
                   style={{ scrollSnapAlign: 'start' }}
                   onClick={() => {
@@ -179,8 +180,15 @@ export function ChangeTemplateModal({
                 >
                   {/* Current template badge */}
                   {isCurrent && (
-                    <div className="absolute top-3 left-3 z-10 bg-foreground text-background rounded-full px-3 py-1 text-xs font-medium">
+                    <div className="absolute top-3 left-3 z-10 bg-orange-500 text-white rounded-full px-3 py-1 text-xs font-semibold shadow-md">
                       Mevcut şablon
+                    </div>
+                  )}
+
+                  {/* Selected badge (non-current) */}
+                  {isSelected && !isCurrent && (
+                    <div className="absolute top-3 right-3 z-10 bg-orange-500 text-white rounded-full px-3 py-1 text-xs font-semibold shadow-md">
+                      Seçili
                     </div>
                   )}
 
@@ -190,21 +198,27 @@ export function ChangeTemplateModal({
                     alt={template.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=600&fit=crop';
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=800&fit=crop';
                     }}
                   />
 
-                  {/* Hover overlay */}
+                  {/* Always-visible bottom gradient with name */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20 pb-4 px-4">
+                    <span className="inline-block bg-white/20 backdrop-blur-sm text-white/90 text-[10px] font-medium uppercase tracking-wider rounded-full px-2.5 py-0.5 mb-1.5">
+                      {template.category}
+                    </span>
+                    <p className="text-white font-semibold text-base leading-tight">{template.name}</p>
+                  </div>
+
+                  {/* Hover overlay — preview button */}
                   <div className={cn(
-                    'absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-4 transition-opacity duration-200',
+                    'absolute inset-0 bg-black/20 flex items-center justify-center transition-opacity duration-200',
                     'opacity-0 group-hover:opacity-100',
-                    isCurrent && 'group-hover:opacity-0',
                   )}>
-                    <p className="text-white font-medium text-sm mb-2">{template.name}</p>
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="w-fit gap-1.5"
+                      className="gap-1.5 bg-white text-gray-900 hover:bg-gray-100 shadow-lg"
                       onClick={(e) => { e.stopPropagation(); setPreviewTemplateId(template.id); }}
                     >
                       <Eye className="w-3.5 h-3.5" />
@@ -218,11 +232,11 @@ export function ChangeTemplateModal({
         </div>
 
         {/* Bottom action bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border flex-shrink-0">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex items-center justify-between px-8 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+          <Button variant="outline" onClick={onClose} className="text-gray-600 border-gray-300 hover:bg-gray-100">
             İptal
           </Button>
-          <Button onClick={handleApply} disabled={isApplyDisabled}>
+          <Button onClick={handleApply} disabled={isApplyDisabled} className="bg-orange-500 hover:bg-orange-600 text-white disabled:bg-gray-200 disabled:text-gray-400 border-0">
             Şablonu Uygula →
           </Button>
         </div>
