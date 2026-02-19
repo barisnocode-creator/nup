@@ -1,144 +1,93 @@
 
 
-## Editor Kapsamli Guncelleme: Font Sistemi, Renk Uyumu ve UI/UX Iyilestirmeleri
+## ChaiBuilder Tamamen Kaldirma + Template'lerin Orijinal Gorunumuyle Editorde ve Yayinda Calismasi
 
-### Tespit Edilen Sorunlar
+### Yapilacaklar
 
-**1. Font Degisiklikleri Calismior**
-- `CustomizePanel`'de font secildiginde `--font-heading` ve `--font-body` CSS degiskenleri guncelleniyor
-- AMA section bilesenleri bu degiskenleri kullanmiyor! Ornegin `HeroCafe.tsx` sabit `style={{ fontFamily: "'Playfair Display', Georgia, serif" }}` kullaniyor
-- `HeroCentered.tsx` hic font-family belirtmiyor, varsayilan Tailwind fontu kullaniliyor
-- Google Fonts'tan sadece Inter ve Playfair Display yukleniyor — kullanici Poppins, Lora vb. sectignde font yuklenmez
-- **Cozum:** Tum section bilesenlerinde `font-heading-dynamic` ve `font-body-dynamic` CSS siniflarini kullan + dinamik Google Fonts yukleme
+#### 1. Silinen Dosyalar
 
-**2. Renk Degisimleri Sisteme Uymuyor**
-- `SiteEditor.tsx` renkleri `--primary`, `--background` gibi CSS degiskenleri olarak set ediyor ama deger olarak hex string (`#C65D3E`) kullaniyor
-- Tailwind'in HSL tabanli sistemi (`24 95% 53%`) ile hex degerleri uyumsuz
-- Section bilesenleri `bg-primary`, `text-primary` gibi Tailwind siniflarini kullaniyor, bunlar HSL bekliyor
-- HeroCafe gibi bilesenler ise sabit hex renkleri kullaniyor (`bg-[#C65D3E]`), tema renklerini yok sayiyor
-- **Cozum:** Renk degisikliklerinde hex'i HSL'e cevirme fonksiyonu ekle + bilesenlerde tema renklerini kullan
+- **`src/hooks/useMigrateSections.ts`** — Migration hook'u tamamen silinir
+- **`supabase/functions/chai-ai-assistant/index.ts`** — Chai AI asistani silinir
 
-**3. Eksik/Calismayan UI Bilesenleri**
+#### 2. `src/pages/Project.tsx` Temizleme
 
-- **Stil panelinde renk secici yok** — Sadece dropdown'lar var, section arka plan/metin rengi icin color picker eksik
-- **Array prop duzenleyici yok** — `services`, `testimonials`, `items` gibi liste prop'lari `skipFields` ile gizleniyor, duzenlenemez
-- **Gorsel yukleme/degistirme yok** — Gorseller input alaninda URL olarak gosteriliyor, dosya yukleme veya Pixabay entegrasyonu yok
-- **Responsive onizleme yok** — Kullanici mobil/tablet gorunumu kontrol edemiyor
+- `chai_blocks`, `chai_theme` alanlarini `ProjectData` interface'inden cikar
+- `useMigrateSections` import'unu ve `migrate` kullanimini kaldir
+- `migrating` state'ini kaldir
+- Supabase select sorgusundan `chai_blocks, chai_theme` kaldir
+- "Priority 2: chai_blocks exist -> migrate" blogunu tamamen sil
+- Sadece `site_sections` ve `generated_content` akisi kalir
 
-### Cozum Plani
+#### 3. `src/pages/PublicWebsite.tsx` Temizleme
 
-#### Faz 1: Font Sistemi Duzeltme
+- `chai_blocks`, `chai_theme` alanlarini interface'den cikar
+- Select sorgusundan `chai_blocks, chai_theme` cikar
+- `extractColor` fonksiyonunu ve legacy `[light,dark]` dizi formatini kaldir
+- `hasChaiBlocks`, `convertedSections` bloklarini tamamen sil
+- `activeTheme` sadece `project?.site_theme` olur
+- `sectionsToRender` sadece `siteSections` kullanir
 
-**1a. Dinamik Google Fonts Yukleme**
-- `SiteEditor.tsx`'e font degistiginde Google Fonts CSS'ini dinamik olarak `<link>` etiketi ile yukleme
-- Desteklenen fontlari genislet: Inter, Playfair Display, Space Grotesk, Poppins, Open Sans, Lora, DM Sans, Sora, Roboto, Montserrat
+#### 4. `supabase/functions/deploy-to-netlify/index.ts` Guncelleme
 
-**1b. Section Bilesenlerinde Dinamik Font Kullanimi**
-Tum section bilesenlerinde (`HeroCafe`, `HeroCentered`, `HeroOverlay`, `HeroSplit`, `MenuShowcase`, `CafeStory`, `CafeFeatures`, `CafeGallery`, `ServicesGrid`, `AboutSection`, `StatisticsCounter`, `TestimonialsCarousel`, `ContactForm`, `CTABanner`, `FAQAccordion`, `PricingTable`) basliklarda `font-heading-dynamic` CSS sinifini, govde metinlerinde `font-body-dynamic` sinifini kullanacak sekilde guncelle.
-
-Ornegin `HeroCafe.tsx` satirlari:
+- `ChaiBlock` interface'ini `SiteSection` tabanli bir yapiya donustur:
 ```text
-style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+interface SiteSection {
+  id: string;
+  type: string;      // kebab-case: "hero-centered", "services-grid"
+  props: Record<string, unknown>;
+  style?: Record<string, unknown>;
+}
 ```
-yerine:
-```text
-className="font-heading-dynamic"
-```
+- Tum `renderXxx(b: ChaiBlock)` fonksiyonlarindaki parametre tipini degistir; iceride `b.title` yerine `b.props.title` kullanilacak sekilde guncelle (cunku artik props icinde)
+- `renderBlock` switch'ini kebab-case type'lar ile calistir (`"hero-centered"` yerine `"HeroCentered"` degil)
+- `blocksToHtml` fonksiyonunu `sectionsToHtml` olarak yeniden adlandir, parametre olarak `SiteSection[]` alsin
+- Ana handler'da `chai_blocks` fallback mantigi kaldirilir; sadece `site_sections` kullanilir
+- `site_sections -> ChaiBlock donusturme` kodu silinir
 
-#### Faz 2: Renk Sistemi Duzeltme
+#### 5. `supabase/config.toml` Guncelleme
 
-**2a. Hex-to-HSL Donusturucu**
-`src/lib/utils.ts`'e `hexToHSL(hex: string): string` fonksiyonu ekle. Bu fonksiyon `#C65D3E` gibi hex degerleri `15 55% 51%` gibi HSL degerlerine cevirir.
+- `[functions.chai-ai-assistant]` blogu kaldirilir (dosya otomatik guncellenmez ama edge function silinecek)
 
-**2b. SiteEditor'da Renk Uygulama Duzeltmesi**
-`SiteEditor.tsx`'deki `useEffect` blogunda renk set ederken hex degerleri HSL'e cevirip set et:
-```text
-root.style.setProperty(`--${key}`, hexToHSL(val));
-```
+#### 6. Deploy-to-Netlify'da Template Font/Stil Uyumu
 
-**2c. Section Bilesenlerinde Tema Renkleri Kullanimi**
-`HeroCafe.tsx` gibi sabit renkli bilesenleri tema renklerini kullanacak sekilde guncelle:
-- `bg-[#C65D3E]` yerine `bg-primary`
-- `text-[#C65D3E]` yerine `text-primary`
-- Boylece kullanici customize panelinden renk degistirdiginde tum bilesenler guncellenir
+- `blocksToHtml` (yeni: `sectionsToHtml`) icinde `theme.fonts.heading` ve `theme.fonts.body` alanlarini kullanarak dogru Google Fonts yukle (artik `fontFamily` degil `fonts` nesnesi)
+- HSL renk degerleri icin hex-to-HSL donusumunu edge function'a da ekle (editordeki ile ayni)
+- Boylece yayinlanan site editordeki ile birebir ayni gorunur
 
-#### Faz 3: Stil Panelini Zenginlestirme
+#### 7. Veritabani Notu
 
-**3a. Renk Secici Ekleme (SectionEditPanel Stil Sekmesi)**
-- Arka plan rengi icin mevcut dropdown'a ek olarak bir color picker ekle
-- Metin rengi icin de color picker ekle
-- Bunlar `section.style` uzerinden `customBgColor` ve `customTitleColor` olarak kayit edilir
-
-**3b. Array Prop Duzenleyici**
-`SectionEditPanel`'deki `ContentFields`'e basit bir liste duzenleyici ekle:
-- `services` dizisi icin: Her bir ogede baslik+aciklama duzenle, sil, yenisini ekle
-- `testimonials` icin: Isim, rol, yorum alanlari
-- `items` (FAQ, Menu) icin: Soru/cevap, isim/fiyat alanlari
-- Her liste ogesi bir Collapsible/Accordion icinde gosterilir
-
-**3c. Gorsel URL Alani Iyilestirmesi**
-- `backgroundImage`, `image` gibi prop'lar icin URL input'unun yanina bir kucuk onizleme gorseli goster
-- Ileride dosya yukleme eklenebilir ancak su an URL girisi yeterli
-
-#### Faz 4: Responsive Onizleme
-
-**EditorToolbar'a Cihaz Toggler**
-- Masaustu (1200px), Tablet (768px), Mobil (375px) genislik secenekleri
-- Canvas container'ina `max-width` ve `mx-auto` ile boyutlandirma uygula
-- Secili cihaz toolbar'da ikon ile gosterilir
-
-#### Faz 5: CustomizePanel'e Tema Preset'leri
-
-**Hizli Tema Secimi**
-- Mevcut `specialtyCafePreset` ve `modernProfessionalPreset` disinda 3-4 yeni preset ekle:
-  - "Koyu Minimal" (siyah bg, beyaz text, turkuaz accent)
-  - "Pastel Zarif" (krem bg, gul kurusu accent, serif font)  
-  - "Canli Enerjik" (beyaz bg, parlak kirmizi accent, sans-serif)
-- CustomizePanel'de renk secicilerin ustune kucuk preset kartlari (renk dairesi + isim)
-- Tiklandiginda tum tema renkleri, fontlar ve borderRadius guncellenir
+- `chai_blocks` ve `chai_theme` kolonlari veritabaninda kalacak (veri kaybi onlenmesi icin)
+- Ancak hicbir frontend veya edge function bu kolonlari okumayacak/yazmayacak
 
 ### Teknik Detaylar
 
-**Dosya Degisiklikleri:**
+**Silinen dosyalar:**
+
+| Dosya | Neden |
+|-------|-------|
+| `src/hooks/useMigrateSections.ts` | chai_blocks -> site_sections migration artik gereksiz |
+| `supabase/functions/chai-ai-assistant/index.ts` | ChaiBuilder AI asistani artik kullanilmiyor |
+
+**Guncellenen dosyalar:**
 
 | Dosya | Degisiklik |
 |-------|-----------|
-| `src/lib/utils.ts` | `hexToHSL()` fonksiyonu ekle |
-| `src/components/editor/SiteEditor.tsx` | Dinamik font yukleme + hex-to-HSL renk uygulama |
-| `src/components/editor/CustomizePanel.tsx` | Tema preset'leri + iyilestirilmis renk seciciler |
-| `src/components/editor/SectionEditPanel.tsx` | Array prop duzenleyici + section renk secicileri |
-| `src/components/editor/EditorToolbar.tsx` | Responsive cihaz toggler |
-| `src/components/editor/EditorCanvas.tsx` | Responsive genislik sinirlamasi |
-| `src/components/sections/HeroCafe.tsx` | Sabit renkler yerine tema degiskenleri + dinamik font |
-| `src/components/sections/HeroCentered.tsx` | Dinamik font siniflari |
-| `src/components/sections/HeroOverlay.tsx` | Dinamik font siniflari |
-| `src/components/sections/HeroSplit.tsx` | Dinamik font siniflari |
-| `src/components/sections/MenuShowcase.tsx` | Tema renkleri + dinamik font |
-| `src/components/sections/CafeStory.tsx` | Tema renkleri + dinamik font |
-| `src/components/sections/CafeFeatures.tsx` | Tema renkleri + dinamik font |
-| `src/components/sections/CafeGallery.tsx` | Tema renkleri + dinamik font |
-| `src/components/sections/ServicesGrid.tsx` | Dinamik font siniflari |
-| `src/components/sections/AboutSection.tsx` | Dinamik font siniflari |
-| `src/components/sections/StatisticsCounter.tsx` | Dinamik font siniflari |
-| `src/components/sections/TestimonialsCarousel.tsx` | Dinamik font siniflari |
-| `src/components/sections/ContactForm.tsx` | Dinamik font siniflari |
-| `src/components/sections/CTABanner.tsx` | Tema renkleri + dinamik font |
-| `src/components/sections/FAQAccordion.tsx` | Dinamik font siniflari |
-| `src/components/sections/PricingTable.tsx` | Dinamik font siniflari |
-| `src/themes/presets.ts` | 3-4 yeni tema preset'i |
-| `index.html` | Google Fonts linkine ek fontlar (Poppins, Lora, Space Grotesk vb.) |
+| `src/pages/Project.tsx` | chai referanslari, migration kodu, migrating state kaldirilir |
+| `src/pages/PublicWebsite.tsx` | chai fallback, convertedSections, extractColor kaldirilir |
+| `supabase/functions/deploy-to-netlify/index.ts` | ChaiBlock -> SiteSection, tum render fonksiyonlari props.xxx erisimi, kebab-case switch, theme.fonts uyumu |
 
 ### Uygulama Sirasi
 
-1. **Faz 1** - Font sistemi (en kritik: dinamik yukleme + section guncelleme)
-2. **Faz 2** - Renk sistemi (hex-to-HSL + tema uyumu)
-3. **Faz 3** - Stil paneli zenginlestirme (array editor + color picker)
-4. **Faz 4** - Responsive onizleme
-5. **Faz 5** - Tema preset'leri
+1. `useMigrateSections.ts` sil
+2. `chai-ai-assistant/index.ts` sil + edge function'i sil
+3. `Project.tsx` temizle
+4. `PublicWebsite.tsx` temizle
+5. `deploy-to-netlify/index.ts` SiteSection tabanina gecir + font/renk uyumu
 
-### Onemli Notlar
+### Sonuc
 
-- Editor UI panelleri (toolbar, SectionEditPanel, CustomizePanel, AddSectionPanel) sabit Tailwind renkleri kullanmaya devam edecek — tema degiskenleri sadece canvas icerigini etkiler
-- Font degisiklikleri canli onizlemede aninda gorunecek
-- Renk degisiklikleri tum bilesenlere aninda yansiyacak (HeroCafe dahil)
+- ChaiBuilder'in sistemdeki tum izleri temizlenir
+- Template'ler editorde ve yayinda ayni gorunur (font, renk, stil)
+- Tek veri kaynagi: `site_sections` + `site_theme`
+- Kod tabaninda gereksiz legacy donusturme mantiklari kalmaz
 
