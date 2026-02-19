@@ -1,87 +1,60 @@
 
 
-## Dental Template Gorsellerine "Degistir" Ozelligini Ekleme
+## Pixabay Gorsel Degistirme Kartini Iyilestirme
 
 ### Mevcut Durum
 
-Projede `EditableImage` adinda hazir bir bilesen var (`src/components/website-preview/EditableImage.tsx`). Bu bilesen, gorselin uzerine gelindiginde "Stili Degistir" ve "Yeniden Olustur" gibi aksiyonlar gosteren bir action toolbar iceriyor. Ancak bu bilesen sadece eski template sisteminde (`website-preview/`) tanimli — yeni native section'larda (`src/components/sections/`) hic kullanilmiyor.
+Kaydetme sistemi zaten calisiyor. `HeroDental`'daki `onUpdate?.({ image: url })` cagrisi, editor state'ini guncelliyor ve `useSiteSave` hook'u 2 saniyelik debounce ile degisiklikleri otomatik olarak veritabanina kaydediyor. Yani gorsel degistirdiginde kayit zaten yapiliyor.
 
-Dental template'deki section'lardan gorsel iceren tek bilesen **HeroDental** (hero goeseli). `DentalServices` sadece ikon kullanir, `DentalTips` gorsel icermez, `DentalBooking` bir form bilesenidir.
+Asil iyilestirilecek kisim: **PixabayImagePicker** karti daha hareketli, daha buyuk ve daha kolay kapanabilir olmali.
 
-### Yapilacaklar
+### Yapilacak Degisiklikler
 
-#### 1. HeroDental'a EditableImage Entegrasyonu
+**`src/components/sections/PixabayImagePicker.tsx` — UI/UX Yeniden Tasarim**
 
-**`src/components/sections/HeroDental.tsx`**
-
-Mevcut duz `<img>` etiketini `EditableImage` ile degistir. `isEditing` true oldugunda hover'da "Gorseli Degistir" aksiyonu gorunecek. Tiklandiginda `onImageChange` callback'i tetiklenecek.
+Mevcut kucuk absolute panel yerine, tam ekrani kaplayan bir modal/overlay yapisi:
 
 ```text
-Onceki:
-  <img src={image} alt={title} className="..." />
-
-Sonraki:
-  isEditing ?
-    <EditableImage
-      src={image}
-      alt={title}
-      type="hero"
-      imagePath="image"
-      className="..."
-      isEditable={true}
-      onSelect={(data) => onImageChange?.("image", data.currentUrl)}
-      actions={[{ id: 'change', icon: Paintbrush, label: 'Görseli Değiştir', onClick: openPixabayPicker, group: 'primary' }]}
-    />
-  :
-    <img src={image} alt={title} className="..." />
++--------------------------------------------------+
+|  [dim backdrop - tikla kapat]                     |
+|                                                   |
+|   +------------------------------------------+    |
+|   |  Gorsel Sec                         [X]  |    |
+|   +------------------------------------------+    |
+|   |  [🔍 Arama: dental clinic_________ ]     |    |
+|   +------------------------------------------+    |
+|   |                                          |    |
+|   |  [img1] [img2] [img3] [img4]             |    |
+|   |  [img5] [img6] [img7] [img8]             |    |
+|   |  [img9] [img10] [img11] [img12]          |    |
+|   |                                          |    |
+|   +------------------------------------------+    |
+|   |  Pixabay uzerinden ucretsiz gorseller    |    |
+|   +------------------------------------------+    |
++--------------------------------------------------+
 ```
 
-#### 2. Pixabay Arama Paneli Ekleme (Inline Image Switcher)
-
-HeroDental icerisine basit bir Pixabay arama paneli ekle. Gorsele tiklandiginda acilan, arama yapip sonuclari gosteren kucuk bir floating panel:
-
-- Arama input'u (debounce 500ms)
-- `search-pixabay` edge function'a istek
-- Sonuclari 3x2 grid'de goster
-- Bir gorsele tiklandiginda `onUpdate?.({ image: selectedUrl })` ile prop'u guncelle
-- Panel disina tiklandiginda kapanir
-
-#### 3. SectionComponentProps Genisletme (Opsiyonel)
-
-`SectionComponentProps` uzerindeki mevcut `onImageChange` callback'i zaten tanimli. `EditorCanvas` bu callback'i `onUpdate` uzerinden calistirabilir — gorsel URL'si degistiginde section props guncellenir.
-
-#### 4. EditorCanvas ve SectionEditPanel'e Image Prop Destegi
-
-`SectionEditPanel` zaten `image` prop'unu bir Input olarak gosteriyor (labelMap'te var). Ek olarak:
-- Image prop'unun yanina kucuk bir "Pixabay'da Ara" butonu ekle
-- Bu buton tiklandiginda ayni Pixabay arama panelini ac
+Yeni ozellikler:
+- **Backdrop overlay** — Arkaplan karartmasi, tiklandiginda kapatir
+- **Buyuk kapatma butonu** — Sag ustte belirgin X butonu, `hover:rotate-90` animasyonuyla
+- **ESC tusu** ile kapatma destegi
+- **Gorsel hover animasyonu** — `scale(1.05)` + parlak kenarlik + tag bilgisi overlay olarak gosterilir
+- **Gorsel secim animasyonu** — Tiklandiginda `scale(0.95)` bounce + checkmark ikonu gosterilir, 300ms sonra kapanir
+- **Staggered grid animasyonu** — Gorseller sirali olarak (50ms aralikla) `fade-in + slide-up` ile belirir
+- **Loading animasyonu** — Skeleton placeholder kartlari (pulse animasyonlu)
+- **Baslik ve aciklama** — "Gorsel Sec" basligi + "Pixabay'dan ucretsiz yuksek kaliteli gorseller" alt yazisi
 
 ### Teknik Detaylar
 
-**Dosya degisiklikleri:**
-
 | Dosya | Degisiklik |
 |-------|-----------|
-| `src/components/sections/HeroDental.tsx` | `EditableImage` + inline Pixabay picker ekleme |
-| `src/components/sections/types.ts` | Degisiklik yok (onImageChange zaten var) |
-| `src/components/editor/EditorCanvas.tsx` | Degisiklik yok (onUpdate zaten calisiyor) |
+| `src/components/sections/PixabayImagePicker.tsx` | Modal overlay + animasyonlu grid + ESC/backdrop kapatma |
 
-**Pixabay Entegrasyonu:**
-- `search-pixabay` edge function zaten mevcut ve calisir durumda
-- Arama sonuclari: `largeImageURL` veya `webformatURL` kullanilacak
-- Her gorsel icin `tags` bilgisi tooltip olarak gosterilecek
-
-**Kullanici Akisi:**
-1. Editorde HeroDental section'indaki gorselin uzerine gel
-2. "Gorseli Degistir" butonu belirir (ImageActionBox ile)
-3. Tikla -> Pixabay arama paneli acilir
-4. Anahtar kelime yaz (ornegin "dental clinic")
-5. Sonuclardan birini sec
-6. Gorsel aninda degisir (onUpdate ile props guncellenir)
-7. Panel kapanir
-
-**Animasyonlar:**
-- Panel acilis: `framer-motion` ile `initial={{ opacity: 0, scale: 0.95 }}` -> `animate={{ opacity: 1, scale: 1 }}`
-- Gorsel secimi: secilen gorselin etrafinda `ring-2 ring-primary` efekti
-- Gorsel degisimi: `crossfade` gecis animasyonu
+Animasyon detaylari (framer-motion):
+- Backdrop: `initial={{ opacity: 0 }}` -> `animate={{ opacity: 1 }}`
+- Panel: `initial={{ opacity: 0, scale: 0.9, y: 40 }}` -> `animate={{ opacity: 1, scale: 1, y: 0 }}` (spring)
+- Her gorsel karti: `initial={{ opacity: 0, y: 20 }}` -> `animate={{ opacity: 1, y: 0 }}` staggered (`transition={{ delay: index * 0.05 }}`)
+- Gorsel hover: `whileHover={{ scale: 1.05 }}` + tag overlay fade-in
+- X butonu: `whileHover={{ rotate: 90 }}` gecisi
+- Secim: `whileTap={{ scale: 0.95 }}` + kisa checkmark flash
 
