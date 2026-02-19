@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
+import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
 
 interface EditorState {
   sections: SiteSection[];
@@ -134,16 +135,19 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     setTheme(prev => ({ ...prev, ...updates }));
   }, [pushUndo]);
 
-  const applyTemplate = useCallback((templateId: string) => {
+  const applyTemplate = useCallback((templateId: string, projectData?: ProjectData | null) => {
     const def = getCatalogTemplate(templateId);
     if (!def) return;
     pushUndo();
 
-    // Build new sections from template definition, preserving matching content
+    // Map user's project data onto template defaults
+    const mappedSections = mapContentToTemplate(def.sections, projectData);
+
+    // Build new sections, also preserving matching content from old sections
     const oldProps: Record<string, Record<string, any>> = {};
     sections.forEach(s => { oldProps[s.type] = s.props || {}; });
 
-    const newSections: SiteSection[] = def.sections.map((secDef, i) => {
+    const newSections: SiteSection[] = mappedSections.map((secDef, i) => {
       const mergedProps = { ...secDef.defaultProps };
       // If old site had same section type, carry over text content
       if (oldProps[secDef.type]) {
