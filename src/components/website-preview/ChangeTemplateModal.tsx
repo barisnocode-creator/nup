@@ -1,11 +1,9 @@
-import { useState, useMemo, useEffect } from 'react';
-import { RefreshCw, Check, Eye, LayoutGrid, ArrowLeft } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { RefreshCw, ArrowLeft, LayoutGrid, Eye, Sparkles } from 'lucide-react';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { getAllTemplates } from '@/templates';
 import { getCatalogTemplate } from '@/templates/catalog';
 import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
@@ -25,24 +23,41 @@ interface ChangeTemplateModalProps {
 export function ChangeTemplateModal({
   isOpen, onClose, currentTemplateId, onSelectTemplate, onPreview, projectData,
 }: ChangeTemplateModalProps) {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(currentTemplateId);
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
   const [shuffleKey, setShuffleKey] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedTemplateId(null);
+      setSelectedTemplateId(currentTemplateId);
       setPreviewTemplateId(null);
     }
-  }, [isOpen]);
+  }, [isOpen, currentTemplateId]);
+
+  const sector = (projectData as any)?.sector as string | undefined;
 
   const templates = useMemo(() => {
-    const allTemplates = getAllTemplates();
-    if (shuffleKey > 0) return [...allTemplates].sort(() => Math.random() - 0.5);
-    return allTemplates;
-  }, [shuffleKey]);
+    const all = getAllTemplates();
+    let list = shuffleKey > 0 ? [...all].sort(() => Math.random() - 0.5) : [...all];
 
-  // Build live preview sections for the previewed template
+    if (sector) {
+      const lower = sector.toLowerCase();
+      const matched: typeof list = [];
+      const rest: typeof list = [];
+      list.forEach(t => {
+        if (t.supportedProfessions?.some(p => p.toLowerCase().includes(lower) || lower.includes(p.toLowerCase()))) {
+          matched.push(t);
+        } else {
+          rest.push(t);
+        }
+      });
+      list = [...matched, ...rest];
+    }
+    return list;
+  }, [shuffleKey, sector]);
+
+  // Live preview sections
   const previewSections = useMemo<SiteSection[]>(() => {
     if (!previewTemplateId) return [];
     const def = getCatalogTemplate(previewTemplateId);
@@ -58,21 +73,14 @@ export function ChangeTemplateModal({
 
   const handleRegenerate = () => {
     setShuffleKey(prev => prev + 1);
-    setSelectedTemplateId(null);
+    setSelectedTemplateId(currentTemplateId);
   };
 
-  const handleTemplateClick = (templateId: string) => {
-    if (templateId === currentTemplateId) return;
-    setSelectedTemplateId(templateId === selectedTemplateId ? null : templateId);
-  };
-
-  const handlePreview = (templateId: string) => {
-    setPreviewTemplateId(templateId);
-  };
-
-  const handleSelect = (templateId: string) => {
-    onSelectTemplate(templateId);
-    onClose();
+  const handleApply = () => {
+    if (selectedTemplateId && selectedTemplateId !== currentTemplateId) {
+      onSelectTemplate(selectedTemplateId);
+      onClose();
+    }
   };
 
   // Live preview mode
@@ -80,33 +88,28 @@ export function ChangeTemplateModal({
     const previewTemplate = templates.find(t => t.id === previewTemplateId);
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700 p-0">
-          {/* Preview toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
+        <DialogContent className="w-[90vw] max-w-[1200px] h-[85vh] overflow-hidden flex flex-col bg-background border-border p-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border flex-shrink-0">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => setPreviewTemplateId(null)} className="gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 Geri
               </Button>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-foreground">
                 {previewTemplate?.name || previewTemplateId} — Önizleme
               </span>
             </div>
-            <Button size="sm" onClick={() => handleSelect(previewTemplateId)} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
+            <Button size="sm" onClick={() => { onSelectTemplate(previewTemplateId); onClose(); }} className="gap-2">
               <LayoutGrid className="w-4 h-4" />
               Bu Şablonu Kullan
             </Button>
           </div>
-
-          {/* Info banner */}
-          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex-shrink-0">
-            <p className="text-xs text-amber-700 dark:text-amber-300">
+          <div className="px-4 py-2 bg-muted/50 border-b border-border flex-shrink-0">
+            <p className="text-xs text-muted-foreground">
               Metin içerikleri işletme verilerinizi göstermektedir. Görseller şablon varsayılanlarını kullanır.
             </p>
           </div>
-
-          {/* Live rendered preview */}
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-zinc-950">
+          <div className="flex-1 overflow-y-auto bg-background">
             <div className="max-w-[1200px] mx-auto">
               <SectionRenderer sections={previewSections} />
             </div>
@@ -116,86 +119,112 @@ export function ChangeTemplateModal({
     );
   }
 
-  // Gallery mode
+  // Gallery mode — horizontal carousel
+  const isApplyDisabled = selectedTemplateId === currentTemplateId;
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-700">
-        <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">Şablon Değiştir</DialogTitle>
-              <DialogDescription className="text-sm text-gray-500 mt-1">
-                Mevcut içerikleriniz korunarak yeni düzene aktarılacaktır.
+      <DialogContent className="w-[90vw] max-w-[1200px] h-[85vh] overflow-hidden flex flex-col bg-background border-border p-0">
+        {/* Header */}
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 flex-shrink-0">
+          <div>
+            <DialogHeader className="space-y-0 p-0">
+              <DialogTitle className="text-2xl font-bold text-foreground">Şablon Değiştir</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground mt-1.5">
+                Mevcut görsel ve metinleriniz korunur, yeni düzene uyarlanır.
               </DialogDescription>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-2 border-gray-200 dark:border-zinc-700">
-              <RefreshCw className="w-4 h-4" />
-              Karıştır
-            </Button>
+            </DialogHeader>
           </div>
-        </DialogHeader>
+          <Button variant="outline" size="sm" onClick={handleRegenerate} className="gap-2 flex-shrink-0 mt-1">
+            <Sparkles className="w-4 h-4" />
+            Karıştır
+          </Button>
+        </div>
 
-        <div className="flex-1 overflow-y-auto py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* Carousel */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          {sector && (
+            <p className="text-xs text-muted-foreground px-8 pb-2">
+              İşletme türünüze özel şablonlar gösteriliyor
+            </p>
+          )}
+          <div
+            ref={scrollRef}
+            className="flex-1 flex flex-row gap-4 overflow-x-auto overflow-y-hidden px-8 pb-6 pt-2"
+            style={{
+              scrollSnapType: 'x mandatory',
+              scrollBehavior: 'smooth',
+              paddingRight: '80px',
+              scrollbarWidth: 'none',
+            }}
+          >
+            <style>{`[data-carousel-scroll]::-webkit-scrollbar { display: none; }`}</style>
             {templates.map((template) => {
-              const isCurrentTemplate = template.id === currentTemplateId;
+              const isCurrent = template.id === currentTemplateId;
               const isSelected = template.id === selectedTemplateId;
 
               return (
                 <div
                   key={template.id}
                   className={cn(
-                    'group relative rounded-lg border-2 overflow-hidden transition-all',
-                    isCurrentTemplate && 'ring-2 ring-blue-500 ring-offset-2 cursor-default',
-                    !isCurrentTemplate && 'cursor-pointer',
-                    isSelected && !isCurrentTemplate && 'border-blue-500',
-                    !isSelected && !isCurrentTemplate && 'border-gray-200 dark:border-zinc-700 hover:border-gray-400'
+                    'relative w-[340px] h-[560px] flex-shrink-0 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 group',
+                    isSelected && !isCurrent && 'border-2 border-primary',
+                    isCurrent && 'border-2 border-primary/50',
+                    !isSelected && !isCurrent && 'border-2 border-transparent hover:border-border',
                   )}
-                  onClick={() => handleTemplateClick(template.id)}
+                  style={{ scrollSnapAlign: 'start' }}
+                  onClick={() => {
+                    if (!isCurrent) setSelectedTemplateId(template.id);
+                  }}
                 >
-                  {isCurrentTemplate && (
-                    <div className="absolute top-2 left-2 z-10">
-                      <Badge className="gap-1 bg-blue-600 text-white">
-                        <Check className="w-3 h-3" />
-                        Mevcut
-                      </Badge>
+                  {/* Current template badge */}
+                  {isCurrent && (
+                    <div className="absolute top-3 left-3 z-10 bg-foreground text-background rounded-full px-3 py-1 text-xs font-medium">
+                      Mevcut şablon
                     </div>
                   )}
 
-                  <AspectRatio ratio={4 / 5}>
-                    <img
-                      src={template.preview}
-                      alt={template.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=500&fit=crop';
-                      }}
-                    />
-                    
-                    <div className={cn(
-                      'absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 transition-opacity',
-                      isSelected && !isCurrentTemplate ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                      isCurrentTemplate && 'hidden'
-                    )}>
-                      <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); handlePreview(template.id); }} className="gap-2">
-                        <Eye className="w-4 h-4" />
-                        Önizle
-                      </Button>
-                      <Button size="sm" onClick={(e) => { e.stopPropagation(); handleSelect(template.id); }} className="gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                        <LayoutGrid className="w-4 h-4" />
-                        Bu Şablonu Kullan
-                      </Button>
-                    </div>
-                  </AspectRatio>
+                  {/* Thumbnail */}
+                  <img
+                    src={template.preview}
+                    alt={template.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=400&h=600&fit=crop';
+                    }}
+                  />
 
-                  <div className="p-3 bg-white dark:bg-zinc-800">
-                    <h3 className="font-medium text-sm truncate text-gray-900 dark:text-white">{template.name}</h3>
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{template.category}</p>
+                  {/* Hover overlay */}
+                  <div className={cn(
+                    'absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-4 transition-opacity duration-200',
+                    'opacity-0 group-hover:opacity-100',
+                    isCurrent && 'group-hover:opacity-0',
+                  )}>
+                    <p className="text-white font-medium text-sm mb-2">{template.name}</p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-fit gap-1.5"
+                      onClick={(e) => { e.stopPropagation(); setPreviewTemplateId(template.id); }}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Önizle
+                    </Button>
                   </div>
                 </div>
               );
             })}
           </div>
+        </div>
+
+        {/* Bottom action bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-border flex-shrink-0">
+          <Button variant="outline" onClick={onClose}>
+            İptal
+          </Button>
+          <Button onClick={handleApply} disabled={isApplyDisabled}>
+            Şablonu Uygula →
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
