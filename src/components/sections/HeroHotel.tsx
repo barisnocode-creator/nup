@@ -1,0 +1,77 @@
+import { motion } from 'framer-motion';
+import type { SectionComponentProps } from './types';
+
+export function HeroHotel({ section, isEditing }: SectionComponentProps) {
+  const p = section.props;
+  const title = p.title || 'Lüksün ve Konforun Buluştuğu Yer';
+  const description = p.description || 'Eşsiz manzara ve birinci sınıf hizmetlerle unutulmaz bir konaklama deneyimi.';
+  const badge = p.badge || '★★★★★';
+  const image = p.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80';
+  const buttonText = p.buttonText || 'Oda Ara';
+
+  return (
+    <section className="relative min-h-screen flex items-center overflow-hidden">
+      {/* Parallax background */}
+      <div className="absolute inset-0">
+        <img src={image} alt={title} className="w-full h-full object-cover scale-105" style={{ transform: 'scale(1.05)' }} />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-6 py-20">
+        <div className="max-w-2xl">
+          <motion.span
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="inline-block text-primary text-sm tracking-[0.3em] uppercase font-medium mb-6 font-body-dynamic"
+          >
+            {badge}
+          </motion.span>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="text-5xl md:text-7xl font-bold text-white leading-[1.1] tracking-tight font-heading-dynamic mb-6"
+          >
+            {title}
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="text-lg md:text-xl text-white/70 max-w-lg leading-relaxed font-body-dynamic mb-10"
+          >
+            {description}
+          </motion.p>
+
+          {/* Search bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.7 }}
+            className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-white/20"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <div>
+                <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Giriş</label>
+                <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
+              </div>
+              <div>
+                <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Çıkış</label>
+                <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
+              </div>
+              <a
+                href={isEditing ? '#' : (p.buttonLink || '#rooms')}
+                className="inline-flex items-center justify-center px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-all duration-300 font-body-dynamic"
+              >
+                {buttonText}
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}

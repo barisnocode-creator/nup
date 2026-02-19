@@ -21,6 +21,15 @@ import { HeroDental } from './HeroDental';
 import { DentalServices } from './DentalServices';
 import { DentalTips } from './DentalTips';
 import { DentalBooking } from './DentalBooking';
+import { HeroRestaurant } from './HeroRestaurant';
+import { ChefShowcase } from './ChefShowcase';
+import { RestaurantMenu } from './RestaurantMenu';
+import { HeroHotel } from './HeroHotel';
+import { RoomShowcase } from './RoomShowcase';
+import { HotelAmenities } from './HotelAmenities';
+import { HeroPortfolio } from './HeroPortfolio';
+import { ProjectShowcase } from './ProjectShowcase';
+import { SkillsGrid } from './SkillsGrid';
 
 type SectionComponent = React.ComponentType<SectionComponentProps>;
 
@@ -35,6 +44,12 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'hero-cafe': HeroCafe,
   'HeroDental': HeroDental,
   'hero-dental': HeroDental,
+  'HeroRestaurant': HeroRestaurant,
+  'hero-restaurant': HeroRestaurant,
+  'HeroHotel': HeroHotel,
+  'hero-hotel': HeroHotel,
+  'HeroPortfolio': HeroPortfolio,
+  'hero-portfolio': HeroPortfolio,
   'ServicesGrid': ServicesGrid,
   'services-grid': ServicesGrid,
   'DentalServices': DentalServices,
@@ -69,6 +84,18 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'dental-tips': DentalTips,
   'DentalBooking': DentalBooking,
   'dental-booking': DentalBooking,
+  'ChefShowcase': ChefShowcase,
+  'chef-showcase': ChefShowcase,
+  'RestaurantMenu': RestaurantMenu,
+  'restaurant-menu': RestaurantMenu,
+  'RoomShowcase': RoomShowcase,
+  'room-showcase': RoomShowcase,
+  'HotelAmenities': HotelAmenities,
+  'hotel-amenities': HotelAmenities,
+  'ProjectShowcase': ProjectShowcase,
+  'project-showcase': ProjectShowcase,
+  'SkillsGrid': SkillsGrid,
+  'skills-grid': SkillsGrid,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
@@ -88,6 +115,9 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'hero-overlay', label: 'Hero - Overlay', category: 'hero' },
   { type: 'hero-cafe', label: 'Hero - Cafe', category: 'hero' },
   { type: 'hero-dental', label: 'Hero - Dental', category: 'hero' },
+  { type: 'hero-restaurant', label: 'Hero - Restoran', category: 'hero' },
+  { type: 'hero-hotel', label: 'Hero - Otel', category: 'hero' },
+  { type: 'hero-portfolio', label: 'Hero - Portfolio', category: 'hero' },
   { type: 'services-grid', label: 'Hizmetler', category: 'content' },
   { type: 'dental-services', label: 'Dental Hizmetler', category: 'dental' },
   { type: 'about-section', label: 'Hakkımızda', category: 'content' },
@@ -105,4 +135,10 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'cafe-gallery', label: 'Cafe Galeri', category: 'cafe' },
   { type: 'dental-tips', label: 'Sağlık İpuçları', category: 'dental' },
   { type: 'dental-booking', label: 'Adımlı Randevu', category: 'dental' },
+  { type: 'chef-showcase', label: 'Şef Tanıtım', category: 'restaurant' },
+  { type: 'restaurant-menu', label: 'Restoran Menü', category: 'restaurant' },
+  { type: 'room-showcase', label: 'Oda Vitrini', category: 'hotel' },
+  { type: 'hotel-amenities', label: 'Otel Olanakları', category: 'hotel' },
+  { type: 'project-showcase', label: 'Proje Vitrini', category: 'portfolio' },
+  { type: 'skills-grid', label: 'Yetenek Kartları', category: 'portfolio' },
 ];
