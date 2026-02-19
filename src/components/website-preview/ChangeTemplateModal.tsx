@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { getAllTemplates } from '@/templates';
 import { getCatalogTemplate } from '@/templates/catalog';
 import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
+import { filterIncompatibleSections } from '@/templates/catalog/mappers';
 import { SectionRenderer } from '@/components/sections/SectionRenderer';
 import type { SiteSection } from '@/components/sections/types';
 import { cn } from '@/lib/utils';
@@ -64,7 +65,11 @@ export function ChangeTemplateModal({
     if (!previewTemplateId) return [];
     const def = getCatalogTemplate(previewTemplateId);
     if (!def) return [];
-    const mapped = mapContentToTemplate(def.sections, projectData);
+    let mapped = mapContentToTemplate(def.sections, projectData);
+    // Extra safety: filter incompatible sections even if mapSections already does it
+    if (sector) {
+      mapped = filterIncompatibleSections(mapped, sector);
+    }
     return mapped.map((sec, i) => ({
       id: `preview_${sec.type}_${i}`,
       type: sec.type,

@@ -10,6 +10,9 @@ import { SiteEditor } from '@/components/editor/SiteEditor';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { getCatalogTemplate } from '@/templates/catalog';
+import { resolveEffectiveSector } from '@/utils/inferSector';
+import { filterIncompatibleSections } from '@/templates/catalog/mappers';
+import type { TemplateSectionDef } from '@/templates/catalog/definitions';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface ProjectData {
@@ -81,9 +84,42 @@ export default function Project() {
         return;
       }
 
+      // Resolve sector for filtering
+      const effectiveSector = resolveEffectiveSector(p.form_data);
+
       // Priority 1: site_sections already exist
       const siteSections = p.site_sections as SiteSection[] | null;
       if (siteSections && Array.isArray(siteSections) && siteSections.length > 0) {
+        // Filter incompatible sections on first load
+        if (effectiveSector) {
+          const asDefs: TemplateSectionDef[] = siteSections.map(s => ({
+            type: s.type.replace(/-([a-z])/g, (_, c) => c.toUpperCase()).replace(/^([a-z])/, (_, c) => c.toUpperCase()),
+            defaultProps: s.props || {},
+            required: s.locked,
+          }));
+          const filtered = filterIncompatibleSections(asDefs, effectiveSector);
+          if (filtered.length !== siteSections.length) {
+            // Some sections were filtered — rebuild and save
+            const newSections: SiteSection[] = filtered.map((sec, i) => ({
+              id: siteSections[i]?.id || `${sec.type}_${i}_${Date.now()}`,
+              type: sec.type === 'HeroCentered' ? 'hero-centered' :
+                    sec.type === 'ServicesGrid' ? 'services-grid' :
+                    sec.type === 'AboutSection' ? 'about-section' :
+                    sec.type === 'AppointmentBooking' ? 'appointment-booking' :
+                    sec.type,
+              locked: sec.required,
+              props: sec.defaultProps,
+            }));
+            setSections(newSections);
+            setTheme((p.site_theme as SiteTheme) || {});
+            // Save filtered sections
+            await supabase.from('projects').update({
+              site_sections: newSections as any,
+              updated_at: new Date().toISOString(),
+            }).eq('id', p.id);
+            return;
+          }
+        }
         setSections(siteSections);
         setTheme((p.site_theme as SiteTheme) || {});
         return;
@@ -243,7 +279,7 @@ export default function Project() {
       projectData={{
         generatedContent: project.generated_content,
         formData: project.form_data,
-        sector: project.form_data?.businessType ?? project.form_data?.sector ?? '',
+        sector: resolveEffectiveSector(project.form_data),
       }}
     />
   );
