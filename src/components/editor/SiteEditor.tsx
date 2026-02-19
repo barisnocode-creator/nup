@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useEditorState } from './useEditorState';
 import { useSiteSave } from './useSiteSave';
@@ -10,6 +10,7 @@ import { CustomizePanel } from './CustomizePanel';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { ChangeTemplateModal } from '@/components/website-preview/ChangeTemplateModal';
 import { hexToHSL } from '@/lib/utils';
+import { getTemplateConfig } from '@/templates';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface SiteEditorProps {
@@ -34,7 +35,9 @@ export function SiteEditor({
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
 
+  const activeTemplateName = activeTemplateId ? getTemplateConfig(activeTemplateId)?.name : undefined;
   // Sync initial data when it changes (e.g., after migration)
   useEffect(() => {
     if (initialSections.length > 0 && editor.sections.length === 0) {
@@ -48,13 +51,12 @@ export function SiteEditor({
     }
   }, [initialTheme]);
 
-  // Apply theme CSS variables with hex-to-HSL conversion
+  // Apply theme CSS variables with hex-to-HSL conversion + cleanup on unmount
   useEffect(() => {
     const colors = editor.theme.colors || {};
     const root = document.documentElement;
     Object.entries(colors).forEach(([key, val]) => {
       if (typeof val === 'string') {
-        // Convert hex to HSL for Tailwind compatibility
         const hslVal = val.startsWith('#') ? hexToHSL(val) : val;
         root.style.setProperty(`--${key}`, hslVal);
       }
@@ -68,6 +70,46 @@ export function SiteEditor({
     if (editor.theme.borderRadius) {
       root.style.setProperty('--radius', editor.theme.borderRadius);
     }
+
+    return () => {
+      // Cleanup: reset ALL theme CSS variables to SaaS defaults
+      const defaults: Record<string, string> = {
+        '--background': '0 0% 100%',
+        '--foreground': '0 0% 10%',
+        '--card': '0 0% 100%',
+        '--card-foreground': '0 0% 10%',
+        '--popover': '0 0% 100%',
+        '--popover-foreground': '0 0% 10%',
+        '--primary': '24 95% 53%',
+        '--primary-foreground': '0 0% 100%',
+        '--secondary': '220 14% 96%',
+        '--secondary-foreground': '0 0% 29%',
+        '--muted': '220 14% 96%',
+        '--muted-foreground': '220 9% 46%',
+        '--accent': '24 95% 53%',
+        '--accent-foreground': '0 0% 100%',
+        '--destructive': '0 84% 60%',
+        '--destructive-foreground': '0 0% 100%',
+        '--border': '220 13% 91%',
+        '--input': '220 13% 91%',
+        '--ring': '24 95% 53%',
+        '--radius': '0.5rem',
+        '--sidebar-background': '0 0% 98%',
+        '--sidebar-foreground': '240 5.3% 26.1%',
+        '--sidebar-primary': '24 95% 53%',
+        '--sidebar-primary-foreground': '0 0% 100%',
+        '--sidebar-accent': '240 4.8% 95.9%',
+        '--sidebar-accent-foreground': '240 5.9% 10%',
+        '--sidebar-border': '220 13% 91%',
+        '--sidebar-ring': '24 95% 53%',
+      };
+      Object.entries(defaults).forEach(([k, v]) => root.style.setProperty(k, v));
+      root.style.setProperty('--font-heading', "'Playfair Display', Georgia, serif");
+      root.style.setProperty('--font-body', "'Inter', system-ui, sans-serif");
+      ['--color-secondary-custom', '--color-accent-custom'].forEach(p => root.style.removeProperty(p));
+      root.classList.remove('reduce-motion');
+      document.querySelectorAll('style[data-chai]').forEach(el => el.remove());
+    };
   }, [editor.theme]);
 
   const handlePublish = async () => {
@@ -77,6 +119,7 @@ export function SiteEditor({
 
   const handleApplyTemplate = (templateId: string) => {
     editor.applyTemplate(templateId, projectData);
+    setActiveTemplateId(templateId);
     setTemplateModalOpen(false);
   };
 
@@ -95,6 +138,7 @@ export function SiteEditor({
         onUndo={editor.undo}
         previewDevice={previewDevice}
         onChangeDevice={setPreviewDevice}
+        activeTemplateName={activeTemplateName ?? undefined}
       />
 
       <div className="flex-1 flex overflow-hidden relative">

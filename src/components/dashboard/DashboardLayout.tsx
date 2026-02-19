@@ -22,15 +22,40 @@ export function DashboardLayout({ children, rightPanel, activeProjectId }: Dashb
   useLayoutEffect(() => {
     const root = document.documentElement;
     const forceOrange = () => {
-      root.style.setProperty('--primary', '24 95% 53%');
-      root.style.setProperty('--ring', '24 95% 53%');
-      root.style.setProperty('--accent', '24 95% 53%');
-      root.style.setProperty('--sidebar-primary', '24 95% 53%');
-      root.style.setProperty('--sidebar-ring', '24 95% 53%');
-      root.style.setProperty('--accent-foreground', '0 0% 100%');
-      root.style.setProperty('--primary-foreground', '0 0% 100%');
-      ['--color-secondary-custom', '--color-accent-custom',
-       '--font-heading', '--font-body', '--radius'].forEach((p) => root.style.removeProperty(p));
+      const defaults: Record<string, string> = {
+        '--background': '0 0% 100%',
+        '--foreground': '0 0% 10%',
+        '--card': '0 0% 100%',
+        '--card-foreground': '0 0% 10%',
+        '--popover': '0 0% 100%',
+        '--popover-foreground': '0 0% 10%',
+        '--primary': '24 95% 53%',
+        '--primary-foreground': '0 0% 100%',
+        '--secondary': '220 14% 96%',
+        '--secondary-foreground': '0 0% 29%',
+        '--muted': '220 14% 96%',
+        '--muted-foreground': '220 9% 46%',
+        '--accent': '24 95% 53%',
+        '--accent-foreground': '0 0% 100%',
+        '--destructive': '0 84% 60%',
+        '--destructive-foreground': '0 0% 100%',
+        '--border': '220 13% 91%',
+        '--input': '220 13% 91%',
+        '--ring': '24 95% 53%',
+        '--radius': '0.5rem',
+        '--sidebar-background': '0 0% 98%',
+        '--sidebar-foreground': '240 5.3% 26.1%',
+        '--sidebar-primary': '24 95% 53%',
+        '--sidebar-primary-foreground': '0 0% 100%',
+        '--sidebar-accent': '240 4.8% 95.9%',
+        '--sidebar-accent-foreground': '240 5.9% 10%',
+        '--sidebar-border': '220 13% 91%',
+        '--sidebar-ring': '24 95% 53%',
+      };
+      Object.entries(defaults).forEach(([k, v]) => root.style.setProperty(k, v));
+      root.style.setProperty('--font-heading', "'Playfair Display', Georgia, serif");
+      root.style.setProperty('--font-body', "'Inter', system-ui, sans-serif");
+      ['--color-secondary-custom', '--color-accent-custom'].forEach((p) => root.style.removeProperty(p));
       root.classList.remove('reduce-motion');
       document.querySelectorAll('style[data-chai]').forEach(el => el.remove());
     };
