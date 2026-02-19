@@ -1,110 +1,78 @@
 
-## Dental Clinic Template'ini Sisteme Entegre Etme
 
-### Kaynak Template
-**React Dental Clinic Landing Page** (React + Vite + Tailwind CSS + Framer Motion)
-- Demo: https://react-dental-landing-page.netlify.app/
-- Temiz, modern, sky-blue tonlarinda dis klinigi tasarimi
-- Bolumleri: Hero, Services, About, Tips, Book Appointment, Testimonials, Footer
+## Randevu Alma UI/UX Birlestirme: Sik Gorunum + Gercek Sistem Entegrasyonu
 
-### Entegrasyon Yaklasimi
+### Sorun
 
-Bu template direkt JSX kopyalamak yerine, mevcut **section-based sistem** icin yeni section bilesenlerini olusturarak eklenecek. Boylece editorde tamamen duzenlenebilir ve tema degisikliklerine duyarli olacak.
+Sistemde iki ayri randevu bileseni var:
 
-### Yapilacaklar
+1. **`AppointmentBooking`** — Backend'e baglanir, gercek slot'lari gosterir, form validation yapar. Gorunumu is gorur ama "adimli" degil.
+2. **`DentalBooking`** — Gorsel olarak sik (3 adimli step indicator, animasyonlu gecisler) ama tamamen statik. Backend'e hicbir sekilde baglanmiyor, sabit saatler gosteriyor.
 
-#### 1. Yeni Section Bilesenleri (4 adet)
+### Cozum
 
-Dental template'in orijinal gorunumunu koruyarak, mevcut `SectionComponentProps` arayuzune uygun yeni section bilesenleri:
+`DentalBooking`'i tamamen yeniden yazarak `AppointmentBooking`'in backend mantgini (slot sorgulama, form fields, anti-spam, consent, submit) premium bir 3 adimli UI icine yerlestirmek.
 
-**`src/components/sections/HeroDental.tsx`**
-- Sol tarafta baslik + aciklama + CTA butonu, sag tarafta yuvarlak koseli gorsel
-- `sky-50` arka plan yerine tema renkleri (`bg-secondary`, `text-primary`)
-- Framer Motion ile fade-in animasyonlari
-- Props: `title`, `description`, `buttonText`, `buttonLink`, `image`
+### Yeni DentalBooking Akisi
 
-**`src/components/sections/DentalServices.tsx`**
-- 4'lu kart grid, her kartta ikon + baslik + aciklama
-- Gradient arka plan (`from-card to-secondary`)
-- Framer Motion stagger animasyonu (kartlar sirayla yukari kayarak gorunur)
-- `react-icons` yerine Lucide ikonlari kullanilacak (proje zaten Lucide kullaniyor)
-- Props: `title`, `description`, `services[]` (icon, title, desc)
-
-**`src/components/sections/DentalTips.tsx`**
-- Tab/Toggle tarzinda icerik — tiklandiginda aciklama degisen interaktif kartlar
-- Her tip icin ikon + baslik + icerik
-- Props: `title`, `description`, `tips[]` (title, content, icon)
-
-**`src/components/sections/DentalBooking.tsx`**
-- Cok adimli randevu formu (3 step: Kisisel Bilgi -> Tarih/Saat -> Onay)
-- Step indicator ile ilerleme gosterimi
-- Mevcut `AppointmentBooking` section'indan farkli: daha gorsel, step-by-step UI
-- Props: `title`, `description`, `services[]`, `availableTimes[]`
-
-#### 2. Registry ve Katalog Guncelleme
-
-**`src/components/sections/registry.ts`**
-- 4 yeni section tipini ekle: `HeroDental`, `DentalServices`, `DentalTips`, `DentalBooking`
-- Hem PascalCase hem kebab-case key'leri kaydet
-- `sectionCatalog`'a Turkce etiketlerle ekle (kategori: "dental")
-
-#### 3. Template Tanimi
-
-**`src/templates/catalog/definitions.ts`**
-- `dentalClinic: TemplateDefinition` ekle:
-  - id: `dental-clinic`
-  - sections: `HeroDental`, `DentalServices`, `AboutSection` (mevcut), `DentalTips`, `DentalBooking`, `TestimonialsCarousel` (mevcut), `ContactForm` (mevcut), `CTABanner` (mevcut)
-  - themePresetKey: `dental-clinic`
-  - supportedIndustries: `doctor, dentist, dental, clinic, health, hospital, medical, veterinary, physiotherapy, optometry`
-
-#### 4. Tema Preset'i
-
-**`src/themes/presets.ts`**
-- `dentalClinicPreset: ThemePresetValues` ekle:
-  - Font: heading `Sora`, body `Inter`
-  - Renkler: sky-blue tonlari (`#0284c7` primary, `#f0f9ff` background, `#0c4a6e` foreground)
-  - borderRadius: `12px`
-- `templateToPreset` map'ine `"dental-clinic": dentalClinicPreset` ekle
-- `namedPresets`'e `"Dental Klinik"` olarak ekle
-
-#### 5. Template Index Guncelleme
-
-**`src/templates/index.ts`**
-- `getAllTemplates()` zaten catalog'dan okuyor, otomatik gorunecek
-- Preview gorseli icin mevcut `showcase-dental.jpg` asset'i kullanilacak (zaten var)
+```text
+Adim 1: Tarih Sec          Adim 2: Saat Sec          Adim 3: Bilgilerin
++------------------+       +------------------+       +------------------+
+| [< Hafta ileri >]|       | Musait Saatler   |       | Ad Soyad *       |
+| Pzt Sal Car Per..|       | 09:00  09:30     |       | E-posta *        |
+| [17] [18] [19]...|       | 10:00  10:30     |       | Telefon          |
+|                  |       | 14:00  14:30     |       | Not              |
+| Secili: 19 Ocak  |       | (30 dk slotlar)  |       | [x] KVKK Onayi  |
++------------------+       +------------------+       +------------------+
+     Step 1/3                   Step 2/3                   Step 3/3
+```
 
 ### Teknik Detaylar
 
-**Animasyon Detaylari (Framer Motion):**
-- Hero: `initial={{ opacity: 0, y: 30 }}` -> `animate={{ opacity: 1, y: 0 }}` (0.6s delay cascade)
-- Services kartlari: `whileInView` ile viewport'a girdiginde stagger (0.15s aralikla)
-- Tips: tab degisiminde `AnimatePresence` ile icerik gecisi
-- Booking steps: `slide` gecis animasyonu
+**`src/components/sections/DentalBooking.tsx` — Tamamen Yeniden Yazim**
 
-**Ikon Stratejisi:**
-Orijinal template `react-icons` kullaniyor ama projede `lucide-react` var. Tum ikonlar Lucide karsiliklarla degistirilecek:
-- `FaTooth` -> Lucide `Heart` veya emoji kullanimina devam
-- `GiToothbrush` -> Lucide `Sparkles`
-- `FaSmileBeam` -> Lucide `Smile`
-- `FaXRay` -> Lucide `ScanLine`
-- `FaShieldAlt` -> Lucide `Shield`
+Mevcut `AppointmentBooking`'den alinacak backend mantiklari:
+- `window.__PROJECT_ID__` ve `window.__SUPABASE_URL__` uzerinden proje tanimlamasi
+- `book-appointment` edge function'a GET istegi ile musait slot'lari sorgulama
+- Haftalik paralel slot kontrolu (`checkedWeeks` + `weekOffset`)
+- Musait olmayan gunleri otomatik devre disi birakma (`unavailableDates`)
+- Dinamik form alanlari (`formFields`) — backend'den gelen custom field'lar
+- KVKK onayi (consent) kontrolu
+- Honeypot anti-spam koruması
+- Form yuklenme zamani kontrolu (3 saniye alt sinir)
+- POST istegi ile randevu olusturma
 
-**Dosya Degisiklikleri:**
+DentalBooking'e ozel premium UI ozellikleri:
+- **3 adimli step indicator** — Tarih > Saat > Bilgiler (pill seklinde, ikonlu, animasyonlu gecis)
+- **DateStrip** — Yatay haftalik takvim seridi (7 gun gorunumu, saga/sola kaydir)
+- **Slot grid** — 2 veya 3 sutunlu kart gorunumunde saat secimi (secilenin scale + shadow animasyonu)
+- **Form alanlari** — Glassmorphism kartlar icinde, input focus animasyonlari
+- **Basarili gonderim** — Konfeti/check animasyonu ile onay ekrani
+- **Skeleton loading** — Slot'lar yuklenirken animasyonlu placeholder'lar
+- **Editorde onizleme** — `isEditing` modunda statik demo gorunumu (backend sorgusu yapmaz)
 
-| Dosya | Islem |
-|-------|-------|
-| `src/components/sections/HeroDental.tsx` | Yeni dosya |
-| `src/components/sections/DentalServices.tsx` | Yeni dosya |
-| `src/components/sections/DentalTips.tsx` | Yeni dosya |
-| `src/components/sections/DentalBooking.tsx` | Yeni dosya |
-| `src/components/sections/registry.ts` | 4 yeni section kaydı |
-| `src/templates/catalog/definitions.ts` | `dentalClinic` template tanimi |
-| `src/themes/presets.ts` | `dentalClinicPreset` + kayitlar |
+**Mevcut `AppointmentBooking` etkilenmez** — O ayri bir section olarak kalmaya devam eder. Kullanicilar iki farkli gorunumden birini secebilir.
 
-### Sonuc
+### Animasyon Detaylari (Framer Motion)
 
-- Dental Clinic template'i editor'de tamamen duzenlenebilir olacak (metin, gorsel, renk, font)
-- Tema degistirildiginde tum bilesenler guncellenecek
-- "Sablon Degistir" modalinde gorunecek
-- Yayinlandiginda (deploy-to-netlify) ayni gorunumu koruyacak
-- Doktor, dis hekimi, klinik, hastane gibi sektorler icin otomatik onerilecek
+- Step gecisleri: `AnimatePresence mode="wait"` ile sola/saga kayma
+- Step indicator: aktif adim `scale-110` + `shadow-lg` + `bg-primary`
+- Tarih secimi: secilen gun `scale-105` + `shadow-lg` spring animasyonu
+- Slot secimi: secilen saat `bg-primary` + `scale-[1.02]` gecisi
+- Form alanlari: `initial={{ opacity: 0, y: 20 }}` ile alt'tan yukari fade-in
+- Basari ekrani: `CheckCircle2` ikonu `scale(0) -> scale(1)` spring bounce
+
+### Dosya Degisiklikleri
+
+| Dosya | Degisiklik |
+|-------|-----------|
+| `src/components/sections/DentalBooking.tsx` | Tamamen yeniden yazim — backend entegrasyonu + premium UI |
+
+### Onemli Notlar
+
+- `AppointmentBooking` section'i aynen kalir (farkli bir UI alternatifi olarak)
+- `DentalBooking` artik gercek randevu sistemiyle calisir
+- Editor modunda (`isEditing=true`) backend sorgusu yapilmaz, statik demo gosterilir
+- Tema renkleri (`bg-primary`, `text-primary-foreground` vb.) kullanilir — her temada uyumlu gorunur
+- `font-heading-dynamic` ve `font-body-dynamic` siniflari kullanilir
+
