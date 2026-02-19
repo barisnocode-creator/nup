@@ -1,93 +1,110 @@
 
+## Dental Clinic Template'ini Sisteme Entegre Etme
 
-## ChaiBuilder Tamamen Kaldirma + Template'lerin Orijinal Gorunumuyle Editorde ve Yayinda Calismasi
+### Kaynak Template
+**React Dental Clinic Landing Page** (React + Vite + Tailwind CSS + Framer Motion)
+- Demo: https://react-dental-landing-page.netlify.app/
+- Temiz, modern, sky-blue tonlarinda dis klinigi tasarimi
+- Bolumleri: Hero, Services, About, Tips, Book Appointment, Testimonials, Footer
+
+### Entegrasyon Yaklasimi
+
+Bu template direkt JSX kopyalamak yerine, mevcut **section-based sistem** icin yeni section bilesenlerini olusturarak eklenecek. Boylece editorde tamamen duzenlenebilir ve tema degisikliklerine duyarli olacak.
 
 ### Yapilacaklar
 
-#### 1. Silinen Dosyalar
+#### 1. Yeni Section Bilesenleri (4 adet)
 
-- **`src/hooks/useMigrateSections.ts`** — Migration hook'u tamamen silinir
-- **`supabase/functions/chai-ai-assistant/index.ts`** — Chai AI asistani silinir
+Dental template'in orijinal gorunumunu koruyarak, mevcut `SectionComponentProps` arayuzune uygun yeni section bilesenleri:
 
-#### 2. `src/pages/Project.tsx` Temizleme
+**`src/components/sections/HeroDental.tsx`**
+- Sol tarafta baslik + aciklama + CTA butonu, sag tarafta yuvarlak koseli gorsel
+- `sky-50` arka plan yerine tema renkleri (`bg-secondary`, `text-primary`)
+- Framer Motion ile fade-in animasyonlari
+- Props: `title`, `description`, `buttonText`, `buttonLink`, `image`
 
-- `chai_blocks`, `chai_theme` alanlarini `ProjectData` interface'inden cikar
-- `useMigrateSections` import'unu ve `migrate` kullanimini kaldir
-- `migrating` state'ini kaldir
-- Supabase select sorgusundan `chai_blocks, chai_theme` kaldir
-- "Priority 2: chai_blocks exist -> migrate" blogunu tamamen sil
-- Sadece `site_sections` ve `generated_content` akisi kalir
+**`src/components/sections/DentalServices.tsx`**
+- 4'lu kart grid, her kartta ikon + baslik + aciklama
+- Gradient arka plan (`from-card to-secondary`)
+- Framer Motion stagger animasyonu (kartlar sirayla yukari kayarak gorunur)
+- `react-icons` yerine Lucide ikonlari kullanilacak (proje zaten Lucide kullaniyor)
+- Props: `title`, `description`, `services[]` (icon, title, desc)
 
-#### 3. `src/pages/PublicWebsite.tsx` Temizleme
+**`src/components/sections/DentalTips.tsx`**
+- Tab/Toggle tarzinda icerik — tiklandiginda aciklama degisen interaktif kartlar
+- Her tip icin ikon + baslik + icerik
+- Props: `title`, `description`, `tips[]` (title, content, icon)
 
-- `chai_blocks`, `chai_theme` alanlarini interface'den cikar
-- Select sorgusundan `chai_blocks, chai_theme` cikar
-- `extractColor` fonksiyonunu ve legacy `[light,dark]` dizi formatini kaldir
-- `hasChaiBlocks`, `convertedSections` bloklarini tamamen sil
-- `activeTheme` sadece `project?.site_theme` olur
-- `sectionsToRender` sadece `siteSections` kullanir
+**`src/components/sections/DentalBooking.tsx`**
+- Cok adimli randevu formu (3 step: Kisisel Bilgi -> Tarih/Saat -> Onay)
+- Step indicator ile ilerleme gosterimi
+- Mevcut `AppointmentBooking` section'indan farkli: daha gorsel, step-by-step UI
+- Props: `title`, `description`, `services[]`, `availableTimes[]`
 
-#### 4. `supabase/functions/deploy-to-netlify/index.ts` Guncelleme
+#### 2. Registry ve Katalog Guncelleme
 
-- `ChaiBlock` interface'ini `SiteSection` tabanli bir yapiya donustur:
-```text
-interface SiteSection {
-  id: string;
-  type: string;      // kebab-case: "hero-centered", "services-grid"
-  props: Record<string, unknown>;
-  style?: Record<string, unknown>;
-}
-```
-- Tum `renderXxx(b: ChaiBlock)` fonksiyonlarindaki parametre tipini degistir; iceride `b.title` yerine `b.props.title` kullanilacak sekilde guncelle (cunku artik props icinde)
-- `renderBlock` switch'ini kebab-case type'lar ile calistir (`"hero-centered"` yerine `"HeroCentered"` degil)
-- `blocksToHtml` fonksiyonunu `sectionsToHtml` olarak yeniden adlandir, parametre olarak `SiteSection[]` alsin
-- Ana handler'da `chai_blocks` fallback mantigi kaldirilir; sadece `site_sections` kullanilir
-- `site_sections -> ChaiBlock donusturme` kodu silinir
+**`src/components/sections/registry.ts`**
+- 4 yeni section tipini ekle: `HeroDental`, `DentalServices`, `DentalTips`, `DentalBooking`
+- Hem PascalCase hem kebab-case key'leri kaydet
+- `sectionCatalog`'a Turkce etiketlerle ekle (kategori: "dental")
 
-#### 5. `supabase/config.toml` Guncelleme
+#### 3. Template Tanimi
 
-- `[functions.chai-ai-assistant]` blogu kaldirilir (dosya otomatik guncellenmez ama edge function silinecek)
+**`src/templates/catalog/definitions.ts`**
+- `dentalClinic: TemplateDefinition` ekle:
+  - id: `dental-clinic`
+  - sections: `HeroDental`, `DentalServices`, `AboutSection` (mevcut), `DentalTips`, `DentalBooking`, `TestimonialsCarousel` (mevcut), `ContactForm` (mevcut), `CTABanner` (mevcut)
+  - themePresetKey: `dental-clinic`
+  - supportedIndustries: `doctor, dentist, dental, clinic, health, hospital, medical, veterinary, physiotherapy, optometry`
 
-#### 6. Deploy-to-Netlify'da Template Font/Stil Uyumu
+#### 4. Tema Preset'i
 
-- `blocksToHtml` (yeni: `sectionsToHtml`) icinde `theme.fonts.heading` ve `theme.fonts.body` alanlarini kullanarak dogru Google Fonts yukle (artik `fontFamily` degil `fonts` nesnesi)
-- HSL renk degerleri icin hex-to-HSL donusumunu edge function'a da ekle (editordeki ile ayni)
-- Boylece yayinlanan site editordeki ile birebir ayni gorunur
+**`src/themes/presets.ts`**
+- `dentalClinicPreset: ThemePresetValues` ekle:
+  - Font: heading `Sora`, body `Inter`
+  - Renkler: sky-blue tonlari (`#0284c7` primary, `#f0f9ff` background, `#0c4a6e` foreground)
+  - borderRadius: `12px`
+- `templateToPreset` map'ine `"dental-clinic": dentalClinicPreset` ekle
+- `namedPresets`'e `"Dental Klinik"` olarak ekle
 
-#### 7. Veritabani Notu
+#### 5. Template Index Guncelleme
 
-- `chai_blocks` ve `chai_theme` kolonlari veritabaninda kalacak (veri kaybi onlenmesi icin)
-- Ancak hicbir frontend veya edge function bu kolonlari okumayacak/yazmayacak
+**`src/templates/index.ts`**
+- `getAllTemplates()` zaten catalog'dan okuyor, otomatik gorunecek
+- Preview gorseli icin mevcut `showcase-dental.jpg` asset'i kullanilacak (zaten var)
 
 ### Teknik Detaylar
 
-**Silinen dosyalar:**
+**Animasyon Detaylari (Framer Motion):**
+- Hero: `initial={{ opacity: 0, y: 30 }}` -> `animate={{ opacity: 1, y: 0 }}` (0.6s delay cascade)
+- Services kartlari: `whileInView` ile viewport'a girdiginde stagger (0.15s aralikla)
+- Tips: tab degisiminde `AnimatePresence` ile icerik gecisi
+- Booking steps: `slide` gecis animasyonu
 
-| Dosya | Neden |
+**Ikon Stratejisi:**
+Orijinal template `react-icons` kullaniyor ama projede `lucide-react` var. Tum ikonlar Lucide karsiliklarla degistirilecek:
+- `FaTooth` -> Lucide `Heart` veya emoji kullanimina devam
+- `GiToothbrush` -> Lucide `Sparkles`
+- `FaSmileBeam` -> Lucide `Smile`
+- `FaXRay` -> Lucide `ScanLine`
+- `FaShieldAlt` -> Lucide `Shield`
+
+**Dosya Degisiklikleri:**
+
+| Dosya | Islem |
 |-------|-------|
-| `src/hooks/useMigrateSections.ts` | chai_blocks -> site_sections migration artik gereksiz |
-| `supabase/functions/chai-ai-assistant/index.ts` | ChaiBuilder AI asistani artik kullanilmiyor |
-
-**Guncellenen dosyalar:**
-
-| Dosya | Degisiklik |
-|-------|-----------|
-| `src/pages/Project.tsx` | chai referanslari, migration kodu, migrating state kaldirilir |
-| `src/pages/PublicWebsite.tsx` | chai fallback, convertedSections, extractColor kaldirilir |
-| `supabase/functions/deploy-to-netlify/index.ts` | ChaiBlock -> SiteSection, tum render fonksiyonlari props.xxx erisimi, kebab-case switch, theme.fonts uyumu |
-
-### Uygulama Sirasi
-
-1. `useMigrateSections.ts` sil
-2. `chai-ai-assistant/index.ts` sil + edge function'i sil
-3. `Project.tsx` temizle
-4. `PublicWebsite.tsx` temizle
-5. `deploy-to-netlify/index.ts` SiteSection tabanina gecir + font/renk uyumu
+| `src/components/sections/HeroDental.tsx` | Yeni dosya |
+| `src/components/sections/DentalServices.tsx` | Yeni dosya |
+| `src/components/sections/DentalTips.tsx` | Yeni dosya |
+| `src/components/sections/DentalBooking.tsx` | Yeni dosya |
+| `src/components/sections/registry.ts` | 4 yeni section kaydı |
+| `src/templates/catalog/definitions.ts` | `dentalClinic` template tanimi |
+| `src/themes/presets.ts` | `dentalClinicPreset` + kayitlar |
 
 ### Sonuc
 
-- ChaiBuilder'in sistemdeki tum izleri temizlenir
-- Template'ler editorde ve yayinda ayni gorunur (font, renk, stil)
-- Tek veri kaynagi: `site_sections` + `site_theme`
-- Kod tabaninda gereksiz legacy donusturme mantiklari kalmaz
-
+- Dental Clinic template'i editor'de tamamen duzenlenebilir olacak (metin, gorsel, renk, font)
+- Tema degistirildiginde tum bilesenler guncellenecek
+- "Sablon Degistir" modalinde gorunecek
+- Yayinlandiginda (deploy-to-netlify) ayni gorunumu koruyacak
+- Doktor, dis hekimi, klinik, hastane gibi sektorler icin otomatik onerilecek
