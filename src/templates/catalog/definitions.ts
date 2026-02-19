@@ -31,7 +31,7 @@ export const specialtyCafe: TemplateDefinition = {
   industry: 'food',
   category: 'Yeme & İçme',
   description: 'Haight Ashbury tarzı, sıcak terracotta tonlarında specialty cafe tasarımı',
-  preview: '',
+  preview: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=800&fit=crop&crop=center',
   themePresetKey: 'specialty-cafe',
   supportedIndustries: ['food', 'cafe', 'coffee', 'restaurant', 'bakery', 'bar', 'bistro', 'patisserie', 'retail'],
   sections: [
@@ -157,7 +157,7 @@ export const dentalClinic: TemplateDefinition = {
   industry: 'health',
   category: 'Sağlık',
   description: 'Modern, sky-blue tonlarında diş kliniği tasarımı. Animasyonlu hero, hizmet kartları ve adımlı randevu formu.',
-  preview: '',
+  preview: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=800&fit=crop&crop=center',
   themePresetKey: 'dental-clinic',
   supportedIndustries: ['doctor', 'dentist', 'dental', 'clinic', 'health', 'hospital', 'medical', 'veterinary', 'physiotherapy', 'optometry'],
   sections: [
@@ -258,7 +258,7 @@ export const restaurantElegant: TemplateDefinition = {
   industry: 'food',
   category: 'Yeme & İçme',
   description: 'Altın vurgulu, koyu tonlarda zarif restoran tasarımı. Preline Agency esinlenmesi.',
-  preview: '',
+  preview: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=800&fit=crop&crop=center',
   themePresetKey: 'restaurant-elegant',
   supportedIndustries: ['restaurant', 'food', 'bistro', 'bar', 'fine-dining', 'steakhouse', 'seafood'],
   sections: [
@@ -370,7 +370,7 @@ export const hotelLuxury: TemplateDefinition = {
   industry: 'hospitality',
   category: 'Konaklama',
   description: 'Lacivert ve altın tonlarında lüks otel tasarımı. Preline Agency profesyonel stili.',
-  preview: '',
+  preview: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=800&fit=crop&crop=center',
   themePresetKey: 'hotel-luxury',
   supportedIndustries: ['hotel', 'resort', 'hostel', 'accommodation', 'motel', 'boutique-hotel', 'apart'],
   sections: [
@@ -477,7 +477,7 @@ export const engineerPortfolio: TemplateDefinition = {
   industry: 'technology',
   category: 'Portfolyo',
   description: 'Siyah arka plan, mavi vurgulu modern mühendis/freelancer portfolyo tasarımı.',
-  preview: '',
+  preview: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=800&fit=crop&crop=center',
   themePresetKey: 'engineer-portfolio',
   supportedIndustries: ['developer', 'engineer', 'freelancer', 'designer', 'creative', 'technology', 'consultant', 'architect'],
   sections: [
