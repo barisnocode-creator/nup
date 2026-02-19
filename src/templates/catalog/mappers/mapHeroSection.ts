@@ -1,5 +1,6 @@
 import { safeGet } from './utils';
 import type { ProjectData } from '../contentMapper';
+import { getSectorProfile } from '../sectorProfiles';
 
 export const compatibleSectors: string[] = []; // all sectors
 
@@ -8,10 +9,14 @@ export function mapHeroSection(
   projectData: ProjectData
 ): Record<string, any> {
   const overrides: Record<string, any> = {};
+  const profile = getSectorProfile(projectData.sector);
 
-  const title = safeGet(projectData, 'generatedContent.pages.home.hero.title', '');
-  const description = safeGet(projectData, 'generatedContent.pages.home.hero.description', '');
-  const subtitle = safeGet(projectData, 'generatedContent.pages.home.hero.subtitle', '');
+  const title = safeGet(projectData, 'generatedContent.pages.home.hero.title', '')
+    || profile?.heroTitle || '';
+  const description = safeGet(projectData, 'generatedContent.pages.home.hero.description', '')
+    || profile?.heroDescription || '';
+  const subtitle = safeGet(projectData, 'generatedContent.pages.home.hero.subtitle', '')
+    || profile?.heroSubtitle || '';
   const businessName = safeGet(projectData, 'formData.businessName', '')
     || safeGet(projectData, 'generatedContent.metadata.siteName', '');
 
@@ -19,6 +24,11 @@ export function mapHeroSection(
   if (description) overrides.description = description;
   if (subtitle) overrides.subtitle = subtitle;
   if (businessName && sectionProps.badge !== undefined) overrides.badge = businessName;
+
+  // CTA text from sector profile
+  const ctaText = safeGet(projectData, 'generatedContent.pages.home.hero.ctaText', '')
+    || profile?.ctaText || '';
+  if (ctaText && sectionProps.buttonText !== undefined) overrides.buttonText = ctaText;
 
   // HeroPortfolio special mapping
   if (businessName && sectionProps.name !== undefined) {

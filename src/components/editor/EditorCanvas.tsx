@@ -3,6 +3,7 @@ import { Plus, ArrowUp, ArrowDown, Trash2, Copy } from 'lucide-react';
 import { getSectionComponent } from '@/components/sections/registry';
 import type { SiteSection } from '@/components/sections/types';
 import { cn } from '@/lib/utils';
+import { AddableSectionsPanel } from './AddableSectionsPanel';
 
 const sectionTypeLabels: Record<string, string> = {
   'hero-centered': 'Hero', 'hero-split': 'Hero', 'hero-overlay': 'Hero',
@@ -29,12 +30,15 @@ interface EditorCanvasProps {
   onDuplicate: (sectionId: string) => void;
   onAddAt: (index: number) => void;
   previewDevice?: 'desktop' | 'tablet' | 'mobile';
+  sector?: string;
+  addableSections?: Record<string, boolean>;
+  onToggleAddableSection?: (key: string) => void;
 }
 
 export function EditorCanvas({
   sections, isEditing, selectedSectionId, onSelectSection,
   onUpdateProps, onMoveUp, onMoveDown, onRemove, onDuplicate, onAddAt,
-  previewDevice = 'desktop',
+  previewDevice = 'desktop', sector, addableSections = {}, onToggleAddableSection,
 }: EditorCanvasProps) {
   const handleSectionClick = useCallback((e: React.MouseEvent, sectionId: string) => {
     if (!isEditing) return;
@@ -102,6 +106,14 @@ export function EditorCanvas({
               <span className="text-sm text-gray-500 font-medium">Bölüm Ekle</span>
             </button>
           </div>
+        )}
+
+        {isEditing && onToggleAddableSection && (
+          <AddableSectionsPanel
+            sector={sector}
+            addableSections={addableSections}
+            onToggle={onToggleAddableSection}
+          />
         )}
       </div>
     </div>
