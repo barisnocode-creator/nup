@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EditableImage } from '@/components/website-preview/EditableImage';
+import { PixabayImagePicker } from './PixabayImagePicker';
 import type { SectionComponentProps } from './types';
 
-export function HeroDental({ section, isEditing }: SectionComponentProps) {
+export function HeroDental({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
   const title = p.title || 'Sağlıklı Gülüşler İçin Profesyonel Bakım';
   const description = p.description || 'Uzman diş hekimlerimiz ve modern teknolojimizle, ailenizin ağız ve diş sağlığını güvenle emanet edebilirsiniz.';
@@ -11,6 +14,12 @@ export function HeroDental({ section, isEditing }: SectionComponentProps) {
   const buttonLink = p.buttonLink || '#appointment';
   const image = p.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&q=80';
   const badge = p.badge || 'Diş Kliniği';
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const handleImageSelect = (url: string) => {
+    onUpdate?.({ image: url });
+  };
 
   return (
     <section className="relative overflow-hidden bg-secondary/30 py-20 md:py-28">
@@ -75,14 +84,46 @@ export function HeroDental({ section, isEditing }: SectionComponentProps) {
             className="relative"
           >
             <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
-              <img
-                src={image}
-                alt={title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
+              {isEditing ? (
+                <EditableImage
+                  src={image}
+                  alt={title}
+                  type="hero"
+                  imagePath="image"
+                  className="w-full h-full object-cover"
+                  containerClassName="w-full h-full"
+                  isEditable
+                  actions={[
+                    {
+                      id: 'change-image',
+                      icon: ImageIcon,
+                      label: 'Görseli Değiştir',
+                      onClick: () => setPickerOpen(true),
+                      group: 'primary',
+                    },
+                  ]}
+                />
+              ) : (
+                <img
+                  src={image}
+                  alt={title}
+                  className="w-full h-full object-cover"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
             </div>
-            {/* Decorative blob */}
+
+            {/* Pixabay Picker */}
+            {isEditing && (
+              <PixabayImagePicker
+                isOpen={pickerOpen}
+                onClose={() => setPickerOpen(false)}
+                onSelect={handleImageSelect}
+                defaultQuery="dental clinic"
+              />
+            )}
+
+            {/* Decorative blobs */}
             <div className="absolute -z-10 -top-8 -right-8 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
             <div className="absolute -z-10 -bottom-8 -left-8 w-56 h-56 bg-accent/10 rounded-full blur-3xl" />
           </motion.div>
