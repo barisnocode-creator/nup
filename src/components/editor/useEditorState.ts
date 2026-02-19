@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
 import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
+import { filterIncompatibleSections } from '@/templates/catalog/mappers';
 
 // Map of addable section keys to their section type and default props
 const addableSectionConfig: Record<string, { type: string; defaultProps: Record<string, any> }> = {
@@ -155,8 +156,10 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     if (!def) return;
     pushUndo();
 
-    // Map user's project data onto template defaults
-    const mappedSections = mapContentToTemplate(def.sections, projectData);
+    // Filter incompatible sections for user's sector, then map content
+    const sector = projectData?.sector || '';
+    const filteredDefs = filterIncompatibleSections(def.sections, sector);
+    const mappedSections = mapContentToTemplate(filteredDefs, projectData);
 
     // Build new sections, also preserving matching content from old sections
     const oldProps: Record<string, Record<string, any>> = {};

@@ -12,6 +12,8 @@ import { mapContactSection, compatibleSectors as contactSectors } from './mapCon
 import { mapAboutSection, compatibleSectors as aboutSectors } from './mapAboutSection';
 import { mapCtaSection, compatibleSectors as ctaSectors } from './mapCtaSection';
 import { mapTeamSection, compatibleSectors as teamSectors } from './mapTeamSection';
+import { mapTestimonialsSection, compatibleSectors as testimonialsSectors } from './mapTestimonialsSection';
+import { mapAppointmentSection, compatibleSectors as appointmentSectors } from './mapAppointmentSection';
 
 type MapperFn = (props: Record<string, any>, data: ProjectData) => Record<string, any>;
 
@@ -52,9 +54,55 @@ register(['CTABanner'], mapCtaSection, ctaSectors);
 // Team
 register(['ChefShowcase'], mapTeamSection, teamSectors);
 
+// Testimonials
+register(['TestimonialsCarousel'], mapTestimonialsSection, testimonialsSectors);
+
+// Appointment / Booking
+register(['AppointmentBooking', 'DentalBooking'], mapAppointmentSection, appointmentSectors);
+
+// ─── Sector-incompatible section definitions ─────────────────────
+// Key = section type, Value = list of sectors where this section IS compatible.
+// If user's sector is NOT in this list, the section is removed or replaced.
+const sectorCompatibility: Record<string, string[]> = {
+  'RoomShowcase': ['hotel', 'resort', 'accommodation', 'motel', 'hostel', 'apart'],
+  'HotelAmenities': ['hotel', 'resort', 'accommodation', 'motel', 'hostel', 'apart'],
+  'RestaurantMenu': ['restaurant', 'food', 'bistro', 'cafe', 'bar', 'fine-dining', 'bakery', 'patisserie', 'coffee'],
+  'ChefShowcase': ['restaurant', 'food', 'cafe', 'bistro', 'bar', 'fine-dining', 'bakery'],
+  'DentalTips': ['dentist', 'dental', 'doctor', 'health', 'clinic', 'medical', 'hospital'],
+  'DentalBooking': ['dentist', 'dental', 'doctor', 'health', 'clinic', 'medical', 'hospital', 'veterinary', 'physiotherapy'],
+  'DentalServices': ['dentist', 'dental', 'doctor', 'health', 'clinic', 'medical', 'hospital', 'veterinary', 'physiotherapy'],
+  'SkillsGrid': ['developer', 'engineer', 'freelancer', 'designer', 'creative', 'technology', 'consultant', 'architect'],
+  'ProjectShowcase': ['developer', 'engineer', 'freelancer', 'designer', 'creative', 'technology', 'consultant', 'architect'],
+  'MenuShowcase': ['restaurant', 'food', 'cafe', 'bistro', 'bar', 'fine-dining', 'bakery', 'patisserie', 'coffee'],
+  'CafeGallery': ['cafe', 'coffee', 'food', 'restaurant', 'bistro', 'bar', 'bakery', 'patisserie', 'fine-dining'],
+};
+
+// Sections that should be replaced with a compatible alternative instead of removed
+const sectionReplacements: Record<string, { type: string; propsTransform?: (props: Record<string, any>) => Record<string, any> }> = {
+  'DentalServices': { type: 'ServicesGrid' },
+  'DentalBooking': { type: 'AppointmentBooking', propsTransform: (p) => ({
+    sectionTitle: p.title || 'Randevu',
+    sectionSubtitle: p.subtitle || 'Online Randevu Alın',
+    sectionDescription: p.description || 'Hemen randevunuzu oluşturun.',
+    submitButtonText: 'Randevu Al',
+    successMessage: 'Randevunuz alındı!',
+  })},
+  'MenuShowcase': { type: 'ServicesGrid' },
+  'RestaurantMenu': { type: 'ServicesGrid' },
+};
+
+/**
+ * Check if a section type is compatible with the user's sector.
+ */
+function isSectorCompatible(sectionType: string, sector: string): boolean {
+  const compatList = sectorCompatibility[sectionType];
+  if (!compatList) return true; // no restriction
+  const lower = sector.toLowerCase().replace(/[\s-]/g, '_');
+  return compatList.some(s => lower.includes(s) || s.includes(lower));
+}
+
 /**
  * Generic label replacements based on sector profile.
- * Replaces template-specific labels with sector-appropriate ones.
  */
 const genericLabels = [
   'menümüz', 'menü', 'our menu', 'şeflerimiz', 'chef team',
@@ -71,13 +119,11 @@ function applySectorLabels(
   const result = { ...props };
   const labels = profile.sectionLabels;
 
-  // Check title/sectionTitle for generic labels and replace
   for (const key of ['title', 'sectionTitle']) {
     const val = result[key];
     if (typeof val === 'string') {
       const lower = val.toLowerCase().trim();
       if (genericLabels.some(g => lower.includes(g))) {
-        // Determine which label to use based on context
         if (lower.includes('menü') || lower.includes('menu')) result[key] = labels.services;
         else if (lower.includes('şef') || lower.includes('chef') || lower.includes('ekip') || lower.includes('team')) result[key] = labels.team;
         else if (lower.includes('oda') || lower.includes('room')) result[key] = labels.services;
@@ -90,6 +136,34 @@ function applySectorLabels(
 }
 
 /**
+ * Filter and transform sections based on sector compatibility.
+ * Exported for use in applyTemplate.
+ */
+export function filterIncompatibleSections(
+  sections: TemplateSectionDef[],
+  sector: string
+): TemplateSectionDef[] {
+  if (!sector) return sections;
+
+  return sections.reduce<TemplateSectionDef[]>((acc, sec) => {
+    if (isSectorCompatible(sec.type, sector)) {
+      acc.push(sec);
+    } else {
+      // Check for replacement
+      const replacement = sectionReplacements[sec.type];
+      if (replacement) {
+        const newProps = replacement.propsTransform
+          ? replacement.propsTransform(sec.defaultProps)
+          : sec.defaultProps;
+        acc.push({ ...sec, type: replacement.type, defaultProps: newProps });
+      }
+      // else: skip (remove) the section
+    }
+    return acc;
+  }, []);
+}
+
+/**
  * Maps project data onto template section definitions.
  * Unknown section types are returned untouched.
  */
@@ -99,15 +173,16 @@ export function mapSections(
 ): TemplateSectionDef[] {
   const sector = projectData.sector || '';
 
-  return sections.map(sec => {
+  // First filter incompatible sections
+  const filtered = filterIncompatibleSections(sections, sector);
+
+  return filtered.map(sec => {
     const entry = mapperRegistry[sec.type];
     let mappedProps = { ...sec.defaultProps };
 
     if (entry) {
-      // Sector compatibility check
       if (entry.compatibleSectors.length > 0 && sector) {
         if (!entry.compatibleSectors.includes(sector)) {
-          // Still apply sector labels even for incompatible mappers
           mappedProps = applySectorLabels(mappedProps, projectData);
           return { ...sec, defaultProps: mappedProps };
         }
@@ -115,7 +190,6 @@ export function mapSections(
       mappedProps = entry.fn(mappedProps, projectData);
     }
 
-    // Post-process: apply sector label adaptation
     mappedProps = applySectorLabels(mappedProps, projectData);
 
     return { ...sec, defaultProps: mappedProps };

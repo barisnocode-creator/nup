@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, Pencil, Palette, Globe, Loader2, Undo2, Monitor, Tablet, Smartphone } from 'lucide-react';
+import { ArrowLeft, Eye, Pencil, Palette, Globe, Loader2, Undo2, Monitor, Tablet, Smartphone, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -16,12 +16,13 @@ interface EditorToolbarProps {
   previewDevice: 'desktop' | 'tablet' | 'mobile';
   onChangeDevice: (device: 'desktop' | 'tablet' | 'mobile') => void;
   activeTemplateName?: string;
+  onSave?: () => void;
 }
 
 export function EditorToolbar({
   projectName, isEditing, onToggleEdit, onOpenCustomize, customizePanelOpen,
   onPublish, isSaving, hasUnsavedChanges, canUndo, onUndo, previewDevice, onChangeDevice,
-  activeTemplateName,
+  activeTemplateName, onSave,
 }: EditorToolbarProps) {
   const navigate = useNavigate();
 
@@ -101,9 +102,21 @@ export function EditorToolbar({
           <Palette className="w-3.5 h-3.5" /> Özelleştir
         </button>
 
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          {isSaving ? (<><Loader2 className="w-3 h-3 animate-spin" /><span>Kaydediliyor...</span></>) : hasUnsavedChanges ? (<span className="text-red-500">●</span>) : null}
-        </div>
+        {hasUnsavedChanges && (
+          <button
+            onClick={onSave}
+            disabled={isSaving}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 active:scale-[0.97]',
+              isSaving
+                ? 'text-gray-400 bg-gray-100 dark:bg-zinc-800 cursor-not-allowed'
+                : 'text-green-700 bg-green-50 hover:bg-green-100 dark:text-green-400 dark:bg-green-900/20 dark:hover:bg-green-900/30'
+            )}
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+          </button>
+        )}
 
         <button onClick={onPublish} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 active:scale-95 shadow-md shadow-blue-600/20">
           <Globe className="w-3.5 h-3.5" /> Yayınla
