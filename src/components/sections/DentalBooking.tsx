@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Clock, User, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { Calendar, Clock, User, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Sunrise, Sun, Sunset, CalendarX2 } from 'lucide-react';
 import type { SectionComponentProps } from './types';
 
 interface FormField {
@@ -115,11 +115,150 @@ function DateStrip({ dates, selectedDate, onSelect, weekOffset, onWeekChange, un
 /* ── Skeleton Loader ────────────────────────────────── */
 function SlotsSkeleton() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-12 rounded-xl bg-muted animate-pulse" />
+    <div className="space-y-4">
+      {[0, 1].map(g => (
+        <div key={g}>
+          <div className="h-4 w-20 bg-muted animate-pulse rounded mb-3" />
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-10 w-[72px] rounded-full bg-muted animate-pulse" />
+            ))}
+          </div>
+        </div>
       ))}
     </div>
+  );
+}
+
+/* ── Time Slot Groups (Sabah / Öğle / Akşam) ────────── */
+interface SlotGroup {
+  label: string;
+  icon: React.ElementType;
+  slots: string[];
+}
+
+function groupSlots(slots: string[]): SlotGroup[] {
+  const morning: string[] = [];
+  const afternoon: string[] = [];
+  const evening: string[] = [];
+
+  for (const slot of slots) {
+    const hour = parseInt(slot.split(':')[0], 10);
+    if (hour < 12) morning.push(slot);
+    else if (hour < 17) afternoon.push(slot);
+    else evening.push(slot);
+  }
+
+  const groups: SlotGroup[] = [];
+  if (morning.length > 0) groups.push({ label: 'Sabah', icon: Sunrise, slots: morning });
+  if (afternoon.length > 0) groups.push({ label: 'Öğle', icon: Sun, slots: afternoon });
+  if (evening.length > 0) groups.push({ label: 'Akşam', icon: Sunset, slots: evening });
+  return groups;
+}
+
+function TimeSlotPicker({ slots, selectedSlot, onSelect, slotDuration, selectedDate }: {
+  slots: string[];
+  selectedSlot: string;
+  onSelect: (t: string) => void;
+  slotDuration: number;
+  selectedDate: string;
+}) {
+  const groups = useMemo(() => groupSlots(slots), [slots]);
+
+  const getEndTime = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    const endMin = h * 60 + m + slotDuration;
+    return `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+  };
+
+  if (slots.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col items-center justify-center py-12 text-center"
+      >
+        <div className="w-16 h-16 rounded-2xl bg-muted/80 flex items-center justify-center mb-4">
+          <CalendarX2 className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <p className="text-foreground font-medium mb-1">Müsait saat bulunmuyor</p>
+        <p className="text-muted-foreground text-sm">Başka bir gün seçmeyi deneyin</p>
+      </motion.div>
+    );
+  }
+
+  const dateLabel = new Date(selectedDate + 'T00:00:00').toLocaleDateString('tr-TR', {
+    day: 'numeric', month: 'long', weekday: 'long'
+  });
+
+  return (
+    <LayoutGroup>
+      <div className="space-y-5">
+        {groups.map((group, gi) => {
+          const GroupIcon = group.icon;
+          return (
+            <motion.div
+              key={group.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: gi * 0.08 }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <GroupIcon className="w-4 h-4 text-primary/70" />
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.label}</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {group.slots.map(t => {
+                  const isSelected = selectedSlot === t;
+                  return (
+                    <motion.button
+                      key={t}
+                      type="button"
+                      onClick={() => onSelect(t)}
+                      layout
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      className={`relative px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                        isSelected
+                          ? 'bg-primary text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.35)]'
+                          : 'border border-border bg-background text-foreground hover:border-primary/50 hover:shadow-sm'
+                      }`}
+                    >
+                      {t}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          );
+        })}
+
+        {/* Selected slot summary */}
+        <AnimatePresence>
+          {selectedSlot && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-foreground">
+                    {dateLabel}
+                  </span>
+                </div>
+                <span className="text-sm font-bold text-primary">
+                  {selectedSlot} – {getEndTime(selectedSlot)} <span className="font-normal text-muted-foreground">({slotDuration} dk)</span>
+                </span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </LayoutGroup>
   );
 }
 
@@ -133,7 +272,7 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
   const submitText = p.submitButtonText || p.buttonText || 'Randevu Oluştur';
 
   // State
-  const [step, setStep] = useState(0); // 0=date, 1=time, 2=info
+  const [step, setStep] = useState(0);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -162,9 +301,9 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
     return result;
   }, []);
 
-  // Pre-check week availability
+  // Pre-check week availability (works in editor too now)
   useEffect(() => {
-    if (isEditing || checkedWeeks.has(weekOffset)) return;
+    if (checkedWeeks.has(weekOffset)) return;
     const projectId = (window as any).__PROJECT_ID__;
     const supabaseUrl = (window as any).__SUPABASE_URL__;
     if (!projectId || !supabaseUrl) return;
@@ -184,9 +323,8 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
       });
       setUnavailableDates(newU);
     });
-  }, [weekOffset, dates, isEditing, checkedWeeks]);
+  }, [weekOffset, dates, checkedWeeks]);
 
-  // Track form load time for anti-spam
   useEffect(() => {
     if (step === 2) formLoadedAt.current = new Date().toISOString();
   }, [step]);
@@ -227,6 +365,13 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
     const formData = new FormData(form);
     if (!selectedDate || !selectedSlot) { setError('Lütfen tarih ve saat seçin'); return; }
     if (consentRequired && !consentChecked) { setError('Gizlilik onayını kabul etmelisiniz'); return; }
+
+    // In editor mode, show demo success instead of real submission
+    if (isEditing) {
+      setSubmitted(true);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const projectId = (window as any).__PROJECT_ID__;
@@ -306,45 +451,7 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
   const systemFields = sortedFields?.filter(f => f.system) || [];
   const customFields = sortedFields?.filter(f => !f.system) || [];
 
-  /* ── Editor Preview (static) ──────────────────────── */
-  if (isEditing) {
-    return (
-      <section className="py-20 md:py-28 bg-background" id="appointment">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12 space-y-3">
-            <span className="text-primary font-medium text-sm tracking-wider uppercase">{subtitle}</span>
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground">{title}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{description}</p>
-          </div>
-          <div className="max-w-lg mx-auto">
-            <div className="bg-card/80 backdrop-blur-md rounded-2xl border border-border/50 shadow-xl p-6">
-              <StepIndicator current={1} />
-              <div className="grid grid-cols-7 gap-1.5 mb-6">
-                {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((d, i) => (
-                  <div key={d} className={`flex flex-col items-center py-3 rounded-xl ${i === 2 ? 'bg-primary text-primary-foreground shadow-lg' : i === 5 ? 'opacity-35' : ''}`}>
-                    <span className={`text-[10px] uppercase mb-1 ${i === 2 ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{d}</span>
-                    <span className={`text-lg font-bold ${i === 5 ? 'line-through text-muted-foreground' : i === 2 ? '' : 'text-foreground'}`}>{15 + i}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-3 gap-2 mb-6">
-                {['09:00', '09:30', '10:00', '10:30', '14:00', '14:30'].map((t, i) => (
-                  <div key={t} className={`flex items-center justify-center px-3 py-3 rounded-xl text-sm font-medium ${i === 1 ? 'bg-primary text-primary-foreground shadow-md' : 'border border-border text-foreground'}`}>
-                    {t}
-                  </div>
-                ))}
-              </div>
-              <button disabled className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-semibold text-sm">
-                {submitText}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  /* ── Live Component ───────────────────────────────── */
+  /* ── Live Component (works in both editor and public) ── */
   return (
     <section className="py-20 md:py-28 bg-background" id="appointment">
       <div className="container mx-auto px-4">
@@ -363,7 +470,6 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
           <div className="bg-card/80 backdrop-blur-md rounded-2xl border border-border/50 shadow-xl overflow-hidden">
             <AnimatePresence mode="wait">
               {submitted ? (
-                /* ── Success Screen ─────────────────── */
                 <motion.div
                   key="success"
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -379,13 +485,14 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
                     <CheckCircle2 className="w-16 h-16 text-primary mx-auto mb-4" />
                   </motion.div>
                   <h3 className="text-xl font-heading font-bold text-foreground mb-2">{successMessage}</h3>
-                  <p className="text-muted-foreground text-sm mb-6">En kısa sürede sizinle iletişime geçeceğiz.</p>
+                  <p className="text-muted-foreground text-sm mb-6">
+                    {isEditing ? 'Bu bir demo önizlemesidir — gerçek randevu oluşturulmadı.' : 'En kısa sürede sizinle iletişime geçeceğiz.'}
+                  </p>
                   <button onClick={resetAll} className="px-6 py-2.5 border border-border rounded-xl text-foreground text-sm hover:bg-muted transition-colors">
                     Yeni Randevu
                   </button>
                 </motion.div>
               ) : (
-                /* ── Form Steps ─────────────────────── */
                 <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <form onSubmit={handleSubmit}>
                     <div className="p-6">
@@ -411,51 +518,32 @@ export function DentalBooking({ section, isEditing }: SectionComponentProps) {
                           </motion.div>
                         )}
 
-                        {/* ── Step 1: Time ──────────────── */}
+                        {/* ── Step 1: Time (Premium) ─────── */}
                         {step === 1 && (
                           <motion.div key="step-time" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }} transition={{ duration: 0.25 }}>
-                            <div className="mb-3 flex items-center justify-between">
+                            <div className="mb-4 flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-primary" />
                                 <span className="text-sm font-semibold text-foreground">Müsait Saatler</span>
-                                <span className="text-xs text-muted-foreground">({slotDuration} dk)</span>
                               </div>
                               <button type="button" onClick={() => { setStep(0); setSelectedDate(''); setSelectedSlot(''); }}
                                 className="text-xs text-primary hover:underline">Tarihi Değiştir</button>
                             </div>
 
                             {/* Selected date badge */}
-                            <div className="mb-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full text-xs font-medium text-primary">
+                            <div className="mb-5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-full text-xs font-medium text-primary">
                               <Calendar className="w-3 h-3" />
                               {new Date(selectedDate + 'T00:00:00').toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' })}
                             </div>
 
-                            {slotsLoading ? <SlotsSkeleton /> : availableSlots.length === 0 ? (
-                              <p className="text-muted-foreground text-sm py-8 text-center">Bu tarihte müsait saat bulunmuyor.</p>
-                            ) : (
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[260px] overflow-y-auto pr-1">
-                                {availableSlots.map(t => {
-                                  const isSelected = selectedSlot === t;
-                                  const [h, m] = t.split(':').map(Number);
-                                  const endMin = h * 60 + m + slotDuration;
-                                  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
-                                  return (
-                                    <motion.button
-                                      key={t} type="button"
-                                      onClick={() => selectSlot(t)}
-                                      whileTap={{ scale: 0.96 }}
-                                      className={`flex flex-col items-center justify-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                                        isSelected
-                                          ? 'bg-primary text-primary-foreground shadow-md scale-[1.02]'
-                                          : 'border border-border text-foreground hover:border-primary/50 hover:bg-primary/5'
-                                      }`}
-                                    >
-                                      <span className="font-bold">{t}</span>
-                                      <span className={`text-[10px] mt-0.5 ${isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>{t}–{endTime}</span>
-                                    </motion.button>
-                                  );
-                                })}
-                              </div>
+                            {slotsLoading ? <SlotsSkeleton /> : (
+                              <TimeSlotPicker
+                                slots={availableSlots}
+                                selectedSlot={selectedSlot}
+                                onSelect={selectSlot}
+                                slotDuration={slotDuration}
+                                selectedDate={selectedDate}
+                              />
                             )}
                           </motion.div>
                         )}
