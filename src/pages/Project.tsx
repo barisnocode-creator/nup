@@ -243,6 +243,7 @@ export default function Project() {
       projectData={{
         generatedContent: project.generated_content,
         formData: project.form_data,
+        sector: project.form_data?.businessType ?? project.form_data?.sector ?? '',
       }}
     />
   );

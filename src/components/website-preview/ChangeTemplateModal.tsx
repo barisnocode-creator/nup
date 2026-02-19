@@ -98,6 +98,13 @@ export function ChangeTemplateModal({
             </Button>
           </div>
 
+          {/* Info banner */}
+          <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 flex-shrink-0">
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Metin içerikleri işletme verilerinizi göstermektedir. Görseller şablon varsayılanlarını kullanır.
+            </p>
+          </div>
+
           {/* Live rendered preview */}
           <div className="flex-1 overflow-y-auto bg-white dark:bg-zinc-950">
             <div className="max-w-[1200px] mx-auto">

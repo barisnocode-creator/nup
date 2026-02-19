@@ -20,7 +20,7 @@ interface SiteEditorProps {
   subdomain?: string | null;
   isPublished?: boolean;
   onPublished?: (subdomain: string) => void;
-  projectData?: { generatedContent?: any; formData?: any } | null;
+  projectData?: { generatedContent?: any; formData?: any; sector?: string } | null;
 }
 
 export function SiteEditor({
