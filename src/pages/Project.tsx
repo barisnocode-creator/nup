@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SiteEditor } from '@/components/editor/SiteEditor';
-import { useMigrateSections } from '@/hooks/useMigrateSections';
 import { useToast } from '@/hooks/use-toast';
 import { usePageView } from '@/hooks/usePageView';
 import { getCatalogTemplate } from '@/templates/catalog';
@@ -23,8 +22,6 @@ interface ProjectData {
   template_id?: string;
   form_data: any;
   generated_content: any;
-  chai_blocks?: any[];
-  chai_theme?: any;
   site_sections?: SiteSection[];
   site_theme?: SiteTheme;
 }
@@ -34,12 +31,10 @@ export default function Project() {
   const navigate = useNavigate();
   const { user, signInWithGoogle, signInWithApple } = useAuth();
   const { toast } = useToast();
-  const { migrate } = useMigrateSections();
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [migrating, setMigrating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const [sections, setSections] = useState<SiteSection[]>([]);
@@ -53,7 +48,7 @@ export default function Project() {
       if (!id) return;
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, profession, status, subdomain, is_published, template_id, form_data, generated_content, chai_blocks, chai_theme, site_sections, site_theme')
+        .select('id, name, profession, status, subdomain, is_published, template_id, form_data, generated_content, site_sections, site_theme')
         .eq('id', id)
         .single();
 
@@ -82,19 +77,7 @@ export default function Project() {
         return;
       }
 
-      // Priority 2: chai_blocks exist → migrate
-      if (p.chai_blocks && Array.isArray(p.chai_blocks) && p.chai_blocks.length > 0) {
-        setMigrating(true);
-        const result = await migrate(p.id, p.chai_blocks, p.chai_theme);
-        if (result) {
-          setSections(result.sections);
-          setTheme(result.theme);
-        }
-        setMigrating(false);
-        return;
-      }
-
-      // Priority 3: generated_content exists but no blocks → create sections from catalog or content
+      // Priority 2: generated_content exists but no sections → create sections from catalog or content
       if (p.generated_content) {
         const catalogDef = getCatalogTemplate(p.template_id || '');
         let newSections: SiteSection[];
@@ -177,7 +160,7 @@ export default function Project() {
   if (!project) return null;
 
   // Generation in progress
-  if (generating || migrating || (project.status === 'draft' && !project.generated_content)) {
+  if (generating || (project.status === 'draft' && !project.generated_content)) {
     return (
       <div className="min-h-screen bg-muted/30">
         <header className="bg-background border-b">
@@ -210,7 +193,7 @@ export default function Project() {
               <div className="flex items-center justify-center gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 <span className="text-xl font-semibold text-primary">
-                  {migrating ? 'İçerik aktarılıyor...' : generating ? 'AI ile siteniz oluşturuluyor...' : 'Siteniz hazırlanıyor'}
+                  {generating ? 'AI ile siteniz oluşturuluyor...' : 'Siteniz hazırlanıyor'}
                 </span>
               </div>
             </div>
