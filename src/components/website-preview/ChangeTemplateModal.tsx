@@ -10,7 +10,9 @@ import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/cont
 import { SectionRenderer } from '@/components/sections/SectionRenderer';
 import type { SiteSection } from '@/components/sections/types';
 import { cn } from '@/lib/utils';
-
+import { templateToPreset } from '@/themes/presets';
+import { hexToHSL } from '@/lib/utils';
+import { loadGoogleFont } from '@/hooks/useThemeColors';
 interface ChangeTemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -71,6 +73,51 @@ export function ChangeTemplateModal({
     }));
   }, [previewTemplateId, projectData]);
 
+  // Apply theme CSS variables when previewing a template
+  useEffect(() => {
+    if (!previewTemplateId) return;
+    const preset = templateToPreset[previewTemplateId];
+    if (!preset) return;
+
+    const root = document.documentElement;
+    const savedValues: Record<string, string> = {};
+
+    // Save current values and apply preset colors
+    if (preset.colors) {
+      Object.entries(preset.colors).forEach(([key, vals]) => {
+        if (Array.isArray(vals) && vals.length > 0) {
+          const cssVar = `--${key}`;
+          savedValues[cssVar] = root.style.getPropertyValue(cssVar);
+          const hslVal = vals[0].startsWith('#') ? hexToHSL(vals[0]) : vals[0];
+          root.style.setProperty(cssVar, hslVal);
+        }
+      });
+    }
+
+    // Apply fonts
+    if (preset.fontFamily?.heading) {
+      loadGoogleFont(preset.fontFamily.heading);
+      savedValues['--font-heading'] = root.style.getPropertyValue('--font-heading');
+      root.style.setProperty('--font-heading', `'${preset.fontFamily.heading}', sans-serif`);
+    }
+    if (preset.fontFamily?.body) {
+      loadGoogleFont(preset.fontFamily.body);
+      savedValues['--font-body'] = root.style.getPropertyValue('--font-body');
+      root.style.setProperty('--font-body', `'${preset.fontFamily.body}', sans-serif`);
+    }
+    if (preset.borderRadius) {
+      savedValues['--radius'] = root.style.getPropertyValue('--radius');
+      root.style.setProperty('--radius', preset.borderRadius);
+    }
+
+    return () => {
+      // Restore previous values
+      Object.entries(savedValues).forEach(([k, v]) => {
+        if (v) root.style.setProperty(k, v);
+        else root.style.removeProperty(k);
+      });
+    };
+  }, [previewTemplateId]);
   const handleRegenerate = () => {
     setShuffleKey(prev => prev + 1);
     setSelectedTemplateId(currentTemplateId);
