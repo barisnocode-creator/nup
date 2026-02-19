@@ -250,9 +250,314 @@ export const dentalClinic: TemplateDefinition = {
   ],
 };
 
+// ─── Restaurant Template ─────────────────────────────────────────
+
+export const restaurantElegant: TemplateDefinition = {
+  id: 'restaurant-elegant',
+  name: 'Restaurant Elegant',
+  industry: 'food',
+  category: 'Yeme & İçme',
+  description: 'Altın vurgulu, koyu tonlarda zarif restoran tasarımı. Preline Agency esinlenmesi.',
+  preview: '',
+  themePresetKey: 'restaurant-elegant',
+  supportedIndustries: ['restaurant', 'food', 'bistro', 'bar', 'fine-dining', 'steakhouse', 'seafood'],
+  sections: [
+    {
+      type: 'HeroRestaurant',
+      required: true,
+      defaultProps: {
+        badge: '★ Fine Dining',
+        title: 'Lezzetin Sanatla Buluştuğu Yer',
+        description: 'Şefimizin özenle hazırladığı menümüzle unutulmaz bir gastronomi deneyimi yaşayın.',
+        primaryButtonText: 'Rezervasyon',
+        primaryButtonLink: '#reservation',
+        secondaryButtonText: 'Menü',
+        secondaryButtonLink: '#menu',
+        image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80',
+        infoItems: ['Fine Dining', 'Est. 2015', 'Michelin Guide'],
+      },
+    },
+    {
+      type: 'CafeFeatures',
+      defaultProps: {
+        subtitle: 'Neden Biz',
+        title: 'Farkımız',
+        features: [
+          { icon: '🍷', title: 'Özel Şarap Listesi', description: 'Dünya çapında seçilmiş 200+ etiket' },
+          { icon: '🌿', title: 'Taze Malzemeler', description: 'Yerel çiftliklerden günlük tedarik' },
+          { icon: '👨‍🍳', title: 'Ödüllü Şef', description: 'Uluslararası deneyimli mutfak ekibi' },
+          { icon: '🎵', title: 'Canlı Müzik', description: 'Her cuma ve cumartesi akşamı' },
+        ],
+      },
+    },
+    {
+      type: 'RestaurantMenu',
+      defaultProps: {
+        subtitle: 'Menümüz',
+        title: 'Lezzetli Seçimler',
+      },
+    },
+    {
+      type: 'ChefShowcase',
+      defaultProps: {
+        subtitle: 'Baş Şefimiz',
+        title: 'Chef Ahmet Yılmaz',
+        description: '15 yıllık deneyimiyle dünya mutfaklarını harmanlayan şefimiz, her tabağı bir sanat eserine dönüştürür.',
+        image: 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800&q=80',
+      },
+    },
+    {
+      type: 'CafeGallery',
+      defaultProps: {
+        subtitle: 'Galeri',
+        title: 'Atmosferimiz',
+        images: [
+          { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80', alt: 'Restoran iç mekan' },
+          { src: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80', alt: 'Yemek sunumu' },
+          { src: 'https://images.unsplash.com/photo-1550966871-3ed3cdb51f3a?w=600&q=80', alt: 'Bar alanı' },
+          { src: 'https://images.unsplash.com/photo-1424847651672-bf20a4b0982b?w=600&q=80', alt: 'Teras' },
+        ],
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Misafirlerimiz Ne Diyor?',
+        sectionSubtitle: 'Değerlendirmeler',
+        testimonials: [
+          { name: 'Selin Korkmaz', role: 'Gurme Blogger', content: 'İstanbul\'un en iyi fine dining deneyimlerinden biri. Servis ve sunum mükemmel.', avatar: '' },
+          { name: 'Emre Aksoy', role: 'İş İnsanı', content: 'İş yemeklerimiz için vazgeçilmez adresimiz. Özel oda seçeneği çok kullanışlı.', avatar: '' },
+          { name: 'Deniz Yıldırım', role: 'Şarap Tutkunu', content: 'Şarap listesi olağanüstü. Sommelye önerileri her seferinde isabetli.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'AppointmentBooking',
+      defaultProps: {
+        sectionTitle: 'Rezervasyon',
+        sectionSubtitle: 'Masa Ayırın',
+        sectionDescription: 'Özel bir akşam yemeği için masa ayırtın.',
+        submitButtonText: 'Rezervasyon Yap',
+        successMessage: 'Rezervasyonunuz alındı!',
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Özel etkinlikler ve sorularınız için bize yazın.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Unutulmaz Bir Akşam Yemeği Sizi Bekliyor',
+        description: 'Özel günlerinize özel menüler hazırlıyoruz.',
+        buttonText: 'Rezervasyon Yap',
+        buttonLink: '#reservation',
+      },
+    },
+  ],
+};
+
+// ─── Hotel Template ──────────────────────────────────────────────
+
+export const hotelLuxury: TemplateDefinition = {
+  id: 'hotel-luxury',
+  name: 'Hotel Luxury',
+  industry: 'hospitality',
+  category: 'Konaklama',
+  description: 'Lacivert ve altın tonlarında lüks otel tasarımı. Preline Agency profesyonel stili.',
+  preview: '',
+  themePresetKey: 'hotel-luxury',
+  supportedIndustries: ['hotel', 'resort', 'hostel', 'accommodation', 'motel', 'boutique-hotel', 'apart'],
+  sections: [
+    {
+      type: 'HeroHotel',
+      required: true,
+      defaultProps: {
+        badge: '★★★★★',
+        title: 'Lüksün ve Konforun Buluştuğu Yer',
+        description: 'Eşsiz manzara ve birinci sınıf hizmetlerle unutulmaz bir konaklama deneyimi.',
+        buttonText: 'Oda Ara',
+        buttonLink: '#rooms',
+        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80',
+      },
+    },
+    {
+      type: 'RoomShowcase',
+      defaultProps: {
+        subtitle: 'Odalarımız',
+        title: 'Konfor ve Zarafet',
+      },
+    },
+    {
+      type: 'HotelAmenities',
+      defaultProps: {
+        subtitle: 'Olanaklar',
+        title: 'Premium Hizmetler',
+      },
+    },
+    {
+      type: 'ImageGallery',
+      defaultProps: {
+        sectionTitle: 'Galeri',
+        sectionSubtitle: 'Otelimizden Kareler',
+        images: [
+          { src: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=80', alt: 'Lobi' },
+          { src: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&q=80', alt: 'Havuz' },
+          { src: 'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=600&q=80', alt: 'Restoran' },
+          { src: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80', alt: 'Spa' },
+        ],
+      },
+    },
+    {
+      type: 'StatisticsCounter',
+      defaultProps: {
+        sectionTitle: 'Rakamlarla Biz',
+        stats: [
+          { value: '25+', label: 'Yıllık Deneyim' },
+          { value: '150K+', label: 'Mutlu Misafir' },
+          { value: '200+', label: 'Oda Kapasitesi' },
+          { value: '4.8', label: 'Puan Ortalaması' },
+        ],
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Misafirlerimiz Ne Diyor?',
+        sectionSubtitle: 'Değerlendirmeler',
+        testimonials: [
+          { name: 'Maria Schmidt', role: 'İş Seyahati', content: 'Harika bir konaklama deneyimi. Personel çok ilgili ve oda kusursuzdu.', avatar: '' },
+          { name: 'James Wilson', role: 'Tatilci', content: 'Spa hizmetleri mükemmel. Havuz alanı çok güzel tasarlanmış.', avatar: '' },
+          { name: 'Ayşe Kara', role: 'Balayı', content: 'Balayımız için mükemmel bir seçimdi. Manzara nefes kesiciydi.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'FAQAccordion',
+      defaultProps: {
+        sectionTitle: 'Sıkça Sorulan Sorular',
+        items: [
+          { question: 'Check-in ve check-out saatleri nedir?', answer: 'Check-in saat 14:00, check-out saat 12:00\'dir. Erken giriş ve geç çıkış talepleri müsaitliğe göre değerlendirilir.' },
+          { question: 'Ücretsiz iptal politikası var mı?', answer: 'Giriş tarihinden 48 saat öncesine kadar ücretsiz iptal yapabilirsiniz.' },
+          { question: 'Evcil hayvan kabul ediyor musunuz?', answer: 'Evet, belirli odalarda evcil hayvan kabul ediyoruz. Ek ücret uygulanabilir.' },
+        ],
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Grup rezervasyonları ve özel istekleriniz için bize yazın.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Hayalinizdeki Tatil Sizi Bekliyor',
+        description: 'Erken rezervasyon fırsatlarından yararlanın.',
+        buttonText: 'Hemen Rezervasyon Yap',
+        buttonLink: '#rooms',
+      },
+    },
+  ],
+};
+
+// ─── Engineer/Freelancer Template ────────────────────────────────
+
+export const engineerPortfolio: TemplateDefinition = {
+  id: 'engineer-portfolio',
+  name: 'Engineer Portfolio',
+  industry: 'technology',
+  category: 'Portfolyo',
+  description: 'Siyah arka plan, mavi vurgulu modern mühendis/freelancer portfolyo tasarımı.',
+  preview: '',
+  themePresetKey: 'engineer-portfolio',
+  supportedIndustries: ['developer', 'engineer', 'freelancer', 'designer', 'creative', 'technology', 'consultant', 'architect'],
+  sections: [
+    {
+      type: 'HeroPortfolio',
+      required: true,
+      defaultProps: {
+        name: 'Ahmet Yılmaz',
+        title: 'Full Stack Developer',
+        bio: 'React, Node.js ve cloud teknolojileri konusunda 8+ yıl deneyim. Ölçeklenebilir, kullanıcı odaklı ürünler geliştiriyorum.',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
+        buttonText: 'Projelerimi Gör',
+        buttonLink: '#projects',
+      },
+    },
+    {
+      type: 'SkillsGrid',
+      defaultProps: {
+        subtitle: 'Yetenekler',
+        title: 'Teknik Beceriler',
+      },
+    },
+    {
+      type: 'ProjectShowcase',
+      defaultProps: {
+        subtitle: 'Projeler',
+        title: 'Son Çalışmalarım',
+      },
+    },
+    {
+      type: 'StatisticsCounter',
+      defaultProps: {
+        sectionTitle: 'Rakamlarla',
+        stats: [
+          { value: '50+', label: 'Tamamlanan Proje' },
+          { value: '30+', label: 'Mutlu Müşteri' },
+          { value: '8+', label: 'Yıl Deneyim' },
+          { value: '15+', label: 'Açık Kaynak Katkı' },
+        ],
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Müşterilerim Ne Diyor?',
+        sectionSubtitle: 'Referanslar',
+        testimonials: [
+          { name: 'Startup CEO', role: 'TechCo', content: 'Projemizi zamanında ve bütçe dahilinde teslim etti. Kod kalitesi mükemmel.', avatar: '' },
+          { name: 'Ürün Müdürü', role: 'BigCorp', content: 'Teknik bilgisi ve iletişim yeteneği çok güçlü. Kesinlikle tavsiye ederim.', avatar: '' },
+          { name: 'Girişimci', role: 'StartupX', content: 'MVP\'mizi 6 haftada çıkardı. Kullanıcı deneyimi odaklı yaklaşımı çok değerli.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bir Proje mi Var?',
+        sectionDescription: 'Projenizi konuşmak için bana yazın.',
+        submitButtonText: 'Gönder',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Birlikte Harika Şeyler Yapalım',
+        description: 'Yeni projelere her zaman açığım. Hemen iletişime geçin.',
+        buttonText: 'İletişime Geç',
+        buttonLink: '#contact',
+      },
+    },
+  ],
+};
+
 // ─── All Definitions ─────────────────────────────────────────────
 
 export const allDefinitions: TemplateDefinition[] = [
   specialtyCafe,
   dentalClinic,
+  restaurantElegant,
+  hotelLuxury,
+  engineerPortfolio,
 ];

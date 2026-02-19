@@ -135,6 +135,57 @@ export const dentalClinicPreset: ThemePresetValues = {
   },
 };
 
+// Restaurant Elegant — dark bg, gold accents
+export const restaurantElegantPreset: ThemePresetValues = {
+  fontFamily: { heading: "Playfair Display", body: "Inter" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#0a0a0a", "#0a0a0a"], foreground: ["#fafafa", "#fafafa"],
+    primary: ["#d4a853", "#e0b96a"], "primary-foreground": ["#0a0a0a", "#0a0a0a"],
+    secondary: ["#1a1a1a", "#1a1a1a"], "secondary-foreground": ["#a3a3a3", "#a3a3a3"],
+    muted: ["#1a1a1a", "#1a1a1a"], "muted-foreground": ["#737373", "#737373"],
+    accent: ["#d4a853", "#e0b96a"], "accent-foreground": ["#0a0a0a", "#0a0a0a"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#262626", "#262626"], input: ["#262626", "#262626"], ring: ["#d4a853", "#e0b96a"],
+    card: ["#111111", "#111111"], "card-foreground": ["#fafafa", "#fafafa"],
+    popover: ["#111111", "#111111"], "popover-foreground": ["#fafafa", "#fafafa"],
+  },
+};
+
+// Hotel Luxury — navy bg, gold/beige accents
+export const hotelLuxuryPreset: ThemePresetValues = {
+  fontFamily: { heading: "Cormorant Garamond", body: "Inter" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#0f172a", "#0f172a"], foreground: ["#f1f5f9", "#f1f5f9"],
+    primary: ["#c9a96e", "#d4b87e"], "primary-foreground": ["#0f172a", "#0f172a"],
+    secondary: ["#1e293b", "#1e293b"], "secondary-foreground": ["#94a3b8", "#94a3b8"],
+    muted: ["#1e293b", "#1e293b"], "muted-foreground": ["#64748b", "#64748b"],
+    accent: ["#c9a96e", "#d4b87e"], "accent-foreground": ["#0f172a", "#0f172a"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#334155", "#334155"], input: ["#334155", "#334155"], ring: ["#c9a96e", "#d4b87e"],
+    card: ["#1e293b", "#1e293b"], "card-foreground": ["#f1f5f9", "#f1f5f9"],
+    popover: ["#1e293b", "#1e293b"], "popover-foreground": ["#f1f5f9", "#f1f5f9"],
+  },
+};
+
+// Engineer Portfolio — dark bg, blue accents
+export const engineerPortfolioPreset: ThemePresetValues = {
+  fontFamily: { heading: "Space Grotesk", body: "Inter" },
+  borderRadius: "8px",
+  colors: {
+    background: ["#0a0a0a", "#0a0a0a"], foreground: ["#fafafa", "#fafafa"],
+    primary: ["#3b82f6", "#60a5fa"], "primary-foreground": ["#ffffff", "#0a0a0a"],
+    secondary: ["#1a1a1a", "#1a1a1a"], "secondary-foreground": ["#a3a3a3", "#a3a3a3"],
+    muted: ["#1a1a1a", "#1a1a1a"], "muted-foreground": ["#737373", "#737373"],
+    accent: ["#3b82f6", "#60a5fa"], "accent-foreground": ["#ffffff", "#0a0a0a"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#262626", "#262626"], input: ["#262626", "#262626"], ring: ["#3b82f6", "#60a5fa"],
+    card: ["#111111", "#111111"], "card-foreground": ["#fafafa", "#fafafa"],
+    popover: ["#111111", "#111111"], "popover-foreground": ["#fafafa", "#fafafa"],
+  },
+};
+
 export const defaultTheme: ThemePresetValues = specialtyCafePreset;
 
 export const themePresets: Record<string, ThemePresetValues>[] = [
@@ -151,11 +202,17 @@ export const namedPresets: { name: string; preset: ThemePresetValues }[] = [
   { name: "Canlı Cesur", preset: vibrantBoldPreset },
   { name: "Kurumsal Mavi", preset: corporateBluePreset },
   { name: "Dental Klinik", preset: dentalClinicPreset },
+  { name: "Restoran Zarif", preset: restaurantElegantPreset },
+  { name: "Otel Lüks", preset: hotelLuxuryPreset },
+  { name: "Mühendis Portfolio", preset: engineerPortfolioPreset },
 ];
 
 export const templateToPreset: Record<string, ThemePresetValues> = {
   "specialty-cafe": specialtyCafePreset,
   "dental-clinic": dentalClinicPreset,
+  "restaurant-elegant": restaurantElegantPreset,
+  "hotel-luxury": hotelLuxuryPreset,
+  "engineer-portfolio": engineerPortfolioPreset,
   "temp1": modernProfessionalPreset,
   "pilates1": specialtyCafePreset,
   "lawyer-firm": specialtyCafePreset,
