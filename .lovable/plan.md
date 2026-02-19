@@ -1,120 +1,91 @@
 
 
-## Preline UI Tasarim Dilinden Esinlenen 3 Yeni Template
+## Template Onizlemede Dinamik Icerik Eslestirme
 
-Preline UI'in temiz, modern tasarim dilini referans alarak 3 yeni sektor template'i olusturulacak. Her biri mevcut section-based editore tam uyumlu, duzenlenebilir ve kaydedilebilir olacak.
+Kullanicinin isleri/projeleri icin template secerken, her template'in onceden tanimli "placeholder" icerikler yerine kullanicinin kendi is bilgileriyle (isim, sloganlar, hizmetler, iletisim vb.) otomatik olarak dolmus halini gormesini saglayacagiz.
 
 ### Mevcut Durum
-- **Specialty Cafe** ve **Dental Clinic** template'leri zaten calisiyor
-- Section registry'de 22 section tipi kayitli
-- Yeni template eklemek icin sadece: 1) Section bilesenleri, 2) Registry kaydi, 3) Definition, 4) Theme preset gerekiyor
 
-### Eklenecek 3 Template
+- `ChangeTemplateModal` sadece **statik preview gorseli** gosteriyor
+- `applyTemplate` (useEditorState) template uygularken sadece birkaç temel alanı (title, subtitle, description, phone, email) eski section'lardan tasıyor
+- Kullanicinin `generated_content` ve `form_data` verileri Project sayfasinda mevcut ama template onizlemeye aktarilmiyor
 
-#### 1. Restoran Template (Preline Agency karanlik estetigi + yemek sektoru)
-Yeni section'lar:
-- **HeroRestaurant** — Tam ekran gorsel arka plan, ortalanmis baslik, animasyonlu alt metin, "Rezervasyon" ve "Menu" butonlari
-- **ChefShowcase** — Sef tanitim section'i: buyuk gorsel + baslik + aciklama + imza yemekler listesi
-- **RestaurantMenu** — Kategorili menu kartlari (Baslangiclar, Ana Yemekler, Tatlilar), fiyat ve gorsel destekli
+### Cozum Yaklasimi
 
-Mevcut section'lardan kullanilacaklar: TestimonialsCarousel, CafeGallery, AppointmentBooking (Rezervasyon olarak), ContactForm, CTABanner
+Uc katmanli bir mimari:
 
-#### 2. Otel Template (Preline Agency profesyonel stili + konaklama sektoru)
-Yeni section'lar:
-- **HeroHotel** — Parallax arka plan, check-in/check-out tarih secicili overlay, "Oda Ara" butonu
-- **RoomShowcase** — Oda kartlari: gorsel, oda tipi, fiyat/gece, ozellik ikonlari (WiFi, klima, minibar), "Rezervasyon" butonu
-- **HotelAmenities** — Otel olanaklari grid'i: havuz, spa, restoran, fitness, vale park gibi ikonlu kartlar
+1. **Icerik Eslestirme Yardimci Fonksiyonu** — `mapContentToTemplate(templateDef, projectData)` 
+2. **applyTemplate Gelistirmesi** — Mevcut eslestirme mantigi derinlestirilecek
+3. **Modal Canli Onizleme** — Secilen template, kullanici verisiyle render edilecek
 
-Mevcut section'lardan kullanilacaklar: ImageGallery, TestimonialsCarousel, StatisticsCounter, ContactForm, CTABanner, FAQAccordion
+### Detayli Teknik Plan
 
-#### 3. Muhendis/Freelancer Template (Preline Personal tasarimi referans)
-Yeni section'lar:
-- **HeroPortfolio** — Avatar + isim + unvan + kisa bio + sosyal medya linkleri (Preline Personal birebir esinlenme)
-- **ProjectShowcase** — Proje kartlari: gorsel, baslik, aciklama, kullanilan teknolojiler badge'leri, canli link
-- **SkillsGrid** — Yetenek kartlari: kategori (Frontend, Backend, DevOps), ilerleme cubugu veya ikonlu liste
+#### 1. Yeni Dosya: `src/templates/catalog/contentMapper.ts`
 
-Mevcut section'lardan kullanilacaklar: TestimonialsCarousel, ContactForm, CTABanner, StatisticsCounter
+Bu fonksiyon, bir template tanimi (TemplateDefinition) ve proje verisi (generated_content, form_data) alarak template'in defaultProps'larini kullanicinin verisiyle akilli sekilde degistirir:
 
----
+- **Hero section'lari**: Proje adi, slogan, aciklama → title, subtitle, description
+- **Hizmet/Menu/Oda section'lari**: generated_content.pages.services.servicesList → template'in ilgili listelerine
+- **Iletisim section'lari**: generated_content.pages.contact.info → phone, email, address
+- **Testimonial section'lari**: Orijinal template verisini korur (kullanicinin boyle verisi genelde yok)
+- **CTA/Banner section'lari**: Proje adini ve sektorunu kullanarak uyarlar
+- **Chef/Team section'lari**: about.team bilgisini kullanir
 
-### Olusturulacak Dosyalar
+Esleme kurallari:
+- Eger kullanici verisinde karsilik yoksa, template'in kendi default'unu korur (template bozulmaz)
+- Sadece metin alanlari eslenir, gorseller template default'larinda kalir
+- Sektorle uyumsuz alanlar zorlanmaz (orn. restoran template'indeki menu kartlari, doktor icin degistirilmez — sadece basliklar eslenir)
 
-| Dosya | Aciklama |
-|-------|----------|
-| `src/components/sections/HeroRestaurant.tsx` | Tam ekran restoran hero |
-| `src/components/sections/ChefShowcase.tsx` | Sef tanitim section |
-| `src/components/sections/RestaurantMenu.tsx` | Kategorili yemek menusu |
-| `src/components/sections/HeroHotel.tsx` | Tarih secicili otel hero |
-| `src/components/sections/RoomShowcase.tsx` | Oda kartlari vitrini |
-| `src/components/sections/HotelAmenities.tsx` | Otel olanaklari grid |
-| `src/components/sections/HeroPortfolio.tsx` | Kisisel portfolio hero |
-| `src/components/sections/ProjectShowcase.tsx` | Proje vitrini |
-| `src/components/sections/SkillsGrid.tsx` | Yetenek kartlari |
+#### 2. Guncelleme: `src/components/editor/useEditorState.ts` → `applyTemplate`
 
-### Guncellenecek Dosyalar
+Mevcut `applyTemplate` fonksiyonu genisletilecek:
+- Yeni bir opsiyonel parametre: `projectData?: { generatedContent, formData }`
+- Eger projectData verilmisse, `contentMapper` kullanarak section prop'larini kullanici verisiyle doldurur
+- Verilmemisse mevcut davranisi korur (geriye uyumluluk)
 
-| Dosya | Degisiklik |
-|-------|-----------|
-| `src/components/sections/registry.ts` | 9 yeni section kaydi |
-| `src/templates/catalog/definitions.ts` | 3 yeni template tanimi (restaurant, hotel, engineer) |
-| `src/themes/presets.ts` | 3 yeni theme preset (restaurantElegant, hotelLuxury, engineerDark) |
-| `src/templates/index.ts` | templateToPreset ve templateRegistry guncelleme |
+#### 3. Guncelleme: `src/components/website-preview/ChangeTemplateModal.tsx`
 
-### Theme Renk Paleti Plani
+- `projectData` prop'u eklenecek (Project.tsx'den gelecek)
+- "Onizle" butonuna tiklaninca, template'in section'larini `contentMapper` ile doldurup `SectionRenderer` ile canli render yapilacak
+- Modal icerisinde bir "onizleme modu" state'i: statik gorsel yerine canli React render gosterilecek
+- Performans icin: sadece secilen/onizlenen template canli render edilecek, diger kartlar statik gorsel kalacak
 
-- **Restaurant**: Koyu arka plan (#0a0a0a), altin vurgular (#d4a853), Playfair Display + Inter
-- **Hotel**: Lacivert tonlar (#0f172a), altin/bej vurgular (#c9a96e), Cormorant Garamond + Inter
-- **Engineer/Freelancer**: Siyah (#0a0a0a), mavi vurgular (#3b82f6), Space Grotesk + Inter (Preline Personal'a yakin)
+#### 4. Guncelleme: `src/pages/Project.tsx` ve `src/components/editor/SiteEditor.tsx`
 
-### Her Template'in Section Yapisi
+- `SiteEditor`'a `projectData` prop'u eklenir (generated_content + form_data)
+- `SiteEditor` bu veriyi `ChangeTemplateModal`'a ve `applyTemplate` cagrisina aktarir
 
-**Restaurant:**
-1. HeroRestaurant (zorunlu)
-2. CafeFeatures (restoran ozellikleri olarak uyarlanir)
-3. RestaurantMenu
-4. ChefShowcase
-5. CafeGallery (restoran galeri)
-6. TestimonialsCarousel
-7. AppointmentBooking (Rezervasyon)
-8. ContactForm
-9. CTABanner
+### Esleme Mantigi Ornegi
 
-**Hotel:**
-1. HeroHotel (zorunlu)
-2. RoomShowcase
-3. HotelAmenities
-4. ImageGallery (otel galeri)
-5. StatisticsCounter (yil, misafir, oda sayisi)
-6. TestimonialsCarousel
-7. FAQAccordion
-8. ContactForm
-9. CTABanner
+```text
+Kullanici Verisi (generated_content)     →    Template Section Props
+─────────────────────────────────────    →    ──────────────────────
+pages.home.hero.title                    →    HeroRestaurant.title / HeroHotel.title / HeroPortfolio.name
+pages.home.hero.description              →    Hero*.description
+pages.services.servicesList[0..N]        →    CafeFeatures.features / DentalServices.services
+pages.contact.info.phone                 →    ContactForm.phone
+pages.contact.info.email                 →    ContactForm.email
+pages.contact.info.address               →    ContactForm.address
+pages.about.story.title                  →    AboutSection.title / CafeStory.title
+pages.about.story.content                →    AboutSection.description / CafeStory.description
+metadata.siteName                        →    Hero title fallback, CTA icerikleri
+form_data.businessName                   →    Hero badge, site adi
+```
 
-**Engineer/Freelancer:**
-1. HeroPortfolio (zorunlu)
-2. SkillsGrid
-3. ProjectShowcase
-4. StatisticsCounter (proje, musteri, yil)
-5. TestimonialsCarousel
-6. ContactForm
-7. CTABanner
+### Dosya Degisiklikleri Ozeti
 
-### Animasyon ve Gorsel Kalite
+| Dosya | Islem |
+|-------|-------|
+| `src/templates/catalog/contentMapper.ts` | **Yeni** — Icerik esleme fonksiyonu |
+| `src/components/editor/useEditorState.ts` | **Guncelleme** — applyTemplate'e projectData destegi |
+| `src/components/website-preview/ChangeTemplateModal.tsx` | **Guncelleme** — Canli onizleme modu + projectData prop |
+| `src/components/editor/SiteEditor.tsx` | **Guncelleme** — projectData prop'u aktarimi |
+| `src/pages/Project.tsx` | **Guncelleme** — generated_content ve form_data'yi SiteEditor'a aktarma |
 
-Tum yeni section'lar mevcut sisteme uyumlu olarak:
-- framer-motion ile staggered fade-in giris animasyonlari
-- IntersectionObserver ile goruntuye girdiginde tetiklenen animasyonlar
-- Hover efektleri (scale, shadow, border-glow)
-- Responsive tasarim (mobil, tablet, masaustu)
-- EditableText ve EditableImage bilesenleri ile editorle tam uyum
-- onUpdate callback'i ile otomatik kaydetme destegi
+### Guvenlik Onlemleri (Template Bozulmaz)
 
-### Uygulama Sirasi
-
-1. Once 9 yeni section bilesenini olustur
-2. Registry'ye kaydet
-3. definitions.ts'e 3 template tanimi ekle
-4. presets.ts'e 3 theme preset ekle
-5. index.ts'i guncelle
-6. Editorde test et
+- Esleme sadece `defaultProps` uzerine `Object.assign` / spread ile yapilir; template yapisi (section tipleri, siralama) degismez
+- Bos veya undefined degerler atlanir — template'in kendi default'u korunur
+- Her section tipi icin ayri esleme kurallari tanimlanir, bilinmeyen section tipleri dokunulmaz birakılır
+- Canli onizleme, ana editoru etkilemez — ayri bir state'de calisir
 
