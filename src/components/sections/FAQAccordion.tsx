@@ -19,18 +19,18 @@ export function FAQAccordion({ section }: SectionComponentProps) {
     <section className={`${s.sectionPadding} ${s.bgColor}`}>
       <div className="container mx-auto px-6">
         <div className={`text-${s.textAlign} max-w-3xl mx-auto mb-16`}>
-          {props.sectionSubtitle && <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>{props.sectionSubtitle}</span>}
-          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor}`}>{props.sectionTitle}</h2>
+          {props.sectionSubtitle && <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform} font-body-dynamic`}>{props.sectionSubtitle}</span>}
+          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} font-heading-dynamic`}>{props.sectionTitle}</h2>
         </div>
         <div className="max-w-3xl mx-auto space-y-4">
           {items.map((item: any, index: number) => (
             <div key={index} className="rounded-xl border border-border overflow-hidden">
               <button className="w-full px-6 py-5 flex items-center justify-between bg-card hover:bg-muted/50 transition-colors text-left" onClick={() => setOpenIndex(openIndex === index ? null : index)}>
-                <span className="font-medium text-foreground pr-4">{item.question}</span>
+                <span className="font-medium text-foreground pr-4 font-body-dynamic">{item.question}</span>
                 <span className={`flex-shrink-0 text-2xl text-primary transition-transform duration-300 ${openIndex === index ? 'rotate-45' : ''}`}>+</span>
               </button>
               <div className={`overflow-hidden transition-all duration-300 ${openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="px-6 pb-5 text-muted-foreground">{item.answer}</div>
+                <div className="px-6 pb-5 text-muted-foreground font-body-dynamic">{item.answer}</div>
               </div>
             </div>
           ))}

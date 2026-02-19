@@ -1,9 +1,6 @@
 import { motion } from 'framer-motion';
 import type { SectionComponentProps } from './types';
 
-/**
- * Cafe Gallery — masonry-like image showcase
- */
 export function CafeGallery({ section, isEditing }: SectionComponentProps) {
   const { props } = section;
 
@@ -15,45 +12,25 @@ export function CafeGallery({ section, isEditing }: SectionComponentProps) {
   ];
 
   return (
-    <section className="py-24 lg:py-32 bg-[#F5EDE4]">
+    <section className="py-24 lg:py-32 bg-secondary">
       <div className="container mx-auto px-6 lg:px-12">
         <div className="text-center mb-16">
-          <motion.span
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-block text-[#C65D3E] text-sm font-semibold tracking-[0.2em] uppercase mb-4"
-          >
+          <motion.span initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="inline-block text-primary text-sm font-semibold tracking-[0.2em] uppercase mb-4 font-body-dynamic">
             {props.subtitle || "Gallery"}
           </motion.span>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold text-[#2C1810]"
-            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
-          >
+          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl font-bold text-foreground font-heading-dynamic">
             {props.title || "Our Space"}
           </motion.h2>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {images.map((img: any, i: number) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-              className={`relative overflow-hidden rounded-2xl group ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className={`w-full object-cover group-hover:scale-110 transition-transform duration-700 ${i === 0 ? 'h-full min-h-[400px]' : 'h-[250px]'}`}
-              />
-              <div className="absolute inset-0 bg-[#2C1810]/0 group-hover:bg-[#2C1810]/30 transition-colors duration-500" />
+            <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.6 }}
+              className={`relative overflow-hidden rounded-2xl group ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
+              <img src={img.src} alt={img.alt} className={`w-full object-cover group-hover:scale-110 transition-transform duration-700 ${i === 0 ? 'h-full min-h-[400px]' : 'h-[250px]'}`} />
+              <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/30 transition-colors duration-500" />
             </motion.div>
           ))}
         </div>

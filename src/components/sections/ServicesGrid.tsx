@@ -32,14 +32,12 @@ export function ServicesGrid({ section }: SectionComponentProps) {
       <div className="container mx-auto px-6">
         <div className={`text-${s.textAlign} max-w-3xl mx-auto mb-16`}>
           {props.sectionSubtitle && (
-            <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform}`}>{props.sectionSubtitle}</span>
+            <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-4 ${s.subtitleTransform} font-body-dynamic`}>{props.sectionSubtitle}</span>
           )}
-          <h2
-            className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} mb-6 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-          >
+          <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} mb-6 transition-all duration-1000 font-heading-dynamic ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             {props.sectionTitle}
           </h2>
-          {props.sectionDescription && <p className={`${s.descSize} ${s.descColor}`}>{props.sectionDescription}</p>}
+          {props.sectionDescription && <p className={`${s.descSize} ${s.descColor} font-body-dynamic`}>{props.sectionDescription}</p>}
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service: any, index: number) => (
@@ -50,11 +48,7 @@ export function ServicesGrid({ section }: SectionComponentProps) {
             >
               {service.image ? (
                 <div className="w-full aspect-[4/5] rounded-xl overflow-hidden mb-6 relative">
-                  <img
-                    src={service.image}
-                    alt={service.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
+                  <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
               ) : (
@@ -62,8 +56,8 @@ export function ServicesGrid({ section }: SectionComponentProps) {
                   {service.icon || '⭐'}
                 </div>
               )}
-              <h3 className="text-xl font-semibold text-foreground mb-3">{service.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{service.description}</p>
+              <h3 className="text-xl font-semibold text-foreground mb-3 font-heading-dynamic">{service.title}</h3>
+              <p className="text-muted-foreground leading-relaxed font-body-dynamic">{service.description}</p>
             </div>
           ))}
         </div>

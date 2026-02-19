@@ -6,7 +6,7 @@ export interface ThemePresetValues {
   colors?: Record<string, string[]>;
 }
 
-// Specialty Cafe — warm terracotta/coral inspired by pencil.dev
+// Specialty Cafe — warm terracotta/coral
 export const specialtyCafePreset: ThemePresetValues = {
   fontFamily: { heading: "Playfair Display", body: "DM Sans" },
   borderRadius: "16px",
@@ -33,7 +33,7 @@ export const specialtyCafePreset: ThemePresetValues = {
   },
 };
 
-// Keep other presets as fallback for existing projects
+// Modern Professional — orange/white
 export const modernProfessionalPreset: ThemePresetValues = {
   fontFamily: { heading: "Inter", body: "Inter" },
   borderRadius: "8px",
@@ -50,6 +50,74 @@ export const modernProfessionalPreset: ThemePresetValues = {
   },
 };
 
+// Dark Minimal — black bg, turquoise accent
+export const darkMinimalPreset: ThemePresetValues = {
+  fontFamily: { heading: "Space Grotesk", body: "Inter" },
+  borderRadius: "8px",
+  colors: {
+    background: ["#0a0a0a", "#0a0a0a"], foreground: ["#fafafa", "#fafafa"],
+    primary: ["#14b8a6", "#2dd4bf"], "primary-foreground": ["#ffffff", "#0a0a0a"],
+    secondary: ["#1a1a1a", "#1a1a1a"], "secondary-foreground": ["#a3a3a3", "#a3a3a3"],
+    muted: ["#1a1a1a", "#1a1a1a"], "muted-foreground": ["#737373", "#737373"],
+    accent: ["#14b8a6", "#2dd4bf"], "accent-foreground": ["#ffffff", "#0a0a0a"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#262626", "#262626"], input: ["#262626", "#262626"], ring: ["#14b8a6", "#2dd4bf"],
+    card: ["#111111", "#111111"], "card-foreground": ["#fafafa", "#fafafa"],
+    popover: ["#111111", "#111111"], "popover-foreground": ["#fafafa", "#fafafa"],
+  },
+};
+
+// Pastel Elegant — cream bg, rose accent, serif
+export const pastelElegantPreset: ThemePresetValues = {
+  fontFamily: { heading: "Lora", body: "DM Sans" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#FDF8F4", "#1a1412"], foreground: ["#3D2B1F", "#F5EDE4"],
+    primary: ["#C2717B", "#D4838D"], "primary-foreground": ["#ffffff", "#1a1412"],
+    secondary: ["#F0E6DE", "#2d2820"], "secondary-foreground": ["#7A6B62", "#d4cfc6"],
+    muted: ["#F0E6DE", "#2d2820"], "muted-foreground": ["#9B8E84", "#a69d91"],
+    accent: ["#C2717B", "#D4838D"], "accent-foreground": ["#ffffff", "#1a1412"],
+    destructive: ["#c53030", "#fc8181"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#E8DDD0", "#3d362c"], input: ["#E8DDD0", "#3d362c"], ring: ["#C2717B", "#D4838D"],
+    card: ["#ffffff", "#221e19"], "card-foreground": ["#3D2B1F", "#F5EDE4"],
+    popover: ["#ffffff", "#221e19"], "popover-foreground": ["#3D2B1F", "#F5EDE4"],
+  },
+};
+
+// Vibrant Bold — white bg, red accent, sans-serif
+export const vibrantBoldPreset: ThemePresetValues = {
+  fontFamily: { heading: "Poppins", body: "Poppins" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#ffffff", "#0d0d0d"], foreground: ["#111111", "#fafafa"],
+    primary: ["#dc2626", "#ef4444"], "primary-foreground": ["#ffffff", "#0d0d0d"],
+    secondary: ["#f5f5f5", "#1a1a1a"], "secondary-foreground": ["#525252", "#d4d4d4"],
+    muted: ["#f5f5f5", "#1a1a1a"], "muted-foreground": ["#737373", "#a3a3a3"],
+    accent: ["#dc2626", "#ef4444"], "accent-foreground": ["#ffffff", "#0d0d0d"],
+    destructive: ["#b91c1c", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#e5e5e5", "#2e2e2e"], input: ["#e5e5e5", "#2e2e2e"], ring: ["#dc2626", "#ef4444"],
+    card: ["#ffffff", "#141414"], "card-foreground": ["#111111", "#fafafa"],
+    popover: ["#ffffff", "#141414"], "popover-foreground": ["#111111", "#fafafa"],
+  },
+};
+
+// Corporate Blue — professional blue accent
+export const corporateBluePreset: ThemePresetValues = {
+  fontFamily: { heading: "Sora", body: "Inter" },
+  borderRadius: "8px",
+  colors: {
+    background: ["#f8fafc", "#0f172a"], foreground: ["#0f172a", "#f1f5f9"],
+    primary: ["#2563eb", "#3b82f6"], "primary-foreground": ["#ffffff", "#0f172a"],
+    secondary: ["#e2e8f0", "#1e293b"], "secondary-foreground": ["#475569", "#cbd5e1"],
+    muted: ["#e2e8f0", "#1e293b"], "muted-foreground": ["#64748b", "#94a3b8"],
+    accent: ["#2563eb", "#3b82f6"], "accent-foreground": ["#ffffff", "#0f172a"],
+    destructive: ["#ef4444", "#f87171"], "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#e2e8f0", "#334155"], input: ["#e2e8f0", "#334155"], ring: ["#2563eb", "#3b82f6"],
+    card: ["#ffffff", "#1e293b"], "card-foreground": ["#0f172a", "#f1f5f9"],
+    popover: ["#ffffff", "#1e293b"], "popover-foreground": ["#0f172a", "#f1f5f9"],
+  },
+};
+
 export const defaultTheme: ThemePresetValues = specialtyCafePreset;
 
 export const themePresets: Record<string, ThemePresetValues>[] = [
@@ -57,10 +125,19 @@ export const themePresets: Record<string, ThemePresetValues>[] = [
   { "Modern Profesyonel": modernProfessionalPreset },
 ];
 
+// Named presets for CustomizePanel display
+export const namedPresets: { name: string; preset: ThemePresetValues }[] = [
+  { name: "Sıcak Kafe", preset: specialtyCafePreset },
+  { name: "Modern Profesyonel", preset: modernProfessionalPreset },
+  { name: "Koyu Minimal", preset: darkMinimalPreset },
+  { name: "Pastel Zarif", preset: pastelElegantPreset },
+  { name: "Canlı Cesur", preset: vibrantBoldPreset },
+  { name: "Kurumsal Mavi", preset: corporateBluePreset },
+];
+
 export const templateToPreset: Record<string, ThemePresetValues> = {
   "specialty-cafe": specialtyCafePreset,
   "temp1": modernProfessionalPreset,
-  // Legacy mappings for existing projects
   "pilates1": specialtyCafePreset,
   "lawyer-firm": specialtyCafePreset,
   "natural": specialtyCafePreset,
