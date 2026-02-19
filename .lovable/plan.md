@@ -1,111 +1,86 @@
 
 
-## Template Preview Sistemi Refactoring
+## Dashboard Tema Kirlenmesini Onleme ve Template Onizleme/Kaydetme Akisi
 
-Mevcut `contentMapper.ts` ve `ChangeTemplateModal` zaten calisiyor ancak kod kalitesi, guvenlik ve bakim kolayligi icin asagidaki degisiklikler yapilacak.
+### Problem 1: Dashboard Renk Kirlenmesi
 
-### Degisiklik Ozeti
+SiteEditor, template temalarini `document.documentElement` uzerine CSS degiskeni olarak yaziyor (background, foreground, card, border, muted vb. TUMU). Editorden cikildiginda DashboardLayout sadece `--primary`, `--ring`, `--accent` degiskenlerini sifirliyor — diger 20+ degisken (ozellikle `--background`, `--foreground`, `--card`, `--border`) editordeki degerlerle kaliyor. Bu yuzden koyu temali bir template duzenledikten sonra dashboard koyu gorunuyor.
+
+### Cozum 1: SiteEditor'da Tema Izolasyonu
+
+SiteEditor'daki `useEffect` (satir 52-71) CSS degiskenlerini `document.documentElement` yerine editore ait bir **container div** uzerine yazacak. Boylece tema degiskenleri sadece editor alani icinde gecerli olur, dashboard'a hic bulasmaz.
+
+Alternatif olarak (daha basit): SiteEditor unmount oldugunda (editorden cikildiginda) tum CSS degiskenlerini `index.css`'deki varsayilan degerlere geri dondurecek bir cleanup fonksiyonu eklenecek.
+
+**Tercih edilen yaklasim:** SiteEditor'a bir `useEffect` cleanup eklemek:
+
+```text
+useEffect(() => {
+  // ... mevcut tema uygulama kodu ...
+  
+  return () => {
+    // Cleanup: tum tema degiskenlerini varsayilana dondur
+    const root = document.documentElement;
+    const defaults = {
+      '--background': '0 0% 100%',
+      '--foreground': '0 0% 10%',
+      '--card': '0 0% 100%',
+      '--card-foreground': '0 0% 10%',
+      '--popover': '0 0% 100%',
+      '--popover-foreground': '0 0% 10%',
+      '--primary': '24 95% 53%',
+      '--primary-foreground': '0 0% 100%',
+      '--secondary': '220 14% 96%',
+      '--secondary-foreground': '0 0% 29%',
+      '--muted': '220 14% 96%',
+      '--muted-foreground': '220 9% 46%',
+      '--accent': '24 95% 53%',
+      '--accent-foreground': '0 0% 100%',
+      '--border': '220 13% 91%',
+      '--input': '220 13% 91%',
+      '--ring': '24 95% 53%',
+      '--radius': '0.5rem',
+      '--font-heading': "'Playfair Display', Georgia, serif",
+      '--font-body': "'Inter', system-ui, sans-serif",
+    };
+    Object.entries(defaults).forEach(([k, v]) => root.style.setProperty(k, v));
+  };
+}, [editor.theme]);
+```
+
+Ayrica DashboardLayout'daki `forceOrange` fonksiyonunu da ayni tam listeyle guncelleyerek yedek koruma saglanacak.
+
+### Problem 2: Template Onizleme/Kaydetme Akisi
+
+Kullanici template degistirdiginde secilen template'in ne oldugunu gormek, onizleyebilmek ve kaydedebilmek istiyor.
+
+### Cozum 2: ChangeTemplateModal Gelistirmesi
+
+Mevcut modal zaten "Onizle" ve "Bu Sablonu Kullan" butonlarina sahip. Ek olarak:
+
+1. **Secili template gostergesi**: Mevcut template'in uzerine "Mevcut" badge'i zaten var. Buna ek olarak EditorToolbar'da veya editor ust cubugunda secili template adini gosteren kucuk bir bilgi etiketi eklenecek.
+
+2. **Onizleme → Uygula akisi**: Mevcut "Bu Sablonu Kullan" butonu template'i hemen uyguluyor. Bunun yerine su akis:
+   - "Onizle" tiklandiginda canli onizleme acilir (mevcut davranis)
+   - Onizleme ekraninda "Uygula" ve "Iptal" butonlari olur
+   - "Uygula" tiklandiginda template uygulanir ve auto-save tetiklenir
+   - "Iptal" tiklandiginda geri donulur, hicbir sey degismez
+
+3. **EditorToolbar'da template bilgisi**: Toolbar'a mevcut template adini gosteren kucuk bir badge/etiket eklenecek (orn. "Restoran Zarif" badge'i)
+
+### Dosya Degisiklikleri
 
 | Dosya | Islem |
 |-------|-------|
-| `src/templates/catalog/mappers/utils.ts` | **Yeni** — `safeGet` helper |
-| `src/templates/catalog/mappers/mapHeroSection.ts` | **Yeni** — Hero esleme |
-| `src/templates/catalog/mappers/mapServicesSection.ts` | **Yeni** — Servis esleme |
-| `src/templates/catalog/mappers/mapContactSection.ts` | **Yeni** — Iletisim esleme |
-| `src/templates/catalog/mappers/mapAboutSection.ts` | **Yeni** — Hakkinda esleme |
-| `src/templates/catalog/mappers/mapCtaSection.ts` | **Yeni** — CTA esleme |
-| `src/templates/catalog/mappers/mapTeamSection.ts` | **Yeni** — Takim esleme |
-| `src/templates/catalog/mappers/index.ts` | **Yeni** — Orchestrator |
-| `src/templates/catalog/contentMapper.ts` | **Guncelleme** — Yeni mapper sistemini kullanacak sekilde yeniden yazilacak |
-| `src/components/editor/useEditorState.ts` | **Guncelleme** — `applyTemplate` icerisinde projectData yoksa esleme atlanacak |
-| `src/components/website-preview/ChangeTemplateModal.ts` | **Guncelleme** — Onizleme banner'i eklenecek |
-| `src/pages/Project.tsx` | **Guncelleme** — `sector` alani projectData'ya eklenecek |
-
-### Detayli Plan
-
-#### 1. `src/templates/catalog/mappers/utils.ts`
-
-Tum mapper'larda kullanilacak `safeGet` helper fonksiyonu:
-
-```text
-safeGet(obj, 'generated_content.pages.home.hero.title', '')
-```
-
-- Nokta ile ayrilmis yolu izleyerek guvenli erisim saglar
-- Herhangi bir adim `null` veya `undefined` ise fallback doner
-- Bos string de fallback olarak degerlendirilir
-
-#### 2. Her Mapper Dosyasi
-
-Her dosya su yapiyi takip eder:
-- `compatibleSectors` array'i export eder (bos array = tum sektorlerle uyumlu)
-- Tek bir fonksiyon export eder: `mapXxxSection(sectionProps, projectData) => Record<string, any>`
-- `safeGet` kullanarak veri erisimi yapar
-- Overrides objesi olusturur, sadece dolu degerler eklenir
-- `{ ...sectionProps, ...overrides }` ile birlestirir, asla mutasyon yapmaz
-
-Mapper listesi ve sektor uyumlulugu:
-
-| Mapper | Eslenen Section Tipleri | compatibleSectors |
-|--------|------------------------|-------------------|
-| mapHeroSection | Hero*, HeroCafe, HeroDental, HeroRestaurant, HeroHotel, HeroPortfolio | `[]` (hepsi) |
-| mapServicesSection | CafeFeatures, DentalServices, ServicesGrid | `[]` (hepsi) |
-| mapContactSection | ContactForm | `[]` (hepsi) |
-| mapAboutSection | AboutSection, CafeStory | `[]` (hepsi) |
-| mapCtaSection | CTABanner | `[]` (hepsi) |
-| mapTeamSection | ChefShowcase | `['restaurant','cafe','food']` |
-
-#### 3. Orchestrator (`mappers/index.ts`)
-
-- Section tipine gore dogru mapper'i secer
-- Sektor uyumluluk kontrolu yapar: `compatibleSectors` bos degilse ve projectData.sector uyusmuyorsa, esleme atlanir
-- Bilinmeyen section tipleri dokunulmadan doner
-- `mapContentToTemplate(sections, projectData)` imzasi korunur
-
-#### 4. `contentMapper.ts` Guncelleme
-
-Mevcut tek dosya yerine yeni mapper sistemine delege eder. Eski `ProjectData` interface'i korunur ancak `sector` alani eklenir. Geriye uyumluluk saglanir — `generatedContent` ve `formData` isimleri ayni kalir.
-
-#### 5. `useEditorState.ts` Guncelleme
-
-`applyTemplate` icinde:
-- `projectData?.generatedContent || projectData?.formData` kontrolu eklenir
-- Sadece icerik varsa `mapContentToTemplate` cagirilir
-- Yoksa template'in kendi default'lari kullanilir (mevcut davranis korunur)
-
-#### 6. `ChangeTemplateModal.tsx` Guncelleme
-
-- Onizleme modunda ust kisma bilgi banner'i eklenir:
-  "Metin icerikleri isletme verilerinizi gostermektedir. Gorseller sablon varsayilanlarini kullanir."
-
-#### 7. `Project.tsx` Guncelleme
-
-projectData'ya `sector` alani eklenir:
-```text
-projectData={{
-  generatedContent: project.generated_content,
-  formData: project.form_data,
-  sector: project.form_data?.businessType ?? project.form_data?.sector ?? ''
-}}
-```
-
-SiteEditor props interface'ine de `sector` eklenir.
+| `src/components/editor/SiteEditor.tsx` | Tema CSS cleanup fonksiyonu ekleme (useEffect return) |
+| `src/components/dashboard/DashboardLayout.tsx` | `forceOrange` fonksiyonunu tam degisken listesiyle guncelleme |
+| `src/components/editor/EditorToolbar.tsx` | Template adi badge'i ekleme |
+| `src/components/editor/SiteEditor.tsx` | Template ID state'i ve EditorToolbar'a aktarma |
 
 ### Uygulama Sirasi
 
-1. `mappers/utils.ts` olustur
-2. 6 mapper dosyasini olustur
-3. `mappers/index.ts` orchestrator olustur
-4. `contentMapper.ts` guncelle (yeni mapper'lari kullansin)
-5. `useEditorState.ts` guncelle
-6. `ChangeTemplateModal.tsx` banner ekle
-7. `Project.tsx` ve `SiteEditor.tsx` sector aktarimi
-
-### Korunan Davranislar
-
-- Template kartlari statik gorsel gostermeye devam eder
-- Sadece "Onizle" tiklaninca canli render yapilir (mevcut davranis zaten boyle)
-- `applyTemplate()` projectData olmadan cagrildiginda mevcut davranis korunur
-- Section bilesenlerine ve template tanimlarina dokunulmaz
-- Modal acma/kapama mantigi degismez
+1. SiteEditor.tsx — tema cleanup useEffect return'u ekle
+2. DashboardLayout.tsx — forceOrange'a eksik degiskenleri ekle
+3. EditorToolbar.tsx — template adi gostergesi ekle
+4. SiteEditor.tsx — mevcut template ID izleme
 
