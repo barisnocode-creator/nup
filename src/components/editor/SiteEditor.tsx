@@ -172,14 +172,12 @@ export function SiteEditor({
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {editor.addPanelOpen && (
-            <AddSectionPanel
-              onAdd={(type, defaultProps) => editor.addSection(type, defaultProps, editor.addInsertIndex ?? undefined)}
-              onClose={() => editor.setAddPanelOpen(false)}
-            />
-          )}
-        </AnimatePresence>
+        <AddSectionPanel
+          isOpen={editor.addPanelOpen}
+          onAdd={(type, defaultProps) => { editor.addSection(type, defaultProps, editor.addInsertIndex ?? undefined); editor.setAddPanelOpen(false); }}
+          onClose={() => editor.setAddPanelOpen(false)}
+          sector={projectData?.sector}
+        />
 
         <AnimatePresence>
           {editor.customizePanelOpen && (
