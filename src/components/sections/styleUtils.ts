@@ -82,6 +82,8 @@ export interface StyleProps {
   subtitleTransform?: string;
   bgColor?: string;
   sectionPadding?: string;
+  customBgColor?: string;
+  customTitleColor?: string;
 }
 
 export function resolveStyles(props: StyleProps) {

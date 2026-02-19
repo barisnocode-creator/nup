@@ -9,6 +9,7 @@ import { AddSectionPanel } from './AddSectionPanel';
 import { CustomizePanel } from './CustomizePanel';
 import { PublishModal } from '@/components/website-preview/PublishModal';
 import { ChangeTemplateModal } from '@/components/website-preview/ChangeTemplateModal';
+import { hexToHSL } from '@/lib/utils';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface SiteEditorProps {
@@ -31,6 +32,7 @@ export function SiteEditor({
   });
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
   // Sync initial data when it changes (e.g., after migration)
   useEffect(() => {
@@ -45,13 +47,15 @@ export function SiteEditor({
     }
   }, [initialTheme]);
 
-  // Apply theme CSS variables
+  // Apply theme CSS variables with hex-to-HSL conversion
   useEffect(() => {
     const colors = editor.theme.colors || {};
     const root = document.documentElement;
     Object.entries(colors).forEach(([key, val]) => {
       if (typeof val === 'string') {
-        root.style.setProperty(`--${key}`, val);
+        // Convert hex to HSL for Tailwind compatibility
+        const hslVal = val.startsWith('#') ? hexToHSL(val) : val;
+        root.style.setProperty(`--${key}`, hslVal);
       }
     });
     if (editor.theme.fonts?.heading) {
@@ -88,6 +92,8 @@ export function SiteEditor({
         hasUnsavedChanges={hasUnsavedChanges}
         canUndo={editor.canUndo}
         onUndo={editor.undo}
+        previewDevice={previewDevice}
+        onChangeDevice={setPreviewDevice}
       />
 
       <div className="flex-1 flex overflow-hidden relative">
@@ -102,6 +108,7 @@ export function SiteEditor({
           onRemove={editor.removeSection}
           onDuplicate={editor.duplicateSection}
           onAddAt={(index) => editor.openAddPanel(index)}
+          previewDevice={previewDevice}
         />
 
         <AnimatePresence>

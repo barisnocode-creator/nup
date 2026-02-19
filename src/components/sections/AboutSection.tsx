@@ -12,16 +12,16 @@ export function AboutSection({ section }: SectionComponentProps) {
         <div className={`grid lg:grid-cols-2 gap-12 items-center ${props.imagePosition === 'left' ? 'lg:flex-row-reverse' : ''}`}>
           <div className={`space-y-6 ${props.imagePosition === 'left' ? 'lg:order-2' : ''}`}>
             {props.subtitle && (
-              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform}`}>{props.subtitle}</span>
+              <span className={`inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium ${s.subtitleTransform} font-body-dynamic`}>{props.subtitle}</span>
             )}
-            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign}`}>{props.title}</h2>
-            <p className={`${s.descSize} ${s.descColor} leading-relaxed`}>{props.description}</p>
+            <h2 className={`${s.titleSize()} ${s.titleWeight} ${s.titleColor} text-${s.textAlign} font-heading-dynamic`}>{props.title}</h2>
+            <p className={`${s.descSize} ${s.descColor} leading-relaxed font-body-dynamic`}>{props.description}</p>
             {featureList.length > 0 && (
               <ul className="space-y-3">
                 {featureList.map((feature: string, index: number) => (
                   <li key={index} className="flex items-start gap-3">
                     <svg className="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    <span className="text-foreground">{feature}</span>
+                    <span className="text-foreground font-body-dynamic">{feature}</span>
                   </li>
                 ))}
               </ul>
