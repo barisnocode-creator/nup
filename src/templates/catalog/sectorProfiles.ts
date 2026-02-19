@@ -188,8 +188,47 @@ export const sectorProfiles: Record<string, SectorProfile> = {
  * Returns the sector profile for a given sector key.
  * Falls back to undefined if sector is not found.
  */
+/**
+ * Alias map: maps alternative sector names to canonical sectorProfiles keys.
+ */
+const sectorAliases: Record<string, string> = {
+  'aesthetic_surgery': 'doctor',
+  'plastic_surgery': 'doctor',
+  'estetik': 'doctor',
+  'cerrahi': 'doctor',
+  'health': 'doctor',
+  'medical': 'doctor',
+  'clinic': 'doctor',
+  'hospital': 'doctor',
+  'dental': 'dentist',
+  'dis': 'dentist',
+  'food': 'restaurant',
+  'bistro': 'restaurant',
+  'fine_dining': 'restaurant',
+  'coffee': 'cafe',
+  'resort': 'hotel',
+  'accommodation': 'hotel',
+  'attorney': 'lawyer',
+  'hukuk': 'lawyer',
+  'spa': 'beauty_salon',
+  'kuafor': 'beauty_salon',
+  'fitness': 'gym',
+  'pilates': 'gym',
+  'yoga': 'gym',
+  'pet': 'veterinary',
+};
+
 export function getSectorProfile(sector: string | undefined): SectorProfile | undefined {
   if (!sector) return undefined;
   const key = sector.toLowerCase().replace(/[\s-]/g, '_');
-  return sectorProfiles[key];
+  // Direct match
+  if (sectorProfiles[key]) return sectorProfiles[key];
+  // Alias match
+  const alias = sectorAliases[key];
+  if (alias && sectorProfiles[alias]) return sectorProfiles[alias];
+  // Partial match
+  for (const [aliasKey, target] of Object.entries(sectorAliases)) {
+    if (key.includes(aliasKey)) return sectorProfiles[target];
+  }
+  return undefined;
 }
