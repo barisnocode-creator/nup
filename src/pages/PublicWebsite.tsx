@@ -14,42 +14,20 @@ interface PublicProject {
   profession: string;
   subdomain: string;
   generated_content: GeneratedContent | null;
-  chai_blocks?: any[];
-  chai_theme?: any;
   site_sections?: SiteSection[];
   site_theme?: SiteTheme;
   template_id?: string;
 }
 
-// Extract theme color (for legacy chai_theme format: [light, dark] arrays)
-function extractColor(colors: Record<string, any> | undefined, key: string, fallback: string): string {
-  if (!colors) return fallback;
-  const val = colors[key];
-  if (Array.isArray(val) && val[0]) return val[0];
-  if (typeof val === 'string') return val;
-  return fallback;
-}
-
-function buildThemeStyle(theme: any): string {
+function buildThemeStyle(theme: SiteTheme | undefined): string {
   if (!theme?.colors) return '';
   const c = theme.colors;
-  const vars: Record<string, string> = {
-    '--background': extractColor(c, 'background', '#ffffff'),
-    '--foreground': extractColor(c, 'foreground', '#1a1a1a'),
-    '--primary': extractColor(c, 'primary', '#f97316'),
-    '--primary-foreground': extractColor(c, 'primary-foreground', '#ffffff'),
-    '--secondary': extractColor(c, 'secondary', '#f4f4f5'),
-    '--secondary-foreground': extractColor(c, 'secondary-foreground', '#4a4a4a'),
-    '--muted': extractColor(c, 'muted', '#f4f4f5'),
-    '--muted-foreground': extractColor(c, 'muted-foreground', '#737373'),
-    '--accent': extractColor(c, 'accent', '#f97316'),
-    '--accent-foreground': extractColor(c, 'accent-foreground', '#ffffff'),
-    '--border': extractColor(c, 'border', '#e5e5e5'),
-    '--input': extractColor(c, 'input', '#e5e5e5'),
-    '--ring': extractColor(c, 'ring', '#f97316'),
-    '--card': extractColor(c, 'card', '#ffffff'),
-    '--card-foreground': extractColor(c, 'card-foreground', '#1a1a1a'),
-  };
+  const vars: Record<string, string> = {};
+  for (const [key, val] of Object.entries(c)) {
+    if (typeof val === 'string') {
+      vars[`--${key}`] = val;
+    }
+  }
   return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
 }
 
@@ -65,7 +43,7 @@ export default function PublicWebsite() {
 
       const { data, error } = await supabase
         .from('public_projects')
-        .select('id, name, profession, subdomain, generated_content, chai_blocks, chai_theme, site_sections, site_theme, template_id')
+        .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
         .eq('subdomain', subdomain)
         .maybeSingle();
 
@@ -92,14 +70,12 @@ export default function PublicWebsite() {
     }
   }, [project?.id]);
 
-  // Determine which theme to use: site_theme > chai_theme
-  const activeTheme = project?.site_theme || project?.chai_theme;
   const themeStyleTag = useMemo(() => {
-    if (!activeTheme) return null;
-    const cssVars = buildThemeStyle(activeTheme);
+    if (!project?.site_theme) return null;
+    const cssVars = buildThemeStyle(project.site_theme);
     if (!cssVars) return null;
     return <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />;
-  }, [activeTheme]);
+  }, [project?.site_theme]);
 
   if (loading) {
     return (
@@ -133,41 +109,15 @@ export default function PublicWebsite() {
     );
   }
 
-  // Priority 1: site_sections
   const siteSections = project.site_sections as SiteSection[] | undefined;
   const hasSiteSections = siteSections && Array.isArray(siteSections) && siteSections.length > 0;
-
-  // Priority 2: chai_blocks (convert inline for display)
-  const hasChaiBlocks = !hasSiteSections && project.chai_blocks && Array.isArray(project.chai_blocks) && project.chai_blocks.length > 0;
-
-  // Convert chai_blocks to SiteSection format for rendering
-  const convertedSections = useMemo(() => {
-    if (!hasChaiBlocks || !project.chai_blocks) return [];
-    const typeMap: Record<string, string> = {
-      HeroCentered: 'hero-centered', HeroSplit: 'hero-split', HeroOverlay: 'hero-overlay',
-      ServicesGrid: 'services-grid', AboutSection: 'about-section', StatisticsCounter: 'statistics-counter',
-      TestimonialsCarousel: 'testimonials-carousel', ContactForm: 'contact-form', CTABanner: 'cta-banner',
-      FAQAccordion: 'faq-accordion', ImageGallery: 'image-gallery', PricingTable: 'pricing-table',
-      AppointmentBooking: 'appointment-booking', NaturalHeader: 'natural-header', NaturalHero: 'natural-hero',
-      NaturalIntro: 'natural-intro', NaturalArticleGrid: 'natural-article-grid', NaturalNewsletter: 'natural-newsletter',
-      NaturalFooter: 'natural-footer',
-    };
-    const skip = new Set(['_id', '_type', '_position', '_name', 'styles', 'blockProps', 'inBuilder', 'containerClassName']);
-    return project.chai_blocks.map((b: any, i: number) => {
-      const props: Record<string, any> = {};
-      for (const [k, v] of Object.entries(b)) { if (!skip.has(k)) props[k] = v; }
-      return { id: b._id || `s_${i}`, type: typeMap[b._type] || b._type, locked: i === 0, props } as SiteSection;
-    });
-  }, [hasChaiBlocks, project.chai_blocks]);
-
-  const sectionsToRender = hasSiteSections ? siteSections! : hasChaiBlocks ? convertedSections : [];
 
   return (
     <>
       {themeStyleTag}
 
-      {sectionsToRender.length > 0 ? (
-        <SectionRenderer sections={sectionsToRender} />
+      {hasSiteSections ? (
+        <SectionRenderer sections={siteSections!} />
       ) : (
         project.generated_content && (
           <WebsitePreview content={project.generated_content} colorPreference="light" isEditable={false} />
