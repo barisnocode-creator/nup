@@ -42,6 +42,18 @@ export default function Project() {
 
   usePageView(id, '/preview');
 
+  // Set window globals for booking components to access
+  useEffect(() => {
+    if (project?.id) {
+      (window as any).__PROJECT_ID__ = project.id;
+      (window as any).__SUPABASE_URL__ = import.meta.env.VITE_SUPABASE_URL;
+    }
+    return () => {
+      delete (window as any).__PROJECT_ID__;
+      delete (window as any).__SUPABASE_URL__;
+    };
+  }, [project?.id]);
+
   // Fetch project
   useEffect(() => {
     async function fetchProject() {
