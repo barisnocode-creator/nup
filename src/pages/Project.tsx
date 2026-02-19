@@ -240,6 +240,10 @@ export default function Project() {
       subdomain={project.subdomain}
       isPublished={project.is_published}
       onPublished={(sub) => setProject(prev => prev ? { ...prev, subdomain: sub, is_published: true } : null)}
+      projectData={{
+        generatedContent: project.generated_content,
+        formData: project.form_data,
+      }}
     />
   );
 }

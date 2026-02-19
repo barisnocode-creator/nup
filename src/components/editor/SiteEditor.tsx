@@ -20,11 +20,12 @@ interface SiteEditorProps {
   subdomain?: string | null;
   isPublished?: boolean;
   onPublished?: (subdomain: string) => void;
+  projectData?: { generatedContent?: any; formData?: any } | null;
 }
 
 export function SiteEditor({
   projectId, projectName, initialSections, initialTheme,
-  subdomain, isPublished, onPublished,
+  subdomain, isPublished, onPublished, projectData,
 }: SiteEditorProps) {
   const editor = useEditorState(initialSections, initialTheme);
   const { isSaving, hasUnsavedChanges, forceSave } = useSiteSave({
@@ -75,7 +76,7 @@ export function SiteEditor({
   };
 
   const handleApplyTemplate = (templateId: string) => {
-    editor.applyTemplate(templateId);
+    editor.applyTemplate(templateId, projectData);
     setTemplateModalOpen(false);
   };
 
@@ -153,6 +154,7 @@ export function SiteEditor({
         currentTemplateId="specialty-cafe"
         onSelectTemplate={handleApplyTemplate}
         onPreview={(id) => handleApplyTemplate(id)}
+        projectData={projectData}
       />
 
       <PublishModal
