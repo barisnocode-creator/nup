@@ -2,6 +2,7 @@ import { X, LayoutGrid } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { namedPresets } from '@/themes/presets';
 import type { SiteTheme } from '@/components/sections/types';
 
@@ -10,6 +11,9 @@ interface CustomizePanelProps {
   onUpdateTheme: (updates: Partial<SiteTheme>) => void;
   onClose: () => void;
   onOpenTemplateModal: () => void;
+  sector?: string;
+  addableSections?: Record<string, boolean>;
+  onToggleAddableSection?: (key: string) => void;
 }
 
 const fontOptions = [
@@ -17,7 +21,31 @@ const fontOptions = [
   'Lora', 'DM Sans', 'Sora', 'Roboto', 'Montserrat',
 ];
 
-export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateModal }: CustomizePanelProps) {
+interface AddableToggle { key: string; label: string; sectorOnly?: string[] }
+
+const universalToggles: AddableToggle[] = [
+  { key: 'appointment', label: 'Randevu / Rezervasyon Formu' },
+  { key: 'faq', label: 'Sık Sorulan Sorular (FAQ)' },
+  { key: 'messageForm', label: 'Mesaj Bırak / İletişim Formu' },
+  { key: 'workingHours', label: 'Çalışma Saatleri & Harita' },
+];
+
+const sectorToggles: AddableToggle[] = [
+  { key: 'onlineConsultation', label: 'Online Konsültasyon', sectorOnly: ['doctor', 'dentist', 'pharmacy'] },
+  { key: 'insurance', label: 'Anlaşmalı Sigorta Şirketleri', sectorOnly: ['doctor', 'dentist'] },
+  { key: 'menuHighlights', label: 'Menü Öne Çıkanlar', sectorOnly: ['restaurant', 'cafe'] },
+  { key: 'roomAvailability', label: 'Oda Müsaitliği', sectorOnly: ['hotel'] },
+  { key: 'caseEvaluation', label: 'Ücretsiz Hukuki Değerlendirme', sectorOnly: ['lawyer'] },
+  { key: 'beforeAfter', label: 'Önce & Sonra Galerisi', sectorOnly: ['beauty_salon', 'gym'] },
+  { key: 'petRegistration', label: 'Hasta Kaydı (Evcil Hayvan)', sectorOnly: ['veterinary'] },
+];
+
+function getSectorToggles(sector: string) {
+  const normalized = sector.toLowerCase().replace(/[\s-]/g, '_');
+  return sectorToggles.filter(t => t.sectorOnly?.includes(normalized));
+}
+
+export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateModal, sector, addableSections = {}, onToggleAddableSection }: CustomizePanelProps) {
   const colors = theme.colors || {};
   const fonts = theme.fonts || {};
 
@@ -58,15 +86,40 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {/* Template Change */}
         <div className="space-y-3">
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Şablon</h4>
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Şablon</h4>
           <button
             onClick={onOpenTemplateModal}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-900 dark:text-white text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm font-medium hover:bg-accent transition-colors"
           >
-            <LayoutGrid className="w-4 h-4 text-gray-500" />
+            <LayoutGrid className="w-4 h-4 text-muted-foreground" />
             Template Değiştir
           </button>
         </div>
+
+        {/* Addable Sections */}
+        {onToggleAddableSection && (
+          <div className="space-y-3">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sayfanıza Eklenebilir Bölümler</h4>
+            <div className="space-y-2">
+              {universalToggles.map(t => (
+                <AddableToggleRow
+                  key={t.key}
+                  label={t.label}
+                  checked={!!addableSections[t.key]}
+                  onToggle={() => onToggleAddableSection(t.key)}
+                />
+              ))}
+              {sector && getSectorToggles(sector).map(t => (
+                <AddableToggleRow
+                  key={t.key}
+                  label={t.label}
+                  checked={!!addableSections[t.key]}
+                  onToggle={() => onToggleAddableSection(t.key)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Theme Presets */}
         <div className="space-y-3">
@@ -152,12 +205,24 @@ function ColorPicker({ label, value, onChange }: { label: string; value: string;
   return (
     <div className="flex items-center gap-2">
       <input type="color" value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded-lg border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5" />
+        className="w-8 h-8 rounded-lg border border-border cursor-pointer p-0.5" />
       <div className="flex-1">
-        <label className="text-xs text-gray-500 dark:text-gray-400">{label}</label>
+        <label className="text-xs text-muted-foreground">{label}</label>
         <Input value={value} onChange={(e) => onChange(e.target.value)}
-          className="text-xs h-7 mt-0.5 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+          className="text-xs h-7 mt-0.5" />
       </div>
+    </div>
+  );
+}
+
+function AddableToggleRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
+  return (
+    <div
+      className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 border border-border/50 hover:border-border transition-colors cursor-pointer"
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
+    >
+      <span className="text-xs font-medium text-foreground leading-tight pr-2">{label}</span>
+      <Switch checked={checked} onCheckedChange={() => onToggle()} onClick={(e) => e.stopPropagation()} className="shrink-0" />
     </div>
   );
 }

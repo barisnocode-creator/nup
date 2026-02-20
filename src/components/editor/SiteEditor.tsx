@@ -189,6 +189,9 @@ export function SiteEditor({
                 editor.setCustomizePanelOpen(false);
                 setTemplateModalOpen(true);
               }}
+              sector={projectData?.sector}
+              addableSections={editor.addableSections}
+              onToggleAddableSection={editor.toggleAddableSection}
             />
           )}
         </AnimatePresence>
