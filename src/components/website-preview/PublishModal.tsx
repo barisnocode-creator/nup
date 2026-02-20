@@ -88,14 +88,13 @@ export function PublishModal({
   const [domainModalOpen, setDomainModalOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | undefined>();
   const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
-  const [netlifyUrl, setNetlifyUrl] = useState('');
+  const [vercelUrl, setVercelUrl] = useState('');
 
-  // Fetch project data for domain suggestions
   const fetchProjectData = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('projects')
-        .select('profession, form_data, netlify_url, netlify_custom_domain')
+        .select('profession, form_data, vercel_url, vercel_custom_domain')
         .eq('id', projectId)
         .single();
 
@@ -105,7 +104,7 @@ export function PublishModal({
         const profession = data.profession || '';
         setDomainSuggestions(generateDomainSuggestions(businessName, profession));
 
-        if (data.netlify_url) setNetlifyUrl(data.netlify_url);
+        if (data.vercel_url) setVercelUrl(data.vercel_url);
         return data;
       }
     } catch (err) {
@@ -128,14 +127,13 @@ export function PublishModal({
       }
       
       if (isPublished && currentSubdomain) {
-        // For published sites: fetch URL but do NOT show success screen
         fetchProjectData().then((data) => {
           if (data) {
-            const url = data.netlify_custom_domain 
-              ? `https://${data.netlify_custom_domain}`
-              : data.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
+            const url = data.vercel_custom_domain 
+              ? `https://${data.vercel_custom_domain}`
+              : data.vercel_url || `${window.location.origin}/site/${currentSubdomain}`;
             setPublishedUrl(url);
-            if (data.netlify_url) setNetlifyUrl(data.netlify_url);
+            if (data.vercel_url) setVercelUrl(data.vercel_url);
           }
         });
       } else {
@@ -143,6 +141,7 @@ export function PublishModal({
       }
     }
   }, [isOpen, projectName, currentSubdomain, isPublished, fetchProjectData]);
+
 
   const checkAvailability = useCallback(
     (() => {
@@ -230,20 +229,20 @@ export function PublishModal({
 
       if (error) throw error;
 
-      let deployedNetlifyUrl = '';
+      let deployedVercelUrl = '';
       try {
-        const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+        const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
           body: { projectId },
         });
 
-        if (!deployError && deployData?.netlifyUrl) {
-          deployedNetlifyUrl = deployData.netlifyUrl;
-          setNetlifyUrl(deployedNetlifyUrl);
+        if (!deployError && deployData?.vercelUrl) {
+          deployedVercelUrl = deployData.vercelUrl;
+          setVercelUrl(deployedVercelUrl);
         } else {
-          console.warn('Netlify deploy warning:', deployError || deployData?.error);
+          console.warn('Vercel deploy warning:', deployError || deployData?.error);
         }
-      } catch (netlifyErr) {
-        console.warn('Netlify deploy failed, site still published on platform:', netlifyErr);
+      } catch (deployErr) {
+        console.warn('Vercel deploy failed, site still published on platform:', deployErr);
       }
 
       const url = deployedNetlifyUrl;
