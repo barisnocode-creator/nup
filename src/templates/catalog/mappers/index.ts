@@ -65,21 +65,51 @@ register(['AppointmentBooking', 'DentalBooking'], mapAppointmentSection, appoint
 // FAQ
 register(['FAQAccordion'], mapFaqSection, []);
 
-// MenuShowcase — sektöre göre menu item'larını Türkçeleştir + bölüm başlığını ayarla
+// MenuShowcase & RestaurantMenu — gerçek içerik enjeksiyonu
 register(['MenuShowcase', 'RestaurantMenu'], (props, data) => {
   const profile = getSectorProfile(data.sector);
   const overrides: Record<string, any> = {};
-  if (profile?.sectionLabels?.services && props.subtitle !== undefined) {
-    overrides.subtitle = profile.sectionLabels.services;
+
+  // Bölüm başlığı: generatedContent → sectorProfile → fallback
+  const gcTitle = safeGet<string>(data, 'generatedContent.pages.services.hero.title', '');
+  const gcSubtitle = safeGet<string>(data, 'generatedContent.pages.services.hero.subtitle', '');
+  if (gcTitle) overrides.title = gcTitle;
+  else if (profile?.sectionLabels?.services) overrides.title = profile.sectionLabels.services;
+
+  if (gcSubtitle) overrides.subtitle = gcSubtitle;
+  else if (profile?.sectionLabels?.services) overrides.subtitle = profile.sectionLabels.services;
+
+  // Menü öğeleri: generatedContent.pages.services.servicesList → pages.home.highlights → sectorProfile.services
+  const servicesList = safeGet<any[]>(data, 'generatedContent.pages.services.servicesList', []);
+  const highlights = safeGet<any[]>(data, 'generatedContent.pages.home.highlights', []);
+  const profileServices = profile?.services || [];
+  let sources = servicesList.length > 0 ? servicesList : (highlights.length > 0 ? highlights : profileServices.map(s => ({ title: s.name, description: s.description })));
+
+  if (sources.length > 0) {
+    overrides.items = sources.slice(0, 6).map((src: any, i: number) => ({
+      name: src.title || src.name || `Ürün ${i + 1}`,
+      description: src.description || '',
+      price: src.price || '',
+      image: src.image || `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80`,
+      category: src.category || profile?.sectionLabels?.services || '',
+    }));
   }
-  if (profile?.sectionLabels?.services && props.title !== undefined && !props.title) {
-    overrides.title = 'Özel Seçkilerimiz';
-  }
+
   return { ...props, ...overrides };
 }, []);
 
-// StatisticsCounter — sektöre göre stat etiketleri
+// StatisticsCounter — sektöre göre stat etiketleri + generatedContent
 register(['StatisticsCounter'], (props, data) => {
+  // Önce generatedContent statistics bak
+  const gcStats = safeGet<any[]>(data, 'generatedContent.pages.home.statistics', []);
+  if (gcStats && gcStats.length > 0) {
+    return { ...props, stats: gcStats.slice(0, 4).map((s: any) => ({
+      value: s.value || s.number || '',
+      label: s.label || s.title || '',
+      suffix: s.suffix || '',
+    }))};
+  }
+
   const statsByKey: Record<string, Array<{ value: string; label: string; suffix?: string }>> = {
     doctor: [
       { value: '15', label: 'Yıllık Deneyim', suffix: '+' },
@@ -130,7 +160,78 @@ register(['StatisticsCounter'], (props, data) => {
   if (stats && Array.isArray(props.stats)) {
     return { ...props, stats };
   }
+  // sectionTitle fallback
+  if (!props.sectionTitle) {
+    return { ...props, sectionTitle: 'Rakamlarla Biz' };
+  }
   return props;
+}, []);
+
+// DentalTips — sektöre göre sağlık ipuçları
+register(['DentalTips'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const sectorKey = data.sector?.toLowerCase().replace(/[\s-]/g, '_') || '';
+  const overrides: Record<string, any> = {};
+
+  if (!props.title) overrides.title = sectorKey === 'dentist' ? 'Ağız Sağlığı İpuçları' : 'Sağlıklı Yaşam İpuçları';
+  if (!props.subtitle) overrides.subtitle = 'Bilmeniz Gerekenler';
+
+  // Tips: eğer tüm tip başlıkları boşsa (definitions'tan geldi) sektör defaults kullan
+  const allEmpty = Array.isArray(props.tips) && props.tips.every((t: any) => !t.title && !t.content);
+  if (allEmpty) {
+    const defaultTips: Record<string, any[]> = {
+      dentist: [
+        { icon: 'Droplets', title: 'Doğru Fırçalama', content: 'Günde en az 2 kez, 2 dakika boyunca yumuşak kıllı fırçayla 45 derece açıyla fırçalayın.' },
+        { icon: 'Clock', title: 'Düzenli Kontrol', content: 'Altı ayda bir diş hekiminizi ziyaret edin. Erken teşhis tedavi süresini azaltır.' },
+        { icon: 'Apple', title: 'Sağlıklı Beslenme', content: 'Şekerli ve asitli yiyeceklerden kaçının. Kalsiyum zengin besinler diş sağlığını destekler.' },
+        { icon: 'ShieldCheck', title: 'Koruyucu Tedaviler', content: 'Fissür örtücü ve flor uygulamaları ile dişlerinizi çürüklere karşı koruyun.' },
+      ],
+      doctor: [
+        { icon: 'Heart', title: 'Düzenli Egzersiz', content: 'Haftada en az 150 dakika orta yoğunlukta fiziksel aktivite yapın.' },
+        { icon: 'Droplets', title: 'Yeterli Su Tüketimi', content: 'Günde en az 2 litre su içerek vücudunuzu nemli tutun.' },
+        { icon: 'Clock', title: 'Düzenli Check-up', content: 'Yılda bir genel sağlık kontrolü yaptırın. Erken teşhis hayat kurtarır.' },
+        { icon: 'ShieldCheck', title: 'Aşı Takibi', content: 'Aşı takviminizi güncel tutarak sizi ve çevrenizi koruyun.' },
+      ],
+    };
+    const tipList = defaultTips[sectorKey] || defaultTips.doctor;
+    if (tipList) overrides.tips = tipList;
+  }
+
+  return { ...props, ...overrides };
+}, []);
+
+// RoomShowcase & HotelAmenities — sektöre uygun başlıklar
+register(['RoomShowcase'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const overrides: Record<string, any> = {};
+  if (!props.subtitle) overrides.subtitle = profile?.sectionLabels?.services || 'Odalarımız';
+  if (!props.title) overrides.title = 'Konfor ve Zarafet';
+  return { ...props, ...overrides };
+}, []);
+
+register(['HotelAmenities'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const overrides: Record<string, any> = {};
+  if (!props.subtitle) overrides.subtitle = 'Olanaklar';
+  if (!props.title) overrides.title = 'Premium Hizmetler';
+  return { ...props, ...overrides };
+}, []);
+
+// SkillsGrid & ProjectShowcase — sektöre uygun başlıklar
+register(['SkillsGrid'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const overrides: Record<string, any> = {};
+  if (!props.subtitle) overrides.subtitle = 'Yetenekler';
+  if (!props.title) overrides.title = profile?.sectionLabels?.services || 'Teknik Beceriler';
+  return { ...props, ...overrides };
+}, []);
+
+register(['ProjectShowcase'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const overrides: Record<string, any> = {};
+  if (!props.subtitle) overrides.subtitle = profile?.sectionLabels?.gallery || 'Projeler';
+  if (!props.title) overrides.title = 'Son Çalışmalarım';
+  return { ...props, ...overrides };
 }, []);
 
 // ─── Sector-incompatible section definitions ─────────────────────

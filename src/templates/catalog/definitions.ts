@@ -74,17 +74,10 @@ export const specialtyCafe: TemplateDefinition = {
     {
       type: 'MenuShowcase',
       defaultProps: {
-        subtitle: 'Menümüz',
-        title: 'Özel Seçkiler',
-        description: 'En sevilen içecek ve lezzetlerimiz',
-        items: [
-          { name: 'Espresso', description: 'Zengin, dolgun ve yoğun', price: '₺45', image: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&q=80', category: 'Kahve' },
-          { name: 'Cappuccino', description: 'Mükemmel buharlanmış süt ve espresso', price: '₺55', image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80', category: 'Kahve' },
-          { name: 'Matcha Latte', description: 'Tören kalitesinde matcha', price: '₺65', image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400&q=80', category: 'Specialty' },
-          { name: 'Croissant', description: 'Taze pişirilmiş, tereyağlı katmanlar', price: '₺40', image: 'https://images.unsplash.com/photo-1555507036-ab1f4038024a?w=400&q=80', category: 'Pastane' },
-          { name: 'Pour Over', description: 'Tek kökenli, el ile demleme', price: '₺70', image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80', category: 'Kahve' },
-          { name: 'Ekşi Mayalı Tost', description: 'Avokado ve mikro yeşillikler ile', price: '₺75', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80', category: 'Yemek' },
-        ],
+        subtitle: '',
+        title: '',
+        description: '',
+        items: [],
       },
     },
     {
@@ -102,8 +95,8 @@ export const specialtyCafe: TemplateDefinition = {
     {
       type: 'CafeGallery',
       defaultProps: {
-        subtitle: 'Galeri',
-        title: 'Mekanımız',
+        subtitle: '',
+        title: '',
         images: [
           { src: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&q=80', alt: 'İç Mekan' },
           { src: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=600&q=80', alt: 'Kahve' },
@@ -205,22 +198,22 @@ export const dentalClinic: TemplateDefinition = {
     {
       type: 'DentalTips',
       defaultProps: {
-        subtitle: 'Bilmeniz Gerekenler',
-        title: 'Ağız Sağlığı İpuçları',
+        subtitle: '',
+        title: '',
         tips: [
-          { icon: 'Droplets', title: 'Doğru Fırçalama', content: 'Günde en az 2 kez, 2 dakika boyunca yumuşak kıllı fırçayla 45 derece açıyla fırçalayın.' },
-          { icon: 'Clock', title: 'Düzenli Kontrol', content: 'Altı ayda bir diş hekiminizi ziyaret edin. Erken teşhis tedavi süresini azaltır.' },
-          { icon: 'Apple', title: 'Sağlıklı Beslenme', content: 'Şekerli ve asitli yiyeceklerden kaçının. Kalsiyum zengin besinler diş sağlığını destekler.' },
-          { icon: 'ShieldCheck', title: 'Koruyucu Tedaviler', content: 'Fissür örtücü ve flor uygulamaları ile dişlerinizi çürüklere karşı koruyun.' },
+          { icon: 'Droplets', title: '', content: '' },
+          { icon: 'Clock', title: '', content: '' },
+          { icon: 'Apple', title: '', content: '' },
+          { icon: 'ShieldCheck', title: '', content: '' },
         ],
       },
     },
     {
       type: 'DentalBooking',
       defaultProps: {
-        subtitle: 'Hemen Başlayın',
-        title: 'Online Randevu',
-        description: 'Birkaç adımda kolayca randevunuzu oluşturun.',
+        subtitle: '',
+        title: '',
+        description: '',
       },
     },
     {
@@ -299,8 +292,8 @@ export const restaurantElegant: TemplateDefinition = {
     {
       type: 'RestaurantMenu',
       defaultProps: {
-        subtitle: 'Menümüz',
-        title: 'Lezzetli Seçimler',
+        subtitle: '',
+        title: '',
       },
     },
     {
@@ -315,8 +308,8 @@ export const restaurantElegant: TemplateDefinition = {
     {
       type: 'CafeGallery',
       defaultProps: {
-        subtitle: 'Galeri',
-        title: 'Atmosferimiz',
+        subtitle: '',
+        title: '',
         images: [
           { src: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80', alt: 'Restoran iç mekan' },
           { src: 'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&q=80', alt: 'Yemek sunumu' },
@@ -395,22 +388,22 @@ export const hotelLuxury: TemplateDefinition = {
     {
       type: 'RoomShowcase',
       defaultProps: {
-        subtitle: 'Odalarımız',
-        title: 'Konfor ve Zarafet',
+        subtitle: '',
+        title: '',
       },
     },
     {
       type: 'HotelAmenities',
       defaultProps: {
-        subtitle: 'Olanaklar',
-        title: 'Premium Hizmetler',
+        subtitle: '',
+        title: '',
       },
     },
     {
       type: 'ImageGallery',
       defaultProps: {
-        sectionTitle: 'Galeri',
-        sectionSubtitle: 'Otelimizden Kareler',
+        sectionTitle: '',
+        sectionSubtitle: '',
         images: [
           { src: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&q=80', alt: 'Lobi' },
           { src: 'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&q=80', alt: 'Havuz' },
@@ -422,12 +415,12 @@ export const hotelLuxury: TemplateDefinition = {
     {
       type: 'StatisticsCounter',
       defaultProps: {
-        sectionTitle: 'Rakamlarla Biz',
+        sectionTitle: '',
         stats: [
-          { value: '25+', label: 'Yıllık Deneyim' },
-          { value: '150K+', label: 'Mutlu Misafir' },
-          { value: '200+', label: 'Oda Kapasitesi' },
-          { value: '4.8', label: 'Puan Ortalaması' },
+          { value: '', label: '' },
+          { value: '', label: '' },
+          { value: '', label: '' },
+          { value: '', label: '' },
         ],
       },
     },
@@ -446,11 +439,11 @@ export const hotelLuxury: TemplateDefinition = {
     {
       type: 'FAQAccordion',
       defaultProps: {
-        sectionTitle: 'Sıkça Sorulan Sorular',
+        sectionTitle: '',
         items: [
-          { question: 'Check-in ve check-out saatleri nedir?', answer: 'Check-in saat 14:00, check-out saat 12:00\'dir. Erken giriş ve geç çıkış talepleri müsaitliğe göre değerlendirilir.' },
-          { question: 'Ücretsiz iptal politikası var mı?', answer: 'Giriş tarihinden 48 saat öncesine kadar ücretsiz iptal yapabilirsiniz.' },
-          { question: 'Evcil hayvan kabul ediyor musunuz?', answer: 'Evet, belirli odalarda evcil hayvan kabul ediyoruz. Ek ücret uygulanabilir.' },
+          { question: '', answer: '' },
+          { question: '', answer: '' },
+          { question: '', answer: '' },
         ],
       },
     },
@@ -502,26 +495,26 @@ export const engineerPortfolio: TemplateDefinition = {
     {
       type: 'SkillsGrid',
       defaultProps: {
-        subtitle: 'Yetenekler',
-        title: 'Teknik Beceriler',
+        subtitle: '',
+        title: '',
       },
     },
     {
       type: 'ProjectShowcase',
       defaultProps: {
-        subtitle: 'Projeler',
-        title: 'Son Çalışmalarım',
+        subtitle: '',
+        title: '',
       },
     },
     {
       type: 'StatisticsCounter',
       defaultProps: {
-        sectionTitle: 'Rakamlarla',
+        sectionTitle: '',
         stats: [
-          { value: '50+', label: 'Tamamlanan Proje' },
-          { value: '30+', label: 'Mutlu Müşteri' },
-          { value: '8+', label: 'Yıl Deneyim' },
-          { value: '15+', label: 'Açık Kaynak Katkı' },
+          { value: '', label: '' },
+          { value: '', label: '' },
+          { value: '', label: '' },
+          { value: '', label: '' },
         ],
       },
     },
@@ -656,12 +649,12 @@ export const medcarePro: TemplateDefinition = {
     {
       type: 'FAQAccordion',
       defaultProps: {
-        sectionTitle: 'Sıkça Sorulan Sorular',
+        sectionTitle: '',
         items: [
-          { question: 'İlk muayene ücretsiz mi?', answer: 'Evet, yeni hastalarımız için ilk muayene ücretsizdir. Randevu almak için bize ulaşabilirsiniz.' },
-          { question: 'Randevu nasıl alabilirim?', answer: 'Web sitemiz üzerinden online randevu alabilir, telefon veya WhatsApp ile iletişime geçebilirsiniz.' },
-          { question: 'Sigortam geçerli mi?', answer: 'SGK ve özel sağlık sigortalarının büyük bölümüyle anlaşmalıyız. Detaylar için kliniğimizi arayın.' },
-          { question: 'Acil durumda ne yapmalıyım?', answer: '7/24 acil hattımız üzerinden bize ulaşabilir ya da en yakın acil servise başvurabilirsiniz.' },
+          { question: '', answer: '' },
+          { question: '', answer: '' },
+          { question: '', answer: '' },
+          { question: '', answer: '' },
         ],
       },
     },

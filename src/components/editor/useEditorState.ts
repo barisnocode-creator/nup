@@ -219,11 +219,18 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
 
     const newSections: SiteSection[] = mappedSections.map((secDef, i) => {
       const mergedProps = { ...secDef.defaultProps };
-      // If old site had same section type, carry over text content
+      // If old site had same section type, carry over ALL non-empty string/number props
       if (oldProps[secDef.type]) {
         const old = oldProps[secDef.type];
-        for (const key of ['title', 'subtitle', 'description', 'sectionTitle', 'sectionSubtitle', 'sectionDescription', 'phone', 'email', 'address', 'siteName']) {
-          if (old[key]) mergedProps[key] = old[key];
+        for (const key of Object.keys(old)) {
+          if (key.startsWith('_')) continue; // skip internals
+          const val = old[key];
+          // Carry over strings (non-empty) and numbers — skip arrays/objects (those come from mapper)
+          if (typeof val === 'string' && val.trim() !== '') {
+            mergedProps[key] = val;
+          } else if (typeof val === 'number') {
+            mergedProps[key] = val;
+          }
         }
       }
       // Inject images and contact info from generated content
