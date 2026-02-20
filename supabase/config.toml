@@ -37,8 +37,7 @@ verify_jwt = false
 verify_jwt = false
 
 
-[functions.deploy-to-netlify]
-verify_jwt = false
+
 
 [functions.book-appointment]
 verify_jwt = false

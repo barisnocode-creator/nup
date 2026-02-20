@@ -1161,6 +1161,13 @@ ${trackingScript}
 async function vercelDeploy(projectName: string, htmlContent: string, token: string): Promise<string> {
   console.log(`[Vercel] Deploying: ${projectName}`);
 
+  const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID");
+  const deployEndpoint = VERCEL_TEAM_ID
+    ? `https://api.vercel.com/v13/deployments?teamId=${VERCEL_TEAM_ID}`
+    : "https://api.vercel.com/v13/deployments";
+
+  console.log(`[Vercel] Using endpoint: ${deployEndpoint}`);
+
   // Encode HTML as base64
   const encoder = new TextEncoder();
   const bytes = encoder.encode(htmlContent);
@@ -1171,7 +1178,7 @@ async function vercelDeploy(projectName: string, htmlContent: string, token: str
   }
   const base64 = btoa(binary);
 
-  const res = await fetch("https://api.vercel.com/v13/deployments", {
+  const res = await fetch(deployEndpoint, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -1279,17 +1286,18 @@ Deno.serve(async (req) => {
 
     if (verifiedDomain?.domain && !vercelCustomDomain) {
       try {
-        const domainRes = await fetch(
-          `https://api.vercel.com/v9/projects/${encodeURIComponent(vercelProjectName)}/domains`,
-          {
+        const VERCEL_TEAM_ID_DOMAIN = Deno.env.get("VERCEL_TEAM_ID");
+        const domainEndpoint = VERCEL_TEAM_ID_DOMAIN
+          ? `https://api.vercel.com/v9/projects/${encodeURIComponent(vercelProjectName)}/domains?teamId=${VERCEL_TEAM_ID_DOMAIN}`
+          : `https://api.vercel.com/v9/projects/${encodeURIComponent(vercelProjectName)}/domains`;
+        const domainRes = await fetch(domainEndpoint, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${VERCEL_API_TOKEN}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ name: verifiedDomain.domain }),
-          }
-        );
+          });
         if (domainRes.ok) {
           vercelCustomDomain = verifiedDomain.domain;
         } else {

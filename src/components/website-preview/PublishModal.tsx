@@ -131,8 +131,8 @@ export function PublishModal({
           if (data) {
             const url = data.vercel_custom_domain 
               ? `https://${data.vercel_custom_domain}`
-              : data.vercel_url || `${window.location.origin}/site/${currentSubdomain}`;
-            setPublishedUrl(url);
+              : data.vercel_url || null;
+            if (url) setPublishedUrl(url);
             if (data.vercel_url) setVercelUrl(data.vercel_url);
           }
         });
@@ -240,12 +240,20 @@ export function PublishModal({
           setVercelUrl(deployedVercelUrl);
         } else {
           console.warn('Vercel deploy warning:', deployError || deployData?.error);
+          throw new Error(deployError?.message || deployData?.error || 'Vercel deploy başarısız oldu.');
         }
-      } catch (deployErr) {
-        console.warn('Vercel deploy failed, site still published on platform:', deployErr);
+      } catch (deployErr: any) {
+        console.error('Vercel deploy failed:', deployErr);
+        toast({
+          title: 'Deploy Hatası',
+          description: deployErr.message || 'Vercel deploy başarısız. Lütfen tekrar deneyin.',
+          variant: 'destructive',
+        });
+        setIsPublishing(false);
+        return;
       }
 
-      const url = deployedVercelUrl || `${window.location.origin}/site/${subdomain}`;
+      const url = deployedVercelUrl;
       setPublishedUrl(url);
       setShowSuccess(true);
       
