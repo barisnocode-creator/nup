@@ -1,71 +1,69 @@
 
-## Yapılacaklar
+## Hedef
 
-### Sorun 1: SectionEditPanel'de Görsel URL'si Görünüyor
-`SectionEditPanel.tsx` içindeki `ContentFields` fonksiyonunda, görsel alanları (`image`, `backgroundImage`) için şu an hem thumbnail + hem de URL input kutusu gösteriliyor. Kullanıcı URL'yi görüyor — bu gereksiz ve çirkin.
+`SectionEditPanel` şu an sağ kenara yapışık, tam ekran yüksekliğinde bir panel olarak açılıyor. Kullanıcı bunu, `CustomizePanel` gibi küçük, yüzen, rounded bir kart yapısına dönüştürmek istiyor.
 
-**Çözüm:** Görsel alanlarında URL input'unu kaldır. Yerine:
-- Geniş, tıklanabilir görsel kartı (thumbnail)
-- Üzerinde hover ile beliren "Görseli Değiştir" overlay butonu
-- Görsel yoksa büyük noktalı çerçeve + "Görsel Ekle" alanı
-- Pixabay butonu ayrı değil, görselin üstündeki overlay'den tetikleniyor
+## Mevcut vs Yeni Konum
 
+Mevcut (SectionEditPanel):
 ```
-Mevcut:
-┌──────────────────────────────────┐
-│  [küçük thumbnail]               │
-│  [https://pixabay.com/...  ] [🖼] │  ← URL kutusu görünüyor
-└──────────────────────────────────┘
-
-Yeni:
-┌──────────────────────────────────┐
-│                                  │
-│    [Geniş Görsel Thumbnail]      │  ← Tıkla = Pixabay açılır
-│    hover → "Görseli Değiştir"    │
-│                                  │
-└──────────────────────────────────┘
+fixed top-14 right-0 bottom-0 w-[360px]
+→ Sağ kenara yapışık, full-height sidebar
 ```
 
-### Sorun 2: SectionEditPanel Genel UI — Modernleştirme
+Yeni (CustomizePanel tarzı):
+```
+fixed top-16 right-3 w-[310px] max-h-[calc(100vh-80px)]
+→ Sağ üste yüzen küçük kart, scroll edilebilir, rounded-xl
+```
 
-Mevcut panel görünümü çok "form-like" ve düz. Kullanıcı screenshot'ında Özelleştir panelinin modern accordion/kart yapısını beğenmiş.
+## Görsel Karşılaştırma
 
-**SectionEditPanel İçerik Sekmesi İyileştirmeleri:**
-- Alan grupları arasında hafif separator/divider
-- Label'lar daha kompakt: `text-[11px]` + `font-medium` + `text-gray-400`
-- Input'lar: daha düz, `h-8` yükseklik, soft border
-- Görsel alanları: büyük tıklanabilir kart (yukarıda açıklandı)
-- "Tamam" butonu: şu an mavi — marka rengine (orange-500) çevir
+```text
+Mevcut:                          Yeni:
+┌──────────────┐                     ╭──────────────╮
+│ Hero (Ortala)│                     │Hero (Ortala) │
+│──────────────│                     │──────────────│
+│ İçerik │ Stil│                     │ İçerik │ Stil│
+│              │                     │              │
+│  [alanlar]   │                     │  [alanlar]   │
+│              │          →          │  (scroll)    │
+│              │                     │              │
+│              │                     ╰──────────────╯
+│              │
+│  [Tamam]     │
+└──────────────┘
+```
 
-**SectionEditPanel Stil Sekmesi İyileştirmeleri:**
-- Mevcut stil kontrolleri (başlık boyutu, hizalama, renk) aynı kalır
-- Görsel düzeni: 2 kolonlu grid (boyut + hizalama yan yana)
-- Renk seçiciler daha kompakt
+## Teknik Değişiklik
 
-### Değiştirilecek Dosya
+Sadece `SectionEditPanel.tsx` içindeki `motion.div` className güncellenir:
 
-**`src/components/editor/SectionEditPanel.tsx`** — sadece şu kısımlar:
+**Eski (satır 50):**
+```
+"fixed top-14 right-0 bottom-0 w-[360px] bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-700 shadow-lg z-40 flex flex-col overflow-hidden"
+```
 
-1. **`ContentFields` fonksiyonu içinde görsel alanı render (satır 257-285)**:
-   - `isImage` koşulunda: URL Input kaldırılır
-   - Yerine: `aspect-video` tıklanabilir kart, hover overlay, Pixabay tetikleyici
+**Yeni:**
+```
+"fixed top-16 right-3 w-[310px] max-h-[calc(100vh-80px)] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-lg z-[60] overflow-hidden flex flex-col"
+```
 
-2. **"Tamam" butonu (satır 77)**:
-   - `bg-blue-600 hover:bg-blue-700` → `bg-orange-500 hover:bg-orange-600`
+Değişen noktalar:
+- `right-0 bottom-0` → `right-3` (kenarda yüzer, alta uzamaz)
+- `w-[360px]` → `w-[310px]` (biraz daha kompakt)
+- `border-l` → `border` (her yanda border, kart gibi)
+- `top-14` → `top-16` (CustomizePanel ile aynı hizalama)
+- `rounded-xl` eklendi (yuvarlatılmış köşeler)
+- `max-h-[calc(100vh-80px)]` eklendi (ekrandan taşmaz)
+- `z-40` → `z-[60]` (CustomizePanel ile aynı z-index seviyesi)
 
-3. **Label stilleri (satır 259)**:
-   - Hafif güncelleme: daha hafif renk ve boyut
+Ayrıca animasyon da güncellenir — mevcut `x: 20` (soldan kayma) yerine `CustomizePanel` ile aynı: `y: -4, scale: 0.97` (hafif yukarıdan drop-in efekti).
 
-### Değiştirilecek Dosyalar
+## Değiştirilecek Dosya
 
-| # | Dosya | İşlem |
-|---|---|---|
-| 1 | `src/components/editor/SectionEditPanel.tsx` | Görsel alanı UI yenile, URL input kaldır, Tamam butonu marka rengi |
+| Dosya | İşlem |
+|---|---|
+| `src/components/editor/SectionEditPanel.tsx` | Sadece `motion.div` wrapper className ve animasyon güncellenir (satır 47-51) |
 
-### Sonuç
-
-Kullanıcı editörde bir hero bölümünü tıkladığında:
-- Görsel alanında sadece büyük thumbnail görecek
-- URL kirliği olmayacak
-- Tıklayınca Pixabay açılacak
-- Panel genel görünümü daha modern, marka rengiyle uyumlu olacak
+Başka hiçbir şey değişmez — içerik, sekmeler, alanlar, Tamam butonu hepsi aynı kalır.
