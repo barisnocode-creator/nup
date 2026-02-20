@@ -578,9 +578,6 @@ export type Database = {
           id: string
           is_published: boolean | null
           name: string
-          netlify_custom_domain: string | null
-          netlify_site_id: string | null
-          netlify_url: string | null
           profession: string
           published_at: string | null
           site_sections: Json | null
@@ -590,6 +587,9 @@ export type Database = {
           template_id: string | null
           updated_at: string
           user_id: string
+          vercel_custom_domain: string | null
+          vercel_project_id: string | null
+          vercel_url: string | null
         }
         Insert: {
           chai_blocks?: Json | null
@@ -602,9 +602,6 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name?: string
-          netlify_custom_domain?: string | null
-          netlify_site_id?: string | null
-          netlify_url?: string | null
           profession: string
           published_at?: string | null
           site_sections?: Json | null
@@ -614,6 +611,9 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           user_id: string
+          vercel_custom_domain?: string | null
+          vercel_project_id?: string | null
+          vercel_url?: string | null
         }
         Update: {
           chai_blocks?: Json | null
@@ -626,9 +626,6 @@ export type Database = {
           id?: string
           is_published?: boolean | null
           name?: string
-          netlify_custom_domain?: string | null
-          netlify_site_id?: string | null
-          netlify_url?: string | null
           profession?: string
           published_at?: string | null
           site_sections?: Json | null
@@ -638,6 +635,9 @@ export type Database = {
           template_id?: string | null
           updated_at?: string
           user_id?: string
+          vercel_custom_domain?: string | null
+          vercel_project_id?: string | null
+          vercel_url?: string | null
         }
         Relationships: []
       }

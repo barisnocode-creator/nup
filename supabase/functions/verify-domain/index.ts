@@ -22,91 +22,39 @@ async function queryDnsTxt(hostname: string): Promise<string[]> {
   }
 }
 
-// ---------- Netlify helpers ----------
+// ---------- Vercel helpers ----------
 
-function getNetlifyToken(): string | null {
-  return Deno.env.get('NETLIFY_API_TOKEN') ?? null;
+function getVercelToken(): string | null {
+  return Deno.env.get('VERCEL_API_TOKEN') ?? null;
 }
 
-async function netlifyGet(path: string, token: string) {
-  const res = await fetch(`https://api.netlify.com/api/v1${path}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return { ok: res.ok, status: res.status, data: await res.json() };
-}
+/** Register domain on Vercel project. SSL is automatic on Vercel. */
+async function registerVercelDomain(vercelProjectId: string, domain: string, token: string) {
+  console.log(`[Vercel] Adding domain ${domain} to project ${vercelProjectId}`);
 
-async function netlifyPost(path: string, token: string, body: Record<string, unknown>) {
-  const res = await fetch(`https://api.netlify.com/api/v1${path}`, {
+  const res = await fetch(`https://api.vercel.com/v9/projects/${vercelProjectId}/domains`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name: domain }),
   });
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { data = text; }
-  return { ok: res.ok, status: res.status, data };
-}
 
-/** Register domain on Netlify via domain_aliases if not already present. */
-async function registerNetlifyDomain(siteId: string, domain: string, token: string) {
-  console.log(`[Netlify] Checking existing domain aliases for site ${siteId}`);
+  const data = await res.json();
 
-  // Check if domain already exists
-  const list = await netlifyGet(`/sites/${siteId}/domain_aliases`, token);
-  if (list.ok && Array.isArray(list.data)) {
-    const existing = list.data.find((d: any) => d.hostname === domain);
-    if (existing) {
-      console.log(`[Netlify] Domain ${domain} already registered (id: ${existing.id})`);
-      return { success: true, alreadyExists: true, domainId: existing.id };
+  if (!res.ok) {
+    // domain_already_exists means it's already registered — treat as success
+    if (data.error?.code === 'domain_already_exists' || data.error?.code === 'domain_conflict') {
+      console.log(`[Vercel] Domain ${domain} already registered`);
+      return { success: true, alreadyExists: true };
     }
+    console.error(`[Vercel] Failed to add domain:`, data);
+    return { success: false, error: JSON.stringify(data) };
   }
 
-  // Also set custom_domain on site (required for apex domains)
-  console.log(`[Netlify] Setting custom_domain on site ${siteId}`);
-  const siteRes = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ custom_domain: domain }),
-  });
-  if (!siteRes.ok) {
-    const errText = await siteRes.text();
-    console.error(`[Netlify] Failed to set custom_domain:`, errText);
-  }
-
-  // Add via domain_aliases
-  console.log(`[Netlify] Adding domain alias: ${domain}`);
-  const add = await netlifyPost(`/sites/${siteId}/domain_aliases`, token, { hostname: domain });
-  if (!add.ok) {
-    // 422 usually means already exists
-    if (add.status === 422) {
-      console.log(`[Netlify] Domain alias already exists (422)`);
-      return { success: true, alreadyExists: true, domainId: null };
-    }
-    console.error(`[Netlify] Failed to add domain alias:`, add.data);
-    return { success: false, error: typeof add.data === 'string' ? add.data : JSON.stringify(add.data) };
-  }
-
-  console.log(`[Netlify] Domain alias added successfully`);
-  return { success: true, alreadyExists: false, domainId: add.data?.id ?? null };
-}
-
-/** Poll SSL certificate status with exponential backoff (5s, 15s, 60s). */
-async function pollSslStatus(siteId: string, token: string): Promise<{ issued: boolean; state: string }> {
-  const delays = [5000, 15000, 60000];
-  for (const delay of delays) {
-    console.log(`[SSL] Waiting ${delay / 1000}s before checking...`);
-    await new Promise(r => setTimeout(r, delay));
-
-    const ssl = await netlifyGet(`/sites/${siteId}/ssl`, token);
-    if (ssl.ok && ssl.data) {
-      const state = ssl.data.state ?? 'unknown';
-      console.log(`[SSL] State: ${state}`);
-      if (state === 'issued' || state === 'renewed') {
-        return { issued: true, state };
-      }
-    }
-  }
-  return { issued: false, state: 'pending' };
+  console.log(`[Vercel] Domain registered successfully`);
+  return { success: true, alreadyExists: false };
 }
 
 // ---------- Main handler ----------
