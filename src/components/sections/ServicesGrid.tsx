@@ -47,7 +47,7 @@ export function ServicesGrid({ section }: SectionComponentProps) {
               style={{ transitionDelay: `${index * 150}ms` }}
             >
               {service.image ? (
-                <div className="w-full aspect-[4/5] rounded-xl overflow-hidden mb-6 relative">
+                <div className="w-full aspect-[3/2] rounded-xl overflow-hidden mb-6 relative">
                   <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
