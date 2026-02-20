@@ -92,7 +92,7 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
 }
 
 // ---- Array item field config ----
-// FAZ 2: Genişletilmiş schema — stats, plans, features eklendi
+// FAZ 2: Genişletilmiş schema — stats, plans, features, members eklendi
 const arrayFieldSchemas: Record<string, { fields: { key: string; label: string; type?: 'textarea' }[] }> = {
   services: { fields: [
     { key: 'title', label: 'Başlık' },
@@ -149,6 +149,12 @@ const arrayFieldSchemas: Record<string, { fields: { key: string; label: string; 
     { key: 'price', label: 'Fiyat' },
     { key: 'image', label: 'Görsel URL' },
   ]},
+  members: { fields: [
+    { key: 'name', label: 'Ad Soyad' },
+    { key: 'role', label: 'Ünvan / Rol' },
+    { key: 'bio', label: 'Kısa Biyografi', type: 'textarea' },
+    { key: 'image', label: 'Fotoğraf' },
+  ]},
 };
 
 // FAZ 2: Genişletilmiş Türkçe etiket haritası
@@ -187,6 +193,95 @@ const labelMap: Record<string, string> = {
   infoItems: 'Bilgi Etiketleri (virgülle ayır)',
   videoUrl: 'YouTube Linki',
 };
+
+// ---- Placeholder map ----
+const placeholderMap: Record<string, string> = {
+  title: 'Örn: Hizmetlerimiz',
+  subtitle: 'Örn: Size en iyi hizmeti sunuyoruz',
+  description: 'Bölüm açıklamasını buraya yazın...',
+  sectionTitle: 'Örn: Hakkımızda',
+  sectionSubtitle: 'Örn: Bizi daha yakından tanıyın',
+  sectionDescription: 'Bölüm açıklamasını buraya yazın...',
+  phone: 'Örn: +90 555 123 4567',
+  email: 'Örn: info@siteniz.com',
+  address: 'Örn: Bağcılar Mah. İstanbul',
+  buttonText: 'Örn: Daha Fazla Bilgi',
+  primaryButtonText: 'Örn: Hemen Başlayın',
+  secondaryButtonText: 'Örn: Daha Fazla',
+  siteName: 'Sitenizin adı',
+  tagline: 'Örn: Kalite ve güven bir arada',
+  badge: 'Örn: Yeni',
+  hours: 'Örn: Pzt–Cum 09:00–18:00',
+  name: 'Örn: Ahmet Yılmaz',
+  role: 'Örn: Genel Müdür',
+  bio: 'Kısa biyografi yazısı...',
+  content: 'Buraya yazınızı girin...',
+  videoUrl: 'https://youtube.com/watch?v=...',
+  submitButtonText: 'Örn: Gönder',
+  successMessage: 'Örn: Mesajınız iletildi!',
+  primaryButtonLink: '/hizmetler',
+  secondaryButtonLink: '/iletisim',
+  buttonLink: '/hakkimizda',
+};
+
+// ---- Galeri bölümü için özel içerik editörü ----
+function GalleryFields({ section, onUpdateProps, onOpenImagePicker }: {
+  section: SiteSection;
+  onUpdateProps: (props: Record<string, any>) => void;
+  onOpenImagePicker: (field: string) => void;
+}) {
+  const props = section.props || {};
+  const imageKeys = [1, 2, 3, 4, 5, 6].map(n => `image${n}`);
+
+  return (
+    <div className="space-y-3">
+      {/* Section title/subtitle fields */}
+      {['title', 'subtitle'].map(k => props[k] !== undefined && (
+        <div key={k} className="space-y-1.5">
+          <label className="text-[11px] font-medium text-gray-400 dark:text-gray-500">{labelMap[k] || k}</label>
+          <Input
+            value={String(props[k] || '')}
+            onChange={e => onUpdateProps({ [k]: e.target.value })}
+            placeholder={placeholderMap[k]}
+            className="h-8 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white"
+          />
+        </div>
+      ))}
+
+      <div className="border-t border-gray-100 dark:border-zinc-800 pt-3">
+        <div className="flex items-center gap-2 mb-2">
+          <ImageIcon className="w-3.5 h-3.5 text-orange-500" />
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Galeri Görselleri</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {imageKeys.map(key => (
+            <button
+              key={key}
+              onClick={() => onOpenImagePicker(key)}
+              className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-orange-400 transition-all group focus:outline-none"
+            >
+              {props[key] ? (
+                <>
+                  <img src={props[key]} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/90 text-gray-900 text-[10px] font-medium shadow">
+                      <ImageIcon className="w-3 h-3" /> Değiştir
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-1 h-full text-gray-400">
+                  <ImageIcon className="w-4 h-4 opacity-50" />
+                  <span className="text-[9px] font-medium">Ekle</span>
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ---- Blog bölümü için özel içerik editörü ----
 function BlogFields({ section, onUpdateProps, onOpenImagePicker }: {
@@ -324,21 +419,25 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
     return <BlogFields section={section} onUpdateProps={onUpdateProps} onOpenImagePicker={onOpenImagePicker} />;
   }
 
+  // Galeri bölümleri için özel editör
+  if (['ImageGallery', 'CafeGallery', 'image-gallery'].includes(section.type)) {
+    return <GalleryFields section={section} onUpdateProps={onUpdateProps} onOpenImagePicker={onOpenImagePicker} />;
+  }
+
   const textareaFields = ['description', 'sectiondescription', 'content', 'bio', 'features'];
 
-  // FAZ 2a: Genişletilmiş array key listesi
-  const arrayKeys = ['services', 'testimonials', 'items', 'features', 'stats', 'plans', 'tips', 'projects', 'rooms'];
+  // FAZ 2a: Genişletilmiş array key listesi — members eklendi
+  const arrayKeys = ['services', 'testimonials', 'items', 'features', 'stats', 'plans', 'tips', 'projects', 'rooms', 'members'];
   // Sadece gerçek nesne/görsel dizileri ve dahili alanları atla
   const skipFields = ['images', 'theme', 'style', '_sector'];
 
   // Regular (non-array) fields — boş string olan alanları da göster
   const entries = Object.entries(props).filter(([key, val]) => {
     if (skipFields.includes(key)) return false;
-    if (key.startsWith('post') && (key.endsWith('Title') || key.endsWith('Excerpt') || key.endsWith('Image') || key.endsWith('Date') || key.endsWith('Slug') || key.endsWith('Category') || key.endsWith('Content') || key.endsWith('Keywords'))) return false; // blog alanlarını atla
+    if (key.startsWith('post') && (key.endsWith('Title') || key.endsWith('Excerpt') || key.endsWith('Image') || key.endsWith('Date') || key.endsWith('Slug') || key.endsWith('Category') || key.endsWith('Content') || key.endsWith('Keywords'))) return false;
     if (arrayKeys.includes(key) && Array.isArray(val)) return false;
     if (Array.isArray(val)) return false;
     if (typeof val === 'object' && val !== null) return false;
-    // Boolean alanları da göster
     return true;
   });
 
@@ -356,6 +455,7 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
         const isImage = key === 'image' || key === 'backgroundImage';
         const isVideo = key === 'videoUrl';
         const isBool = typeof value === 'boolean';
+        const placeholder = placeholderMap[key] || '';
 
         if (key === 'imagePosition') {
           return (
@@ -391,6 +491,7 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
             <label className="text-[11px] font-medium text-gray-400 dark:text-gray-500">{label}</label>
             {isTextarea ? (
               <Textarea value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
+                placeholder={placeholder || 'Buraya yazın...'}
                 className="text-sm min-h-[80px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
             ) : isImage ? (
               <button
@@ -433,8 +534,12 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
                 )}
               </div>
             ) : (
-              <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
-                className="h-8 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
+              <Input
+                value={String(value || '')}
+                onChange={(e) => onUpdateProps({ [key]: e.target.value })}
+                placeholder={placeholder}
+                className="h-8 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white"
+              />
             )}
           </div>
         );
@@ -459,10 +564,17 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
       ))}
 
       {entries.length === 0 && arrayEntries.length === 0 && !hasInfoItems && (
-        <p className="text-sm text-gray-500 text-center py-4">Bu bölüm için düzenlenebilir alan bulunmuyor.</p>
+        <div className="text-center py-6 space-y-2">
+          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto">
+            <ImageIcon className="w-4 h-4 text-gray-400" />
+          </div>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Düzenlenecek alan bulunamadı</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Bu bölümün içeriği otomatik oluşturulmuştur.<br/>Stil sekmesinden görünümü ayarlayabilirsiniz.</p>
+        </div>
       )}
     </>
   );
+
 }
 
 function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]; onUpdate: (items: any[]) => void }) {
@@ -472,7 +584,7 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
   const arrayLabel: Record<string, string> = {
     services: 'Hizmetler', testimonials: 'Müşteri Yorumları', items: 'Öğeler',
     features: 'Özellikler', stats: 'İstatistikler', plans: 'Planlar',
-    tips: 'İpuçları', projects: 'Projeler', rooms: 'Odalar',
+    tips: 'İpuçları', projects: 'Projeler', rooms: 'Odalar', members: 'Ekip Üyeleri',
   };
 
   const addItem = () => {
