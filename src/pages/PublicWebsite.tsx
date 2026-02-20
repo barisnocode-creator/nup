@@ -56,6 +56,21 @@ export default function PublicWebsite() {
       if (projectData.generated_content?.metadata?.siteName) {
         document.title = `${projectData.generated_content.metadata.siteName} | Open Lucius`;
       }
+
+      // Inject sitemap link tag
+      if (projectData.subdomain) {
+        const existingLink = document.querySelector('link[rel="sitemap"]');
+        if (!existingLink) {
+          const link = document.createElement('link');
+          link.rel = 'sitemap';
+          link.type = 'application/xml';
+          link.title = 'Sitemap';
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || '';
+          link.href = `${supabaseUrl}/functions/v1/sitemap?subdomain=${projectData.subdomain}`;
+          document.head.appendChild(link);
+        }
+      }
     }
     fetchProject();
   }, [subdomain]);

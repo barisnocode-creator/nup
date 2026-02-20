@@ -17,6 +17,7 @@ import { PetRegistrationSection } from './addable/PetRegistrationSection';
 import { CallUsSection } from './addable/CallUsSection';
 import { SocialProofSection } from './addable/SocialProofSection';
 import { VideoSection } from './addable/VideoSection';
+import { BlogSection } from './addable/BlogSection';
 import { TeamGridSection } from './addable/TeamGridSection';
 import { PromotionBannerSection } from './addable/PromotionBannerSection';
 import { HeroOverlay } from './HeroOverlay';
@@ -133,6 +134,7 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'AddableTeamGrid': TeamGridSection,
   'AddablePromotionBanner': PromotionBannerSection,
   'AddableVideo': VideoSection,
+  'AddableBlog': BlogSection,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
