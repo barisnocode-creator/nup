@@ -19,7 +19,7 @@ export function HeroHotel({ section, isEditing, onUpdate }: SectionComponentProp
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
+    <section className="relative min-h-[calc(100vh-7rem)] flex items-center overflow-hidden">
       {/* Parallax background */}
       {/* Edit image button */}
       {isEditing && (

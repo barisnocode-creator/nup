@@ -16,7 +16,7 @@ export function HeroCentered({ section, isEditing, onUpdate }: SectionComponentP
 
   return (
     <section
-      className="relative min-h-[700px] flex items-center justify-center overflow-hidden group"
+      className="relative min-h-[calc(100vh-7rem)] flex items-center justify-center overflow-hidden group"
     >
       {/* Background image or gradient */}
       {image ? (

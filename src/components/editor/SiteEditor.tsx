@@ -159,6 +159,7 @@ export function SiteEditor({
           sector={projectData?.sector}
           addableSections={editor.addableSections}
           onToggleAddableSection={editor.toggleAddableSection}
+          projectName={projectName}
         />
 
         <AnimatePresence>
