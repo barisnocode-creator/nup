@@ -33,6 +33,7 @@ const universalToggles: AddableToggle[] = [
   { key: 'socialProof', label: '⭐ Sosyal Kanıt / Memnuniyet' },
   { key: 'teamGrid', label: '👥 Ekibimiz' },
   { key: 'promotionBanner', label: '🎉 Kampanya & Duyuru' },
+  { key: 'blog', label: '📝 Blog Köşesi' },
 ];
 
 const sectorToggles: AddableToggle[] = [

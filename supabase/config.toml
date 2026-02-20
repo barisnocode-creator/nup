@@ -57,3 +57,6 @@ verify_jwt = false
 
 [functions.auto-configure-dns]
 verify_jwt = false
+
+[functions.sitemap]
+verify_jwt = false
