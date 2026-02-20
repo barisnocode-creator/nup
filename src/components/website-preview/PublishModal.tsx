@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings, ChevronDown } from 'lucide-react';
+import { Globe, Check, X, Loader2, Copy, ExternalLink, Settings, ChevronDown, RefreshCw } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { DomainSettingsModal } from './DomainSettingsModal';
 import { DomainSuggestionCard, generateDomainSuggestions } from './DomainSuggestionCard';
@@ -128,13 +128,14 @@ export function PublishModal({
       }
       
       if (isPublished && currentSubdomain) {
-        setShowSuccess(true);
+        // For published sites: fetch URL but do NOT show success screen
         fetchProjectData().then((data) => {
           if (data) {
             const url = data.netlify_custom_domain 
               ? `https://${data.netlify_custom_domain}`
               : data.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
             setPublishedUrl(url);
+            if (data.netlify_url) setNetlifyUrl(data.netlify_url);
           }
         });
       } else {
@@ -269,6 +270,29 @@ export function PublishModal({
     }
   };
 
+  const handleUpdate = async () => {
+    setIsPublishing(true);
+    try {
+      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+        body: { projectId },
+      });
+
+      if (!deployError && deployData?.netlifyUrl) {
+        toast({
+          title: '✅ Site güncellendi!',
+          description: 'Değişiklikler canlıya alındı.',
+        });
+        onClose();
+      } else {
+        throw new Error(deployError?.message || 'Deploy başarısız.');
+      }
+    } catch (err: any) {
+      toast({ title: 'Hata', description: err.message || 'Güncelleme başarısız.', variant: 'destructive' });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(publishedUrl);
     toast({
@@ -312,6 +336,95 @@ export function PublishModal({
         return '';
     }
   };
+
+  // Update view for already-published sites
+  if (isPublished && currentSubdomain && !showSuccess) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleClose}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md bg-white text-gray-900 [&>button]:text-gray-500">
+          <DialogHeader className="text-center space-y-3 sm:space-y-4">
+            <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+              <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+            </div>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
+              Değişiklikleri Yayınla
+            </DialogTitle>
+            <DialogDescription className="text-base text-gray-500">
+              Siteniz zaten canlı. Yaptığınız değişiklikleri güncelleyin.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-4">
+            {/* Current live URL */}
+            {publishedUrl && (
+              <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+                <p className="text-xs text-gray-500 mb-1">✅ Şu an canlı adresiniz:</p>
+                <p className="font-medium text-emerald-700 break-all text-sm">{publishedUrl}</p>
+                <div className="flex gap-2 mt-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs"
+                    onClick={() => navigator.clipboard.writeText(publishedUrl).then(() => toast({ title: 'Link kopyalandı!' }))}
+                  >
+                    <Copy className="w-3 h-3 mr-1" />
+                    Linki Kopyala
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-emerald-300 text-emerald-700 hover:bg-emerald-50 text-xs"
+                    onClick={() => window.open(publishedUrl, '_blank')}
+                  >
+                    <ExternalLink className="w-3 h-3 mr-1" />
+                    Siteyi Aç
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-500 text-center">
+              Editörde yaptığınız değişiklikleri canlı siteye aktarmak için aşağıdaki butona tıklayın.
+            </p>
+
+            {/* Update Button */}
+            <Button
+              size="lg"
+              className="w-full h-12 text-base gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleUpdate}
+              disabled={isPublishing}
+            >
+              {isPublishing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Güncelleniyor...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5" />
+                  Değişiklikleri Yayınla
+                </>
+              )}
+            </Button>
+
+            {/* Domain Settings */}
+            <CustomDomainCollapsible onOpenDomainModal={() => setDomainModalOpen(true)} />
+
+            <Button variant="outline" onClick={handleClose} className="w-full border-gray-300 text-gray-700">
+              Kapat
+            </Button>
+          </div>
+        </DialogContent>
+
+        <DomainSettingsModal
+          isOpen={domainModalOpen}
+          onClose={() => { setDomainModalOpen(false); setSelectedDomain(undefined); }}
+          projectId={projectId}
+          initialDomain={selectedDomain}
+        />
+      </Dialog>
+    );
+  }
 
   // Success view after publishing
   if (showSuccess) {
