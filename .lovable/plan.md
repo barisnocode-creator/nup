@@ -1,87 +1,62 @@
 
-## Sorunun Kök Nedeni
+## Yapılacaklar
 
-Kullanıcının paylaştığı URL `https://...lovableproject.com/site/deneme-kafe` — bu **Lovable'ın kendi önizleme sunucusu**, Vercel değil. Vercel'e hiç deploy gitmemiş çünkü:
+### 1. `deploy-to-vercel` — `teamId` desteği eklenir
 
-1. **Edge function eski versiyon çalışıyor** — loglar açıkça `vercelCreateOrGetProject` hatası gösteriyor. "Projectless" deploy kodumuzu yazdık ama edge function deploy edilmedi (önbellek sorunu).
-2. **VERCEL_API_TOKEN yetersiz izin** — Vercel "You don't have permission to create the project" diyor. Token proje oluşturma yetkisi olmayan bir hesaba ait.
-3. **`vercel_url` veritabanında `null`** — Deneme Kafe hiç Vercel'e ulaşamadı.
-
-"Lavable Project" ifadesi, kullanıcının Vercel token'ının bağlı olduğu hesapta mevcut olan varsayılan bir proje adından kaynaklanıyor — bizim kodumuzdaki bir şey değil.
-
----
-
-## Çözüm Planı
-
-### Adım 1 — Edge Function Yeniden Deploy (Zorunlu)
-
-`deploy-to-vercel` edge function'ı zorla yeniden deploy edilecek. Loglar eski versiyonun (`vercelCreateOrGetProject` içeren) hâlâ çalıştığını gösteriyor — yani son yaptığımız "projectless" değişiklik production'a yansımamış.
-
-### Adım 2 — Vercel Token İzin Sorununu Çöz
-
-Vercel `v13/deployments` API'si **scope/team** bilgisi gerektiriyor. Mevcut token proje oluşturma yetkisi olmayan kişisel bir token gibi görünüyor.
-
-Çözüm: Deploy isteğine kullanıcının Vercel **Team ID** veya **slug**'ını `teamId` parametresi olarak eklemek. Bu parametre olmadan Vercel token'ın bağlı olduğu hesabı bulamıyor.
-
-Edge function'da Vercel API'ye gönderilen request'e `teamId` parametresi eklenerek:
+Mevcut `vercelDeploy` fonksiyonunda deploy endpoint'i şu an sabit `https://api.vercel.com/v13/deployments`. `VERCEL_TEAM_ID` secret zaten eklenmiş. Endpoint şu şekilde güncellenecek:
 
 ```typescript
-// Deploy isteğine teamId eklenir (eğer varsa)
-const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID");
-const deployUrl = VERCEL_TEAM_ID
-  ? `https://api.vercel.com/v13/deployments?teamId=${VERCEL_TEAM_ID}`
-  : "https://api.vercel.com/v13/deployments";
-```
-
-Bu sayede kullanıcı kendi Vercel team'ine deploy edebilecek.
-
-### Adım 3 — VERCEL_TEAM_ID Secret Eklenmesi
-
-Kullanıcıdan Vercel Team ID alınacak. Vercel dashboard'unda:
-- Settings → General → Team ID (örn: `team_xxxxxxxxxxxx`)
-
-Bu bilgi `VERCEL_TEAM_ID` adıyla secret olarak eklenecek.
-
-### Adım 4 — PublishModal'da URL Gösterimi Düzeltme
-
-Şu an `publishedUrl` boş kaldığında modal `window.location.origin/site/subdomain` URL'ini gösteriyor. Vercel URL başarıyla gelirse bunu göster, gelmezse kullanıcıya açıkça belirt.
-
----
-
-## Teknik Değişiklikler
-
-### `supabase/functions/deploy-to-vercel/index.ts`
-
-```typescript
-// ÖNCE:
-const res = await fetch("https://api.vercel.com/v13/deployments", {
-
-// SONRA:
 const VERCEL_TEAM_ID = Deno.env.get("VERCEL_TEAM_ID");
 const deployEndpoint = VERCEL_TEAM_ID
   ? `https://api.vercel.com/v13/deployments?teamId=${VERCEL_TEAM_ID}`
   : "https://api.vercel.com/v13/deployments";
-
-const res = await fetch(deployEndpoint, {
 ```
 
-### `supabase/config.toml`
+Domain ekleme API çağrısı da (`/v9/projects/...domains`) `teamId` parametresiyle güncellenecek.
+
+### 2. `verify-domain` — Netlify tamamen kaldırılır, Vercel'e alınır
+
+`verify-domain/index.ts` hâlâ eski Netlify entegrasyonunu içeriyor (`registerNetlifyDomain`, `pollSslStatus`, `netlify_site_id`, `netlify_custom_domain` DB güncellemeleri vs.). Bunların tamamı kaldırılacak.
+
+DNS doğrulaması başarılı olursa artık şunlar yapılacak:
+- Domain `custom_domains` tablosunda `verified` olarak işaretlenir
+- `projects.custom_domain` güncellenir
+- `vercel_project_id` mevcutsa doğrudan `registerVercelDomain` çağrılır (zaten tanımlanmış)
+- Netlify SSL poll mantığı → Vercel'de SSL otomatik gelir, poll gerekmez
+
+### 3. `supabase/config.toml` — Netlify function girişi kaldırılır
 
 ```toml
-[functions.deploy-to-vercel]
+# Kaldırılacak:
+[functions.deploy-to-netlify]
 verify_jwt = false
 ```
 
-(Zaten mevcut — değişiklik yok)
+### 4. `PublishModal.tsx` — URL gösterimi iyileştirilir
+
+Şu an `publishedUrl` Vercel URL başarısız olduğunda `window.location.origin/site/subdomain` yani Lovable önizleme URL'ini gösteriyor. Bu düzeltilecek:
+
+- Vercel deploy başarılıysa → Vercel URL gösterilir
+- Başarısız ise → kullanıcıya açık bir hata mesajı gösterilir, Lovable önizleme URL'i gösterilmez
+- "Şu an canlı adresiniz" bölümü sadece gerçek Vercel URL'ini gösterir
 
 ---
 
-## Özet
+## Teknik Değişiklikler Özeti
 
-| Sorun | Nedeni | Çözüm |
-|-------|--------|-------|
-| "Lavable Project" görünüyor | Vercel'e hiç ulaşılamadı, Lovable önizleme URL'i gösteriliyor | Vercel deploy'u çalıştır |
-| Forbidden hatası | Token team scope'u bilmiyor | `VERCEL_TEAM_ID` ekle |
-| Eski kod çalışıyor | Edge function deploy edilmedi | Zorla yeniden deploy |
+| Dosya | Değişiklik |
+|---|---|
+| `supabase/functions/deploy-to-vercel/index.ts` | `teamId` parametresi deploy ve domain endpoint'lerine eklenir |
+| `supabase/functions/verify-domain/index.ts` | Netlify kodu tamamen kaldırılır, Vercel domain kaydı kullanılır |
+| `supabase/config.toml` | `deploy-to-netlify` girişi kaldırılır |
+| `src/components/website-preview/PublishModal.tsx` | URL gösterimi düzeltilir — Vercel URL yoksa Lovable URL gösterilmez |
 
-Bu değişikliklerden sonra kullanıcının kendi Vercel hesabına deploy edilecek ve "Lavable Project" görünmeyecek — site kullanıcının Vercel'inde `openlucius-deneme-kafe` projesi altında yayınlanacak.
+---
+
+## Beklenen Sonuç
+
+Deploy tetiklendiğinde:
+1. `https://api.vercel.com/v13/deployments?teamId=<VERCEL_TEAM_ID>` çağrılır
+2. Vercel token artık team scope'unu tanır → `forbidden` hatası ortadan kalkar
+3. Deployment oluşur, Vercel URL DB'ye yazılır
+4. Modal'da gerçek Vercel URL'i gösterilir — "Lavable Project" ya da Lovable önizleme URL'i görünmez
