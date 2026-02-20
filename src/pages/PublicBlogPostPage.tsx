@@ -77,7 +77,7 @@ export default function PublicBlogPostPage() {
       post={post}
       allPosts={allPosts}
       siteName={siteName}
-      onBack={() => navigate(`/site/${subdomain}`)}
+      onBack={() => navigate(`/site/${subdomain}/blog`)}
     />
   );
 }

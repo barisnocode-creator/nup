@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Tag, ArrowRight, BookOpen } from 'lucide-react';
+import { Calendar, Tag, ArrowRight, BookOpen, Image as ImageIcon } from 'lucide-react';
 import type { SectionComponentProps } from '../types';
-import BlogPostDetailSection from './BlogPostDetailSection';
+import { PixabayImagePicker } from '../PixabayImagePicker';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BlogPost {
@@ -31,7 +31,6 @@ function getCategoryQuery(category: string, title: string): string {
   if (cat.includes('başar') || cat.includes('success')) return 'success achievement business growth';
   if (cat.includes('sağlık') || cat.includes('health')) return 'healthcare medical wellness professional';
   if (cat.includes('hukuk') || cat.includes('law')) return 'law legal office professional';
-  // Başlıktan keyword çıkar (ilk 3 anlamlı kelime)
   const keywords = title.split(' ').filter(w => w.length > 3).slice(0, 3).join(' ');
   if (keywords.length > 5) return `${keywords} professional`;
   return 'professional blog article modern office';
@@ -39,19 +38,21 @@ function getCategoryQuery(category: string, title: string): string {
 
 export function BlogSection({ section, isEditing, onUpdate }: SectionComponentProps) {
   const props = section.props || {};
-  const [activeBlogSlug, setActiveBlogSlug] = useState<string | null>(null);
   const [autoImages, setAutoImages] = useState<Record<string, string>>({});
+  const [editingImageSlug, setEditingImageSlug] = useState<string | null>(null);
   const fetchedRef = useRef(false);
 
   const sectionTitle = props.sectionTitle || 'Blog & Haberler';
   const sectionSubtitle = props.sectionSubtitle || 'Güncel makalelerimizi ve sektör bilgilerini keşfedin';
-  const siteName = props.siteName || '';
+
+  // Subdomain from URL
+  const subdomain = typeof window !== 'undefined' ? window.location.pathname.split('/')[2] : '';
 
   const posts: BlogPost[] = [
     {
       title: props.post1Title || 'Sektördeki Son Gelişmeler ve Trendler',
       category: props.post1Category || 'Genel',
-      excerpt: props.post1Excerpt || 'Sektörümüzdeki en güncel gelişmeleri, yenilikleri ve önemli trendleri sizin için derliyoruz. Bu yazıda bilmeniz gereken tüm detayları bulabilirsiniz.',
+      excerpt: props.post1Excerpt || 'Sektörümüzdeki en güncel gelişmeleri, yenilikleri ve önemli trendleri sizin için derliyoruz.',
       image: props.post1Image || '',
       date: props.post1Date || '2026-01-15',
       slug: props.post1Slug || 'sektor-son-gelismeler',
@@ -61,7 +62,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
     {
       title: props.post2Title || 'Profesyonellerden Pratik İpuçları ve Öneriler',
       category: props.post2Category || 'İpuçları',
-      excerpt: props.post2Excerpt || 'Alanında uzman profesyonellerden derlediğimiz pratik ipuçları ve önerilerle işinizi ve yaşamınızı kolaylaştırın.',
+      excerpt: props.post2Excerpt || 'Alanında uzman profesyonellerden derlediğimiz pratik ipuçları ve önerilerle işinizi kolaylaştırın.',
       image: props.post2Image || '',
       date: props.post2Date || '2026-01-22',
       slug: props.post2Slug || 'profesyonel-ipuclari',
@@ -71,7 +72,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
     {
       title: props.post3Title || 'Sık Yapılan Hatalar ve Nasıl Önlenir?',
       category: props.post3Category || 'Rehber',
-      excerpt: props.post3Excerpt || 'En yaygın yapılan hatalar nelerdir? Bu rehberde sık karşılaşılan sorunları ve bunlardan nasıl korunabileceğinizi adım adım anlatıyoruz.',
+      excerpt: props.post3Excerpt || 'En yaygın yapılan hatalar nelerdir? Bu rehberde sık karşılaşılan sorunları anlatıyoruz.',
       image: props.post3Image || '',
       date: props.post3Date || '2026-02-01',
       slug: props.post3Slug || 'sik-yapilan-hatalar',
@@ -81,7 +82,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
     {
       title: props.post4Title || 'Başarılı Sonuçlar İçin Bilmeniz Gerekenler',
       category: props.post4Category || 'Başarı',
-      excerpt: props.post4Excerpt || 'Başarılı sonuçlara ulaşmak için hangi adımları izlemelisiniz? Uzman görüşleri ve gerçek vakalar ışığında kapsamlı bir inceleme.',
+      excerpt: props.post4Excerpt || 'Başarılı sonuçlara ulaşmak için hangi adımları izlemelisiniz? Kapsamlı bir inceleme.',
       image: props.post4Image || '',
       date: props.post4Date || '2026-02-10',
       slug: props.post4Slug || 'basarili-sonuclar',
@@ -90,7 +91,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
     },
   ];
 
-  // Pixabay otomatik görsel çekme — sadece bir kez, boş görseller için
+  // Auto-fetch Pixabay images for empty slots
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
@@ -110,7 +111,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
               }));
             }
           } catch {
-            // sessizce geç
+            // silent
           }
         }
       }
@@ -120,18 +121,19 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activePost = activeBlogSlug ? posts.find(p => p.slug === activeBlogSlug) : null;
+  const editingPost = editingImageSlug ? posts.find(p => p.slug === editingImageSlug) : null;
+  const editingPostIndex = editingImageSlug ? posts.findIndex(p => p.slug === editingImageSlug) + 1 : 0;
 
-  if (activePost) {
-    return (
-      <BlogPostDetailSection
-        post={activePost}
-        allPosts={posts}
-        siteName={siteName}
-        onBack={() => setActiveBlogSlug(null)}
-      />
-    );
-  }
+  const handleImageSelect = (url: string) => {
+    if (!editingImageSlug || !onUpdate) return;
+    onUpdate({ [`post${editingPostIndex}Image`]: url });
+    setEditingImageSlug(null);
+  };
+
+  const handleCardClick = (post: BlogPost) => {
+    if (isEditing) return; // no navigation in editor
+    window.location.href = `/site/${subdomain}/blog/${post.slug}`;
+  };
 
   return (
     <section className="py-20 bg-background">
@@ -154,13 +156,23 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-body-dynamic">
             {sectionSubtitle}
           </p>
+          {/* "Tüm Yazıları Gör" button — only on live site */}
+          {!isEditing && subdomain && (
+            <a
+              href={`/site/${subdomain}/blog`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors mt-6"
+            >
+              Tüm Yazıları Gör
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          )}
         </motion.div>
 
         {/* Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {posts.map((post, index) => {
-              const displayImage = post.image || autoImages[post.slug] || '';
-              return (
+            const displayImage = post.image || autoImages[post.slug] || '';
+            return (
               <motion.div
                 key={post.slug}
                 initial={{ opacity: 0, y: 30 }}
@@ -168,18 +180,10 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group cursor-pointer"
-                onClick={() => {
-                  if (isEditing) {
-                    setActiveBlogSlug(post.slug);
-                  } else {
-                    const pathParts = window.location.pathname.split('/');
-                    const sub = pathParts[2];
-                    window.open(`/site/${sub}/blog/${post.slug}`, '_blank');
-                  }
-                }}
+                onClick={() => handleCardClick(post)}
               >
                 <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                  {/* Image 3:2 */}
+                  {/* Image */}
                   <div className="w-full aspect-[3/2] relative overflow-hidden bg-muted">
                     {displayImage ? (
                       <img
@@ -192,6 +196,7 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
                         <BookOpen className="w-10 h-10 text-primary/40 animate-pulse" />
                       </div>
                     )}
+
                     {/* Category badge */}
                     <div className="absolute top-3 left-3">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm text-[11px] font-semibold text-foreground shadow-sm">
@@ -199,6 +204,22 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
                         {post.category}
                       </span>
                     </div>
+
+                    {/* Image change overlay — editor only */}
+                    {isEditing && (
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingImageSlug(post.slug);
+                          }}
+                          className="px-3 py-2 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-lg flex items-center gap-1.5 hover:bg-gray-50 transition-colors"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          Görsel Değiştir
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
@@ -223,10 +244,18 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
                   </div>
                 </div>
               </motion.div>
-              );
-            })}
+            );
+          })}
         </div>
       </div>
+
+      {/* Pixabay Image Picker Modal */}
+      <PixabayImagePicker
+        isOpen={!!editingImageSlug}
+        onClose={() => setEditingImageSlug(null)}
+        onSelect={handleImageSelect}
+        defaultQuery={editingPost ? getCategoryQuery(editingPost.category, editingPost.title) : 'blog article'}
+      />
     </section>
   );
 }

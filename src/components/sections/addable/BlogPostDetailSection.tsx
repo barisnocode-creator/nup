@@ -158,7 +158,7 @@ export default function BlogPostDetailSection({ post, allPosts, siteName, onBack
       {/* Back button */}
       <div className="container mx-auto px-6 pt-8">
         <button
-          onClick={onBack}
+          onClick={() => subdomain ? (window.location.href = `/site/${subdomain}/blog`) : onBack()}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group mb-6"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -167,9 +167,19 @@ export default function BlogPostDetailSection({ post, allPosts, siteName, onBack
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-8">
-          <span className="hover:text-foreground cursor-pointer" onClick={onBack}>Ana Sayfa</span>
+          <span
+            className="hover:text-foreground cursor-pointer"
+            onClick={() => subdomain ? (window.location.href = `/site/${subdomain}`) : onBack()}
+          >
+            Ana Sayfa
+          </span>
           <ChevronRight className="w-3 h-3" />
-          <span className="hover:text-foreground cursor-pointer" onClick={onBack}>Blog</span>
+          <span
+            className="hover:text-foreground cursor-pointer"
+            onClick={() => subdomain ? (window.location.href = `/site/${subdomain}/blog`) : onBack()}
+          >
+            Blog
+          </span>
           <ChevronRight className="w-3 h-3" />
           <span className="text-foreground font-medium line-clamp-1">{post.title}</span>
         </nav>
