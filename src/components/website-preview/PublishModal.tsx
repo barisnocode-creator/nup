@@ -573,7 +573,7 @@ export function PublishModal({
             <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
               <p className="text-xs text-gray-500 mb-1">Your website will be live at:</p>
               <p className="text-sm font-medium text-orange-600">
-                Netlify üzerinden yayınlanacak
+                Vercel üzerinden yayınlanacak
               </p>
             </div>
           )}
