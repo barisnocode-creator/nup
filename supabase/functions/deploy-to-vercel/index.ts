@@ -1156,44 +1156,20 @@ ${trackingScript}
 }
 
 // ── Vercel Deploy Helpers ──
+// Uses projectless deployments — no project creation needed, no special permissions required.
 
-async function vercelCreateOrGetProject(name: string, token: string): Promise<string> {
-  console.log(`[Vercel] Creating project: ${name}`);
-  const res = await fetch("https://api.vercel.com/v11/projects", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ name, framework: null }),
-  });
-
-  const data = await res.json();
-
-  // 409 = project already exists
-  if (res.status === 409 && data.error?.code === "project_already_exists") {
-    console.log(`[Vercel] Project already exists, fetching by name`);
-    const getRes = await fetch(`https://api.vercel.com/v11/projects/${encodeURIComponent(name)}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const getData = await getRes.json();
-    return getData.id;
-  }
-
-  if (!res.ok) {
-    throw new Error(`Failed to create Vercel project: ${JSON.stringify(data)}`);
-  }
-
-  return data.id;
-}
-
-async function vercelDeploy(projectId: string, projectName: string, htmlContent: string, token: string): Promise<string> {
-  console.log(`[Vercel] Deploying to project: ${projectId}`);
+async function vercelDeploy(projectName: string, htmlContent: string, token: string): Promise<string> {
+  console.log(`[Vercel] Deploying: ${projectName}`);
 
   // Encode HTML as base64
   const encoder = new TextEncoder();
   const bytes = encoder.encode(htmlContent);
-  const base64 = btoa(String.fromCharCode(...bytes));
+  // btoa can fail for large strings; chunk it
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
 
   const res = await fetch("https://api.vercel.com/v13/deployments", {
     method: "POST",
@@ -1210,7 +1186,6 @@ async function vercelDeploy(projectId: string, projectName: string, htmlContent:
           encoding: "base64",
         },
       ],
-      projectId: projectId,
       target: "production",
     }),
   });
@@ -1284,36 +1259,12 @@ Deno.serve(async (req) => {
     const theme = (project.site_theme as SiteTheme) || {};
     const html = sectionsToHtml(sections, theme, project.name, projectId, project.template_id || undefined);
 
-    // Vercel project name (slugified)
+    // Vercel deployment name (slugified) — projectless deployment, no project creation needed
     const slug = (project.subdomain || projectId.slice(0, 8)).toLowerCase().replace(/[^a-z0-9-]/g, "-");
     const vercelProjectName = `openlucius-${slug}`;
 
-    let vercelProjectId = project.vercel_project_id;
-
-    // Create Vercel project if needed
-    if (!vercelProjectId) {
-      vercelProjectId = await vercelCreateOrGetProject(vercelProjectName, VERCEL_API_TOKEN);
-      await supabaseAdmin
-        .from("projects")
-        .update({ vercel_project_id: vercelProjectId })
-        .eq("id", projectId);
-    }
-
-    // Deploy HTML to Vercel
-    let vercelUrl: string;
-    try {
-      vercelUrl = await vercelDeploy(vercelProjectId, vercelProjectName, html, VERCEL_API_TOKEN);
-    } catch (deployErr) {
-      // Self-healing: recreate project if deploy fails
-      console.warn(`[Vercel] Deploy failed, recreating project: ${deployErr}`);
-      const newName = `${vercelProjectName}-${Date.now().toString(36)}`;
-      vercelProjectId = await vercelCreateOrGetProject(newName, VERCEL_API_TOKEN);
-      await supabaseAdmin
-        .from("projects")
-        .update({ vercel_project_id: vercelProjectId, vercel_url: null })
-        .eq("id", projectId);
-      vercelUrl = await vercelDeploy(vercelProjectId, newName, html, VERCEL_API_TOKEN);
-    }
+    // Deploy HTML directly to Vercel (no project creation, no special permissions needed)
+    const vercelUrl = await vercelDeploy(vercelProjectName, html, VERCEL_API_TOKEN);
 
     // Check for verified custom domain and attach it to Vercel project
     const { data: verifiedDomain } = await supabaseAdmin
@@ -1329,7 +1280,7 @@ Deno.serve(async (req) => {
     if (verifiedDomain?.domain && !vercelCustomDomain) {
       try {
         const domainRes = await fetch(
-          `https://api.vercel.com/v9/projects/${vercelProjectId}/domains`,
+          `https://api.vercel.com/v9/projects/${encodeURIComponent(vercelProjectName)}/domains`,
           {
             method: "POST",
             headers: {
@@ -1366,7 +1317,6 @@ Deno.serve(async (req) => {
         success: true,
         vercelUrl,
         vercelCustomDomain,
-        projectId: vercelProjectId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
