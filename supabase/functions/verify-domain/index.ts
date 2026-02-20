@@ -28,11 +28,20 @@ function getVercelToken(): string | null {
   return Deno.env.get('VERCEL_API_TOKEN') ?? null;
 }
 
+function getVercelTeamId(): string | null {
+  return Deno.env.get('VERCEL_TEAM_ID') ?? null;
+}
+
 /** Register domain on Vercel project. SSL is automatic on Vercel. */
 async function registerVercelDomain(vercelProjectId: string, domain: string, token: string) {
   console.log(`[Vercel] Adding domain ${domain} to project ${vercelProjectId}`);
 
-  const res = await fetch(`https://api.vercel.com/v9/projects/${vercelProjectId}/domains`, {
+  const teamId = getVercelTeamId();
+  const endpoint = teamId
+    ? `https://api.vercel.com/v9/projects/${vercelProjectId}/domains?teamId=${teamId}`
+    : `https://api.vercel.com/v9/projects/${vercelProjectId}/domains`;
+
+  const res = await fetch(endpoint, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -160,105 +169,49 @@ Deno.serve(async (req) => {
       .update({ custom_domain: domainRecord.domain })
       .eq('id', domainRecord.project_id);
 
-    // ---- Netlify integration ----
+    // ---- Vercel integration ----
     const { data: project } = await adminClient
       .from('projects')
-      .select('netlify_site_id, is_published')
+      .select('vercel_project_id, is_published')
       .eq('id', domainRecord.project_id)
       .single();
 
-    const NETLIFY_TOKEN = getNetlifyToken();
-    let netlifyResult: any = { registered: false };
-    let sslResult: any = { issued: false, state: 'skipped' };
+    const vercelToken = getVercelToken();
 
-    if (!project?.netlify_site_id) {
-      console.log('[Netlify] No netlify_site_id — skipping domain registration');
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: 'verified',
-          netlify_domain_registered: false,
-          ssl_state: 'no_site',
-          https_status: false,
-          message: 'Domain doğrulandı! Sitenizi yayınladığınızda custom domain otomatik olarak bağlanacak.',
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    if (project?.vercel_project_id && vercelToken) {
+      const vercelResult = await registerVercelDomain(project.vercel_project_id, domainRecord.domain, vercelToken);
+      if (vercelResult.success) {
+        // Mark domain as active — Vercel handles SSL automatically
+        await adminClient
+          .from('custom_domains')
+          .update({ status: 'active' })
+          .eq('id', domainId);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            status: 'active',
+            vercel_domain_registered: true,
+            ssl_state: 'automatic',
+            https_status: true,
+            message: 'Domain doğrulandı ve Vercel\'e bağlandı! SSL otomatik olarak aktif olacak. 🎉',
+          }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        console.error('[Vercel] Domain registration failed:', vercelResult.error);
+      }
     }
 
-    if (!NETLIFY_TOKEN) {
-      console.error('[Netlify] NETLIFY_API_TOKEN not configured');
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: 'verified',
-          netlify_domain_registered: false,
-          ssl_state: 'no_token',
-          https_status: false,
-          message: 'Domain doğrulandı ancak Netlify API token yapılandırılmamış.',
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Step 1: Register domain on Netlify
-    netlifyResult = await registerNetlifyDomain(project.netlify_site_id, domainRecord.domain, NETLIFY_TOKEN);
-
-    if (!netlifyResult.success) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: 'verified',
-          netlify_domain_registered: false,
-          ssl_state: 'netlify_error',
-          https_status: false,
-          netlify_error: netlifyResult.error,
-          message: 'Domain doğrulandı ancak Netlify\'a bağlanırken hata oluştu. Tekrar deneyin.',
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Update DB with netlify custom domain
-    await adminClient
-      .from('projects')
-      .update({ netlify_custom_domain: domainRecord.domain })
-      .eq('id', domainRecord.project_id);
-
-    // Step 2: Poll SSL status
-    sslResult = await pollSslStatus(project.netlify_site_id, NETLIFY_TOKEN);
-
-    if (sslResult.issued) {
-      // Full success — mark domain as active
-      await adminClient
-        .from('custom_domains')
-        .update({ status: 'active' })
-        .eq('id', domainId);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: 'active',
-          netlify_domain_registered: true,
-          netlify_domain_id: netlifyResult.domainId,
-          ssl_state: sslResult.state,
-          https_status: true,
-          message: 'Domain doğrulandı, Netlify\'a bağlandı ve SSL sertifikası aktif! 🎉',
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // SSL not ready yet — keep as verified
+    // No Vercel project yet or domain registration failed — domain is verified, will be attached on next deploy
     return new Response(
       JSON.stringify({
         success: true,
         status: 'verified',
-        netlify_domain_registered: true,
-        netlify_domain_id: netlifyResult.domainId,
-        ssl_state: sslResult.state,
+        vercel_domain_registered: false,
+        ssl_state: 'pending',
         https_status: false,
-        message: 'Domain doğrulandı ve Netlify\'a bağlandı. SSL sertifikası işleniyor, birkaç dakika içinde aktif olacak.',
+        message: 'Domain doğrulandı! Sitenizi yayınladığınızda custom domain otomatik olarak bağlanacak.',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
