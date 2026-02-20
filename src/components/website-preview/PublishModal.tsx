@@ -245,14 +245,14 @@ export function PublishModal({
         console.warn('Vercel deploy failed, site still published on platform:', deployErr);
       }
 
-      const url = deployedNetlifyUrl;
+      const url = deployedVercelUrl || `${window.location.origin}/site/${subdomain}`;
       setPublishedUrl(url);
       setShowSuccess(true);
       
       toast({
         title: 'Website published!',
-        description: deployedNetlifyUrl 
-          ? 'Your website is now live on Netlify!' 
+        description: deployedVercelUrl 
+          ? 'Your website is now live on Vercel!' 
           : 'Your website is now live and accessible to everyone.',
       });
 
@@ -449,10 +449,10 @@ export function PublishModal({
               <p className="font-medium text-orange-600 break-all">{publishedUrl}</p>
             </div>
 
-            {netlifyUrl && netlifyUrl !== publishedUrl && (
+            {vercelUrl && vercelUrl !== publishedUrl && (
               <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                <p className="text-sm text-gray-500 mb-2">Netlify URL:</p>
-                <p className="font-medium text-orange-600 break-all">{netlifyUrl}</p>
+                <p className="text-sm text-gray-500 mb-2">Vercel URL:</p>
+                <p className="font-medium text-orange-600 break-all">{vercelUrl}</p>
               </div>
             )}
 
