@@ -99,7 +99,7 @@ export function DomainSettingsModal({ isOpen, onClose, projectId, initialDomain 
       if (data.status === 'active') {
         toast({
           title: 'Domain Aktif! 🎉',
-          description: data.message || 'Domain doğrulandı, Netlify\'a bağlandı ve SSL aktif!',
+          description: data.message || 'Domain doğrulandı, Vercel\'e bağlandı ve SSL aktif!',
         });
       } else if (data.status === 'verified') {
         toast({
