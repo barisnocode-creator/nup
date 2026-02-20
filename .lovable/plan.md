@@ -1,124 +1,71 @@
 
 
-# Template Sistemi Yol Haritası — Sıfırdan Doğru Mimari
+# Editör Üst Kısım Yerleşim Düzeltmesi
 
-## Mevcut Sorunların Kök Nedeni
+## Sorunlar
 
-Sistem şu an üç çakışan katmandan oluşuyor ve hiçbiri tam çalışmıyor:
+1. **Auto-inject edilen SiteHeader boş props ile oluşturuluyor** — `props: {}` geçiliyor, bu yüzden site adı "Site" olarak görünüyor, telefon ve CTA bilgileri eksik kalıyor.
 
-```text
-1. definitions.ts      → defaultProps içinde hardcoded içerik (Espresso, Cappuccino vs.)
-2. sectorProfiles.ts   → Sektöre göre metin, ama sadece bazı alanları dolduruyor
-3. mappers/            → generatedContent'ten veri çekiyor, ama boş string kontrolü yok
+2. **SiteHeader ile Hero bölümü çakışıyor** — Header `sticky top-14` kullanıyor (editör toolbar'ın altında kalması için) ama hero bölümleri (`HeroRestaurant`, `HeroCentered`, `HeroOverlay`) `min-h-screen` veya `min-h-[600px]` ile tam ekran kaplıyor. Header hero'nun üstüne biniyor ve içerik arkasında kalıyor.
 
-Sorun: Boş string ("") truthy sayılmadığı için mapper bazen overrides uygulayamıyor,
-       bazen eski hardcoded veri kalıyor.
-```
-
-**Template değiştirildiğinde** (`applyTemplate`):
-- Eski `site_sections`'daki prop'lar sadece belirli anahtarlar için taşınıyor
-- `generatedContent` mapper'lara gönderiliyor ama `""` (boş string) olan alanlar atlanıyor
-- Sonuç: Deneme Kafe'de template değişince bambaşka (cafe) içerikler görünüyor
+3. **Full-screen hero'larda yükseklik hesabı yanlış** — `min-h-screen` editörde toolbar (56px) + header (56px) = 112px fazladan yer kaplıyor, sayfa aşağı taşıyor.
 
 ---
 
-## Doğru Mimari — 3 Katmanlı Öncelik Zinciri (Düzeltilmiş)
+## Yapılacak Değişiklikler
 
-```text
-Öncelik 1: generatedContent (kullanıcının gerçek AI verileri) — her zaman kazanır
-Öncelik 2: sectorProfile (sektöre göre Türkçe varsayılanlar) — gc yoksa devreye girer
-Öncelik 3: template defaultProps — sadece placeholder/görsel için (METİN içermemeli)
-```
+### 1. EditorCanvas.tsx — Header'a doğru props geçir
 
-**Kritik kural:** `definitions.ts`'deki `defaultProps` içinde HİÇBİR Türkçe metin bulunmamalı. Tüm metinler ya `generatedContent`'ten ya da `sectorProfile`'dan gelecek.
+Auto-inject edilen SiteHeader'a proje bilgilerini geçirmek gerekiyor. Bunun için `EditorCanvas`'a `projectName` prop'u eklenecek ve header'a `siteName` olarak aktarılacak.
 
----
+- `EditorCanvasProps` interface'ine `projectName?: string` eklenir
+- Auto-inject header'da `props: { siteName: projectName }` kullanılır
+- `SiteEditor.tsx`'den `projectName` EditorCanvas'a geçirilir
 
-## Değiştirilecek Dosyalar ve Yapılacaklar
+### 2. EditorCanvas.tsx — Hero bölümlerine padding-top ekle
 
-### 1. `src/templates/catalog/definitions.ts` — defaultProps Temizleme
+Header sticky olduğu için hero bölümlerinin üst kısmına header yüksekliği kadar (56px) boşluk bırakılması gerekiyor. Ancak bunu hero bileşenlerinin kendisine eklemek yerine, canvas wrapper'da ilk section'a `pt-0` verip header'ın hero üzerine binmesine izin verilecek (overlay hero'lar için bu istenilen davranış).
 
-Tüm template tanımlarındaki `defaultProps` içinden sabit Türkçe metinler kaldırılır. Sadece şunlar kalır:
-- Görsel URL'leri (placeholder images)
-- Yapısal veriler (items dizisinin şekli, icon isimleri)
-- Boş string `""` veya boş dizi `[]` (mapper'ların dolduracağı yerler)
+Asıl sorun: Tam ekran hero'lar (`min-h-screen`) editör ortamında viewport'u aşıyor. Bunun çözümü hero bileşenlerinde `min-h-screen` yerine `min-h-[calc(100vh-112px)]` kullanmak (toolbar 56px + header 56px).
 
-Örnek:
-```typescript
-// ÖNCE (hatalı — hardcoded içerik)
-{
-  type: 'MenuShowcase',
-  defaultProps: {
-    subtitle: 'Menümüz',
-    title: 'Özel Seçkiler',
-    items: [
-      { name: 'Espresso', description: 'Zengin, dolgun...', price: '₺45' },
-    ]
-  }
-}
+### 3. Hero bileşenlerinde yükseklik düzeltmesi
 
-// SONRA (doğru — boş, mapper dolduracak)
-{
-  type: 'MenuShowcase',
-  defaultProps: {
-    subtitle: '',
-    title: '',
-    items: [],
-  }
-}
-```
+Etkilenen dosyalar:
+- `HeroRestaurant.tsx`: `min-h-screen` yerine `min-h-[calc(100vh-7rem)]`
+- `HeroCentered.tsx`: `min-h-[700px]` yerine `min-h-[calc(100vh-7rem)]`
+- `HeroOverlay.tsx`: `min-h-[600px]` — bu zaten kısa, sorun yok
+- `HeroPortfolio.tsx`: `min-h-screen` yerine `min-h-[calc(100vh-7rem)]`
+- `HeroMedical.tsx`: Bu zaten `py-20 md:py-28` padding ile çalışıyor, min-h-screen yok — sorun yok
+- `HeroCafe.tsx`: Kontrol edilecek
+- `HeroHotel.tsx`: Kontrol edilecek
+- `HeroDental.tsx`: Kontrol edilecek
+- `HeroSplit.tsx`: Kontrol edilecek
 
-### 2. `src/templates/catalog/mappers/index.ts` — Boş String Güvenliği
+### 4. SiteEditor.tsx — projectName'i canvas'a aktar
 
-Tüm mapper'larda `""` (boş string) kontrolü eklenir. Şu an bazı override'lar `if (value)` ile yapılıyor ama `""` falsy olduğu için sectorProfile devreye girmiyor doğru sırayla.
-
-Düzeltme: Her alanda önce `generatedContent`'e bak, yoksa `sectorProfile`'e bak, yoksa sabit fallback kullan.
-
-```typescript
-// Düzeltilmiş örnek
-const title = safeGet(gc, 'pages.home.hero.title')  // 1. generatedContent
-  || profile?.heroTitle                               // 2. sectorProfile  
-  || 'Hoş Geldiniz';                                  // 3. son çare fallback
-```
-
-### 3. `src/templates/catalog/mappers/mapServicesSection.ts` — Yeni mapper
-
-`CafeFeatures`, `DentalServices`, `ServicesGrid` için `generatedContent.pages.services.servicesList` verisini doğrudan section props'larına enjekte eden mapper oluşturulur.
-
-### 4. `src/utils/sectionInjectors.ts` — MenuShowcase ve RestaurantMenu için içerik enjeksiyonu
-
-Şu an `MenuShowcase`'e sadece görsel enjekte ediliyor. Menü öğelerinin isim ve açıklamaları da `generatedContent.pages.services.servicesList` veya `pages.home.highlights`'tan doldurulacak.
-
-### 5. `src/components/editor/useEditorState.ts` — applyTemplate İçerik Taşıma Güçlendirme
-
-Template değiştirildiğinde mevcut `sections` içindeki TÜM props anahtarları taşınacak (şu an sadece 9 anahtar taşınıyor). İçerik kaybını önlemek için daha geniş bir anahtar listesi kullanılacak.
-
-```typescript
-// Şu an (yetersiz)
-const carryKeys = ['title', 'subtitle', 'description', 'sectionTitle', ...9 anahtar];
-
-// Sonra (tam)  
-const carryKeys = Object.keys(old).filter(k => !k.startsWith('_') && typeof old[k] === 'string');
-```
+`EditorCanvas` çağrısına `projectName` prop'u eklenir.
 
 ---
 
-## Uygulama Sırası
+## Teknik Detaylar
 
-```text
-Adım 1: definitions.ts → defaultProps'ları temizle (hardcoded metinleri kaldır)
-Adım 2: mappers/index.ts → boş string güvenliği + tam içerik enjeksiyonu  
-Adım 3: sectionInjectors.ts → MenuShowcase/RestaurantMenu içerik enjeksiyonu
-Adım 4: useEditorState.ts → applyTemplate'de tam prop taşıma
-Adım 5: Test: Deneme Kafe → template değiştir → içerikler geldi mi?
-```
+| Dosya | Degisiklik |
+|---|---|
+| `src/components/editor/EditorCanvas.tsx` | `projectName` prop ekle, auto-inject header'a `siteName` geçir |
+| `src/components/editor/SiteEditor.tsx` | `projectName`'i EditorCanvas'a aktar |
+| `src/components/sections/HeroRestaurant.tsx` | `min-h-screen` -> `min-h-[calc(100vh-7rem)]` |
+| `src/components/sections/HeroCentered.tsx` | `min-h-[700px]` -> `min-h-[calc(100vh-7rem)]` |
+| `src/components/sections/HeroPortfolio.tsx` | `min-h-screen` -> `min-h-[calc(100vh-7rem)]` |
+| `src/components/sections/HeroCafe.tsx` | Gerekirse ayni duzeltme |
+| `src/components/sections/HeroHotel.tsx` | Gerekirse ayni duzeltme |
+| `src/components/sections/HeroDental.tsx` | Gerekirse ayni duzeltme |
+| `src/components/sections/HeroSplit.tsx` | Gerekirse ayni duzeltme |
 
 ---
 
-## Beklenen Sonuç
+## Beklenen Sonuc
 
-- Deneme Kafe projesi açıldığında: AI'ın ürettiği gerçek cafe içerikleri görünür
-- Template değiştirildiğinde: Kullanıcının gerçek içerikleri yeni template'e aktarılır
-- Hiçbir template'de "Espresso", "Cappuccino" gibi hardcoded içerik kalmaz
-- Sektör farklı olsa bile (ör. doktor) içerik her zaman sektöre uygun gelir
+- Editorde site header'da gercek proje adi gorunur ("Site" yerine "Kafe Ali" gibi)
+- Hero bolumu ekranin tamami kadar yukseklik kaplar ama toolbar ve header ile cakismaz
+- Ust kisimda bozuk yerlesim sorunu ortadan kalkar
 
