@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { loadGoogleFont } from './useThemeColors';
+import { loadGoogleFont, hexToHsl, isValidHex } from './useThemeColors';
 import type { SiteSection, SiteTheme } from '@/components/sections/types';
 
 interface SiteThemeData {
@@ -58,7 +58,9 @@ export function useSiteTheme(subdomain: string | undefined): SiteThemeData {
         if (theme?.colors) {
           for (const [key, val] of Object.entries(theme.colors)) {
             if (typeof val === 'string') {
-              root.style.setProperty(`--${key}`, val);
+              // Convert HEX to HSL so Tailwind's hsl(var(--x)) works correctly
+              const converted = isValidHex(val) ? hexToHsl(val) : val;
+              root.style.setProperty(`--${key}`, converted);
               injectedProps.push(`--${key}`);
             }
           }

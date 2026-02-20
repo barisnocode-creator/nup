@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { hexToHsl, isValidHex } from '@/hooks/useThemeColors';
 import { SectionRenderer } from '@/components/sections/SectionRenderer';
 import { WebsitePreview } from '@/components/website-preview/WebsitePreview';
 import { GeneratedContent } from '@/types/generated-website';
@@ -25,7 +26,8 @@ function buildThemeStyle(theme: SiteTheme | undefined): string {
   const vars: Record<string, string> = {};
   for (const [key, val] of Object.entries(c)) {
     if (typeof val === 'string') {
-      vars[`--${key}`] = val;
+      // Convert HEX to HSL so Tailwind's hsl(var(--x)) works correctly
+      vars[`--${key}`] = isValidHex(val) ? hexToHsl(val) : val;
     }
   }
   return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
