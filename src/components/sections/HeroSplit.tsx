@@ -1,9 +1,15 @@
+import { useState } from 'react';
+import { ImageIcon } from 'lucide-react';
 import { heroTitleSizeMap, resolveStyles } from './styleUtils';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
-export function HeroSplit({ section, isEditing }: SectionComponentProps) {
+export function HeroSplit({ section, isEditing, onUpdate }: SectionComponentProps) {
   const { props, style } = section;
   const s = resolveStyles({ ...style });
+  const sector = props._sector || 'default';
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className={`relative min-h-[600px] flex items-center ${s.bgColor} ${s.sectionPadding}`}>
@@ -22,12 +28,38 @@ export function HeroSplit({ section, isEditing }: SectionComponentProps) {
               </a>
             )}
           </div>
-          <div className="relative">
+          <div className="relative group">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-50" />
-            <img src={props.image || "/placeholder.svg"} alt={props.title} className="relative rounded-2xl shadow-2xl w-full object-cover aspect-[4/3]" />
+            <div className="relative rounded-2xl shadow-2xl w-full overflow-hidden aspect-[4/3]">
+              <img
+                src={props.image || "/placeholder.svg"}
+                alt={props.title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              {isEditing && (
+                <div
+                  className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                  onClick={() => setPickerOpen(true)}
+                >
+                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-background/90 text-foreground text-sm font-semibold shadow-lg">
+                    <ImageIcon className="w-4 h-4" />
+                    Görseli Değiştir
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); setPickerOpen(false); }}
+          defaultQuery={getSectorImageQuery('hero', sector)}
+        />
+      )}
     </section>
   );
 }

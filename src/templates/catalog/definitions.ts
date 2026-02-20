@@ -558,9 +558,148 @@ export const engineerPortfolio: TemplateDefinition = {
   ],
 };
 
+// ─── MedCare Pro Template ────────────────────────────────────────
+
+import templatePreviewMedcare from '@/assets/template-preview-dental.jpg';
+
+export const medcarePro: TemplateDefinition = {
+  id: 'medcare-pro',
+  name: 'MedCare Pro',
+  industry: 'health',
+  category: 'Sağlık & Profesyonel',
+  description: 'GitHub\'ın en popüler sağlık şablonlarından ilham alan, tam animasyonlu, istatistik rozetli profesyonel klinik tasarımı.',
+  preview: templatePreviewMedcare,
+  themePresetKey: 'medcare-pro',
+  supportedIndustries: [
+    'doctor', 'dentist', 'clinic', 'hospital', 'medical', 'veterinary',
+    'health', 'physiotherapy', 'optometry', 'pharmacy',
+    'lawyer', 'attorney', 'legal',
+    'beauty_salon', 'spa', 'gym', 'fitness',
+    'consultant', 'accountant', 'insurance', 'realtor',
+    'other', 'retail', 'service', 'education', 'technology',
+  ],
+  sections: [
+    {
+      type: 'HeroMedical',
+      required: true,
+      defaultProps: {
+        badge: 'Uzman Klinik',
+        title: 'Sağlığınız İçin Profesyonel Bakım',
+        description: 'Deneyimli uzman kadromuz ve modern teknolojimizle, güvenilir ve konforlu sağlık hizmetleri sunuyoruz. Her hastaya özel tedavi yaklaşımı.',
+        primaryButtonText: 'Randevu Al',
+        primaryButtonLink: '#appointment',
+        secondaryButtonText: 'Hizmetlerimiz',
+        secondaryButtonLink: '#services',
+        image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80',
+        floatingBadge: 'Ücretsiz İlk Muayene',
+        stat1Value: '12K+',
+        stat1Label: 'Mutlu Hasta',
+        stat2Value: '%95',
+        stat2Label: 'Memnuniyet',
+        stat3Value: '20+',
+        stat3Label: 'Yıl Deneyim',
+        features: ['Modern Ekipman', 'Uzman Kadro', '7/24 Destek'],
+      },
+    },
+    {
+      type: 'ServicesGrid',
+      defaultProps: {
+        subtitle: 'Hizmetlerimiz',
+        title: 'Size Nasıl Yardımcı Olabiliriz?',
+        description: 'Uzman kadromuz ve ileri teknolojimizle kapsamlı hizmetler sunuyoruz.',
+        services: [
+          { icon: 'Stethoscope', title: 'Genel Muayene', description: 'Kapsamlı sağlık değerlendirmesi ve önleyici bakım hizmetleri.' },
+          { icon: 'Heart', title: 'Uzman Konsültasyon', description: 'Alanında uzman doktorlarımızla birebir konsültasyon imkanı.' },
+          { icon: 'Shield', title: 'Koruyucu Sağlık', description: 'Erken teşhis ve önleyici tedbirlerle sağlığınızı koruyun.' },
+          { icon: 'Zap', title: 'Acil Hizmetler', description: 'Acil durumlarda hızlı ve etkili müdahale için 7/24 hizmet.' },
+          { icon: 'FileText', title: 'Lab & Tahlil', description: 'Gelişmiş laboratuvar altyapımızla hızlı ve güvenilir sonuçlar.' },
+          { icon: 'Users', title: 'Aile Sağlığı', description: 'Tüm aile bireylerini kapsayan bütünsel sağlık yaklaşımı.' },
+        ],
+      },
+    },
+    {
+      type: 'StatisticsCounter',
+      defaultProps: {
+        title: 'Rakamlarla Kliniğimiz',
+        subtitle: 'Güven ve Deneyim',
+        stat1Value: '12.000+',
+        stat1Label: 'Mutlu Hasta',
+        stat2Value: '%95',
+        stat2Label: 'Memnuniyet Oranı',
+        stat3Value: '20+',
+        stat3Label: 'Yıl Deneyim',
+        stat4Value: '15+',
+        stat4Label: 'Uzman Hekim',
+      },
+    },
+    {
+      type: 'AboutSection',
+      defaultProps: {
+        sectionTitle: 'Hakkımızda',
+        sectionSubtitle: 'Bizi Tanıyın',
+        description: '20 yılı aşkın deneyimimizle, en son teknolojiyi kullanarak hastalarımıza konforlu ve güvenilir tedavi sunuyoruz. Uzman kadromuz, her hastaya özel tedavi planları oluşturur ve sağlıklı bir yaşam için yanınızda olur.',
+        image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=800&q=80',
+      },
+    },
+    {
+      type: 'TestimonialsCarousel',
+      defaultProps: {
+        sectionTitle: 'Hastalarımız Ne Diyor?',
+        sectionSubtitle: 'Değerlendirmeler',
+        testimonials: [
+          { name: 'Ayşe Yıldız', role: 'Hasta', content: 'Çok profesyonel ve ilgili bir ekip. Tedavim mükemmel sonuçlandı, kliniği herkese tavsiye ederim.', avatar: '' },
+          { name: 'Mehmet Kaya', role: 'Hasta', content: 'Randevu sürecinden tedaviye kadar her şey çok organize ve sorunsuzdu. Teşekkürler.', avatar: '' },
+          { name: 'Fatma Demir', role: 'Hasta', content: 'Doktorlar sorularımı sabırla cevapladı ve en iyi tedavi seçeneğini birlikte belirledik.', avatar: '' },
+        ],
+      },
+    },
+    {
+      type: 'FAQAccordion',
+      defaultProps: {
+        sectionTitle: 'Sıkça Sorulan Sorular',
+        items: [
+          { question: 'İlk muayene ücretsiz mi?', answer: 'Evet, yeni hastalarımız için ilk muayene ücretsizdir. Randevu almak için bize ulaşabilirsiniz.' },
+          { question: 'Randevu nasıl alabilirim?', answer: 'Web sitemiz üzerinden online randevu alabilir, telefon veya WhatsApp ile iletişime geçebilirsiniz.' },
+          { question: 'Sigortam geçerli mi?', answer: 'SGK ve özel sağlık sigortalarının büyük bölümüyle anlaşmalıyız. Detaylar için kliniğimizi arayın.' },
+          { question: 'Acil durumda ne yapmalıyım?', answer: '7/24 acil hattımız üzerinden bize ulaşabilir ya da en yakın acil servise başvurabilirsiniz.' },
+        ],
+      },
+    },
+    {
+      type: 'AppointmentBooking',
+      defaultProps: {
+        sectionTitle: 'Online Randevu',
+        sectionSubtitle: 'Hemen Başlayın',
+        sectionDescription: 'Birkaç adımda kolayca randevunuzu oluşturun.',
+        submitButtonText: 'Randevu Al',
+        successMessage: 'Randevunuz başarıyla oluşturuldu!',
+      },
+    },
+    {
+      type: 'CTABanner',
+      defaultProps: {
+        title: 'Sağlıklı Bir Yaşam İçin İlk Adımı Atın',
+        description: 'İlk muayeneniz ücretsiz! Uzman ekibimizle tanışmak için hemen randevu alın.',
+        buttonText: 'Randevu Al',
+        buttonLink: '#appointment',
+      },
+    },
+    {
+      type: 'ContactForm',
+      defaultProps: {
+        sectionTitle: 'İletişim',
+        sectionSubtitle: 'Bize Ulaşın',
+        sectionDescription: 'Sorularınız için bize yazın, en kısa sürede dönüş yapalım.',
+        submitButtonText: 'Mesaj Gönder',
+      },
+    },
+  ],
+};
+
 // ─── All Definitions ─────────────────────────────────────────────
 
 export const allDefinitions: TemplateDefinition[] = [
+  medcarePro,
   specialtyCafe,
   dentalClinic,
   restaurantElegant,

@@ -58,21 +58,27 @@ export function getTemplate(templateId: string): any {
   return null;
 }
 
-// Auto-select best template — now always returns specialty-cafe
+// Auto-select best template based on sector
 export function selectTemplate(
   profession: string,
   _tone?: string
 ): string {
-  return 'specialty-cafe';
+  const lower = (profession || '').toLowerCase();
+  if (['cafe', 'coffee', 'bakery', 'patisserie'].some(k => lower.includes(k))) return 'specialty-cafe';
+  if (['restaurant', 'bistro', 'fine_dining', 'steakhouse', 'seafood'].some(k => lower.includes(k))) return 'restaurant-elegant';
+  if (['hotel', 'resort', 'hostel', 'motel', 'apart'].some(k => lower.includes(k))) return 'hotel-luxury';
+  if (['developer', 'engineer', 'freelancer', 'architect', 'designer', 'creative', 'technology'].some(k => lower.includes(k))) return 'engineer-portfolio';
+  // For all other sectors (doctor, lawyer, dentist, gym, beauty, etc.) — MedCare Pro
+  return 'medcare-pro';
 }
 
 export type { TemplateConfig };
 export type { TemplateDefinition };
+
+export const DEFAULT_TEMPLATE_ID = 'medcare-pro';
 
 const DIRECT_RENDER_TEMPLATES = new Set<string>();
 
 export function isComponentTemplate(templateId: string): boolean {
   return DIRECT_RENDER_TEMPLATES.has(templateId);
 }
-
-export const DEFAULT_TEMPLATE_ID = 'specialty-cafe';

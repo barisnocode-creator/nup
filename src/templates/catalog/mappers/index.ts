@@ -31,7 +31,7 @@ function register(types: string[], fn: MapperFn, sectors: string[]) {
 
 // Hero variants
 register(
-  ['HeroCafe', 'HeroDental', 'HeroRestaurant', 'HeroHotel', 'HeroPortfolio', 'HeroCentered', 'HeroSplit', 'HeroOverlay'],
+  ['HeroCafe', 'HeroDental', 'HeroRestaurant', 'HeroHotel', 'HeroPortfolio', 'HeroCentered', 'HeroSplit', 'HeroOverlay', 'HeroMedical'],
   mapHeroSection,
   heroSectors
 );

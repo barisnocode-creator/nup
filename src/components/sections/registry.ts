@@ -1,6 +1,7 @@
 import type { SectionComponentProps } from './types';
 import { HeroCentered } from './HeroCentered';
 import { HeroSplit } from './HeroSplit';
+import { HeroMedical } from './HeroMedical';
 // Addable sections
 import { AppointmentSection } from './addable/AppointmentSection';
 import { FAQSection as AddableFAQSection } from './addable/FAQSection';
@@ -54,6 +55,8 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'hero-centered': HeroCentered,
   'HeroSplit': HeroSplit,
   'hero-split': HeroSplit,
+  'HeroMedical': HeroMedical,
+  'hero-medical': HeroMedical,
   'HeroOverlay': HeroOverlay,
   'hero-overlay': HeroOverlay,
   'HeroCafe': HeroCafe,
@@ -145,6 +148,7 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'hero-centered', label: 'Hero - Ortalanmış', category: 'hero' },
   { type: 'hero-split', label: 'Hero - İki Kolon', category: 'hero' },
   { type: 'hero-overlay', label: 'Hero - Overlay', category: 'hero' },
+  { type: 'hero-medical', label: 'Hero - MedCare Pro', category: 'hero' },
   { type: 'hero-cafe', label: 'Hero - Cafe', category: 'hero' },
   { type: 'hero-dental', label: 'Hero - Dental', category: 'hero' },
   { type: 'hero-restaurant', label: 'Hero - Restoran', category: 'hero' },
