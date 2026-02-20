@@ -18,15 +18,15 @@ const ctaTitleMap: Record<string, string> = {
 };
 
 const ctaDescMap: Record<string, string> = {
-  doctor: 'İlk muayeneniz ücretsiz. Randevunuzu hemen alın ve sağlığınızı güvence altına alın.',
-  dentist: 'İlk muayeneniz ücretsiz! Sağlıklı gülüşünüz için hemen randevu alın.',
-  lawyer: 'İlk danışmanız tamamen ücretsiz. Haklarınızı korumak için hemen iletişime geçin.',
+  doctor: 'Randevunuzu hemen alın ve sağlığınızı güvence altına alın.',
+  dentist: 'Sağlıklı gülüşünüz için hemen randevu alın.',
+  lawyer: 'Haklarınızı korumak için hemen iletişime geçin.',
   restaurant: 'Özel günleriniz için masanızı ayırtın. Unutulmaz bir akşam sizi bekliyor.',
   cafe: 'Özel blendlerimizi ve taze pastalarımızı keşfedin. Sizi bekliyoruz!',
   hotel: 'Erken rezervasyon fırsatlarından yararlanın. En uygun fiyatları kaçırmayın.',
   beauty_salon: 'Randevunuzu alın ve profesyonel bakım ile en iyi halinize ulaşın.',
-  gym: 'İlk ders ücretsiz! Fitness hedeflerinize ulaşmak için hemen başlayın.',
-  veterinary: 'Dostunuzun sağlığı için randevunuzu alın. İlk muayene ücretsizdir.',
+  gym: 'Fitness hedeflerinize ulaşmak için hemen başlayın.',
+  veterinary: 'Dostunuzun sağlığı için hemen randevu alın.',
   pharmacy: 'Sağlık sorularınız için uzman eczacılarımıza danışın.',
 };
 
