@@ -80,11 +80,26 @@ export function mapFaqSection(
   const overrides: Record<string, any> = {};
   const sectorKey = projectData.sector?.toLowerCase().replace(/[\s-]/g, '_') || '';
 
+  // sectionTitle: generatedContent yoksa sektöre uygun başlık
+  if (sectionProps.sectionTitle !== undefined && !sectionProps.sectionTitle) {
+    overrides.sectionTitle = 'Sıkça Sorulan Sorular';
+  }
+
+  // Önce generatedContent FAQ'larına bak
+  const gcFaqs = (projectData as any)?.generatedContent?.pages?.faq?.items;
+  if (Array.isArray(gcFaqs) && gcFaqs.length > 0) {
+    overrides.items = gcFaqs.slice(0, 5).map((f: any) => ({
+      question: f.question || f.q || '',
+      answer: f.answer || f.a || '',
+    }));
+    return { ...sectionProps, ...overrides };
+  }
+
+  // sectorProfile FAQ
   const faqItems = faqMap[sectorKey];
   if (faqItems) {
     overrides.items = faqItems;
   } else {
-    // Try partial match
     for (const [key, items] of Object.entries(faqMap)) {
       if (sectorKey.includes(key) || key.includes(sectorKey)) {
         overrides.items = items;
