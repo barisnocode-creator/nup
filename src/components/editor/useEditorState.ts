@@ -3,6 +3,8 @@ import type { SiteSection, SiteTheme } from '@/components/sections/types';
 import { getCatalogTemplate, getCatalogTheme } from '@/templates/catalog';
 import { mapContentToTemplate, type ProjectData } from '@/templates/catalog/contentMapper';
 import { filterIncompatibleSections } from '@/templates/catalog/mappers';
+import { injectImages, injectContactInfo, buildFooterSection } from '@/utils/sectionInjectors';
+
 
 // Map of addable section keys to their section type and default props
 const addableSectionConfig: Record<string, { type: string; defaultProps: Record<string, any> }> = {
@@ -204,6 +206,9 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
     const oldProps: Record<string, Record<string, any>> = {};
     sections.forEach(s => { oldProps[s.type] = s.props || {}; });
 
+    const gc = projectData?.generatedContent;
+    const formData = projectData?.formData;
+
     const newSections: SiteSection[] = mappedSections.map((secDef, i) => {
       const mergedProps = { ...secDef.defaultProps };
       // If old site had same section type, carry over text content
@@ -212,6 +217,11 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
         for (const key of ['title', 'subtitle', 'description', 'sectionTitle', 'sectionSubtitle', 'sectionDescription', 'phone', 'email', 'address', 'siteName']) {
           if (old[key]) mergedProps[key] = old[key];
         }
+      }
+      // Inject images and contact info from generated content
+      if (gc) {
+        injectImages(secDef.type, mergedProps, gc);
+        injectContactInfo(mergedProps, gc, formData);
       }
       // Inject sector so image pickers can use sector-aware queries
       mergedProps._sector = sector;
@@ -222,6 +232,11 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
         locked: secDef.required,
       };
     });
+
+    // Ensure footer is last section
+    if (!newSections.find(s => s.type === 'AddableSiteFooter') && gc) {
+      newSections.push(buildFooterSection(gc, formData));
+    }
 
     setSections(newSections);
 
