@@ -18,6 +18,8 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Help = lazy(() => import("./pages/Help"));
 const WebsiteDashboard = lazy(() => import("./pages/WebsiteDashboard"));
 const PublicWebsite = lazy(() => import("./pages/PublicWebsite"));
+const PublicBlogPage = lazy(() => import("./pages/PublicBlogPage"));
+const PublicBlogPostPage = lazy(() => import("./pages/PublicBlogPostPage"));
 const Leads = lazy(() => import("./pages/Leads"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -131,6 +133,8 @@ const App = () => (
               />
               {/* Public website route - no auth required */}
               <Route path="/site/:subdomain" element={<PublicWebsite />} />
+              <Route path="/site/:subdomain/blog" element={<PublicBlogPage />} />
+              <Route path="/site/:subdomain/blog/:slug" element={<PublicBlogPostPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
