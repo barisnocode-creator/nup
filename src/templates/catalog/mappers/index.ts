@@ -15,6 +15,7 @@ import { mapTeamSection, compatibleSectors as teamSectors } from './mapTeamSecti
 import { mapTestimonialsSection, compatibleSectors as testimonialsSectors } from './mapTestimonialsSection';
 import { mapAppointmentSection, compatibleSectors as appointmentSectors } from './mapAppointmentSection';
 import { mapFaqSection } from './mapFaqSection';
+import { safeGet } from './utils';
 
 type MapperFn = (props: Record<string, any>, data: ProjectData) => Record<string, any>;
 
@@ -63,6 +64,74 @@ register(['AppointmentBooking', 'DentalBooking'], mapAppointmentSection, appoint
 
 // FAQ
 register(['FAQAccordion'], mapFaqSection, []);
+
+// MenuShowcase — sektöre göre menu item'larını Türkçeleştir + bölüm başlığını ayarla
+register(['MenuShowcase', 'RestaurantMenu'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  const overrides: Record<string, any> = {};
+  if (profile?.sectionLabels?.services && props.subtitle !== undefined) {
+    overrides.subtitle = profile.sectionLabels.services;
+  }
+  if (profile?.sectionLabels?.services && props.title !== undefined && !props.title) {
+    overrides.title = 'Özel Seçkilerimiz';
+  }
+  return { ...props, ...overrides };
+}, []);
+
+// StatisticsCounter — sektöre göre stat etiketleri
+register(['StatisticsCounter'], (props, data) => {
+  const statsByKey: Record<string, Array<{ value: string; label: string; suffix?: string }>> = {
+    doctor: [
+      { value: '15', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '5000', label: 'Mutlu Hasta', suffix: '+' },
+      { value: '98', label: 'Memnuniyet Oranı', suffix: '%' },
+      { value: '12', label: 'Uzman Hekim', suffix: '' },
+    ],
+    dentist: [
+      { value: '10', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '8000', label: 'Tedavi Edilen Hasta', suffix: '+' },
+      { value: '99', label: 'Memnuniyet Oranı', suffix: '%' },
+      { value: '6', label: 'Uzman Hekim', suffix: '' },
+    ],
+    lawyer: [
+      { value: '20', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '2000', label: 'Çözülen Dava', suffix: '+' },
+      { value: '95', label: 'Başarı Oranı', suffix: '%' },
+      { value: '8', label: 'Uzman Avukat', suffix: '' },
+    ],
+    restaurant: [
+      { value: '12', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '500', label: 'Günlük Misafir', suffix: '+' },
+      { value: '150', label: 'Menü Çeşidi', suffix: '+' },
+      { value: '4.9', label: 'Google Puanı', suffix: '★' },
+    ],
+    cafe: [
+      { value: '8', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '300', label: 'Günlük Misafir', suffix: '+' },
+      { value: '50', label: 'Kahve Çeşidi', suffix: '+' },
+      { value: '4.8', label: 'Google Puanı', suffix: '★' },
+    ],
+    hotel: [
+      { value: '5', label: 'Yıldız', suffix: '★' },
+      { value: '120', label: 'Lüks Oda', suffix: '' },
+      { value: '98', label: 'Doluluk Oranı', suffix: '%' },
+      { value: '25', label: 'Yıllık Deneyim', suffix: '+' },
+    ],
+    engineer: [
+      { value: '10', label: 'Yıllık Deneyim', suffix: '+' },
+      { value: '200', label: 'Tamamlanan Proje', suffix: '+' },
+      { value: '50', label: 'Mutlu Müşteri', suffix: '+' },
+      { value: '5', label: 'Teknoloji Alanı', suffix: '+' },
+    ],
+  };
+
+  const sectorKey = data.sector?.toLowerCase().replace(/[\s-]/g, '_') || '';
+  const stats = statsByKey[sectorKey];
+  if (stats && Array.isArray(props.stats)) {
+    return { ...props, stats };
+  }
+  return props;
+}, []);
 
 // ─── Sector-incompatible section definitions ─────────────────────
 // Key = section type, Value = list of sectors where this section IS compatible.
