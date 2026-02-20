@@ -56,25 +56,22 @@ function buildThemeCssVars(theme: SiteTheme): string {
   };
   const vars: Record<string, string> = {};
   for (const [key, fallback] of Object.entries(defaultColors)) {
+    // Use the stored color directly (hex or hsl) — no conversion needed
     vars[`--${key}`] = colors[key] || fallback;
   }
   return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join("; ");
 }
 
 // ── Section Renderers ──
-
-function isBase64Image(str: string): boolean {
-  if (!str) return false;
-  return str.startsWith("data:image/") || (str.length > 500 && /^[A-Za-z0-9+/=]+$/.test(str.substring(0, 100)));
-}
+// NOTE: isBase64Image removed — all image URLs are passed through directly.
+// Supabase Storage always returns https:// URLs, so no filtering needed.
 
 function renderHeroCentered(s: SiteSection): string {
   const p = s.props;
-  const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = (p.backgroundImage as string) || "";
   const bgStyle = bg
     ? `background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('${escapeHtml(bg)}') center/cover no-repeat`
-    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, black), color-mix(in srgb, var(--primary) 40%, black))`;
+    : `background:linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 40%, black))`;
   return `<section class="relative min-h-[80vh] flex items-center justify-center text-center text-white" style="${bgStyle}">
   <div class="max-w-3xl mx-auto px-6 py-20">
     <h1 class="text-4xl md:text-5xl font-bold mb-4 font-heading-dynamic">${escapeHtml(p.title as string)}</h1>
@@ -108,8 +105,7 @@ function renderStatisticsCounter(s: SiteSection): string {
 
 function renderAboutSection(s: SiteSection): string {
   const p = s.props;
-  const rawImg = p.image as string || "";
-  const img = isBase64Image(rawImg) ? "" : rawImg;
+  const img = (p.image as string) || "";
   const features = (p.features as string || "").split("\n").filter(Boolean);
   const featuresHtml = features.map(f => `<li class="flex items-center gap-2"><span style="color:var(--primary)">✓</span> ${escapeHtml(f)}</li>`).join("");
   const isRight = (p.imagePosition as string) === "right";
@@ -124,7 +120,7 @@ function renderAboutSection(s: SiteSection): string {
         ${featuresHtml ? `<ul class="space-y-2">${featuresHtml}</ul>` : ""}
       </div>
       <div class="${isRight ? "order-2" : "order-1 md:order-2"}">
-        <img src="${escapeHtml(img)}" alt="${escapeHtml(p.title as string)}" class="rounded-xl shadow-lg w-full object-cover aspect-[4/3]" />
+        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.title as string)}" class="rounded-xl shadow-lg w-full object-cover aspect-[4/3]" />` : `<div class="rounded-xl w-full aspect-[4/3] flex items-center justify-center text-6xl" style="background:var(--muted)">📖</div>`}
       </div>
     </div>
   </div>
@@ -269,11 +265,10 @@ function renderContactForm(s: SiteSection, projectId?: string): string {
 
 function renderCTABanner(s: SiteSection): string {
   const p = s.props;
-  const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = (p.backgroundImage as string) || "";
   const bgStyle = bg
     ? `background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),url('${escapeHtml(bg)}') center/cover no-repeat`
-    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 80%, black), color-mix(in srgb, var(--primary) 35%, black))`;
+    : `background:linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 35%, black))`;
   return `<section class="relative py-20 text-white text-center" style="${bgStyle}">
   <div class="max-w-3xl mx-auto px-6">
     <h2 class="text-3xl md:text-4xl font-bold mb-4 font-heading-dynamic">${escapeHtml(p.title as string)}</h2>
@@ -461,8 +456,7 @@ function renderMenuShowcase(s: SiteSection): string {
   const p = s.props;
   const items = (p.items as Array<{ name: string; description?: string; price?: string; image?: string; category?: string }>) || [];
   const cards = items.map(item => {
-    const rawImg = item.image || "";
-    const img = isBase64Image(rawImg) ? "" : rawImg;
+    const img = item.image || "";
     return `<div class="rounded-xl overflow-hidden shadow-md hover:shadow-lg transition" style="background:var(--card)">
       ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(item.name)}" class="w-full h-48 object-cover" />` : `<div class="w-full h-48 flex items-center justify-center text-4xl" style="background:var(--muted)">☕</div>`}
       <div class="p-4">
@@ -485,7 +479,7 @@ function renderMenuShowcase(s: SiteSection): string {
 function renderCafeStory(s: SiteSection): string {
   const p = s.props;
   const rawImg = p.image as string || "";
-  const img = isBase64Image(rawImg) ? "" : rawImg;
+  const img = rawImg;
   const features = (p.features as string || "").split("\n").filter(Boolean);
   const featsHtml = features.map(f => `<li class="flex items-center gap-2"><span style="color:var(--primary)">✓</span> ${escapeHtml(f)}</li>`).join("");
   return `<section class="py-20" style="background:var(--muted)">
@@ -510,11 +504,11 @@ function renderCafeGallery(s: SiteSection): string {
   const images: string[] = [];
   for (let i = 1; i <= 6; i++) {
     const img = p[`image${i}`] as string;
-    if (img && !isBase64Image(img)) images.push(img);
+    if (img) images.push(img);
   }
   if (!images.length) {
     const imgArr = p.images as string[];
-    if (Array.isArray(imgArr)) imgArr.forEach(img => { if (!isBase64Image(img)) images.push(img); });
+    if (Array.isArray(imgArr)) imgArr.forEach(img => { if (img) images.push(img); });
   }
   const galleryHtml = images.map(src => `<img src="${escapeHtml(src)}" alt="Galeri" class="rounded-xl w-full aspect-square object-cover hover:scale-105 transition duration-300" />`).join("");
   return `<section class="py-20" style="background:var(--background)">
@@ -529,7 +523,7 @@ function renderCafeGallery(s: SiteSection): string {
 function renderChefShowcase(s: SiteSection): string {
   const p = s.props;
   const rawImg = p.chefImage as string || p.image as string || "";
-  const img = isBase64Image(rawImg) ? "" : rawImg;
+  const img = rawImg;
   const specialties = (p.specialties as string || "").split("\n").filter(Boolean);
   const specsHtml = specialties.map(sp => `<span class="px-3 py-1 rounded-full text-sm" style="background:var(--primary);color:var(--primary-foreground)">${escapeHtml(sp)}</span>`).join("");
   return `<section class="py-20" style="background:var(--muted)">
@@ -581,7 +575,7 @@ function renderRoomShowcase(s: SiteSection): string {
   const rooms = (p.rooms as Array<{ name: string; description?: string; price?: string; image?: string; features?: string }>) || [];
   const cards = rooms.map(room => {
     const rawImg = room.image || "";
-    const img = isBase64Image(rawImg) ? "" : rawImg;
+    const img = rawImg;
     const feats = (room.features || "").split("\n").filter(Boolean);
     const featsHtml = feats.map(f => `<span class="text-xs px-2 py-1 rounded-full" style="background:var(--muted);color:var(--muted-foreground)">${escapeHtml(f)}</span>`).join("");
     return `<div class="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition" style="background:var(--card)">
@@ -650,7 +644,7 @@ function renderProjectShowcase(s: SiteSection): string {
   const projects = (p.projects as Array<{ title: string; description?: string; image?: string; category?: string; link?: string }>) || [];
   const cards = projects.map(proj => {
     const rawImg = proj.image || "";
-    const img = isBase64Image(rawImg) ? "" : rawImg;
+    const img = rawImg;
     return `<div class="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition group" style="background:var(--card)">
       ${img ? `<div class="overflow-hidden"><img src="${escapeHtml(img)}" alt="${escapeHtml(proj.title)}" class="w-full h-52 object-cover group-hover:scale-105 transition duration-300" /></div>` : `<div class="w-full h-52 flex items-center justify-center text-4xl" style="background:var(--muted)">📁</div>`}
       <div class="p-6">
@@ -674,7 +668,7 @@ function renderDentalServices(s: SiteSection): string {
   const services = (p.services as Array<{ title: string; description?: string; icon?: string; image?: string }>) || [];
   const cards = services.map(sv => {
     const rawImg = sv.image || "";
-    const img = isBase64Image(rawImg) ? "" : rawImg;
+    const img = rawImg;
     return `<div class="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition" style="background:var(--card)">
       ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(sv.title)}" class="w-full h-48 object-cover" />` : `<div class="w-full h-48 flex items-center justify-center text-5xl" style="background:var(--muted)">${escapeHtml(sv.icon || "🦷")}</div>`}
       <div class="p-6">
@@ -742,7 +736,7 @@ function renderAddableBlog(s: SiteSection): string {
     const category = p[`post${i}Category`] as string;
     const image = p[`post${i}Image`] as string;
     const date = p[`post${i}Date`] as string;
-    if (title) posts.push({ title, excerpt, category, image: isBase64Image(image || "") ? "" : (image || ""), date });
+    if (title) posts.push({ title, excerpt, category, image: image || "", date });
   }
   const cards = posts.map(post => `
     <div class="rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition" style="background:var(--card)">
@@ -803,7 +797,7 @@ function renderHeroCafe(s: SiteSection): string {
 function renderHeroDental(s: SiteSection): string {
   const p = s.props;
   const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = rawBg;
   const bgStyle = bg
     ? `background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.85)),url('${escapeHtml(bg)}') center/cover no-repeat`
     : `background:linear-gradient(135deg, #e0f2fe, #f0fdf4)`;
@@ -819,7 +813,7 @@ function renderHeroDental(s: SiteSection): string {
       </div>
     </div>
     <div class="hidden md:flex justify-center">
-      ${p.image && !isBase64Image(p.image as string) ? `<img src="${escapeHtml(p.image as string)}" alt="${escapeHtml(p.title as string)}" class="rounded-2xl shadow-2xl max-h-96 object-cover" />` : `<div class="w-64 h-64 rounded-full flex items-center justify-center text-8xl" style="background:var(--muted)">🦷</div>`}
+      ${p.image ? `<img src="${escapeHtml(p.image as string)}" alt="${escapeHtml(p.title as string)}" class="rounded-2xl shadow-2xl max-h-96 object-cover" />` : `<div class="w-64 h-64 rounded-full flex items-center justify-center text-8xl" style="background:var(--muted)">🦷</div>`}
     </div>
   </div>
 </section>`;
@@ -828,7 +822,7 @@ function renderHeroDental(s: SiteSection): string {
 function renderHeroRestaurant(s: SiteSection): string {
   const p = s.props;
   const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = rawBg;
   const bgStyle = bg
     ? `background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),url('${escapeHtml(bg)}') center/cover no-repeat fixed`
     : `background:linear-gradient(to bottom, #1a0a00, #3d1a00)`;
@@ -848,7 +842,7 @@ function renderHeroRestaurant(s: SiteSection): string {
 function renderHeroHotel(s: SiteSection): string {
   const p = s.props;
   const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = rawBg;
   const bgStyle = bg
     ? `background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url('${escapeHtml(bg)}') center/cover no-repeat`
     : `background:linear-gradient(135deg, #1e3a5f, #0f2847)`;
@@ -879,7 +873,7 @@ function renderHeroPortfolio(s: SiteSection): string {
       </div>
     </div>
     <div class="flex justify-center">
-      ${p.image && !isBase64Image(p.image as string) ? `<img src="${escapeHtml(p.image as string)}" alt="${escapeHtml(p.title as string)}" class="rounded-2xl shadow-2xl w-full max-w-md object-cover aspect-square" />` : `<div class="w-72 h-72 rounded-full flex items-center justify-center text-8xl" style="background:var(--muted)">👤</div>`}
+      ${p.image ? `<img src="${escapeHtml(p.image as string)}" alt="${escapeHtml(p.title as string)}" class="rounded-2xl shadow-2xl w-full max-w-md object-cover aspect-square" />` : `<div class="w-72 h-72 rounded-full flex items-center justify-center text-8xl" style="background:var(--muted)">👤</div>`}
     </div>
   </div>
 </section>`;
@@ -912,7 +906,7 @@ function renderPilatesFooter(name: string, tagline: string): string {
 function renderPilatesHero(s: SiteSection): string {
   const p = s.props;
   const rawBg = p.backgroundImage as string || "";
-  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bg = rawBg;
   const bgStyle = bg
     ? `background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),url('${escapeHtml(bg)}') center/cover no-repeat`
     : `background:linear-gradient(135deg,#667eea,#764ba2)`;
@@ -1370,7 +1364,6 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        netlifyUrl: vercelUrl,       // Keep key name for backwards compat with PublishModal
         vercelUrl,
         vercelCustomDomain,
         projectId: vercelProjectId,
