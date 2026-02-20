@@ -4,6 +4,8 @@ import { getSectionComponent } from '@/components/sections/registry';
 import type { SiteSection } from '@/components/sections/types';
 import { cn } from '@/lib/utils';
 import { SiteFooter } from '@/components/sections/addable/SiteFooter';
+import { SiteHeader } from '@/components/sections/addable/SiteHeader';
+
 
 const sectionTypeLabels: Record<string, string> = {
   'hero-centered': 'Hero', 'hero-split': 'Hero', 'hero-overlay': 'Hero',
@@ -52,12 +54,22 @@ export function EditorCanvas({
 
   const maxWidth = deviceWidths[previewDevice];
 
+  const hasHeader = sections.some(s => s.type === 'AddableSiteHeader');
+
   return (
     <div className="flex-1 overflow-auto bg-gray-100 dark:bg-zinc-900" onClick={handleCanvasClick}>
       <div
         className={cn('min-h-screen mx-auto transition-all duration-300 bg-background shadow-lg', previewDevice !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700')}
         style={{ maxWidth }}
       >
+        {/* Auto-inject site header if not present */}
+        {!hasHeader && (
+          <SiteHeader
+            section={{ id: '__header__', type: 'AddableSiteHeader', props: {} }}
+            sections={sections}
+          />
+        )}
+
         {sections.map((section, index) => {
           const Component = getSectionComponent(section.type);
           const isSelected = selectedSectionId === section.id;

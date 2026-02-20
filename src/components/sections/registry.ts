@@ -21,6 +21,7 @@ import { BlogSection } from './addable/BlogSection';
 import { TeamGridSection } from './addable/TeamGridSection';
 import { PromotionBannerSection } from './addable/PromotionBannerSection';
 import { SiteFooter } from './addable/SiteFooter';
+import { SiteHeader } from './addable/SiteHeader';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroCafe } from './HeroCafe';
 import { ServicesGrid } from './ServicesGrid';
@@ -137,6 +138,7 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'AddableVideo': VideoSection,
   'AddableBlog': BlogSection,
   'AddableSiteFooter': SiteFooter,
+  'AddableSiteHeader': SiteHeader as any,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {

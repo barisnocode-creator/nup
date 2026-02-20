@@ -33,6 +33,8 @@ export function EditorToolbar({
     { id: 'mobile' as const, icon: Smartphone, title: 'Mobil' },
   ];
 
+
+
   return (
     <div className="h-14 shrink-0 flex items-center border-b border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 z-50 px-3 shadow-sm">
       {/* Left */}
@@ -40,7 +42,7 @@ export function EditorToolbar({
         <button onClick={() => navigate('/dashboard')} className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200 active:scale-95" title="Dashboard'a dön">
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[160px]">{projectName}</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[80px] sm:max-w-[160px]">{projectName}</span>
         {activeTemplateName && (
           <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-[10px] font-medium text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
             {activeTemplateName}
@@ -55,28 +57,28 @@ export function EditorToolbar({
       </div>
 
       {/* Center: Edit/Preview toggle + Device toggler */}
-      <div className="flex-1 flex items-center justify-center gap-3">
+      <div className="flex-1 flex items-center justify-center gap-2">
         <div className="flex items-center gap-0.5 p-1 rounded-xl bg-gray-100 dark:bg-zinc-800">
           <button
             onClick={() => !isEditing && onToggleEdit()}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+            className={cn('flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
               isEditing ? 'text-gray-900 dark:text-white bg-white dark:bg-zinc-700 shadow-sm border border-gray-200 dark:border-zinc-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
             )}
           >
-            <Pencil className="w-3.5 h-3.5" /> Düzenle
+            <Pencil className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Düzenle</span>
           </button>
           <button
             onClick={() => isEditing && onToggleEdit()}
-            className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
+            className={cn('flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200',
               !isEditing ? 'text-gray-900 dark:text-white bg-white dark:bg-zinc-700 shadow-sm border border-gray-200 dark:border-zinc-600' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
             )}
           >
-            <Eye className="w-3.5 h-3.5" /> Önizleme
+            <Eye className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Önizleme</span>
           </button>
         </div>
 
-        {/* Device Toggler */}
-        <div className="flex items-center gap-0.5 p-1 rounded-xl bg-gray-100 dark:bg-zinc-800">
+        {/* Device Toggler - hidden on mobile */}
+        <div className="hidden sm:flex items-center gap-0.5 p-1 rounded-xl bg-gray-100 dark:bg-zinc-800">
           {devices.map(({ id, icon: Icon, title }) => (
             <button
               key={id}
