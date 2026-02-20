@@ -21,7 +21,15 @@ const addableSectionConfig: Record<string, { type: string; defaultProps: Record<
   petRegistration: { type: 'AddablePetRegistration', defaultProps: {} },
   callUs: { type: 'AddableCallUs', defaultProps: {} },
   socialProof: { type: 'AddableSocialProof', defaultProps: {} },
-  teamGrid: { type: 'AddableTeamGrid', defaultProps: {} },
+  teamGrid: { type: 'AddableTeamGrid', defaultProps: {
+    title: 'Uzman Ekibimiz',
+    subtitle: 'Alanında uzman, deneyimli kadromuzla hizmetinizdeyiz.',
+    members: [
+      { name: 'Dr. Ayşe Kaya', role: 'Uzman', bio: 'Alanında 15 yıllık deneyimiyle en iyi hizmeti sunmaktadır.', image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face' },
+      { name: 'Mehmet Yıldız', role: 'Kıdemli Uzman', bio: '10 yıllık tecrübesiyle ekibimizin değerli üyesi.', image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face' },
+      { name: 'Zeynep Demir', role: 'Uzman', bio: 'Uluslararası sertifikalı, müşteri memnuniyeti odaklı çalışmaktadır.', image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop&crop=face' },
+    ],
+  }},
   promotionBanner: { type: 'AddablePromotionBanner', defaultProps: {} },
   blog: {
     type: 'AddableBlog',

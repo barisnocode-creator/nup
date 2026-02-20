@@ -412,7 +412,21 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
   onUpdateProps: (props: Record<string, any>) => void;
   onOpenImagePicker: (field: string) => void;
 }) {
-  const props = section.props || {};
+  const rawProps = section.props || {};
+
+  // AddableTeamGrid için members yoksa default inject et
+  const props = (section.type === 'AddableTeamGrid' && !rawProps.members)
+    ? {
+        ...rawProps,
+        title: rawProps.title || 'Uzman Ekibimiz',
+        subtitle: rawProps.subtitle || 'Alanında uzman, deneyimli kadromuzla hizmetinizdeyiz.',
+        members: [
+          { name: 'Dr. Ayşe Kaya', role: 'Uzman', bio: 'Alanında 15 yıllık deneyimiyle en iyi hizmeti sunmaktadır.', image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop&crop=face' },
+          { name: 'Mehmet Yıldız', role: 'Kıdemli Uzman', bio: '10 yıllık tecrübesiyle ekibimizin değerli üyesi.', image: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop&crop=face' },
+          { name: 'Zeynep Demir', role: 'Uzman', bio: 'Uluslararası sertifikalı, müşteri memnuniyeti odaklı çalışmaktadır.', image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop&crop=face' },
+        ],
+      }
+    : rawProps;
 
   // Blog bölümü için özel editör kullan
   if (section.type === 'AddableBlog') {
