@@ -3,7 +3,7 @@ import { Plus, ArrowUp, ArrowDown, Trash2, Copy } from 'lucide-react';
 import { getSectionComponent } from '@/components/sections/registry';
 import type { SiteSection } from '@/components/sections/types';
 import { cn } from '@/lib/utils';
-import { AddableSectionsPanel } from './AddableSectionsPanel';
+import { SiteFooter } from '@/components/sections/addable/SiteFooter';
 
 const sectionTypeLabels: Record<string, string> = {
   'hero-centered': 'Hero', 'hero-split': 'Hero', 'hero-overlay': 'Hero',
@@ -108,13 +108,14 @@ export function EditorCanvas({
           </div>
         )}
 
-        {isEditing && onToggleAddableSection && (
-          <AddableSectionsPanel
-            sector={sector}
-            addableSections={addableSections}
-            onToggle={onToggleAddableSection}
-          />
-        )}
+        <SiteFooter
+          section={{
+            id: '__footer__',
+            type: 'AddableSiteFooter',
+            props: {},
+          }}
+          sections={sections}
+        />
       </div>
     </div>
   );
