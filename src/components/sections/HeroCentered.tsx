@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ImageIcon, Plus } from 'lucide-react';
+import { ImageIcon } from 'lucide-react';
 import { heroCenteredTitleSizeMap, resolveStyles } from './styleUtils';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import { getSectorImageQuery } from './sectorImageQueries';
@@ -12,152 +12,114 @@ export function HeroCentered({ section, isEditing, onUpdate }: SectionComponentP
   const sector = props._sector || 'default';
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const image = props.image || '';
+  const image = props.image || props.backgroundImage || '';
 
   return (
-    <section className="relative overflow-hidden bg-background min-h-[680px] flex items-center">
-      {/* Gradient blobs */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
-      <div className="absolute top-20 left-10 w-64 h-64 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-20 right-10 w-80 h-80 bg-accent/8 rounded-full blur-3xl pointer-events-none" />
+    <section
+      className="relative min-h-[700px] flex items-center justify-center overflow-hidden group"
+    >
+      {/* Background image or gradient */}
+      {image ? (
+        <>
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${image})` }}
+          />
+          {/* Dark overlay for readability */}
+          <div className="absolute inset-0 bg-foreground/55" />
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/10" />
+          <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
+        </>
+      )}
 
-      <div className="relative container mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Edit background image button */}
+      {isEditing && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-background/90 text-foreground text-sm font-medium shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        >
+          <ImageIcon className="w-4 h-4" />
+          {image ? 'Arka Planı Değiştir' : 'Arka Plan Ekle'}
+        </button>
+      )}
 
-          {/* Sol: Metin */}
-          <div className="flex flex-col items-start">
-            {props.subtitle && (
-              <motion.span
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.0 }}
-                className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6 font-body-dynamic"
-              >
-                {props.subtitle}
-              </motion.span>
-            )}
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-6 py-24 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.0 }}
+        >
+          {props.subtitle && (
+            <span className={`inline-block px-4 py-2 ${image ? 'bg-white/20 text-white backdrop-blur-sm' : 'bg-primary/10 text-primary'} rounded-full text-sm font-medium mb-6 font-body-dynamic`}>
+              {props.subtitle}
+            </span>
+          )}
+        </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className={`${s.titleSize(heroCenteredTitleSizeMap)} ${s.titleWeight} ${s.titleColor} leading-tight mb-6 font-heading-dynamic`}
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className={`${s.titleSize(heroCenteredTitleSizeMap)} ${s.titleWeight} leading-tight max-w-4xl mx-auto mb-6 font-heading-dynamic ${image ? 'text-white' : s.titleColor}`}
+        >
+          {props.title}
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className={`${s.descSize} max-w-2xl mx-auto mb-10 font-body-dynamic ${image ? 'text-white/85' : s.descColor}`}
+        >
+          {props.description}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.55 }}
+          className="flex flex-wrap items-center justify-center gap-4"
+        >
+          {props.primaryButtonText && (
+            <a
+              href={isEditing ? '#' : props.primaryButtonLink}
+              className="inline-flex items-center px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all duration-300 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-body-dynamic"
             >
-              {props.title}
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className={`${s.descSize} ${s.descColor} mb-10 max-w-lg font-body-dynamic`}
+              {props.primaryButtonText}
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </a>
+          )}
+          {props.secondaryButtonText && (
+            <a
+              href={isEditing ? '#' : props.secondaryButtonLink}
+              className={`inline-flex items-center px-8 py-4 rounded-lg font-medium transition-all duration-300 text-lg font-body-dynamic ${image ? 'border border-white/40 text-white hover:bg-white/10 backdrop-blur-sm' : 'border border-border text-foreground hover:bg-muted'}`}
             >
-              {props.description}
-            </motion.p>
+              {props.secondaryButtonText}
+            </a>
+          )}
+        </motion.div>
+      </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.55 }}
-              className="flex flex-wrap gap-4"
-            >
-              {props.primaryButtonText && (
-                <a
-                  href={isEditing ? '#' : props.primaryButtonLink}
-                  className="inline-flex items-center px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all duration-300 text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-body-dynamic"
-                >
-                  {props.primaryButtonText}
-                  <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </a>
-              )}
-              {props.secondaryButtonText && (
-                <a
-                  href={isEditing ? '#' : props.secondaryButtonLink}
-                  className="inline-flex items-center px-8 py-4 border border-border text-foreground rounded-lg font-medium hover:bg-muted transition-all duration-300 text-lg font-body-dynamic"
-                >
-                  {props.secondaryButtonText}
-                </a>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Sağ: Görsel */}
-          <motion.div
-            initial={{ opacity: 0, x: 40, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.3 }}
-            className="relative group"
-          >
-            <div
-              className={`relative rounded-3xl overflow-hidden aspect-[4/3] bg-muted ${isEditing ? 'cursor-pointer' : ''}`}
-              onClick={() => isEditing && setPickerOpen(true)}
-            >
-              {image ? (
-                <img
-                  src={image}
-                  alt={props.title || ''}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-muted to-muted/50 text-muted-foreground">
-                  {isEditing ? (
-                    <>
-                      <Plus className="w-10 h-10 mb-3 opacity-40" />
-                      <span className="text-sm font-medium opacity-60 font-body-dynamic">Görsel Ekle</span>
-                    </>
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10" />
-                  )}
-                </div>
-              )}
-
-              {/* Hover overlay for editing */}
-              {isEditing && (
-                <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/30 transition-all duration-300 flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center gap-2 text-background">
-                    <ImageIcon className="w-8 h-8" />
-                    <span className="text-sm font-medium font-body-dynamic">Görseli Değiştir</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Floating badge */}
-            {(props.floatingBadge || props.stat1Value) && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="absolute -bottom-4 -left-4 bg-background border border-border rounded-2xl shadow-xl px-5 py-3 flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-primary text-lg">✓</span>
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground font-body-dynamic">
-                    {props.floatingBadge || props.stat1Value}
-                  </p>
-                  <p className="text-xs text-muted-foreground font-body-dynamic">
-                    {props.floatingBadgeSubtext || props.stat1Label || ''}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Decorative ring */}
-            <div className="absolute -top-4 -right-4 w-24 h-24 border-2 border-primary/20 rounded-full pointer-events-none" />
-            <div className="absolute -top-2 -right-2 w-12 h-12 border-2 border-primary/10 rounded-full pointer-events-none" />
-          </motion.div>
-        </div>
+      {/* Scroll indicator */}
+      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 ${image ? 'text-white/60' : 'text-muted-foreground/60'}`}>
+        <span className="text-xs tracking-widest uppercase font-body-dynamic">Keşfet</span>
+        <svg className="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7" />
+        </svg>
       </div>
 
       {isEditing && (
         <PixabayImagePicker
           isOpen={pickerOpen}
           onClose={() => setPickerOpen(false)}
-          onSelect={(url) => { onUpdate?.({ image: url }); setPickerOpen(false); }}
+          onSelect={(url) => { onUpdate?.({ image: url, backgroundImage: url }); setPickerOpen(false); }}
           defaultQuery={getSectorImageQuery('hero', sector)}
         />
       )}
