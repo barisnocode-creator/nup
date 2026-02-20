@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import BlogPostDetailSection from '@/components/sections/addable/BlogPostDetailSection';
+import { useSiteTheme } from '@/hooks/useSiteTheme';
 
 interface BlogPost {
   title: string;
@@ -19,9 +20,11 @@ export default function PublicBlogPostPage() {
   const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [allPosts, setAllPosts] = useState<BlogPost[]>([]);
-  const [siteName, setSiteName] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading2, setLoading2] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  // Apply site theme (colors, fonts, border-radius)
+  const { siteName, loading: themeLoading } = useSiteTheme(subdomain);
 
   useEffect(() => {
     if (!subdomain || !slug) return;
@@ -31,11 +34,10 @@ export default function PublicBlogPostPage() {
       .eq('subdomain', subdomain)
       .single()
       .then(({ data }) => {
-        if (!data) { setNotFound(true); setLoading(false); return; }
-        setSiteName(data.name || '');
+        if (!data) { setNotFound(true); setLoading2(false); return; }
         const sections = (data.site_sections as any[]) || [];
         const blogSection = sections.find((s: any) => s.type === 'AddableBlog');
-        if (!blogSection?.props) { setNotFound(true); setLoading(false); return; }
+        if (!blogSection?.props) { setNotFound(true); setLoading2(false); return; }
         const p = blogSection.props;
         const posts: BlogPost[] = [
           { title: p.post1Title || '', category: p.post1Category || 'Genel', excerpt: p.post1Excerpt || '', image: p.post1Image || '', date: p.post1Date || '', slug: p.post1Slug || 'post-1', content: p.post1Content || '', keywords: p.post1Keywords || '' },
@@ -46,9 +48,11 @@ export default function PublicBlogPostPage() {
         setAllPosts(posts);
         const found = posts.find(po => po.slug === slug);
         if (!found) { setNotFound(true); } else { setPost(found); }
-        setLoading(false);
+        setLoading2(false);
       });
   }, [subdomain, slug]);
+
+  const loading = themeLoading || loading2;
 
   if (loading) {
     return (
@@ -63,10 +67,10 @@ export default function PublicBlogPostPage() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <p className="text-muted-foreground text-lg">Blog yazısı bulunamadı.</p>
         <button
-          onClick={() => navigate(`/site/${subdomain}`)}
+          onClick={() => navigate(`/site/${subdomain}/blog`)}
           className="text-primary hover:underline text-sm"
         >
-          Ana sayfaya dön
+          Bloga dön
         </button>
       </div>
     );
@@ -77,6 +81,7 @@ export default function PublicBlogPostPage() {
       post={post}
       allPosts={allPosts}
       siteName={siteName}
+      subdomain={subdomain}
       onBack={() => navigate(`/site/${subdomain}/blog`)}
     />
   );

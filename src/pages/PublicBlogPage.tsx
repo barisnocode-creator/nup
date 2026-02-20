@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Tag, ArrowRight, BookOpen, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSiteTheme } from '@/hooks/useSiteTheme';
 
 interface BlogPost {
   title: string;
@@ -27,8 +28,10 @@ export default function PublicBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [sectionTitle, setSectionTitle] = useState('Blog & Haberler');
   const [sectionSubtitle, setSectionSubtitle] = useState('Güncel makalelerimizi keşfedin');
-  const [siteName, setSiteName] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading2, setLoading2] = useState(true);
+
+  // Apply site theme (colors, fonts, border-radius)
+  const { siteName, loading: themeLoading } = useSiteTheme(subdomain);
 
   useEffect(() => {
     if (!subdomain) return;
@@ -38,8 +41,7 @@ export default function PublicBlogPage() {
       .eq('subdomain', subdomain)
       .single()
       .then(({ data }) => {
-        if (!data) return;
-        setSiteName(data.name || '');
+        if (!data) { setLoading2(false); return; }
         const sections = (data.site_sections as any[]) || [];
         const blogSection = sections.find((s: any) => s.type === 'AddableBlog');
         if (blogSection?.props) {
@@ -53,9 +55,11 @@ export default function PublicBlogPage() {
             { title: p.post4Title || 'Başarılı Sonuçlar İçin', category: p.post4Category || 'Başarı', excerpt: p.post4Excerpt || '', image: p.post4Image || '', date: p.post4Date || '', slug: p.post4Slug || 'post-4' },
           ]);
         }
-        setLoading(false);
+        setLoading2(false);
       });
   }, [subdomain]);
+
+  const loading = themeLoading || loading2;
 
   if (loading) {
     return (
@@ -67,7 +71,7 @@ export default function PublicBlogPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Simple Nav */}
+      {/* Themed Nav */}
       <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4 flex items-center gap-4">
           <button
@@ -75,10 +79,10 @@ export default function PublicBlogPage() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Ana Sayfaya Dön
+            {siteName || 'Ana Sayfaya Dön'}
           </button>
           <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-semibold text-foreground">Blog</span>
+          <span className="text-sm font-semibold text-primary font-heading-dynamic">Blog</span>
         </div>
       </header>
 
@@ -94,8 +98,8 @@ export default function PublicBlogPage() {
               <BookOpen className="w-4 h-4" />
               Blog
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">{sectionTitle}</h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">{sectionSubtitle}</p>
+            <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 font-heading-dynamic">{sectionTitle}</h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto font-body-dynamic">{sectionSubtitle}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -129,10 +133,10 @@ export default function PublicBlogPage() {
                       <Calendar className="w-3 h-3" />
                       {formatDate(post.date)}
                     </div>
-                    <h2 className="text-base font-bold text-foreground mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                    <h2 className="text-base font-bold text-foreground mb-2 line-clamp-2 leading-snug font-heading-dynamic group-hover:text-primary transition-colors">
                       {post.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed flex-1">
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed font-body-dynamic flex-1">
                       {post.excerpt}
                     </p>
                     <div className="mt-4 pt-4 border-t border-border flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-200">
@@ -146,6 +150,17 @@ export default function PublicBlogPage() {
           </div>
         </div>
       </main>
+
+      {/* Themed footer strip */}
+      <footer className="border-t border-border py-6">
+        <div className="container mx-auto px-6 text-center text-sm text-muted-foreground font-body-dynamic">
+          {siteName && <span className="font-semibold text-foreground">{siteName}</span>}
+          {siteName && ' — '}
+          <a href={`/site/${subdomain}`} className="hover:text-primary transition-colors">Ana Sayfa</a>
+          <span className="mx-2">·</span>
+          <span className="text-primary font-medium">Blog</span>
+        </div>
+      </footer>
     </div>
   );
 }
