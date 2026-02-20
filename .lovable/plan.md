@@ -1,74 +1,93 @@
 
-## Eklenebilir Bölümler — Accordion/Collapsible Tasarım
+## CustomizePanel Renk Düzeltmesi — SaaS UI Tutarlılığı
 
 ### Sorun
-Şu an "Sayfanıza Eklenebilir Bölümler" başlığı altında 8+ toggle düz liste halinde sıralı duruyor. Panel gereksiz yere uzuyor, şık görünmüyor.
 
-### Çözüm
+`CustomizePanel.tsx` içindeki iki buton (`Template Değiştir` ve `Eklenebilir Bölümler`) ile toggle satırları `bg-muted`, `border-border`, `text-foreground`, `hover:bg-accent` gibi **CSS değişkenleri** kullanıyor. Bu değişkenler template'in temasından etkilenerek siyah/koyu renge dönüşüyor.
 
-"Eklenebilir Bölümler" bölümünü tıklanabilir bir **accordion header** haline getirip, içeriği varsayılan olarak kapalı bırakıyoruz. Tıklayınca toggle listesi animasyonlu açılıp kapanıyor. Template Değiştir butonu gibi aynı satırda yer alan compact bir UI tasarımı.
+Diğer bölümler (`Hızlı Tema`, `Renkler`, `Yazı Tipleri`) zaten `bg-white`, `text-gray-500` gibi **sabit Tailwind renkleri** kullanıyor — doğru olan bu.
 
-**Görünüm (kapalı hali):**
-```text
-┌─────────────────────────────────────────────┐
-│  ☰ Eklenebilir Bölümler        [3 aktif] ▼  │
-└─────────────────────────────────────────────┘
+### Değiştirilecek Öğeler
+
+Panelin tamamını SaaS UI renk sistemine (turuncu vurgu + gri/beyaz zemin) sabitlemek için değişkene dayalı her sınıf sabit renkle değiştirilecek:
+
+#### 1. "Template Değiştir" Butonu
+```
+Önce: border-border bg-muted text-foreground hover:bg-accent
+Sonra: border-gray-200 bg-gray-50 text-gray-700 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700
 ```
 
-**Görünüm (açık hali):**
-```text
-┌─────────────────────────────────────────────┐
-│  ☰ Eklenebilir Bölümler        [3 aktif] ▲  │
-├─────────────────────────────────────────────┤
-│  Randevu / Rezervasyon         [ Toggle ]   │
-│  Sık Sorulan Sorular           [ Toggle ]   │
-│  Mesaj Bırak                   [ Toggle ]   │
-│  Çalışma Saatleri              [ Toggle ]   │
-│  📞 Sizi Arayalım              [ Toggle ]   │
-│  ⭐ Sosyal Kanıt               [ Toggle ]   │
-│  👥 Ekibimiz                   [ Toggle ]   │
-│  🎉 Kampanya & Duyuru          [ Toggle ]   │
-│  ─────── Sektörünüze Özel ──────           │
-│  Online Konsültasyon           [ Toggle ]   │
-└─────────────────────────────────────────────┘
+#### 2. "Eklenebilir Bölümler" Accordion Butonu
+```
+Önce: border-border bg-muted text-foreground hover:bg-accent
+Sonra: border-gray-200 bg-gray-50 text-gray-700 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700
 ```
 
-### Detaylar
+#### 3. "Aktif" Badge
+```
+Önce: bg-primary text-primary-foreground  (template'in primary rengi oluyor)
+Sonra: bg-orange-500 text-white  (her zaman turuncu — SaaS marka rengi)
+```
 
-- **Accordion header**: Tek bir buton satırı — ikon, "Eklenebilir Bölümler" etiketi, aktif sayısı badge'i (örn. `3 aktif`), ok ikonu (`ChevronDown`/`ChevronUp`)
-- **Animasyon**: `framer-motion`'ın `AnimatePresence` + `motion.div` ile yukarıdan aşağı smooth açılma (`overflow: hidden`, `height: auto`)
-- **Aktif sayısı**: Kaç bölüm açık olduğunu gösteren küçük badge — kullanıcı paneli kapattığında bile kaç şey aktif olduğunu görür
-- **Sektöre özel bölümler**: Varsa içeride separator ile ayrı bir grup olarak gösterilir (mevcut mantık korunur)
-- **Varsayılan durum**: Kapalı — panel açıldığında listeyi görmeden önce template/tema ayarlarına odaklanılır
-- **useState**: `isOpen` state'i ile kontrol edilir — dışarıdan prop gerekmez
+#### 4. AddableToggleRow — Her Toggle Satırı
+```
+Önce: bg-muted/50 border-border/50 hover:border-border text-foreground
+Sonra: bg-gray-50 border-gray-200 hover:border-gray-300 hover:bg-white text-gray-700
+```
+
+Aktif (checked) toggle satırları için ek vurgu:
+```
+checked=true → bg-orange-50 border-orange-200 text-orange-800
+checked=false → bg-gray-50 border-gray-200 text-gray-700
+```
+
+#### 5. "Sektörünüze Özel" Divider
+```
+Önce: bg-border text-muted-foreground
+Sonra: bg-gray-200 text-gray-400
+```
+
+#### 6. Şablon Section Başlığı
+```
+Önce: text-muted-foreground  (template rengini miras alıyor)
+Sonra: text-gray-400
+```
+
+#### 7. Switch Bileşeni
+`Switch` bileşeni `checked` durumunda `bg-primary` kullanıyor. Bunu SaaS turuncu rengiyle override etmek için toggle satırına özel `data-checked` sınıfı veya Switch'e doğrudan `className` eklenebilir.
+
+### Sonuç Görünüm (Her Template'de Aynı)
+
+```text
+┌─────────────────────────────────────────────────┐
+│  Şablon                                         │
+│  ┌─────────────────────────────────────────┐    │
+│  │ ▦ Template Değiştir          [gri buton]│    │
+│  └─────────────────────────────────────────┘    │
+│                                                 │
+│  ┌─────────────────────────────────────────┐    │
+│  │ ≡ Eklenebilir Bölümler  [3 aktif🟠] ▼  │    │
+│  └─────────────────────────────────────────┘    │
+│  ┌─────────────────────────────────────────┐    │
+│  │ Randevu / Rezervasyon          [ ● ]    │ ← aktif: turuncu zemin
+│  │ Sık Sorulan Sorular            [   ]    │ ← pasif: gri zemin
+│  │ 📞 Sizi Arayalım               [ ● ]    │
+│  │ ───── Sektörünüze Özel ─────           │
+│  │ Online Konsültasyon            [   ]    │
+│  └─────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────┘
+```
+
+- Butonlar: gri zemin, hover'da hafif turuncu vurgu
+- Badge: her zaman `orange-500`
+- Aktif toggle satırı: `orange-50` zemin + `orange-200` kenarlık
+- Pasif toggle satırı: `gray-50` zemin + `gray-200` kenarlık
+- Template temasından **tamamen bağımsız**
 
 ### Değişecek Dosya
 
 | Dosya | İşlem |
 |---|---|
-| `src/components/editor/CustomizePanel.tsx` | **Güncelleme** — Addable Sections bölümü accordion'a dönüştürülür |
+| `src/components/editor/CustomizePanel.tsx` | CSS değişkenleri → sabit Tailwind renkleri |
 
-### Teknik Uygulama
-
-`CustomizePanel.tsx` içinde:
-
-1. `useState<boolean>(false)` → `isSectionsOpen`
-2. `activeCount` hesapla: `Object.values(addableSections).filter(Boolean).length`
-3. Header buton: `LayoutList` ikonu + "Eklenebilir Bölümler" + aktif sayısı badge + `ChevronDown` (rotate 180° açıkken)
-4. `AnimatePresence` + `motion.div` ile toggle listesi animasyonlu aç/kapat:
-
-```text
-initial: { height: 0, opacity: 0 }
-animate: { height: 'auto', opacity: 1 }
-exit:    { height: 0, opacity: 0 }
-transition: duration 0.2s ease
-```
-
-5. İçeride evrensel + sektör toggleları aynı şekilde listelenir
-
-### Korunanlar
-
-- Toggle mantığı, `onToggleAddableSection` callback'i değişmez
-- Mevcut `AddableToggleRow` bileşeni aynı kalır
-- Diğer panel bölümleri (Şablon, Hızlı Tema, Renkler, Fontlar, Köşeler) değişmez
-- Sadece `CustomizePanel.tsx` değişir
+Sadece bu tek dosya değişiyor. Mantık, toggle işlemleri, accordion animasyonu, sıralama — hiçbiri değişmez. Yalnızca renk sınıfları güncelleniyor.
