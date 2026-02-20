@@ -1,144 +1,160 @@
 
-## Amaç
+## Hedef URL Yapısı
 
-"Sayfanıza Eklenebilir Bölümler" kutusunu web sitesi önizlemesinden kaldırıp yerine gerçek bir **Footer (Alt Bilgi) bölümü** koymak. Bu footer site haritası, navigasyon linkleri, iletişim bilgileri ve sosyal medya ikonları içerecek.
+```
+/site/aysu-psikoloji              →  Ana sayfa (blog bölümü preview gösterir)
+/site/aysu-psikoloji/blog         →  Blog listesi sayfası (tüm yazılar)
+/site/aysu-psikoloji/blog/slug-1  →  Blog yazısı detay sayfası
+```
 
 ---
 
-## Mevcut Durum
+## Sorunlar ve Çözümler
 
-`EditorCanvas.tsx` dosyasının en altında şu kod var:
+### Sorun 1: Ana sayfada "Devamını Oku" → Direkt detay sayfasına gidiyor
+
+**Çözüm:** `BlogSection.tsx`'de her kart tıklaması, blog listesi `/site/{sub}/blog` sayfasına gitsin. Alternatif olarak kartlara tıklayınca detaya git, ama bölüm başlığına veya ek bir butona "Tüm Blogları Gör →" ekle.
+
+En mantıklı UX: Ana sayfadaki "Devamını Oku" butonu → `/site/{sub}/blog/{slug}` (detaya direkt git). Bölüm başlığına ek olarak **"Tüm Yazıları Gör"** linki ekle → `/site/{sub}/blog`. Böylece kullanıcı hem direkt okuyabilir hem de blog liste sayfasını keşfedebilir.
+
+### Sorun 2: Blog detay sayfasında "Geri" butonu ana sayfaya gidiyor
+
+**Çözüm:** `PublicBlogPostPage.tsx`'de `onBack` fonksiyonu `/site/${subdomain}` yerine `/site/${subdomain}/blog` adresine gitsin.
+
+### Sorun 3: Blog görselleri editörde değiştirilemiyor
+
+**Çözüm:** `BlogSection.tsx`'e `isEditing` modunda her kart üzerine bir **görsel değiştir** butonu ekle. Tıklayınca küçük bir Pixabay arama modalı açılsın (mevcut `PixabayImagePicker` bileşeni zaten var), seçilen görsel `onUpdate` ile props'a kaydedilsin.
+
+---
+
+## Değiştirilecek Dosyalar (4 adet)
+
+| # | Dosya | Değişiklik |
+|---|---|---|
+| 1 | `src/components/sections/addable/BlogSection.tsx` | "Tüm Yazıları Gör" butonu + editörde görsel değiştirme |
+| 2 | `src/pages/PublicBlogPage.tsx` | Kart tıklama → aynı sekmede detaya git (window.open yerine navigate) |
+| 3 | `src/pages/PublicBlogPostPage.tsx` | "Geri" butonu → `/site/${subdomain}/blog` |
+| 4 | `src/components/sections/addable/BlogPostDetailSection.tsx` | "Bloga Dön" metni ve `onBack` → blog listesine yönlendir |
+
+---
+
+## Detaylı Değişiklikler
+
+### 1. `BlogSection.tsx` — "Tüm Yazıları Gör" + Görsel Değiştirme
+
+**"Tüm Yazıları Gör" butonu** — bölüm başlığının altına eklenir, sadece `isEditing=false` durumunda URL'e bağlanır:
 
 ```tsx
-{isEditing && onToggleAddableSection && (
-  <AddableSectionsPanel
-    sector={sector}
-    addableSections={addableSections}
-    onToggle={onToggleAddableSection}
-  />
+{/* Bölüm başlığı altına */}
+{!isEditing && (
+  <a
+    href={`/site/${subdomain}/blog`}
+    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors mt-4"
+  >
+    Tüm Yazıları Gör
+    <ArrowRight className="w-4 h-4" />
+  </a>
 )}
 ```
 
-Bu, önizlemede mavi kenarlıklı "Sayfanıza Eklenebilir Bölümler" kutusunu gösteriyor. Özelleştir panelinde zaten aynı toggle'lar var, bu yüzden buradaki gösterim gereksiz.
+Subdomain'i URL'den alır: `const subdomain = window.location.pathname.split('/')[2];`
 
----
-
-## Yapılacaklar (3 Dosya)
-
-### 1. `src/components/sections/addable/SiteFooter.tsx` — YENİ DOSYA
-
-Sitelerin altında gösterilecek modern footer bileşeni. Site section'ı olarak kayıt edilecek (`AddableSiteFooter` tipi), ancak editörde her zaman en altta görünecek.
-
-Footer içeriği:
-- **Marka Kolonu**: Site adı + tagline + kısa açıklama
-- **Site Haritası Kolonu**: Ana Sayfa, Hakkımızda, Hizmetler, İletişim linkleri
-- **Hizmetler Kolonu**: İlk 3-4 hizmet adı (props'tan veya sabit)
-- **İletişim Kolonu**: Telefon, E-posta, Adres (props'tan)
-- **Alt Çubuk**: Telif hakkı yılı + "Powered by Open Lucius" (küçük, soluk)
-
-Tasarım:
-```
-┌─────────────────────────────────────────────────────┐
-│  Site Adı          Site Haritası   Hizmetler   İletişim │
-│  Tagline           Ana Sayfa       Hizmet 1    📞 Tel  │
-│  Açıklama...       Hakkımızda      Hizmet 2    📧 Mail │
-│                    Hizmetler       Hizmet 3    📍 Adres│
-│                    İletişim                            │
-├─────────────────────────────────────────────────────┤
-│  © 2026 Site Adı. Tüm hakları saklıdır.              │
-└─────────────────────────────────────────────────────┘
-```
-
-Props: `siteName`, `tagline`, `address`, `phone`, `email`, `service1`..`service4` (section props'tan okunur; yoksa placeholder gösterilir)
-
----
-
-### 2. `src/components/sections/registry.ts` — GÜNCELLE
-
-`AddableSiteFooter` tipini `SiteFooter` bileşeniyle kaydet:
-
-```typescript
-import { SiteFooter } from './addable/SiteFooter';
-// ...
-'AddableSiteFooter': SiteFooter,
-```
-
----
-
-### 3. `src/components/editor/EditorCanvas.tsx` — GÜNCELLE
-
-**Kaldır**: `AddableSectionsPanel` bloğunu tamamen sil.
-
-**Ekle**: Her zaman en altta bir `SiteFooter` bileşeni render et (sections içinde olsun ya da olmasın):
+**Görsel değiştirme** — `isEditing=true` modunda, her kart üzerinde hover'da "Görsel Değiştir" butonu görünür. Tıklayınca `PixabayImagePicker` bileşeni açılır, seçilen görsel `onUpdate({ post1Image: url })` ile kaydedilir:
 
 ```tsx
-// Eski (SİL):
-{isEditing && onToggleAddableSection && (
-  <AddableSectionsPanel ... />
+{isEditing && (
+  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+    <button
+      onClick={(e) => { e.stopPropagation(); setEditingImageSlug(post.slug); }}
+      className="px-3 py-2 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-lg flex items-center gap-1.5"
+    >
+      <ImageIcon className="w-3.5 h-3.5" />
+      Görsel Değiştir
+    </button>
+  </div>
 )}
-
-// Yeni (EKLE):
-<SiteFooter
-  section={{
-    id: '__footer__',
-    type: 'AddableSiteFooter',
-    props: {
-      siteName: footerProps.siteName,
-      tagline: footerProps.tagline,
-      phone: footerProps.phone,
-      email: footerProps.email,
-      address: footerProps.address,
-    }
-  }}
-  isEditing={isEditing}
-/>
 ```
 
-Footer için `siteName`, `phone`, `email`, `address` verileri sections içindeki mevcut bölümlerden (hero, contact-form vs.) otomatik çekilecek. Bunun için EditorCanvas'a `footerData` prop'u eklenir veya sections array içinden ilk hero/contact section props'u parse edilir.
+`PixabayImagePicker` modal state yönetimi:
+```tsx
+const [editingImageSlug, setEditingImageSlug] = useState<string | null>(null);
 
----
-
-## Footer'da Dinamik Site Haritası
-
-Footer, sayfada hangi section tipleri bulunduğuna göre linkleri otomatik oluşturur:
-
-| Section tipi varsa | Footer'da link göster |
-|---|---|
-| `about-section`, `AboutSection` | "Hakkımızda" |
-| `services-grid`, `ServicesGrid` | "Hizmetler" |
-| `contact-form`, `ContactForm` | "İletişim" |
-| `faq-accordion`, `AddableFAQ` | "Sık Sorulan Sorular" |
-| `AddableBlog` | "Blog" |
-| `appointment-booking`, `AddableAppointment` | "Randevu" |
-
-Böylece footer, kullanıcının aktif ettiği bölümlere göre kendini günceller.
-
----
-
-## Footer'da Veri Kaynağı
-
-Site adı, telefon, e-posta, adres için sections içinden otomatik okuma:
-
-```typescript
-// EditorCanvas veya SiteFooter içinde
-const heroSection = sections.find(s => s.type.includes('hero') || s.type.includes('Hero'));
-const contactSection = sections.find(s => s.type.includes('contact') || s.type.includes('Contact'));
-
-const footerData = {
-  siteName: heroSection?.props?.siteName || heroSection?.props?.title || 'Site Adı',
-  tagline: heroSection?.props?.subtitle || heroSection?.props?.tagline || '',
-  phone: contactSection?.props?.phone || heroSection?.props?.phone || '',
-  email: contactSection?.props?.email || '',
-  address: contactSection?.props?.address || '',
+// Görsel seçince:
+const handleImageSelect = (url: string) => {
+  const index = posts.findIndex(p => p.slug === editingImageSlug) + 1;
+  onUpdate?.({ [`post${index}Image`]: url });
+  setEditingImageSlug(null);
 };
 ```
 
+### 2. `PublicBlogPage.tsx` — Aynı Sekmede Aç
+
+Şu an: `window.open(url, '_blank')` — yeni sekme açıyor.
+Yeni: `navigate(url)` — aynı sekmede blog sayfası içinde kalır, tarayıcı geçmişi çalışır.
+
+Blog listesi kendi bağımsız sayfası olduğu için aynı sekmede açmak daha doğru UX.
+
+### 3. `PublicBlogPostPage.tsx` — Geri Dön Düzeltme
+
+```tsx
+// Eski:
+onBack={() => navigate(`/site/${subdomain}`)}
+
+// Yeni:
+onBack={() => navigate(`/site/${subdomain}/blog`)}
+```
+
+### 4. `BlogPostDetailSection.tsx` — "Bloga Dön" Metni
+
+"Geri" yerine "Bloga Dön" metni zaten var. `onBack` bağlantısını `PublicBlogPostPage`'den alıyor, orası düzeltilince otomatik çalışır. Breadcrumb'daki "Blog" tıklaması da güncellenir:
+
+```tsx
+// Breadcrumb'da Blog linki:
+<span
+  className="hover:text-foreground cursor-pointer"
+  onClick={() => {
+    // subdomain varsa blog listesine git, yoksa onBack
+    if (subdomain) {
+      window.location.href = `/site/${subdomain}/blog`;
+    } else {
+      onBack();
+    }
+  }}
+>
+  Blog
+</span>
+```
+
 ---
 
-## Değiştirilecek / Oluşturulacak Dosyalar
+## Görsel Akış (Sonuç)
 
-| # | Dosya | İşlem |
-|---|---|---|
-| 1 | `src/components/sections/addable/SiteFooter.tsx` | YENİ — Modern site footer bileşeni |
-| 2 | `src/components/sections/registry.ts` | `AddableSiteFooter` kaydı |
-| 3 | `src/components/editor/EditorCanvas.tsx` | Panel kaldır, Footer ekle |
+```
+Ana Sayfa (/site/aysu-psikoloji)
+  │
+  ├── Blog bölümü: 4 kart gösterilir
+  │     ├── "Devamını Oku" → /site/aysu-psikoloji/blog/slug-1 (aynı sekme)
+  │     └── "Tüm Yazıları Gör →" butonu → /site/aysu-psikoloji/blog
+  │
+Blog Listesi (/site/aysu-psikoloji/blog)
+  │   Kendi başlığı, tüm yazılar grid'de
+  │     └── Kart tıkla → /site/aysu-psikoloji/blog/slug-1 (aynı sekme, navigate)
+  │
+Blog Detayı (/site/aysu-psikoloji/blog/slug-1)
+      └── "Bloga Dön" → /site/aysu-psikoloji/blog (geri)
+      └── Breadcrumb: Ana Sayfa > Blog > Yazı Başlığı
+      └── İlgili Yazılar → /site/aysu-psikoloji/blog/slug-2
+```
+
+---
+
+## Editörde Görsel Değiştirme Akışı
+
+```
+Editörde blog bölümüne gel
+  │
+  └── Kart üzerine hover yap
+        └── "Görsel Değiştir" butonu belirir
+              └── Tıkla → Pixabay arama modalı açılır
+                    └── Görsel seç → props'a kaydedilir → kart güncellenir
+```
