@@ -1,5 +1,6 @@
-import { X, LayoutGrid } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { X, LayoutGrid, LayoutList, ChevronDown } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -50,8 +51,12 @@ function getSectorToggles(sector: string) {
 }
 
 export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateModal, sector, addableSections = {}, onToggleAddableSection }: CustomizePanelProps) {
+  const [isSectionsOpen, setIsSectionsOpen] = useState(false);
   const colors = theme.colors || {};
   const fonts = theme.fonts || {};
+
+  const activeCount = Object.values(addableSections).filter(Boolean).length;
+  const sectorSpecificToggles = sector ? getSectorToggles(sector) : [];
 
   const updateColor = (key: string, value: string) => {
     onUpdateTheme({ colors: { ...colors, [key]: value } });
@@ -100,28 +105,66 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
           </button>
         </div>
 
-        {/* Addable Sections */}
+        {/* Addable Sections — Accordion */}
         {onToggleAddableSection && (
-          <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sayfanıza Eklenebilir Bölümler</h4>
-            <div className="space-y-2">
-              {universalToggles.map(t => (
-                <AddableToggleRow
-                  key={t.key}
-                  label={t.label}
-                  checked={!!addableSections[t.key]}
-                  onToggle={() => onToggleAddableSection(t.key)}
-                />
-              ))}
-              {sector && getSectorToggles(sector).map(t => (
-                <AddableToggleRow
-                  key={t.key}
-                  label={t.label}
-                  checked={!!addableSections[t.key]}
-                  onToggle={() => onToggleAddableSection(t.key)}
-                />
-              ))}
-            </div>
+          <div className="space-y-1">
+            <button
+              onClick={() => setIsSectionsOpen(prev => !prev)}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm font-medium hover:bg-accent transition-colors"
+            >
+              <LayoutList className="w-4 h-4 text-muted-foreground shrink-0" />
+              <span className="flex-1 text-left">Eklenebilir Bölümler</span>
+              {activeCount > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">
+                  {activeCount} aktif
+                </span>
+              )}
+              <ChevronDown
+                className="w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200"
+                style={{ transform: isSectionsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {isSectionsOpen && (
+                <motion.div
+                  key="sections-list"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-1 space-y-1.5 px-0.5">
+                    {universalToggles.map(t => (
+                      <AddableToggleRow
+                        key={t.key}
+                        label={t.label}
+                        checked={!!addableSections[t.key]}
+                        onToggle={() => onToggleAddableSection(t.key)}
+                      />
+                    ))}
+                    {sectorSpecificToggles.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 py-1">
+                          <div className="flex-1 h-px bg-border" />
+                          <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">Sektörünüze Özel</span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
+                        {sectorSpecificToggles.map(t => (
+                          <AddableToggleRow
+                            key={t.key}
+                            label={t.label}
+                            checked={!!addableSections[t.key]}
+                            onToggle={() => onToggleAddableSection(t.key)}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
