@@ -13,7 +13,7 @@ export function CallUsSection({ section }: SectionComponentProps) {
     ctaText = 'Hemen Arayın',
     whatsappText = 'WhatsApp\'tan Yazın',
     badge1 = '7/24 Acil Hat',
-    badge2 = 'Ücretsiz İlk Görüşme',
+    badge2 = 'Hızlı Randevu',
     badge3 = 'Hızlı Dönüş',
   } = section.props;
 
