@@ -679,34 +679,595 @@ function renderLawyerFooter(siteName: string): string {
 </footer>`;
 }
 
+// ── New Section Renderers ──
+
+function renderHeroCafe(s: SiteSection): string {
+  const p = s.props;
+  const rawBg = p.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background:linear-gradient(rgba(0,0,0,.5),rgba(0,0,0,.5)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, black), color-mix(in srgb, var(--primary) 40%, black))`;
+  return `<section class="relative min-h-[85vh] flex items-end justify-start text-white" style="${bgStyle}">
+  <div class="max-w-6xl mx-auto px-6 pb-20 pt-40 w-full">
+    ${p.tagline ? `<span class="inline-block px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-4" style="background:rgba(255,255,255,0.15);backdrop-filter:blur(4px)">${escapeHtml(p.tagline as string)}</span>` : ""}
+    <h1 class="text-4xl md:text-6xl font-bold mb-4 font-heading-dynamic max-w-2xl">${escapeHtml(p.title as string || "")}</h1>
+    ${p.subtitle ? `<p class="text-lg md:text-xl opacity-90 mb-8 max-w-xl">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    <div class="flex flex-wrap gap-4">
+      ${p.primaryButtonText ? `<a href="${escapeHtml(p.primaryButtonLink as string || '#')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(p.primaryButtonText as string)}</a>` : ""}
+      ${p.secondaryButtonText ? `<a href="${escapeHtml(p.secondaryButtonLink as string || '#menu')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(p.secondaryButtonText as string)}</a>` : ""}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderHeroDental(s: SiteSection): string {
+  const p = s.props;
+  const rawBg = p.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 80%, black), color-mix(in srgb, var(--primary) 30%, black))`;
+  return `<section class="relative min-h-[80vh] flex items-center text-white" style="${bgStyle}">
+  <div class="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-2 gap-12 items-center w-full">
+    <div>
+      ${p.badge ? `<span class="inline-block px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-4" style="background:rgba(255,255,255,0.2)">${escapeHtml(p.badge as string)}</span>` : ""}
+      <h1 class="text-4xl md:text-5xl font-bold mb-4 font-heading-dynamic">${escapeHtml(p.title as string || "")}</h1>
+      ${p.subtitle ? `<p class="text-lg opacity-90 mb-8">${escapeHtml(p.subtitle as string)}</p>` : ""}
+      <div class="flex flex-wrap gap-4">
+        ${p.primaryButtonText ? `<a href="${escapeHtml(p.primaryButtonLink as string || '#appointment')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(p.primaryButtonText as string)}</a>` : ""}
+        ${p.secondaryButtonText ? `<a href="${escapeHtml(p.secondaryButtonLink as string || '#services')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(p.secondaryButtonText as string)}</a>` : ""}
+      </div>
+    </div>
+  </div>
+</section>`;
+}
+
+function renderHeroRestaurant(s: SiteSection): string {
+  const p = s.props;
+  const rawBg = p.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, black), color-mix(in srgb, var(--primary) 40%, black))`;
+  return `<section class="relative min-h-[90vh] flex items-center justify-center text-center text-white" style="${bgStyle}">
+  <div class="max-w-3xl mx-auto px-6 py-20">
+    ${p.tagline ? `<span class="inline-block px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-6" style="background:rgba(255,255,255,0.15)">${escapeHtml(p.tagline as string)}</span>` : ""}
+    <h1 class="text-5xl md:text-7xl font-bold mb-6 font-heading-dynamic">${escapeHtml(p.title as string || "")}</h1>
+    ${p.subtitle ? `<p class="text-lg opacity-90 mb-10">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    <div class="flex flex-wrap gap-4 justify-center">
+      ${p.primaryButtonText ? `<a href="${escapeHtml(p.primaryButtonLink as string || '#menu')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(p.primaryButtonText as string)}</a>` : ""}
+      ${p.secondaryButtonText ? `<a href="${escapeHtml(p.secondaryButtonLink as string || '#reservation')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(p.secondaryButtonText as string)}</a>` : ""}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderHeroHotel(s: SiteSection): string {
+  const p = s.props;
+  const rawBg = p.backgroundImage as string || "";
+  const bg = isBase64Image(rawBg) ? "" : rawBg;
+  const bgStyle = bg
+    ? `background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),url('${escapeHtml(bg)}') center/cover no-repeat`
+    : `background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 80%, black), color-mix(in srgb, var(--primary) 30%, black))`;
+  return `<section class="relative min-h-screen flex items-center justify-center text-center text-white" style="${bgStyle}">
+  <div class="max-w-4xl mx-auto px-6 py-20">
+    ${p.tagline ? `<span class="inline-block px-4 py-1 rounded-full text-xs font-semibold uppercase tracking-widest mb-6" style="background:rgba(255,255,255,0.15)">${escapeHtml(p.tagline as string)}</span>` : ""}
+    <h1 class="text-5xl md:text-7xl font-bold mb-6 font-heading-dynamic">${escapeHtml(p.title as string || "")}</h1>
+    ${p.subtitle ? `<p class="text-xl opacity-90 mb-10">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    <div class="flex flex-wrap gap-4 justify-center">
+      ${p.primaryButtonText ? `<a href="${escapeHtml(p.primaryButtonLink as string || '#rooms')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(p.primaryButtonText as string)}</a>` : ""}
+      ${p.secondaryButtonText ? `<a href="${escapeHtml(p.secondaryButtonLink as string || '#contact')}" class="px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white/10 transition">${escapeHtml(p.secondaryButtonText as string)}</a>` : ""}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderHeroPortfolio(s: SiteSection): string {
+  const p = s.props;
+  const rawAvatar = p.avatarImage as string || "";
+  const avatar = isBase64Image(rawAvatar) ? "" : rawAvatar;
+  return `<section class="min-h-screen flex items-center py-20" style="background:var(--background)">
+  <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+    <div>
+      ${p.greeting ? `<p class="text-sm font-semibold uppercase tracking-wider mb-2" style="color:var(--primary)">${escapeHtml(p.greeting as string)}</p>` : ""}
+      <h1 class="text-4xl md:text-6xl font-bold mb-4 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string || "")}</h1>
+      ${p.role ? `<p class="text-xl mb-4 font-semibold" style="color:var(--primary)">${escapeHtml(p.role as string)}</p>` : ""}
+      ${p.bio ? `<p class="text-base mb-8 leading-relaxed" style="color:var(--muted-foreground)">${escapeHtml(p.bio as string)}</p>` : ""}
+      <div class="flex flex-wrap gap-4">
+        ${p.primaryButtonText ? `<a href="${escapeHtml(p.primaryButtonLink as string || '#projects')}" style="background:var(--primary);color:var(--primary-foreground)" class="px-8 py-3 font-semibold rounded-lg hover:opacity-90 transition">${escapeHtml(p.primaryButtonText as string)}</a>` : ""}
+        ${p.secondaryButtonText ? `<a href="${escapeHtml(p.secondaryButtonLink as string || '#contact')}" class="px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="border:2px solid var(--primary);color:var(--primary)">${escapeHtml(p.secondaryButtonText as string)}</a>` : ""}
+      </div>
+    </div>
+    <div class="flex justify-center">
+      ${avatar ? `<img src="${escapeHtml(avatar)}" alt="${escapeHtml(p.title as string || "")}" class="rounded-full w-64 h-64 object-cover shadow-2xl" style="border:4px solid var(--primary)" />` : `<div class="rounded-full w-64 h-64 flex items-center justify-center text-6xl" style="background:var(--muted)">👤</div>`}
+    </div>
+  </div>
+</section>`;
+}
+
+function renderCafeFeatures(s: SiteSection): string {
+  const p = s.props;
+  const features = [];
+  for (let i = 1; i <= 4; i++) {
+    const title = p[`feature${i}Title`] as string || p[`title${i}`] as string;
+    const desc = p[`feature${i}Description`] as string || p[`description${i}`] as string;
+    const icon = p[`feature${i}Icon`] as string || ["☕","🎵","📚","🌿"][i-1];
+    if (title) features.push({ title, desc, icon });
+  }
+  if (!features.length) {
+    features.push(
+      { title: "Özel Kahve", desc: "En iyi çekirdeklerden özel demleme", icon: "☕" },
+      { title: "Müzik", desc: "Canlı müzik ve seçilmiş playlist", icon: "🎵" },
+      { title: "Huzurlu Ortam", desc: "Çalışmak ve dinlenmek için ideal", icon: "📚" },
+      { title: "Doğal Malzeme", desc: "Taze ve organik içerikler", icon: "🌿" }
+    );
+  }
+  const cards = features.map(f => `
+    <div class="text-center p-8 rounded-2xl hover:shadow-lg transition" style="background:var(--background)">
+      <div class="text-4xl mb-4">${escapeHtml(f.icon)}</div>
+      <h3 class="text-lg font-semibold mb-2 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(f.title)}</h3>
+      ${f.desc ? `<p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(f.desc)}</p>` : ""}
+    </div>`).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    ${p.title ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string)}</h2>` : ""}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderMenuShowcase(s: SiteSection): string {
+  const p = s.props;
+  const items = (p.items as Array<{ name: string; description?: string; price?: string; image?: string; category?: string }>) || [];
+  const cards = items.map(item => {
+    const rawImg = item.image || "";
+    const img = isBase64Image(rawImg) ? "" : rawImg;
+    return `<div class="rounded-xl overflow-hidden shadow-md hover:shadow-lg transition" style="background:var(--card)">
+      ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(item.name)}" class="w-full h-48 object-cover" />` : `<div class="w-full h-48 flex items-center justify-center text-4xl" style="background:var(--muted)">☕</div>`}
+      <div class="p-4">
+        ${item.category ? `<span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--primary)">${escapeHtml(item.category)}</span>` : ""}
+        <h3 class="font-semibold mt-1 font-heading-dynamic" style="color:var(--card-foreground)">${escapeHtml(item.name)}</h3>
+        ${item.description ? `<p class="text-sm mt-1" style="color:var(--muted-foreground)">${escapeHtml(item.description)}</p>` : ""}
+        ${item.price ? `<p class="font-bold mt-2" style="color:var(--primary)">${escapeHtml(item.price)}</p>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<section id="menu" class="py-20" style="background:var(--background)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    ${p.title ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string)}</h2>` : ""}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderCafeStory(s: SiteSection): string {
+  const p = s.props;
+  const rawImg = p.image as string || "";
+  const img = isBase64Image(rawImg) ? "" : rawImg;
+  const features = (p.features as string || "").split("\n").filter(Boolean);
+  const featsHtml = features.map(f => `<li class="flex items-center gap-2"><span style="color:var(--primary)">✓</span> ${escapeHtml(f)}</li>`).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.title as string || "")}" class="rounded-2xl shadow-xl w-full object-cover aspect-[4/3]" />` : `<div class="rounded-2xl w-full aspect-[4/3] flex items-center justify-center text-6xl" style="background:var(--border)">🏠</div>`}
+      </div>
+      <div>
+        ${p.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider mb-2" style="color:var(--primary)">${escapeHtml(p.subtitle as string)}</p>` : ""}
+        ${p.title ? `<h2 class="text-3xl font-bold mb-6 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string)}</h2>` : ""}
+        ${p.description ? `<div class="mb-6 leading-relaxed" style="color:var(--muted-foreground)">${nl2br(p.description as string)}</div>` : ""}
+        ${featsHtml ? `<ul class="space-y-2">${featsHtml}</ul>` : ""}
+      </div>
+    </div>
+  </div>
+</section>`;
+}
+
+function renderCafeGallery(s: SiteSection): string {
+  const p = s.props;
+  const images: string[] = [];
+  for (let i = 1; i <= 6; i++) {
+    const img = p[`image${i}`] as string;
+    if (img && !isBase64Image(img)) images.push(img);
+  }
+  if (!images.length) {
+    const imgArr = p.images as string[];
+    if (Array.isArray(imgArr)) imgArr.forEach(img => { if (!isBase64Image(img)) images.push(img); });
+  }
+  const galleryHtml = images.map(src => `<img src="${escapeHtml(src)}" alt="Galeri" class="rounded-xl w-full aspect-square object-cover hover:scale-105 transition duration-300" />`).join("");
+  return `<section class="py-20" style="background:var(--background)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    ${p.title ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string)}</h2>` : ""}
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">${galleryHtml}</div>
+  </div>
+</section>`;
+}
+
+function renderChefShowcase(s: SiteSection): string {
+  const p = s.props;
+  const rawImg = p.chefImage as string || p.image as string || "";
+  const img = isBase64Image(rawImg) ? "" : rawImg;
+  const specialties = (p.specialties as string || "").split("\n").filter(Boolean);
+  const specsHtml = specialties.map(sp => `<span class="px-3 py-1 rounded-full text-sm" style="background:var(--primary);color:var(--primary-foreground)">${escapeHtml(sp)}</span>`).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+        ${p.sectionTitle ? `<h2 class="text-3xl font-bold mb-2 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+        ${p.chefName ? `<p class="text-xl font-semibold mb-4" style="color:var(--primary)">${escapeHtml(p.chefName as string)}</p>` : ""}
+        ${p.chefBio ? `<p class="mb-6 leading-relaxed" style="color:var(--muted-foreground)">${nl2br(p.chefBio as string)}</p>` : ""}
+        ${p.experience ? `<p class="text-sm mb-4" style="color:var(--muted-foreground)">🏆 ${escapeHtml(p.experience as string)} yıl deneyim</p>` : ""}
+        ${specsHtml ? `<div class="flex flex-wrap gap-2">${specsHtml}</div>` : ""}
+      </div>
+      <div class="flex justify-center">
+        ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.chefName as string || "Şef")}" class="rounded-2xl shadow-xl w-full max-w-sm object-cover aspect-[3/4]" />` : `<div class="rounded-2xl w-full max-w-sm aspect-[3/4] flex items-center justify-center text-6xl" style="background:var(--border)">👨‍🍳</div>`}
+      </div>
+    </div>
+  </div>
+</section>`;
+}
+
+function renderRestaurantMenu(s: SiteSection): string {
+  const p = s.props;
+  const categories = (p.categories as Array<{ name: string; items: Array<{ name: string; description?: string; price?: string }> }>) || [];
+  const catsHtml = categories.map(cat => {
+    const itemsHtml = (cat.items || []).map(item => `
+      <div class="flex justify-between items-start py-3" style="border-bottom:1px solid var(--border)">
+        <div>
+          <div class="font-medium" style="color:var(--foreground)">${escapeHtml(item.name)}</div>
+          ${item.description ? `<div class="text-sm mt-1" style="color:var(--muted-foreground)">${escapeHtml(item.description)}</div>` : ""}
+        </div>
+        ${item.price ? `<div class="font-bold ml-4 flex-shrink-0" style="color:var(--primary)">${escapeHtml(item.price)}</div>` : ""}
+      </div>`).join("");
+    return `<div class="mb-10">
+      <h3 class="text-xl font-bold mb-4 pb-2 font-heading-dynamic" style="color:var(--foreground);border-bottom:2px solid var(--primary)">${escapeHtml(cat.name)}</h3>
+      ${itemsHtml}
+    </div>`;
+  }).join("");
+  return `<section id="menu" class="py-20" style="background:var(--background)">
+  <div class="max-w-4xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    ${catsHtml}
+  </div>
+</section>`;
+}
+
+function renderRoomShowcase(s: SiteSection): string {
+  const p = s.props;
+  const rooms = (p.rooms as Array<{ name: string; description?: string; price?: string; image?: string; features?: string }>) || [];
+  const cards = rooms.map(room => {
+    const rawImg = room.image || "";
+    const img = isBase64Image(rawImg) ? "" : rawImg;
+    const feats = (room.features || "").split("\n").filter(Boolean);
+    const featsHtml = feats.map(f => `<span class="text-xs px-2 py-1 rounded-full" style="background:var(--muted);color:var(--muted-foreground)">${escapeHtml(f)}</span>`).join("");
+    return `<div class="rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition" style="background:var(--card)">
+      ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(room.name)}" class="w-full h-56 object-cover" />` : `<div class="w-full h-56 flex items-center justify-center text-4xl" style="background:var(--muted)">🛏️</div>`}
+      <div class="p-6">
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="text-lg font-semibold font-heading-dynamic" style="color:var(--card-foreground)">${escapeHtml(room.name)}</h3>
+          ${room.price ? `<span class="font-bold" style="color:var(--primary)">${escapeHtml(room.price)}</span>` : ""}
+        </div>
+        ${room.description ? `<p class="text-sm mb-3" style="color:var(--muted-foreground)">${escapeHtml(room.description)}</p>` : ""}
+        ${featsHtml ? `<div class="flex flex-wrap gap-2">${featsHtml}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderHotelAmenities(s: SiteSection): string {
+  const p = s.props;
+  const amenities = (p.amenities as Array<{ icon?: string; title: string; description?: string }>) || [
+    { icon: "🏊", title: "Açık Havuz", description: "Infinity havuz, güneş terası" },
+    { icon: "💆", title: "Spa & Wellness", description: "Türk hamamı, masaj, sauna" },
+    { icon: "🍽️", title: "Restoran", description: "Fine dining, açık büfe kahvaltı" },
+    { icon: "💪", title: "Fitness Center", description: "24 saat açık, kişisel antrenör" },
+    { icon: "🚗", title: "Vale Park", description: "Ücretsiz vale ve otopark hizmeti" },
+    { icon: "📶", title: "Ücretsiz WiFi", description: "Tüm alanlarda yüksek hızlı internet" },
+  ];
+  const cards = amenities.map(a => `
+    <div class="flex items-start gap-4 p-6 rounded-2xl hover:shadow-lg transition" style="background:var(--card);border:1px solid var(--border)">
+      <div class="text-3xl flex-shrink-0">${escapeHtml(a.icon || "✨")}</div>
+      <div>
+        <h3 class="font-semibold font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(a.title)}</h3>
+        ${a.description ? `<p class="text-sm mt-1" style="color:var(--muted-foreground)">${escapeHtml(a.description)}</p>` : ""}
+      </div>
+    </div>`).join("");
+  return `<section class="py-20" style="background:var(--background)">
+  <div class="max-w-5xl mx-auto px-6">
+    ${p.subtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.subtitle as string)}</p>` : ""}
+    ${p.title ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.title as string)}</h2>` : ""}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderSkillsGrid(s: SiteSection): string {
+  const p = s.props;
+  const skills = (p.skills as Array<{ name: string; level?: number; category?: string }>) || [];
+  const tags = skills.map(sk => `<div class="px-4 py-2 rounded-full text-sm font-medium" style="background:var(--muted);color:var(--foreground)">${escapeHtml(sk.name)}${sk.level ? ` <span style="color:var(--primary)">${sk.level}%</span>` : ""}</div>`).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-4xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="flex flex-wrap gap-3 justify-center">${tags}</div>
+  </div>
+</section>`;
+}
+
+function renderProjectShowcase(s: SiteSection): string {
+  const p = s.props;
+  const projects = (p.projects as Array<{ title: string; description?: string; image?: string; category?: string; link?: string }>) || [];
+  const cards = projects.map(proj => {
+    const rawImg = proj.image || "";
+    const img = isBase64Image(rawImg) ? "" : rawImg;
+    return `<div class="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition group" style="background:var(--card)">
+      ${img ? `<div class="overflow-hidden"><img src="${escapeHtml(img)}" alt="${escapeHtml(proj.title)}" class="w-full h-52 object-cover group-hover:scale-105 transition duration-300" /></div>` : `<div class="w-full h-52 flex items-center justify-center text-4xl" style="background:var(--muted)">📁</div>`}
+      <div class="p-6">
+        ${proj.category ? `<span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--primary)">${escapeHtml(proj.category)}</span>` : ""}
+        <h3 class="text-lg font-semibold mt-1 mb-2 font-heading-dynamic" style="color:var(--card-foreground)">${escapeHtml(proj.title)}</h3>
+        ${proj.description ? `<p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(proj.description)}</p>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<section id="projects" class="py-20" style="background:var(--background)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderDentalServices(s: SiteSection): string {
+  const p = s.props;
+  const services = (p.services as Array<{ title: string; description?: string; icon?: string; image?: string }>) || [];
+  const cards = services.map(sv => {
+    const rawImg = sv.image || "";
+    const img = isBase64Image(rawImg) ? "" : rawImg;
+    return `<div class="rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition" style="background:var(--card)">
+      ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(sv.title)}" class="w-full h-48 object-cover" />` : `<div class="w-full h-48 flex items-center justify-center text-5xl" style="background:var(--muted)">${escapeHtml(sv.icon || "🦷")}</div>`}
+      <div class="p-6">
+        <h3 class="text-lg font-semibold mb-2 font-heading-dynamic" style="color:var(--card-foreground)">${escapeHtml(sv.title)}</h3>
+        ${sv.description ? `<p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(sv.description)}</p>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<section id="services" class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderDentalTips(s: SiteSection): string {
+  const p = s.props;
+  const tips = (p.tips as Array<{ title: string; content?: string; icon?: string }>) || [];
+  const cards = tips.map(tip => `
+    <div class="p-6 rounded-2xl" style="background:var(--card);border:1px solid var(--border)">
+      ${tip.icon ? `<div class="text-3xl mb-3">${escapeHtml(tip.icon)}</div>` : `<div class="w-8 h-8 rounded-full mb-3 flex items-center justify-center text-sm" style="background:var(--primary);color:var(--primary-foreground)">✓</div>`}
+      <h3 class="font-semibold mb-2 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(tip.title)}</h3>
+      ${tip.content ? `<p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(tip.content)}</p>` : ""}
+    </div>`).join("");
+  return `<section class="py-20" style="background:var(--background)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderAddableSiteFooter(s: SiteSection): string {
+  const p = s.props;
+  const year = new Date().getFullYear();
+  return `<footer style="background:var(--foreground);color:var(--background);padding:3rem 0">
+  <div style="max-width:72rem;margin:0 auto;padding:0 1.5rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;margin-bottom:2rem">
+      <div>
+        <h3 class="font-heading-dynamic" style="font-size:1.25rem;font-weight:700;color:var(--background);margin-bottom:0.5rem">${escapeHtml(p.siteName as string || "")}</h3>
+        ${p.tagline ? `<p style="font-size:0.875rem;opacity:0.7">${escapeHtml(p.tagline as string)}</p>` : ""}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.875rem;opacity:0.8">
+        ${p.phone ? `<span>📞 ${escapeHtml(p.phone as string)}</span>` : ""}
+        ${p.email ? `<span>📧 ${escapeHtml(p.email as string)}</span>` : ""}
+        ${p.address ? `<span>📍 ${escapeHtml(p.address as string)}</span>` : ""}
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.15);padding-top:1.5rem;text-align:center;font-size:0.75rem;opacity:0.5">
+      © ${year} ${escapeHtml(p.siteName as string || "")}. Tüm hakları saklıdır.
+    </div>
+  </div>
+</footer>`;
+}
+
+function renderAddableBlog(s: SiteSection): string {
+  const p = s.props;
+  const posts = [];
+  for (let i = 1; i <= 4; i++) {
+    const title = p[`post${i}Title`] as string;
+    const excerpt = p[`post${i}Excerpt`] as string;
+    const category = p[`post${i}Category`] as string;
+    const image = p[`post${i}Image`] as string;
+    const date = p[`post${i}Date`] as string;
+    if (title) posts.push({ title, excerpt, category, image: isBase64Image(image || "") ? "" : (image || ""), date });
+  }
+  const cards = posts.map(post => `
+    <div class="rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition" style="background:var(--card)">
+      ${post.image ? `<img src="${escapeHtml(post.image)}" alt="${escapeHtml(post.title)}" class="w-full h-48 object-cover" />` : `<div class="w-full h-48 flex items-center justify-center text-4xl" style="background:var(--muted)">📝</div>`}
+      <div class="p-6">
+        <div class="flex items-center gap-2 mb-3">
+          ${post.category ? `<span class="text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded-full" style="background:color-mix(in srgb, var(--primary) 10%, transparent);color:var(--primary)">${escapeHtml(post.category)}</span>` : ""}
+          ${post.date ? `<span class="text-xs" style="color:var(--muted-foreground)">${escapeHtml(post.date)}</span>` : ""}
+        </div>
+        <h3 class="font-semibold mb-2 font-heading-dynamic" style="color:var(--card-foreground)">${escapeHtml(post.title)}</h3>
+        ${post.excerpt ? `<p class="text-sm" style="color:var(--muted-foreground)">${escapeHtml(post.excerpt)}</p>` : ""}
+      </div>
+    </div>`).join("");
+  return `<section class="py-20" style="background:var(--muted)">
+  <div class="max-w-6xl mx-auto px-6">
+    ${p.sectionSubtitle ? `<p class="text-sm font-semibold uppercase tracking-wider text-center mb-2" style="color:var(--primary)">${escapeHtml(p.sectionSubtitle as string)}</p>` : ""}
+    ${p.sectionTitle ? `<h2 class="text-3xl font-bold text-center mb-12 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(p.sectionTitle as string)}</h2>` : ""}
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">${cards}</div>
+  </div>
+</section>`;
+}
+
+function renderGenericAddable(s: SiteSection): string {
+  const p = s.props;
+  const title = (p.sectionTitle || p.title) as string || "";
+  const desc = (p.sectionDescription || p.description) as string || "";
+  if (!title && !desc) return "";
+  return `<section class="py-16" style="background:var(--background)">
+  <div class="max-w-4xl mx-auto px-6 text-center">
+    ${title ? `<h2 class="text-2xl font-bold mb-4 font-heading-dynamic" style="color:var(--foreground)">${escapeHtml(title)}</h2>` : ""}
+    ${desc ? `<p style="color:var(--muted-foreground)">${escapeHtml(desc)}</p>` : ""}
+  </div>
+</section>`;
+}
+
 // ── Main renderer ──
 
 function renderSection(section: SiteSection, projectId?: string): string {
   switch (section.type) {
+    // Hero types — PascalCase + kebab-case
+    case "HeroCentered":
     case "hero-centered":
+    case "HeroOverlay":
     case "hero-overlay":
+    case "HeroSplit":
     case "hero-split":
+    case "HeroMedical":
+    case "hero-medical":
       return renderHeroCentered(section);
+    case "HeroCafe":
+    case "hero-cafe":
+      return renderHeroCafe(section);
+    case "HeroDental":
+    case "hero-dental":
+      return renderHeroDental(section);
+    case "HeroRestaurant":
+    case "hero-restaurant":
+      return renderHeroRestaurant(section);
+    case "HeroHotel":
+    case "hero-hotel":
+      return renderHeroHotel(section);
+    case "HeroPortfolio":
+    case "hero-portfolio":
+      return renderHeroPortfolio(section);
+    // Content sections — PascalCase + kebab-case
+    case "StatisticsCounter":
     case "statistics-counter":
       return renderStatisticsCounter(section);
+    case "AboutSection":
     case "about-section":
       return renderAboutSection(section);
+    case "ServicesGrid":
     case "services-grid":
       return renderServicesGrid(section);
+    case "TestimonialsCarousel":
     case "testimonials-carousel":
       return renderTestimonialsCarousel(section);
+    case "ImageGallery":
     case "image-gallery":
       return renderImageGallery(section);
+    case "FAQAccordion":
     case "faq-accordion":
       return renderFAQAccordion(section);
+    case "ContactForm":
     case "contact-form":
       return renderContactForm(section, projectId);
+    case "CTABanner":
     case "cta-banner":
       return renderCTABanner(section);
+    case "PricingTable":
     case "pricing-table":
       return renderPricingTable(section);
+    case "AppointmentBooking":
     case "appointment-booking":
+    case "DentalBooking":
+    case "dental-booking":
       return renderAppointmentBooking(section);
+    // Cafe sections
+    case "CafeFeatures":
+    case "cafe-features":
+      return renderCafeFeatures(section);
+    case "MenuShowcase":
+    case "menu-showcase":
+      return renderMenuShowcase(section);
+    case "CafeStory":
+    case "cafe-story":
+      return renderCafeStory(section);
+    case "CafeGallery":
+    case "cafe-gallery":
+      return renderCafeGallery(section);
+    // Restaurant sections
+    case "ChefShowcase":
+    case "chef-showcase":
+      return renderChefShowcase(section);
+    case "RestaurantMenu":
+    case "restaurant-menu":
+      return renderRestaurantMenu(section);
+    // Hotel sections
+    case "RoomShowcase":
+    case "room-showcase":
+      return renderRoomShowcase(section);
+    case "HotelAmenities":
+    case "hotel-amenities":
+      return renderHotelAmenities(section);
+    // Portfolio sections
+    case "SkillsGrid":
+    case "skills-grid":
+      return renderSkillsGrid(section);
+    case "ProjectShowcase":
+    case "project-showcase":
+      return renderProjectShowcase(section);
+    // Dental sections
+    case "DentalServices":
+    case "dental-services":
+      return renderDentalServices(section);
+    case "DentalTips":
+    case "dental-tips":
+      return renderDentalTips(section);
+    // Addable sections
+    case "AddableSiteFooter":
+      return renderAddableSiteFooter(section);
+    case "AddableBlog":
+      return renderAddableBlog(section);
+    case "AddableAppointment":
+      return renderAppointmentBooking(section);
+    case "AddableFAQ":
+      return renderFAQAccordion(section);
+    case "AddableMessageForm":
+      return renderContactForm(section, projectId);
+    case "AddableWorkingHours":
+    case "AddableOnlineConsultation":
+    case "AddableInsurance":
+    case "AddableMenuHighlights":
+    case "AddableRoomAvailability":
+    case "AddableCaseEvaluation":
+    case "AddableBeforeAfter":
+    case "AddablePetRegistration":
+    case "AddableCallUs":
+    case "AddableSocialProof":
+    case "AddableTeamGrid":
+    case "AddablePromotionBanner":
+    case "AddableVideo":
+      return renderGenericAddable(section);
     // Pilates template types
     case "pilates-hero":
       return renderPilatesHero(section);
