@@ -1,155 +1,203 @@
 
-## Sorun
-
-`PublicBlogPage.tsx` ve `PublicBlogPostPage.tsx` sayfaları şu an sadece blog içeriğini çekiyor. `site_theme` (renkler, fontlar, border-radius) ve `site_sections` (header, footer için) veritabanından **hiç alınmıyor**. Bu yüzden bir Dental Klinik sitesinin blog sayfası sky-blue/Sora font yerine jenerik beyaz/sans görünüyor.
-
 ## Hedef
 
-Her blog sayfası (liste + detay), o sitenin kullandığı şablonun temasını (renkler, fontlar, tasarım dili) birebir yansıtsın. Ayrıca editörde "Devamını Oku"ya basıldığında o sayfa editörde açılarak düzenlenebilsin.
+`CustomizePanel.tsx` içindeki "Hızlı Tema" ve "Renkler" ve "Yazı Tipleri" bölümlerini yeniden tasarlamak:
+
+1. **Hızlı Tema** → Sadece renk değiştirir, fontlara/boyutlara dokunmaz
+2. **Renkler** → Renk kodları görünmez; sadece renkli daire paleti + isim; "Rastgele" butonu her basıldığında farklı bir renk paleti uygular
+3. **Yazı Tipleri** → 20 adet font, dropdown'da fontun kendi yazı tipiyle önizlenir
 
 ---
 
-## Çözüm Mimarisi
+## Değiştirilecek Dosyalar (2 adet)
 
-### 1. Ortak `useSiteTheme` Hook'u (YENİ)
-
-`src/hooks/useSiteTheme.ts` adında yeni bir hook oluşturulacak. Bu hook:
-- Subdomain'e göre `site_sections`, `site_theme`, `name` alanlarını veritabanından çeker
-- `site_theme` içindeki CSS değişkenlerini `document.documentElement` üzerine enjekte eder
-- Google Fonts'u dinamik olarak yükler (heading + body)
-- Cleanup ile tema değişkenlerini geri alır
-
-Bu hook, hem `PublicBlogPage` hem `PublicBlogPostPage` tarafından kullanılır.
-
-### 2. Tema Enjeksiyon Mantığı
-
-`PublicWebsite.tsx`'deki `buildThemeStyle` fonksiyonu gibi, ama daha kapsamlı. `site_theme.colors` içindeki HSL değerlerini (sistem zaten HSL formatında saklıyor) `--primary`, `--background`, `--foreground`, `--card`, `--border` gibi Tailwind CSS değişkenleri olarak root'a yazar. Fontlar için `--font-heading-dynamic`, `--font-body-dynamic` CSS değişkenleri set edilir.
-
-### 3. `PublicBlogPage.tsx` → Temalı Versiyon
-
-Mevcut dosya güncellenir:
-- `useSiteTheme(subdomain)` hook'u çağrılır → tema otomatik enjekte edilir
-- Header: Jenerik `<header>` yerine sitenin adını ve logo alanını kullanan, şablon renk sistemine uyumlu bir header
-- Blog kartları: Mevcut grid korunur, ama artık `var(--primary)`, `bg-background`, `text-foreground` gibi tema CSS değişkenleri doğru renge işaret eder
-- Footer: Sayfanın altına şablon temasıyla uyumlu bir footer eklenir (SiteFooter bileşeni veya basit inline versiyon)
-
-### 4. `PublicBlogPostPage.tsx` → Temalı Versiyon
-
-Mevcut dosya güncellenir:
-- `useSiteTheme(subdomain)` hook'u çağrılır
-- `BlogPostDetailSection`'a `siteTheme` prop geçilebilir, ya da hook sayesinde CSS değişkenleri zaten doğru olduğundan bileşen otomatik temalı görünür
-- Breadcrumb header: Site adı görünür, şablonun primary rengiyle vurgulanır
-
-### 5. Editörde "Devamını Oku" → Editörde Açılsın
-
-`BlogSection.tsx`'deki `handleCardClick` fonksiyonu güncellenir:
-- `isEditing=true` durumunda: Şu an hiçbir şey yapmıyor (navigation engelli). Bunun yerine editör bağlamında bir sinyal verilsin (örn. `window.postMessage` veya özel bir callback prop).
-- Alternatif, daha basit yaklaşım: Editörde blog kartlarına tıklayınca "Bu içeriği editörde düzenlemek için sol panelden Blog bölümünü seçin" şeklinde bir toast mesajı gösterilir.
-- En doğru yaklaşım: `BlogSection`'a `onCardClick?: (slug: string) => void` prop'u ekle. Editör (`SiteEditor` veya `EditorCanvas`) bu prop'u verince, karta tıklama editör içinde ilgili blog kartı düzenleme arayüzünü açar.
-
-**Editörde düzenleme için:** Zaten `SectionEditPanel` üzerinden blog section props'ları düzenlenebiliyor. Kullanıcı istediği şeyi zaten editörde düzenleyebilir. Ancak "Devamını Oku"ya tıklayınca o blogun içerik paneline scroll edilmesi sağlanabilir.
-
----
-
-## Değiştirilecek / Oluşturulacak Dosyalar
-
-| # | Dosya | İşlem |
+| # | Dosya | Değişiklik |
 |---|---|---|
-| 1 | `src/hooks/useSiteTheme.ts` | YENİ — Subdomain → tema enjeksiyonu hook |
-| 2 | `src/pages/PublicBlogPage.tsx` | useSiteTheme ekle, header/footer temalı hale getir |
-| 3 | `src/pages/PublicBlogPostPage.tsx` | useSiteTheme ekle, temalı wrapper |
+| 1 | `src/themes/presets.ts` | 20 font listesi ve renk paletleri ekle |
+| 2 | `src/components/editor/CustomizePanel.tsx` | Hızlı tema sadece renk, ColorPicker kodu gizle, Rastgele butonu, 20 font dropdown |
 
 ---
 
-## `useSiteTheme` Hook Detayı
+## 1. Hızlı Tema — Sadece Renk Değiştirir
+
+Şu anki `applyPreset` fonksiyonu hem renkleri hem fontları hem borderRadius'u değiştiriyor:
 
 ```typescript
-// src/hooks/useSiteTheme.ts
-export function useSiteTheme(subdomain: string | undefined) {
-  const [siteData, setSiteData] = useState<{
-    siteName: string;
-    sections: SiteSection[];
-    theme: SiteTheme | null;
-    loading: boolean;
-  }>({ siteName: '', sections: [], theme: null, loading: true });
+// Eski — her şeyi değiştiriyor
+const applyPreset = (preset) => {
+  onUpdateTheme({
+    colors: presetColors,
+    fonts: preset.fontFamily ? { heading: ..., body: ... } : undefined,
+    borderRadius: preset.borderRadius,  // ← bunlar kaldırılacak
+  });
+};
+```
 
-  useEffect(() => {
-    if (!subdomain) return;
-    supabase
-      .from('public_projects')
-      .select('name, site_sections, site_theme')
-      .eq('subdomain', subdomain)
-      .single()
-      .then(({ data }) => {
-        if (!data) return;
-        setSiteData({
-          siteName: data.name || '',
-          sections: (data.site_sections as SiteSection[]) || [],
-          theme: data.site_theme as SiteTheme || null,
-          loading: false,
-        });
-        
-        // Inject theme CSS variables
-        if (data.site_theme?.colors) {
-          const root = document.documentElement;
-          for (const [key, val] of Object.entries(data.site_theme.colors)) {
-            if (typeof val === 'string') root.style.setProperty(`--${key}`, val);
-          }
-        }
-        
-        // Load Google Fonts
-        if (data.site_theme?.fonts) {
-          const { heading, body } = data.site_theme.fonts;
-          if (heading) loadGoogleFont(heading);
-          if (body) loadGoogleFont(body);
-        }
-      });
-  }, [subdomain]);
+**Yeni — sadece renkler:**
+```typescript
+const applyPreset = (preset: typeof namedPresets[0]['preset']) => {
+  const presetColors: Record<string, string> = {};
+  if (preset.colors) {
+    Object.entries(preset.colors).forEach(([key, vals]) => {
+      presetColors[key] = vals[0]; // sadece light mode değeri
+    });
+  }
+  // Sadece colors güncellenir, fonts ve borderRadius korunur
+  onUpdateTheme({ colors: presetColors });
+};
+```
 
-  return siteData;
+---
+
+## 2. Renkler — Kodu Gizle, Sadece Palet Göster
+
+Mevcut `ColorPicker` bileşeni `<Input>` ile hex kodunu gösteriyor. Bu tamamen yeniden tasarlanacak:
+
+**Yeni ColorPicker tasarımı:**
+```
+[●] Ana Renk    ← renkli daire (tıklayınca native color picker açılır)
+[●] Arka Plan
+[●] Metin
+[●] Vurgu
+```
+
+HTML: Renk kodu input'u `hidden` olacak, sadece daire gösterilecek. Kullanıcı daireye tıklayınca `<input type="color">` trigger'lanacak.
+
+```tsx
+function ColorPicker({ label, value, onChange }) {
+  return (
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <label className="cursor-pointer group">
+        <div
+          className="w-7 h-7 rounded-full border-2 border-white shadow-md ring-1 ring-gray-200 group-hover:scale-110 transition-transform"
+          style={{ backgroundColor: value }}
+        />
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="sr-only" // tamamen gizli
+        />
+      </label>
+    </div>
+  );
 }
 ```
 
 ---
 
-## Blog Sayfalarının Temalı Görünümü
+## 3. Rastgele Renk Paleti Butonu
 
-Tema CSS değişkenleri enjekte edildikten sonra:
-- `bg-background` → şablonun arka plan rengi (Dental için açık mavi, Restoran için koyu siyah, Kafe için krem)
-- `text-foreground` → şablonun metin rengi
-- `text-primary` ve `bg-primary` → şablonun vurgu rengi (Dental: sky-blue, Restoran: altın, Kafe: terrakota)
-- `border-border` → şablonun kenarlık rengi
-- `font-heading-dynamic` → şablonun başlık fontu (Dental: Sora, Restoran: Playfair Display, Kafe: Playfair Display)
+"Renkler" başlığının yanına bir **🎲 Rastgele** butonu eklenir. Her basıldığında `namedPresets` listesinden rastgele bir preset'in renkleri uygulanır (font/boyut değişmez):
 
-Bu sayede blog sayfası **hiçbir ek stil kodu yazılmadan** şablon temasını otomatik yansıtır. Mevcut Tailwind sınıfları CSS değişkenleri üzerinden zaten doğru renklere işaret eder.
+```tsx
+const applyRandomColors = () => {
+  const randomPreset = namedPresets[Math.floor(Math.random() * namedPresets.length)];
+  applyPreset(randomPreset.preset); // zaten sadece renk değiştiriyor
+};
+```
 
----
-
-## Editörde Blog Düzenleme Akışı
-
-Kullanıcı editörde "Devamını Oku"ya bastığında:
-- `isEditing=true` olduğu için navigasyon engellenir (mevcut durum doğru)
-- Blog içeriğini düzenlemek için: Sol panelden "Blog Köşesi" bölümüne tıklanır → `SectionEditPanel` o bölümün props'larını (başlık, içerik, görsel, tarih vb.) düzenleme alanlarıyla açar
-- Editörde blog kartı üzerine hover → "Görsel Değiştir" butonu belirir (zaten mevcut)
-
-Bu akış zaten çalışıyor. Ekstra bir değişiklik gerekmez.
+UI:
+```
+RENKLER                              🎲 Rastgele
+─────────────────────────────────────────────────
+● Ana Renk                                    [●]
+● Arka Plan                                   [●]
+● Metin                                       [●]
+```
 
 ---
 
-## Görsel Etki (Önce / Sonra)
+## 4. Yazı Tipleri — 20 Font, Kendi Yazı Tipiyle Görünür
 
-**Önce:** Blog listesi sayfası → Beyaz arka plan, varsayılan font, mavi primary link rengi (jenerik tarayıcı rengi)
+Mevcut 10 font → 20 fonta çıkarılır. Her font, dropdown'da o fontta yazılmış olarak görünür (Google Fonts embed linkleri `<head>`'e dinamik eklenir).
 
-**Sonra (Dental Klinik sitesi için):**
-- `bg-background`: Açık mavi (#f0f9ff)  
-- `text-primary`: Sky-blue (#0284c7)
-- Başlık fontu: Sora  
-- Kartlar: Mavi tonlu kenarlık, sky-blue hover efekti  
-- Header: Sky-blue vurgulu, Sora fontlu  
+**20 Seçilmiş Font Listesi:**
 
-**Sonra (Restoran Zarif sitesi için):**
-- `bg-background`: Koyu siyah (#0a0a0a)  
-- `text-primary`: Altın (#d4a853)  
-- Başlık fontu: Playfair Display  
-- Kartlar: Koyu kart arka planı, altın hover  
-- Tüm sayfa restoran temasını yansıtır
+| Kategori | Fontlar |
+|---|---|
+| Serif (5) | Playfair Display, Lora, Cormorant Garamond, Merriweather, EB Garamond |
+| Sans-Serif Modern (7) | Inter, DM Sans, Plus Jakarta Sans, Sora, Space Grotesk, Outfit, Nunito |
+| Sans-Serif Klasik (4) | Poppins, Montserrat, Raleway, Open Sans |
+| Dekoratif (4) | Josefin Sans, Bebas Neue, Quicksand, Exo 2 |
+
+Bu 20 fontun Google Fonts URL'i bir kez load edilecek — dropdown açılmadan önce font linkler inject edilir.
+
+**Font Dropdown Tasarımı:**
+
+```tsx
+const FONTS = [
+  // Serif
+  { family: 'Playfair Display', category: 'Serif' },
+  { family: 'Lora', category: 'Serif' },
+  { family: 'Cormorant Garamond', category: 'Serif' },
+  { family: 'Merriweather', category: 'Serif' },
+  { family: 'EB Garamond', category: 'Serif' },
+  // Sans-Serif Modern
+  { family: 'Inter', category: 'Modern' },
+  { family: 'DM Sans', category: 'Modern' },
+  { family: 'Plus Jakarta Sans', category: 'Modern' },
+  { family: 'Sora', category: 'Modern' },
+  { family: 'Space Grotesk', category: 'Modern' },
+  { family: 'Outfit', category: 'Modern' },
+  { family: 'Nunito', category: 'Modern' },
+  // Klasik
+  { family: 'Poppins', category: 'Klasik' },
+  { family: 'Montserrat', category: 'Klasik' },
+  { family: 'Raleway', category: 'Klasik' },
+  { family: 'Open Sans', category: 'Klasik' },
+  // Dekoratif
+  { family: 'Josefin Sans', category: 'Dekoratif' },
+  { family: 'Bebas Neue', category: 'Dekoratif' },
+  { family: 'Quicksand', category: 'Dekoratif' },
+  { family: 'Exo 2', category: 'Dekoratif' },
+];
+```
+
+Dropdown her option'da `style={{ fontFamily: family }}` ile kendi fontunda gösterilir. Google Fonts linkleri CustomizePanel yüklenince `useEffect` ile `<head>`'e eklenir.
+
+---
+
+## Sonuç: CustomizePanel'in Yeni Görünümü
+
+```
+┌─────────────────────────────┐
+│ Özelleştir              [X] │
+├─────────────────────────────┤
+│ ŞABLON                      │
+│ [▦ Template Değiştir]       │
+├─────────────────────────────┤
+│ EKLENEBİLİR BÖLÜMLER       │
+│ [≡ Eklenebilir Bölümler ▾] │
+├─────────────────────────────┤
+│ HIZLI TEMA (sadece renk)   │
+│ [●●●][●●●][●●●][●●●]       │
+│  Sıcak  Koyu  Pastel Mavi  │
+│ ...                         │
+├─────────────────────────────┤
+│ RENKLER           [🎲]      │
+│ Ana Renk           [●]      │
+│ Arka Plan          [●]      │
+│ Metin              [●]      │
+│ Vurgu              [●]      │
+│ Kart               [●]      │
+│ İkincil            [●]      │
+├─────────────────────────────┤
+│ YAZI TİPLERİ               │
+│ Başlık: [Playfair Display▾] │
+│ Gövde:  [Inter           ▾] │
+├─────────────────────────────┤
+│ KÖŞELER                    │
+│ [Varsayılan             ▾]  │
+└─────────────────────────────┘
+```
+
+---
+
+## Teknik Notlar
+
+- `applyPreset` → yalnızca `colors` günceller; `fonts` ve `borderRadius` mevcut değerlerini korur
+- `ColorPicker` → `<input type="color">` gizli, `<div>` daire tıklanabilir `<label>` sarmalı
+- Font linkleri → `loadGoogleFont` utility'si zaten `useThemeColors.ts` içinde mevcut; sadece import edilip 20 font için çağrılır
+- Rastgele buton → `Math.random()` ile `namedPresets` array'inden random seçim, sadece renk uygulanır
