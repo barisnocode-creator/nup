@@ -1,69 +1,125 @@
 
-## Hedef
+## Yapılacaklar
 
-`SectionEditPanel` şu an sağ kenara yapışık, tam ekran yüksekliğinde bir panel olarak açılıyor. Kullanıcı bunu, `CustomizePanel` gibi küçük, yüzen, rounded bir kart yapısına dönüştürmek istiyor.
+### 1. Hizmet Kartlarına Görsel Desteği (ServicesGrid + ArrayEditor)
 
-## Mevcut vs Yeni Konum
+**Sorun:** `SectionEditPanel`'deki `ArrayEditor` içindeki `image` alanı hâlâ küçük input + ikon buton şeklinde gösteriliyor. Kullanıcı, hizmet kartlarına Pixabay'dan görsel eklemek istiyor.
 
-Mevcut (SectionEditPanel):
+**Çözüm:**
+
+`SectionEditPanel.tsx` → `ArrayEditor` içindeki image/avatar alanları (satır 397-408):
 ```
-fixed top-14 right-0 bottom-0 w-[360px]
-→ Sağ kenara yapışık, full-height sidebar
-```
-
-Yeni (CustomizePanel tarzı):
-```
-fixed top-16 right-3 w-[310px] max-h-[calc(100vh-80px)]
-→ Sağ üste yüzen küçük kart, scroll edilebilir, rounded-xl
+Mevcut: [Input URL kutusu] [🖼 buton]
+Yeni:   [Büyük tıklanabilir thumbnail kart]  (tıklayınca Pixabay açılır)
 ```
 
-## Görsel Karşılaştırma
+Yani `isImgField` koşulunda URL input'unu kaldırıp, ana image alanlarında yaptığımız gibi `aspect-video` thumbnail kart sistemi kullanacağız.
 
-```text
-Mevcut:                          Yeni:
-┌──────────────┐                     ╭──────────────╮
-│ Hero (Ortala)│                     │Hero (Ortala) │
-│──────────────│                     │──────────────│
-│ İçerik │ Stil│                     │ İçerik │ Stil│
-│              │                     │              │
-│  [alanlar]   │                     │  [alanlar]   │
-│              │          →          │  (scroll)    │
-│              │                     │              │
-│              │                     ╰──────────────╯
-│              │
-│  [Tamam]     │
-└──────────────┘
+**`ServicesGrid.tsx`:** Zaten `service.image` varsa görsel gösteriyor. Düzenleme modunda her kartın üzerine hover edince "Görseli Değiştir" overlay butonu ekleyeceğiz (başlıkla alakalı Pixabay arama için).
+
+**`arrayFieldSchemas`:** `services` schema'sındaki `image` alanının etiketi `'Görsel URL'` → `'Görsel'` olarak güncellenir.
+
+---
+
+### 2. YouTube Video Bölümü (VideoSection)
+
+2. ekranda tamamen boş bir section görünüyor — bu büyük ihtimalle bir addable section veya yeni eklenen boş alan. Kullanıcı buraya YouTube video embed desteği istiyor.
+
+**Yeni dosya: `src/components/sections/addable/VideoSection.tsx`**
+
+```tsx
+// YouTube URL → embed URL dönüşümü
+// youtube.com/watch?v=XYZ → youtube.com/embed/XYZ
+// youtu.be/XYZ → youtube.com/embed/XYZ
+
+function VideoSection({ section, isEditing, onUpdate }) {
+  // title, subtitle, videoUrl, description prop'ları
+  return (
+    <section className="py-20 bg-background">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-10">
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+        <div className="max-w-3xl mx-auto">
+          {videoUrl ? (
+            <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl">
+              <iframe src={embedUrl} allowFullScreen ... />
+            </div>
+          ) : (
+            isEditing && <YouTubeLinkInput />
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 ```
 
-## Teknik Değişiklik
+Düzenleme modunda video yoksa:
+- Merkezi "YouTube Videosu Ekle" alanı: büyük alan, YouTube linki input'u ve "Uygula" butonu
 
-Sadece `SectionEditPanel.tsx` içindeki `motion.div` className güncellenir:
+**`src/components/sections/registry.ts`** → `VideoSection` kayıt edilir.
 
-**Eski (satır 50):**
+**`SectionEditPanel`:** `videoUrl` alanı → özel bir "YouTube Link" input alanı olarak gösterilir (normal text input yeterli, ama label "YouTube Linki" olarak gösterilir).
+
+---
+
+### Değiştirilecek / Oluşturulacak Dosyalar
+
+| # | Dosya | İşlem |
+|---|---|---|
+| 1 | `src/components/editor/SectionEditPanel.tsx` | ArrayEditor image alanları → thumbnail kart sistemi |
+| 2 | `src/components/sections/ServicesGrid.tsx` | Düzenleme modunda kart görseli hover overlay |
+| 3 | `src/components/sections/addable/VideoSection.tsx` | YENİ — YouTube video embed bölümü |
+| 4 | `src/components/sections/registry.ts` | VideoSection kaydı |
+| 5 | `src/components/editor/SectionEditPanel.tsx` | `videoUrl` için label ve `labelMap` güncellemesi |
+
+---
+
+### ArrayEditor Görsel Kart Tasarımı (Detay)
+
 ```
-"fixed top-14 right-0 bottom-0 w-[360px] bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-700 shadow-lg z-40 flex flex-col overflow-hidden"
+Hizmet 1 [▾]            [🗑]
+──────────────────────────────
+  BAŞLIK
+  [Bireysel Psikolojik Danışmanlık]
+
+  AÇIKLAMA
+  [Yetişkinlerin yaşadığı...]
+
+  GÖRSEL                           ← YENİ
+  ╭──────────────────────────────╮
+  │   [görsel thumbnail]         │  tıkla = Pixabay açılır
+  │   hover → Görseli Değiştir   │
+  ╰──────────────────────────────╯
+
+  İKON
+  [⭐]
 ```
 
-**Yeni:**
+---
+
+### YouTube Video Embed Mantığı
+
+```typescript
+function getYouTubeEmbedUrl(url: string): string | null {
+  // https://www.youtube.com/watch?v=dQw4w9WgXcQ → https://www.youtube.com/embed/dQw4w9WgXcQ
+  // https://youtu.be/dQw4w9WgXcQ → https://www.youtube.com/embed/dQw4w9WgXcQ
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
 ```
-"fixed top-16 right-3 w-[310px] max-h-[calc(100vh-80px)] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-lg z-[60] overflow-hidden flex flex-col"
-```
 
-Değişen noktalar:
-- `right-0 bottom-0` → `right-3` (kenarda yüzer, alta uzamaz)
-- `w-[360px]` → `w-[310px]` (biraz daha kompakt)
-- `border-l` → `border` (her yanda border, kart gibi)
-- `top-14` → `top-16` (CustomizePanel ile aynı hizalama)
-- `rounded-xl` eklendi (yuvarlatılmış köşeler)
-- `max-h-[calc(100vh-80px)]` eklendi (ekrandan taşmaz)
-- `z-40` → `z-[60]` (CustomizePanel ile aynı z-index seviyesi)
+Düzenleme modunda:
+- Video varsa: iframe + hover overlay "Videoyu Değiştir" butonu
+- Video yoksa: büyük placeholder alan + "YouTube linki yapıştır" input
 
-Ayrıca animasyon da güncellenir — mevcut `x: 20` (soldan kayma) yerine `CustomizePanel` ile aynı: `y: -4, scale: 0.97` (hafif yukarıdan drop-in efekti).
+---
 
-## Değiştirilecek Dosya
+### Sonuç
 
-| Dosya | İşlem |
-|---|---|
-| `src/components/editor/SectionEditPanel.tsx` | Sadece `motion.div` wrapper className ve animasyon güncellenir (satır 47-51) |
-
-Başka hiçbir şey değişmez — içerik, sekmeler, alanlar, Tamam butonu hepsi aynı kalır.
+- Hizmet kartlarında editörden Pixabay'dan görsel seçilebilir (thumbnail kart UI)
+- ServicesGrid bileşeni görseli üzerinde hover ile "Görseli Değiştir" butonu gösterir
+- Yeni VideoSection bölümü eklenebilir, YouTube linki yapıştırarak embed yapılır
+- Tüm değişiklikler mevcut kayıt ve stil sistemiyle uyumlu
