@@ -272,11 +272,11 @@ export function PublishModal({
   const handleUpdate = async () => {
     setIsPublishing(true);
     try {
-      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
         body: { projectId },
       });
 
-      if (!deployError && deployData?.netlifyUrl) {
+      if (!deployError && deployData?.vercelUrl) {
         toast({
           title: '✅ Site güncellendi!',
           description: 'Değişiklikler canlıya alındı.',
