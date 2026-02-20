@@ -1,152 +1,130 @@
 
-## Sorun: Yayınlanmış Sitede Güncelleme Akışı Yok
+## Sorun: Template İçerikleri Boşaltılmalı, Sektör/Kullanıcı Verisi Her Zaman Öncelikli Olmalı
 
-Mevcut durum:
-- Kullanıcı düzenleme yapar → sağ üstteki "Yayınla" butonuna basar
-- `PublishModal` açılır, `isPublished: true` olduğu için direkt "Your website is live!" başarı ekranı gösterilir
-- Netlify'daki canlı site **güncellenmez** — yeni değişiklikler yayına gitmez
-- Kullanıcı "değişiklikleri yayınla" işlemini yapamıyor
+### Gerçek Sorun Nedir?
+
+`definitions.ts` içindeki tüm şablonların `defaultProps`'unda hardcoded içerikler var:
+
+```tsx
+// specialty-cafe / definitions.ts
+title: 'Where Every Cup Tells a Story',         // ← hardcoded!
+description: 'A specialty cafe in the heart of Haight Ashbury...',  // ← hardcoded!
+name: 'Chef Ahmet Yılmaz',                      // ← hardcoded!
+bio: 'React, Node.js ve cloud teknolojileri...' // ← hardcoded!
+```
+
+Mapper sistemi (`mapHeroSection.ts`, `mapAboutSection.ts` vb.) kullanıcının `generated_content` veya `sectorProfile`'dan veriyi alıp `defaultProps` üzerine yazar — ama şu an **iki ciddi sorun** var:
+
+**Sorun A:** Mapper çalıştığında `{ ...sectionProps, ...overrides }` şeklinde birleşiyor. Eğer `generated_content` boşsa ve `sectorProfile`'da alan yoksa, **hardcoded defaultProps kalıyor**.
+
+**Sorun B:** `definitions.ts` içindeki `defaultProps`'ta café'ye özel içerikler var: "Where Every Cup Tells a Story", "Single Origin, Organic, Est. 2018", "Chef Ahmet Yılmaz". Kullanıcı farklı sektörde olsa dahi bu içerikler **sızmakta** — mapper tüm alanları kapsamıyor.
+
+**Sorun C:** `applyTemplate` çağrıldığında (template değiştirildiğinde), `mapContentToTemplate` çalışıyor ama `injectImages()` ve `injectContactInfo()` **sadece `Project.tsx`'de** ilk oluşturma sırasında çalışıyor, template değişiminde çalışmıyor.
 
 ---
 
-## Hedef
+## Çözüm: 3 Katmanlı Temizlik
 
-Yayınlanmış bir site için toolbar'da ve modal'da **"Güncelle"** akışı:
+### Katman 1 — `definitions.ts` Boşalt: Hardcoded içerikler kaldırılır
 
-1. **Toolbar "Yayınla" butonu** → zaten yayınlandıysa **"Güncelle"** yazısı gösterir, farklı renk
-2. **PublishModal — zaten yayınlanmış halde** → success ekranı yerine **"Değişiklikleri Yayınla"** butonu gösterilir
-3. **Güncelle butonuna basılınca** → `deploy-to-netlify` yeniden çağrılır, canlı site güncellenir
-4. **Başarı mesajı** → "Site güncellendi!" toast + modal kapanır
+Tüm `defaultProps` içindeki kişiye/şirkete özel içerikler boşaltılır. Yalnızca **yapısal** alanlar kalır (ikonlar, link hedefleri, puan formatları):
+
+**Ne kaldırılır:**
+- `title`, `description`, `subtitle`, `badge` → `''` (boş string)
+- `name`, `bio` → `''`
+- `features[i].title`, `features[i].description` → `''`
+- `services[i].title`, `services[i].description` → `''`
+- `testimonials[i].name`, `testimonials[i].role`, `testimonials[i].content` → `''`
+- `ChefShowcase.title`, `ChefShowcase.description` → `''`
+- `HeroPortfolio.name`, `HeroPortfolio.title`, `HeroPortfolio.bio` → `''`
+- `CTABanner.title`, `CTABanner.description` → `''`
+- `infoItems` gibi sektöre özel diziler → `[]`
+
+**Ne kalır (yapısal):**
+- `image` alanları → Pixabay placeholder kalabilir (injectImages zaten üstüne yazar)
+- `primaryButtonLink: '#menu'` gibi link hedefleri
+- `icon` alanları (`'Smile'`, `'☕'` vb.)
+- `floatingBadge: '4.9★'` gibi görsel formatlar
+
+### Katman 2 — Mapper'ları Güçlendir: Boş alan kaldığında sectorProfile devreye girsin
+
+`mapHeroSection.ts` zaten bunu yapıyor (profile → override), ama mapper alanları eksik kapsıyor. Tüm mapper dosyaları güncellenir:
+
+**`mapHeroSection.ts`:**
+- `infoItems` → sectorProfile'dan doldur (zaten `infoItemsMap` var, çalışıyor)
+- `badge` → businessName > sectorBadge > `''`
+- `floatingBadgeSubtext` → sektöre göre farklı metin
+
+**`mapServicesSection.ts`:**
+- `features[i].description` boşsa sectorProfile'dan doldur
+- `CafeFeatures` section'ı da mapper'a ekle (şu an `CafeFeatures` register edilmiş ama `features` array'ini iyi doldurmayabiliyor)
+
+**`mapTeamSection.ts`:**
+- `ChefShowcase` için: `name` → `generated_content`'den şef adı > sectorProfile team label
+- `description` → about story
+
+**Yeni: `mapTestimonialsSection.ts` içerik dolumu:**
+- Testimonial `role` alanları sektöre göre değişsin:
+  - `doctor/dentist` → 'Hasta'
+  - `lawyer` → 'Müvekkil'
+  - `cafe/restaurant` → 'Düzenli Müşteri'
+  - `hotel` → 'Misafir'
+
+**Yeni: `mapFaqSection.ts` içerik dolumu:**
+- FAQ sorularını sektöre göre belirle (şu an hotel'e özel sorular hardcoded)
+
+### Katman 3 — `applyTemplate` İçinde `injectImages` Çağır
+
+`useEditorState.ts`'deki `applyTemplate` fonksiyonu, `mapContentToTemplate` sonrası `injectImages` ve `injectContactInfo`'yu da çağırmalı. Şu an bu iki fonksiyon sadece `Project.tsx`'de var ve ilk yüklemede çalışıyor.
+
+Çözüm: Bu fonksiyonlar `src/utils/sectionInjectors.ts` adında ayrı bir utility dosyasına taşınır, hem `Project.tsx` hem `useEditorState.ts`'den import edilir.
 
 ---
 
-## Değiştirilecek Dosyalar (2 adet)
+## Değiştirilecek Dosyalar
 
 | # | Dosya | Değişiklik |
 |---|---|---|
-| 1 | `src/components/editor/EditorToolbar.tsx` | `isPublished` prop ekle, buton "Güncelle" / "Yayınla" arasında değişsin |
-| 2 | `src/components/website-preview/PublishModal.tsx` | Zaten yayınlı site için "Değişiklik Yayınla" akışı — success ekranı değil update ekranı |
+| 1 | `src/templates/catalog/definitions.ts` | Tüm 6 şablonda hardcoded içerik alanlarını `''` veya `[]` ile boşalt |
+| 2 | `src/templates/catalog/mappers/mapHeroSection.ts` | `infoItems`, `badge` alanlarını daha iyi doldur, `CafeFeatures` features dolumu |
+| 3 | `src/templates/catalog/mappers/mapServicesSection.ts` | `CafeFeatures` için de `features` array dolumu, boş alan koruması |
+| 4 | `src/templates/catalog/mappers/mapTeamSection.ts` | ChefShowcase için isim/açıklama dolumu |
+| 5 | `src/templates/catalog/mappers/mapTestimonialsSection.ts` | Sektöre göre `role` alanları |
+| 6 | `src/templates/catalog/mappers/mapFaqSection.ts` | Sektöre göre FAQ soruları |
+| 7 | `src/utils/sectionInjectors.ts` | `injectImages` + `injectContactInfo` + `buildFooterSection` → buraya taşı |
+| 8 | `src/pages/Project.tsx` | `sectionInjectors.ts`'den import et (mevcut lokal fonksiyonları sil) |
+| 9 | `src/components/editor/useEditorState.ts` | `applyTemplate` içinde `injectImages`/`injectContactInfo` çağır |
 
 ---
 
-## 1. EditorToolbar Değişikliği
+## Sonuç: İçerik Akışı (Önce/Sonra)
 
-`isPublished` prop'u eklenir. Buton buna göre iki farklı görünüm alır:
-
-```tsx
-// Yeni prop
-isPublished?: boolean;
-
-// Buton: zaten yayınlanmışsa "Güncelle", değilse "Yayınla"
-<button onClick={onPublish} className={cn(
-  'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95 shadow-md',
-  isPublished
-    ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
-    : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
-)}>
-  {isPublished ? <RefreshCw className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-  {isPublished ? 'Güncelle' : 'Yayınla'}
-</button>
+**Önce:**
 ```
-
-`SiteEditor.tsx`'de `isPublished` prop'u toolbar'a geçirilir.
-
----
-
-## 2. PublishModal — Yeni "Güncelle" Ekranı
-
-Şu anki akış: `isPublished: true` → direkt `showSuccess` state'i `true` set ediliyor → başarı ekranı.
-
-**Yeni akış:**
-
-```
-isPublished: true
+Template seçildi (specialty-cafe)
   ↓
-Modal açılır → "Güncelle" ekranı gösterilir (başarı ekranı değil)
+defaultProps: "Where Every Cup Tells a Story" (hardcoded café içeriği)
   ↓
-Kullanıcı "Değişiklikleri Yayınla" butonuna basar
+Mapper: generated_content yoksa → hardcoded kalır
   ↓
-deploy-to-netlify yeniden çağrılır
+Kullanıcı doktor sitesi görüyor ama: "Haight Ashbury", "Chef Ahmet", "Single Origin" yazıyor
+```
+
+**Sonra:**
+```
+Template seçildi (specialty-cafe)
   ↓
-Toast: "Site güncellendi!" → Modal kapanır
-```
-
-**Yeni UI (isPublished: true için):**
-
-```
-┌─────────────────────────────────────┐
-│         🔄 Değişiklikleri Yayınla   │
-│                                     │
-│  ✅ Site zaten canlı:               │
-│  https://deneme-kafe.netlify.app    │  ← mevcut URL gösterilir
-│  [🔗 Siteyi Aç] [📋 Linki Kopyala] │
-│                                     │
-│  Yaptığınız değişiklikleri canlıya  │
-│  almak için güncelle butonuna basın │
-│                                     │
-│  [🔄 Değişiklikleri Yayınla]       │  ← ana eylem
-│  [Kapat]                            │
-└─────────────────────────────────────┘
-```
-
-Güncelleme başarılı olunca:
-- Toast: "✅ Site güncellendi! Değişiklikler canlıya alındı."
-- Modal kapanır (success ekranına gerek yok, kullanıcı zaten URL'yi biliyor)
-
----
-
-## Teknik Detay: `handleUpdate` Fonksiyonu
-
-`PublishModal.tsx` içine yeni `handleUpdate` fonksiyonu eklenir:
-
-```typescript
-const handleUpdate = async () => {
-  setIsPublishing(true);
-  try {
-    // Sadece Netlify deploy'u yeniden çalıştır
-    const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
-      body: { projectId },
-    });
-
-    if (!deployError && deployData?.netlifyUrl) {
-      toast({
-        title: '✅ Site güncellendi!',
-        description: 'Değişiklikler canlıya alındı.',
-      });
-      onClose(); // Modal kapanır
-    }
-  } catch (err) {
-    toast({ title: 'Hata', description: 'Güncelleme başarısız.', variant: 'destructive' });
-  } finally {
-    setIsPublishing(false);
-  }
-};
-```
-
----
-
-## SiteEditor'da Prop Akışı
-
-`SiteEditor.tsx` → `EditorToolbar` ve `PublishModal`'a `isPublished` prop'u zaten geçiriliyor, sadece `EditorToolbar`'a da eklenmesi gerekiyor:
-
-```tsx
-<EditorToolbar
-  ...
-  isPublished={isPublished}  // ← yeni
-/>
-```
-
----
-
-## Özet Akış (Kullanıcı Deneyimi)
-
-```
-Kullanıcı düzenleme yapar
-  → Toolbar sağ üstte "Güncelle" (yeşil) butonu görür
-  → Basar → Modal açılır
-  → Mevcut site URL'si görünür
-  → "Değişiklikleri Yayınla" butonuna basar
-  → Netlify deploy yeniden çalışır (5-10 sn)
-  → Toast: "Site güncellendi!" → Modal kapanır
-  → Canlı site güncel
+defaultProps: title: '', description: '', features: [{title:'', desc:''}, ...]
+  ↓
+Mapper: generated_content → sectorProfile → '' (boş)
+  → Hero: "Sağlığınız İçin Profesyonel Bakım" (doctor sectorProfile)
+  → Features: "Genel Muayene", "Laboratuvar" (doctor services)
+  → Testimonials role: "Hasta"
+  → CTA: "Randevu Al"
+  ↓
+injectImages: Pixabay'den çekilen gerçek görseller
+  ↓
+injectContactInfo: business adı, telefon, email
+  ↓
+Kullanıcı doktor sitesi görüyor ve içerik 100% doktor sektörüne uygun
 ```
