@@ -1,214 +1,101 @@
 
-
 ## Amaç
 
-Blog section'ını eklenebilir bölüm olarak eklemek, 4 blog kartı göstermek, her blog gönderisinin kendi SEO-dostu detay sayfasına sahip olmasını sağlamak ve Google Sitemap desteği eklemek.
+Blog yazılarına tıklanınca **ayrı bir URL sayfasına** gitmesini sağlamak. Şu an blog detayı aynı sayfada (component state ile) açılıyor. Kullanıcı `/site/{subdomain}/blog/{slug}` gibi gerçek URL rotalarında açılmasını istiyor.
 
 ---
 
-## Mimari Genel Bakış
+## Mevcut Durum vs Hedef
 
-```text
-Eklenebilir Bölümler
-       │
-       ▼
-"📝 Blog Köşesi" toggle → AddableBlogSection.tsx
-       │
-       ▼
-site_sections içinde { type: 'AddableBlog' }
-       │
-       ├── Blog liste kartları (4 yazı)
-       ├── Her kart tıklanabilir → blog detay sayfası
-       │       - SEO meta tags (title, description, keywords)
-       │       - Open Graph tags
-       │       - Görseller (Pixabay'dan)
-       │       - İçerik (başlıklar, paragraflar, backlink)
-       └── Sitemap → /sitemap.xml endpoint (edge function)
+**Şu an:**
+```
+/site/benim-sitem  →  Blog listesi + tıklayınca aynı sayfada state değişiyor
+```
+
+**Hedef:**
+```
+/site/benim-sitem           →  Ana sayfa (blog kartları görünür)
+/site/benim-sitem/blog      →  Blog listesi sayfası (tüm yazılar)
+/site/benim-sitem/blog/slug →  Blog detay sayfası (ayrı URL, SEO uyumlu)
 ```
 
 ---
 
-## Yapılacaklar (5 Dosya + 1 Edge Function)
+## Mimari Değişiklikler
 
-### 1. `src/components/sections/addable/BlogSection.tsx` — YENİ
+### 1. `src/App.tsx` — Yeni Rotalar
 
-4 blog kartı gösteren addable section. Her kart:
-- Pixabay'dan alınan `featuredImage`
-- Kategori rozeti, başlık, özet, tarih
-- "Devamını Oku →" butonu
-
-Props şeması:
-```typescript
-{
-  sectionTitle: 'Blog & Haberler',
-  sectionSubtitle: 'Güncel makalelerimizi keşfedin',
-  post1Title, post1Category, post1Excerpt, post1Image, post1Date, post1Slug,
-  post2Title, post2Category, post2Excerpt, post2Image, post2Date, post2Slug,
-  post3Title, post3Category, post3Excerpt, post3Image, post3Date, post3Slug,
-  post4Title, post4Category, post4Excerpt, post4Image, post4Date, post4Slug,
-}
+```
+/site/:subdomain                 →  PublicWebsite (mevcut)
+/site/:subdomain/blog            →  PublicBlogPage (YENİ)
+/site/:subdomain/blog/:slug      →  PublicBlogPostPage (YENİ)
 ```
 
-Tasarım: 2x2 grid (md: 2 kolon, lg: 4 kolon), aspect-[3/2] görsel, hover shadow efekti.
+### 2. `src/pages/PublicBlogPage.tsx` — YENİ DOSYA
+
+Subdomain'e göre projeyi Supabase'den çeker → `site_sections` içindeki `AddableBlog` section'ını bulur → 4 blog kartını listeler.
+
+Her kart tıklanınca → `useNavigate('/site/${subdomain}/blog/${slug}')` ile gerçek URL navigasyonu.
+
+### 3. `src/pages/PublicBlogPostPage.tsx` — YENİ DOSYA
+
+`/site/:subdomain/blog/:slug` parametrelerini alır → Supabase'den projeyi çeker → blog verilerini bulur → `BlogPostDetailSection` bileşenini render eder.
+
+"Geri Dön" → `/site/${subdomain}/blog` veya `/site/${subdomain}` gider.
+
+### 4. `src/components/sections/addable/BlogSection.tsx` — GÜNCELLE
+
+Kart tıklama: `setActiveBlogSlug(post.slug)` → `window.location.href` veya `useNavigate` ile URL tabanlı navigasyon.
+
+Eğer `isEditing` modundaysa (editörde önizleme) → eski davranış (state based) korunur.
+Eğer public siteyse → URL navigasyonu kullanılır.
+
+Bunu anlamak için `isEditing` prop'u zaten mevcut — bunu kullanacağız:
+- `isEditing = true` → state tabanlı (editörde çalışır)
+- `isEditing = false` → URL navigasyonu (public sitede çalışır)
+
+### 5. `src/components/sections/addable/BlogPostDetailSection.tsx` — GÜNCELLE
+
+`onBack` çağrısı yerine, public sitede URL tabanlı "Geri" navigasyonu. "İlgili Yazılar" kartları da tıklanınca URL'e gider.
 
 ---
 
-### 2. `src/components/sections/addable/BlogPostDetailSection.tsx` — YENİ
+## Navigasyon Akışı (Public Site)
 
-Blog gönderisi detay görünümü. Slug bazlı, SEO uyumlu:
-
-```typescript
-// Dinamik meta tag enjeksiyonu (useEffect ile)
-document.title = `${post.title} | ${siteName}`;
-// meta description, keywords, og:title, og:image, og:description
-// canonical URL
 ```
-
-İçerik yapısı:
-- Hero görseli (tam genişlik)
-- Breadcrumb: Ana Sayfa > Blog > Başlık
-- H1 başlık + kategori + tarih
-- İçerik paragrafları (H2/H3 destekli)
-- **Backlink bölümü**: "Bu makaleyi beğendiyseniz paylaşın" → sosyal paylaşım linkleri (Twitter/X, LinkedIn, WhatsApp)
-- İlgili Yazılar (diğer 3 karttan)
-
----
-
-### 3. `src/components/sections/registry.ts` — GÜNCELLE
-
-```typescript
-import { BlogSection } from './addable/BlogSection';
-// ...
-'AddableBlog': BlogSection,
-```
-
----
-
-### 4. `src/components/editor/useEditorState.ts` — GÜNCELLE
-
-`addableSectionConfig`'e ekle:
-```typescript
-blog: { 
-  type: 'AddableBlog', 
-  defaultProps: {
-    sectionTitle: 'Blog & Haberler',
-    post1Title: 'Başlık 1', post1Category: 'Genel', post1Excerpt: '...', 
-    post1Image: '', post1Date: '2026-01-15', post1Slug: 'konu-1',
-    post2Title: 'Başlık 2', post2Category: 'İpuçları', ...
-    post3Title: 'Başlık 3', ...
-    post4Title: 'Başlık 4', ...
-  } 
-},
+/site/benim-sitem
+    │
+    │  [Ana sayfada Blog bölümü görünür]
+    │  "Devamını Oku" butonuna tıkla
+    ▼
+/site/benim-sitem/blog/sektor-son-gelismeler
+    │
+    │  [Full blog detay sayfası]
+    │  Başlık, içerik, paylaşım butonları
+    │  "Bloga Dön" butonu
+    ▼
+/site/benim-sitem
 ```
 
 ---
 
-### 5. `src/components/editor/CustomizePanel.tsx` — GÜNCELLE
+## Editör vs Public Site Davranışı
 
-`universalToggles` listesine ekle:
-```typescript
-{ key: 'blog', label: '📝 Blog Köşesi' },
-```
+| Ortam | Blog Kartı Tıklama | Detay Görünümü |
+|---|---|---|
+| Editörde (`isEditing=true`) | State değişir (mevcut) | Aynı sayfada açılır |
+| Public sitede (`isEditing=false`) | URL navigasyonu | Yeni sayfa `/blog/slug` |
 
----
-
-### 6. `src/components/sections/SectionRenderer.tsx` — GÜNCELLE
-
-Blog kartına tıklanınca blog detay görünümüne geçiş için:
-- `AddableBlog` section tıklanınca → `BlogPostDetailSection` render edilir
-- State: `{ activeBlogPost: string | null }` — null ise liste, string (slug) ise detay gösterir
-- "Geri Dön" butonu ile listeye döner
+Bu sayede editör önizlemesi bozulmaz, public sitede gerçek URL routing çalışır.
 
 ---
 
-### 7. `supabase/functions/sitemap/index.ts` — YENİ Edge Function
+## SEO Avantajı
 
-```typescript
-// GET /sitemap/{subdomain}
-// Response: application/xml
-// İçerik:
-// - Ana sayfa
-// - Hizmetler sayfası
-// - Blog post URL'leri (her kart için)
-
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://{subdomain}.openlucius.com</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://{subdomain}.openlucius.com/blog/konu-1</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-    <image:image>
-      <image:loc>{post1Image}</image:loc>
-      <image:title>{post1Title}</image:title>
-    </image:image>
-  </url>
-  ...
-</urlset>`;
-```
-
----
-
-### 8. `src/pages/PublicWebsite.tsx` — GÜNCELLE
-
-`/sitemap.xml` veya `/robots.txt` route'u için yönlendirme meta tag'ı:
-```html
-<!-- <head> içine dinamik olarak -->
-<link rel="sitemap" type="application/xml" href="/functions/v1/sitemap/{subdomain}" />
-```
-
----
-
-## SEO Detayları
-
-Blog detay sayfasında `useEffect` ile şunlar enjekte edilir:
-
-| Meta Tag | Değer |
-|---|---|
-| `<title>` | `{postTitle} \| {siteName}` |
-| `meta description` | Post özeti (max 160 karakter) |
-| `meta keywords` | Kategori + sektör + başlık kelimeleri |
-| `og:title` | Post başlığı |
-| `og:description` | Özet |
-| `og:image` | Pixabay'dan alınan görselin URL'i |
-| `og:url` | Canonical URL |
-| `meta robots` | `index, follow` |
-| `link canonical` | Site URL + blog slug |
-
----
-
-## Backlink Mekanizması
-
-Blog detay sayfasında sosyal paylaşım butonları:
-- **Twitter/X**: `https://twitter.com/intent/tweet?url={canonicalUrl}&text={title}`
-- **LinkedIn**: `https://www.linkedin.com/sharing/share-offsite/?url={canonicalUrl}`  
-- **WhatsApp**: `https://wa.me/?text={title}%20{canonicalUrl}`
-- **Kopyala**: Clipboard API ile URL kopyalama
-
-Bu butonlar hem backlink oluşturur hem de sosyal sinyaller sağlar.
-
----
-
-## Blog Section Görsel Tasarımı
-
-```text
-┌─────────────────────────────────────────┐
-│        Blog & Haberler                  │
-│    Güncel makalelerimizi keşfedin       │
-├──────────┬──────────┬──────────┬────────┤
-│[görsel]  │[görsel]  │[görsel]  │[görsel]│
-│          │          │          │        │
-│ Kategori │ Kategori │ Kategori │Kategori│
-│ Başlık 1 │ Başlık 2 │ Başlık 3 │Başlık 4│
-│ Özet...  │ Özet...  │ Özet...  │Özet... │
-│ 15 Oca   │ 20 Oca   │ 25 Oca   │ 1 Şub  │
-│Devamı →  │Devamı →  │Devamı →  │Devamı→ │
-└──────────┴──────────┴──────────┴────────┘
-```
+Her blog yazısının kendi URL'i olacak:
+- `/site/benim-sitem/blog/sektor-son-gelismeler` — Google bu sayfayı ayrı indeksler
+- Her sayfada canonical URL, og:url, meta title doğru set edilir
+- Sitemap'te bu URL'ler zaten oluşturuluyor
 
 ---
 
@@ -216,11 +103,52 @@ Bu butonlar hem backlink oluşturur hem de sosyal sinyaller sağlar.
 
 | # | Dosya | İşlem |
 |---|---|---|
-| 1 | `src/components/sections/addable/BlogSection.tsx` | YENİ — 4 kartlı blog listesi |
-| 2 | `src/components/sections/addable/BlogPostDetailSection.tsx` | YENİ — SEO detay sayfası |
-| 3 | `src/components/sections/registry.ts` | `AddableBlog` kaydı |
-| 4 | `src/components/editor/useEditorState.ts` | `blog` config ekleme |
-| 5 | `src/components/editor/CustomizePanel.tsx` | Blog toggle ekleme |
-| 6 | `src/components/sections/SectionRenderer.tsx` | Blog detay geçiş state |
-| 7 | `supabase/functions/sitemap/index.ts` | YENİ — XML sitemap edge function |
+| 1 | `src/App.tsx` | 2 yeni rota ekle: `/site/:subdomain/blog` ve `/site/:subdomain/blog/:slug` |
+| 2 | `src/pages/PublicBlogPage.tsx` | YENİ — blog listesi sayfası |
+| 3 | `src/pages/PublicBlogPostPage.tsx` | YENİ — blog detay sayfası |
+| 4 | `src/components/sections/addable/BlogSection.tsx` | `isEditing=false` durumunda URL navigasyonu |
+| 5 | `src/components/sections/addable/BlogPostDetailSection.tsx` | Geri/ilgili yazı linkleri URL tabanlı |
 
+---
+
+## `PublicBlogPostPage.tsx` Mantığı (Özet)
+
+```typescript
+// URL: /site/:subdomain/blog/:slug
+const { subdomain, slug } = useParams();
+
+// Supabase'den projeyi çek
+const { data } = await supabase
+  .from('public_projects')
+  .select('site_sections, name, ...')
+  .eq('subdomain', subdomain)
+  .single();
+
+// AddableBlog section'ını bul
+const blogSection = data.site_sections.find(s => s.type === 'AddableBlog');
+
+// Slug'a göre postu bul
+const posts = extractPostsFromProps(blogSection.props);
+const post = posts.find(p => p.slug === slug);
+
+// Render
+return <BlogPostDetailSection post={post} ... />;
+```
+
+---
+
+## `BlogSection.tsx` Navigasyon Mantığı
+
+```typescript
+// Public sitede (isEditing=false):
+const handleCardClick = (slug: string) => {
+  if (isEditing) {
+    setActiveBlogSlug(slug); // editörde state bazlı
+  } else {
+    // Subdomain'i URL'den al
+    const pathParts = window.location.pathname.split('/');
+    const subdomain = pathParts[2]; // /site/{subdomain}/...
+    window.location.href = `/site/${subdomain}/blog/${slug}`;
+  }
+};
+```
