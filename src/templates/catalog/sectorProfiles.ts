@@ -182,6 +182,118 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutDescription: 'Hayvan sevgisi ve mesleki tecrübemizle, evcil dostlarınıza en kaliteli sağlık hizmetini veriyoruz.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Veterinerlerimiz', gallery: 'Kliniğimiz', appointment: 'Randevu Al' },
   },
+  engineer: {
+    sector: 'engineer',
+    heroTitle: 'Yazılım ve Teknoloji Çözümleri',
+    heroSubtitle: 'Modern Projeler, Güçlü Altyapı',
+    heroDescription: 'Full-stack geliştirme, sistem mimarisi ve bulut çözümleri alanında uzman ekibimizle projenizi hayata geçiriyoruz.',
+    ctaText: 'Proje Görüşelim',
+    services: [
+      { name: 'Web Geliştirme', description: 'Modern framework\'lerle hızlı ve ölçeklenebilir web uygulamaları.' },
+      { name: 'Mobil Uygulama', description: 'iOS ve Android için native ve cross-platform mobil çözümler.' },
+      { name: 'API & Backend', description: 'RESTful API tasarımı, mikro servis mimarisi ve bulut entegrasyonu.' },
+      { name: 'DevOps & Bulut', description: 'CI/CD pipeline, container yönetimi ve bulut altyapısı kurulumu.' },
+    ],
+    aboutTitle: 'Hakkımızda',
+    aboutDescription: 'Teknoloji tutkusuyla, işletmenizin dijital dönüşümüne öncülük ediyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Ekibimiz', gallery: 'Projelerimiz', appointment: 'İletişime Geç' },
+  },
+  designer: {
+    sector: 'designer',
+    heroTitle: 'Yaratıcı Tasarım Çözümleri',
+    heroSubtitle: 'Markanızı Görselleştiriyoruz',
+    heroDescription: 'Marka kimliği, UI/UX ve dijital içerik tasarımı alanlarında yenilikçi çözümler sunuyoruz.',
+    ctaText: 'Proje Görüşelim',
+    services: [
+      { name: 'Marka Kimliği', description: 'Logo, renk paleti ve marka rehberi tasarımı.' },
+      { name: 'UI/UX Tasarım', description: 'Kullanıcı odaklı arayüz ve deneyim tasarımı.' },
+      { name: 'Baskı Tasarımı', description: 'Broşür, katalog ve kurumsal materyaller.' },
+      { name: 'Sosyal Medya', description: 'Sosyal medya görselleri ve içerik tasarımı.' },
+    ],
+    aboutTitle: 'Tasarım Felsefemiz',
+    aboutDescription: 'Estetik ve işlevselliği bir arada sunan, markanızı öne çıkaran tasarımlar üretiyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Tasarımcılarımız', gallery: 'Portfolyo', appointment: 'Teklif Al' },
+  },
+  consulting: {
+    sector: 'consulting',
+    heroTitle: 'Stratejik İş Danışmanlığı',
+    heroSubtitle: 'Büyümeniz İçin Doğru Yol Haritası',
+    heroDescription: 'İş geliştirme, süreç optimizasyonu ve stratejik planlama alanlarında uzman danışmanlık hizmetleri.',
+    ctaText: 'Ücretsiz Analiz',
+    services: [
+      { name: 'Strateji Geliştirme', description: 'Büyüme hedeflerinize ulaşmak için özelleştirilmiş strateji planları.' },
+      { name: 'Süreç Optimizasyonu', description: 'İş süreçlerinizi analiz ederek verimliliği artırıyoruz.' },
+      { name: 'Finansal Danışmanlık', description: 'Yatırım planlaması ve finansal analiz hizmetleri.' },
+      { name: 'Dijital Dönüşüm', description: 'Şirketinizi dijital çağa hazırlayan kapsamlı dönüşüm projesi.' },
+    ],
+    aboutTitle: 'Biz Kimiz',
+    aboutDescription: 'Deneyimli danışman kadromuzla, işletmenizin potansiyelini maksimuma taşıyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Danışmanlarımız', gallery: 'Başarı Hikayelerimiz', appointment: 'Randevu Al' },
+  },
+  real_estate: {
+    sector: 'real_estate',
+    heroTitle: 'Gayrimenkul Danışmanlığı',
+    heroSubtitle: 'Hayalinizdeki Mülkü Buluyoruz',
+    heroDescription: 'Konut, ticari ve endüstriyel gayrimenkul alım-satım süreçlerinde uzman rehberlik.',
+    ctaText: 'Ücretsiz Değerleme',
+    services: [
+      { name: 'Konut Satışı', description: 'Daire, villa ve müstakil ev alım-satım danışmanlığı.' },
+      { name: 'Ticari Mülk', description: 'Ofis, dükkan ve ticari alan kiralama ve satış hizmetleri.' },
+      { name: 'Kira Yönetimi', description: 'Mülkünüzün kiraya verilmesi ve yönetimi.' },
+      { name: 'Ekspertiz', description: 'Profesyonel mülk değerleme ve piyasa analizi.' },
+    ],
+    aboutTitle: 'Ajansımız Hakkında',
+    aboutDescription: 'Yılların sektör tecrübesiyle, gayrimenkul alım-satım süreçlerinizi güvenle yönetiyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Danışmanlarımız', gallery: 'Portföyümüz', appointment: 'Randevu Al' },
+  },
+  education: {
+    sector: 'education',
+    heroTitle: 'Kaliteli Eğitim, Parlak Gelecek',
+    heroSubtitle: 'Potansiyelinizi Keşfedin',
+    heroDescription: 'Alanında uzman öğretmenler ve modern eğitim yöntemleriyle, başarıya giden yolda yanınızdayız.',
+    ctaText: 'Kayıt Ol',
+    services: [
+      { name: 'Bireysel Ders', description: 'Öğrenciye özel birebir ders programları.' },
+      { name: 'Grup Dersleri', description: 'Verimli ve eğlenceli grup eğitim ortamı.' },
+      { name: 'Online Eğitim', description: 'Dilediğiniz yerden canlı ve kayıtlı dersler.' },
+      { name: 'Sınav Hazırlık', description: 'YKS, KPSS ve yabancı dil sınavlarına hazırlık.' },
+    ],
+    aboutTitle: 'Kurumumuz',
+    aboutDescription: 'Öğrenci odaklı yaklaşımımız ve deneyimli kadromuzla, her öğrencinin başarısına katkı sağlıyoruz.',
+    sectionLabels: { services: 'Programlarımız', team: 'Öğretmenlerimiz', gallery: 'Ortamımız', appointment: 'Kayıt Ol' },
+  },
+  event: {
+    sector: 'event',
+    heroTitle: 'Unutulmaz Etkinlikler',
+    heroSubtitle: 'Her Anı Özel Kılıyoruz',
+    heroDescription: 'Düğün, kurumsal etkinlik ve özel organizasyonlarda kusursuz planlama ve uygulama.',
+    ctaText: 'Teklif Al',
+    services: [
+      { name: 'Düğün Organizasyonu', description: 'Hayalinizdeki düğünü planlama ve koordinasyon.' },
+      { name: 'Kurumsal Etkinlik', description: 'Toplantı, seminer ve şirket etkinlikleri.' },
+      { name: 'Kişisel Kutlamalar', description: 'Doğum günü, nişan ve vaftiz organizasyonları.' },
+      { name: 'Dekorasyon', description: 'Mekan dekorasyonu ve tema tasarımı.' },
+    ],
+    aboutTitle: 'Ajansımız',
+    aboutDescription: 'Her etkinliği özel bir anıya dönüştürmek için tutkuyla çalışıyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Ekibimiz', gallery: 'Etkinliklerimiz', appointment: 'Teklif Al' },
+  },
+  photography: {
+    sector: 'photography',
+    heroTitle: 'Anlarınızı Ölümsüzleştiriyoruz',
+    heroSubtitle: 'Profesyonel Fotoğrafçılık Hizmetleri',
+    heroDescription: 'Düğün, kurumsal ve ürün fotoğrafçılığında yüksek kalite ve yaratıcı perspektif.',
+    ctaText: 'Teklif Al',
+    services: [
+      { name: 'Düğün Fotoğrafçılığı', description: 'Özel gününüzün her anını sanatsal bir bakışla kayıt altına alıyoruz.' },
+      { name: 'Ürün Fotoğrafçılığı', description: 'E-ticaret ve katalog için profesyonel ürün çekimleri.' },
+      { name: 'Portre & Kurumsal', description: 'Kişisel ve kurumsal profil fotoğrafları.' },
+      { name: 'Video Prodüksiyon', description: 'Düğün filmi, tanıtım videosu ve sosyal medya içerikleri.' },
+    ],
+    aboutTitle: 'Stüdyomuz',
+    aboutDescription: 'Işık, kompozisyon ve duygunun buluştuğu noktada, yaşananları sanata dönüştürüyoruz.',
+    sectionLabels: { services: 'Hizmetlerimiz', team: 'Fotoğrafçılarımız', gallery: 'Portfolyo', appointment: 'Teklif Al' },
+  },
 };
 
 /**
@@ -192,30 +304,45 @@ export const sectorProfiles: Record<string, SectorProfile> = {
  * Alias map: maps alternative sector names to canonical sectorProfiles keys.
  */
 const sectorAliases: Record<string, string> = {
-  'aesthetic_surgery': 'doctor',
-  'plastic_surgery': 'doctor',
-  'estetik': 'doctor',
-  'cerrahi': 'doctor',
-  'health': 'doctor',
-  'medical': 'doctor',
-  'clinic': 'doctor',
-  'hospital': 'doctor',
-  'dental': 'dentist',
-  'dis': 'dentist',
-  'food': 'restaurant',
-  'bistro': 'restaurant',
-  'fine_dining': 'restaurant',
-  'coffee': 'cafe',
-  'resort': 'hotel',
-  'accommodation': 'hotel',
-  'attorney': 'lawyer',
-  'hukuk': 'lawyer',
-  'spa': 'beauty_salon',
-  'kuafor': 'beauty_salon',
-  'fitness': 'gym',
-  'pilates': 'gym',
-  'yoga': 'gym',
-  'pet': 'veterinary',
+  // Medical
+  'aesthetic_surgery': 'doctor', 'plastic_surgery': 'doctor', 'estetik': 'doctor',
+  'cerrahi': 'doctor', 'health': 'doctor', 'medical': 'doctor', 'clinic': 'doctor',
+  'hospital': 'doctor', 'physio': 'doctor', 'physiotherapy': 'doctor', 'psikolog': 'doctor',
+  'psychology': 'doctor', 'optometrist': 'doctor', 'eye_clinic': 'doctor',
+  // Dental
+  'dental': 'dentist', 'dis': 'dentist',
+  // Food
+  'food': 'restaurant', 'bistro': 'restaurant', 'fine_dining': 'restaurant',
+  'bakery': 'cafe', 'patisserie': 'cafe', 'coffee': 'cafe', 'bar': 'restaurant',
+  // Hotel / accommodation
+  'resort': 'hotel', 'accommodation': 'hotel', 'motel': 'hotel', 'hostel': 'hotel', 'apart': 'hotel',
+  // Legal
+  'attorney': 'lawyer', 'hukuk': 'lawyer', 'notary': 'lawyer', 'noter': 'lawyer',
+  // Beauty
+  'spa': 'beauty_salon', 'kuafor': 'beauty_salon', 'berber': 'beauty_salon',
+  'nail': 'beauty_salon', 'tirnak': 'beauty_salon', 'aesthetics': 'beauty_salon',
+  // Fitness
+  'fitness': 'gym', 'pilates': 'gym', 'yoga': 'gym', 'crossfit': 'gym', 'martial_arts': 'gym',
+  // Veterinary
+  'pet': 'veterinary', 'petshop': 'veterinary',
+  // Tech
+  'developer': 'engineer', 'software': 'engineer', 'technology': 'engineer',
+  'it': 'engineer', 'yazilim': 'engineer', 'freelancer': 'engineer',
+  // Design
+  'graphic': 'designer', 'creative': 'designer', 'ui_ux': 'designer', 'tasarim': 'designer',
+  // Business
+  'consultant': 'consulting', 'danismanlik': 'consulting', 'finance': 'consulting',
+  'accounting': 'consulting', 'muhasebe': 'consulting',
+  // Real estate
+  'property': 'real_estate', 'emlak': 'real_estate', 'realty': 'real_estate',
+  // Education
+  'school': 'education', 'okul': 'education', 'kurs': 'education', 'academy': 'education',
+  'language': 'education', 'dil_kursu': 'education', 'tutoring': 'education',
+  // Events & Media
+  'wedding': 'event', 'dugun': 'event', 'organization': 'event',
+  'photo': 'photography', 'studio': 'photography', 'video': 'photography',
+  // Pharmacy
+  'eczane': 'pharmacy',
 };
 
 export function getSectorProfile(sector: string | undefined): SectorProfile | undefined {

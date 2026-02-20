@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ChevronDown, ChevronRight, ImageIcon, Youtube } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, ChevronRight, ImageIcon, Youtube, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -188,6 +188,130 @@ const labelMap: Record<string, string> = {
   videoUrl: 'YouTube Linki',
 };
 
+// ---- Blog bölümü için özel içerik editörü ----
+function BlogFields({ section, onUpdateProps, onOpenImagePicker }: {
+  section: SiteSection;
+  onUpdateProps: (props: Record<string, any>) => void;
+  onOpenImagePicker: (field: string) => void;
+}) {
+  const props = section.props || {};
+  const [openPost, setOpenPost] = useState<number | null>(null);
+
+  const posts = [1, 2, 3, 4].map(n => ({
+    n,
+    title: props[`post${n}Title`] || '',
+    category: props[`post${n}Category`] || '',
+    excerpt: props[`post${n}Excerpt`] || '',
+    image: props[`post${n}Image`] || '',
+    date: props[`post${n}Date`] || '',
+    slug: props[`post${n}Slug`] || '',
+  }));
+
+  return (
+    <div className="space-y-3">
+      {/* Section header fields */}
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-medium text-gray-400">Bölüm Başlığı</label>
+        <input
+          value={props.sectionTitle || ''}
+          onChange={e => onUpdateProps({ sectionTitle: e.target.value })}
+          className="w-full h-8 px-3 text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-[11px] font-medium text-gray-400">Bölüm Alt Başlığı</label>
+        <input
+          value={props.sectionSubtitle || ''}
+          onChange={e => onUpdateProps({ sectionSubtitle: e.target.value })}
+          className="w-full h-8 px-3 text-sm rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
+        />
+      </div>
+
+      <div className="border-t border-gray-100 dark:border-zinc-800 pt-2">
+        <div className="flex items-center gap-2 mb-2">
+          <BookOpen className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Blog Yazıları ({posts.length})</span>
+        </div>
+        {posts.map(post => (
+          <div key={post.n} className="border border-gray-100 dark:border-zinc-800 rounded-lg overflow-hidden mb-2">
+            <button
+              onClick={() => setOpenPost(openPost === post.n ? null : post.n)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 transition-colors text-left"
+            >
+              <div className="flex items-center gap-2">
+                {openPost === post.n ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[200px]">
+                  {post.title || `Yazı ${post.n}`}
+                </span>
+              </div>
+            </button>
+            {openPost === post.n && (
+              <div className="p-3 space-y-2 bg-white dark:bg-zinc-900">
+                {/* Title */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Başlık</label>
+                  <input value={post.title} onChange={e => onUpdateProps({ [`post${post.n}Title`]: e.target.value })}
+                    className="w-full h-8 px-2 text-xs rounded border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+                </div>
+                {/* Category */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Kategori</label>
+                  <input value={post.category} onChange={e => onUpdateProps({ [`post${post.n}Category`]: e.target.value })}
+                    className="w-full h-8 px-2 text-xs rounded border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+                </div>
+                {/* Excerpt */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Özet</label>
+                  <textarea value={post.excerpt} onChange={e => onUpdateProps({ [`post${post.n}Excerpt`]: e.target.value })}
+                    rows={3}
+                    className="w-full px-2 py-1.5 text-xs rounded border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white resize-y" />
+                </div>
+                {/* Date */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Tarih</label>
+                  <input type="date" value={post.date} onChange={e => onUpdateProps({ [`post${post.n}Date`]: e.target.value })}
+                    className="w-full h-8 px-2 text-xs rounded border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+                </div>
+                {/* Slug */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">URL (slug)</label>
+                  <input value={post.slug} onChange={e => onUpdateProps({ [`post${post.n}Slug`]: e.target.value })}
+                    placeholder="yazi-url-si"
+                    className="w-full h-8 px-2 text-xs rounded border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white" />
+                </div>
+                {/* Image */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Görsel</label>
+                  <button
+                    onClick={() => onOpenImagePicker(`post${post.n}Image`)}
+                    className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-orange-400 transition-all group focus:outline-none"
+                  >
+                    {post.image ? (
+                      <>
+                        <img src={post.image} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = 'none')} />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/90 text-gray-900 text-[10px] font-medium shadow">
+                            <ImageIcon className="w-3 h-3" /> Değiştir
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1.5 h-full py-4 text-gray-400">
+                        <ImageIcon className="w-5 h-5 opacity-50" />
+                        <span className="text-[10px] font-medium">Görsel Ekle</span>
+                      </div>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
   section: SiteSection;
   onUpdateProps: (props: Record<string, any>) => void;
@@ -195,20 +319,26 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
 }) {
   const props = section.props || {};
 
+  // Blog bölümü için özel editör kullan
+  if (section.type === 'AddableBlog') {
+    return <BlogFields section={section} onUpdateProps={onUpdateProps} onOpenImagePicker={onOpenImagePicker} />;
+  }
+
   const textareaFields = ['description', 'sectiondescription', 'content', 'bio', 'features'];
 
   // FAZ 2a: Genişletilmiş array key listesi
   const arrayKeys = ['services', 'testimonials', 'items', 'features', 'stats', 'plans', 'tips', 'projects', 'rooms'];
-  // FAZ 2a: Sadece gerçek nesne/görsel dizileri atla
-  const skipFields = ['images', 'theme', 'style'];
+  // Sadece gerçek nesne/görsel dizileri ve dahili alanları atla
+  const skipFields = ['images', 'theme', 'style', '_sector'];
 
-  // Regular (non-array) fields
+  // Regular (non-array) fields — boş string olan alanları da göster
   const entries = Object.entries(props).filter(([key, val]) => {
     if (skipFields.includes(key)) return false;
+    if (key.startsWith('post') && (key.endsWith('Title') || key.endsWith('Excerpt') || key.endsWith('Image') || key.endsWith('Date') || key.endsWith('Slug') || key.endsWith('Category') || key.endsWith('Content') || key.endsWith('Keywords'))) return false; // blog alanlarını atla
     if (arrayKeys.includes(key) && Array.isArray(val)) return false;
     if (Array.isArray(val)) return false;
     if (typeof val === 'object' && val !== null) return false;
-    // Boolean alanları da göster (switch/toggle gibi çalışır)
+    // Boolean alanları da göster
     return true;
   });
 
