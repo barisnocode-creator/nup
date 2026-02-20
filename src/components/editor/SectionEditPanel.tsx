@@ -74,7 +74,7 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
       </Tabs>
 
       <div className="px-4 py-3 border-t border-gray-200 dark:border-zinc-700 shrink-0">
-        <button onClick={onClose} className="w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Tamam</button>
+        <button onClick={onClose} className="w-full py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-colors">Tamam</button>
       </div>
 
       {/* Global Pixabay image picker for panel */}
@@ -256,30 +256,36 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
 
         return (
           <div key={key} className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</label>
-            {isImage && value && (
-              <div className="w-full h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 mb-1">
-                <img src={String(value)} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-              </div>
-            )}
+            <label className="text-[11px] font-medium text-gray-400 dark:text-gray-500">{label}</label>
             {isTextarea ? (
               <Textarea value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
                 className="text-sm min-h-[80px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
             ) : isImage ? (
-              <div className="flex gap-2">
-                <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
-                  className="flex-1 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
-                <button
-                  onClick={() => onOpenImagePicker(key)}
-                  title="Pixabay'dan görsel seç"
-                  className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
-                >
-                  <ImageIcon className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => onOpenImagePicker(key)}
+                className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-zinc-800 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-orange-400 transition-all group focus:outline-none"
+              >
+                {value ? (
+                  <>
+                    <img src={String(value)} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 text-gray-900 text-xs font-medium shadow">
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        Görseli Değiştir
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 h-full py-6 text-gray-400">
+                    <ImageIcon className="w-6 h-6 opacity-50" />
+                    <span className="text-xs font-medium">Görsel Ekle</span>
+                    <span className="text-[10px] opacity-60">Tıkla → Pixabay'dan seç</span>
+                  </div>
+                )}
+              </button>
             ) : (
               <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
-                className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
+                className="h-8 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
             )}
           </div>
         );
