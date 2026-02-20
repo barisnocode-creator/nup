@@ -1,7 +1,6 @@
-import { X, LayoutGrid, LayoutList, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { X, LayoutGrid, LayoutList, ChevronDown, Shuffle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { namedPresets } from '@/themes/presets';
@@ -17,10 +16,39 @@ interface CustomizePanelProps {
   onToggleAddableSection?: (key: string) => void;
 }
 
-const fontOptions = [
-  'Inter', 'Playfair Display', 'Space Grotesk', 'Poppins', 'Open Sans',
-  'Lora', 'DM Sans', 'Sora', 'Roboto', 'Montserrat',
+const FONTS = [
+  { family: 'Playfair Display', category: 'Serif' },
+  { family: 'Lora', category: 'Serif' },
+  { family: 'Cormorant Garamond', category: 'Serif' },
+  { family: 'Merriweather', category: 'Serif' },
+  { family: 'EB Garamond', category: 'Serif' },
+  { family: 'Inter', category: 'Modern' },
+  { family: 'DM Sans', category: 'Modern' },
+  { family: 'Plus Jakarta Sans', category: 'Modern' },
+  { family: 'Sora', category: 'Modern' },
+  { family: 'Space Grotesk', category: 'Modern' },
+  { family: 'Outfit', category: 'Modern' },
+  { family: 'Nunito', category: 'Modern' },
+  { family: 'Poppins', category: 'Klasik' },
+  { family: 'Montserrat', category: 'Klasik' },
+  { family: 'Raleway', category: 'Klasik' },
+  { family: 'Open Sans', category: 'Klasik' },
+  { family: 'Josefin Sans', category: 'Dekoratif' },
+  { family: 'Bebas Neue', category: 'Dekoratif' },
+  { family: 'Quicksand', category: 'Dekoratif' },
+  { family: 'Exo 2', category: 'Dekoratif' },
 ];
+
+function loadAllFonts() {
+  const id = 'customize-panel-fonts';
+  if (document.getElementById(id)) return;
+  const params = FONTS.map(f => `family=${encodeURIComponent(f.family)}:wght@400;600;700`).join('&');
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?${params}&display=swap`;
+  document.head.appendChild(link);
+}
 
 interface AddableToggle { key: string; label: string; sectorOnly?: string[] }
 
@@ -59,22 +87,28 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
   const activeCount = Object.values(addableSections).filter(Boolean).length;
   const sectorSpecificToggles = sector ? getSectorToggles(sector) : [];
 
+  // Load all 20 Google Fonts once on mount
+  useEffect(() => { loadAllFonts(); }, []);
+
   const updateColor = (key: string, value: string) => {
     onUpdateTheme({ colors: { ...colors, [key]: value } });
   };
 
+  // Hızlı Tema: ONLY colors, preserve fonts & borderRadius
   const applyPreset = (preset: typeof namedPresets[0]['preset']) => {
     const presetColors: Record<string, string> = {};
     if (preset.colors) {
       Object.entries(preset.colors).forEach(([key, vals]) => {
-        presetColors[key] = vals[0]; // light mode value
+        presetColors[key] = vals[0];
       });
     }
-    onUpdateTheme({
-      colors: presetColors,
-      fonts: preset.fontFamily ? { heading: preset.fontFamily.heading || 'Inter', body: preset.fontFamily.body || 'Inter' } : undefined,
-      borderRadius: preset.borderRadius,
-    });
+    onUpdateTheme({ colors: presetColors });
+  };
+
+  // Rastgele renk paleti
+  const applyRandomColors = () => {
+    const randomPreset = namedPresets[Math.floor(Math.random() * namedPresets.length)];
+    applyPreset(randomPreset.preset);
   };
 
   return (
@@ -169,25 +203,25 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
           </div>
         )}
 
-        {/* Theme Presets */}
+        {/* Theme Presets — COLOR ONLY */}
         <div className="space-y-3">
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hızlı Tema</h4>
           <div className="grid grid-cols-3 gap-2">
             {namedPresets.map(({ name, preset }) => {
               const primaryColor = preset.colors?.primary?.[0] || '#f97316';
               const bgColor = preset.colors?.background?.[0] || '#ffffff';
-              const fgColor = preset.colors?.foreground?.[0] || '#1a1a1a';
+              const accentColor = preset.colors?.accent?.[0] || '#f97316';
               return (
                 <button
                   key={name}
                   onClick={() => applyPreset(preset)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:border-blue-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all group"
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-lg border border-gray-200 dark:border-zinc-700 hover:border-orange-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all group"
                   title={name}
                 >
                   <div className="flex gap-0.5">
-                    <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: bgColor }} />
-                    <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: primaryColor }} />
-                    <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: fgColor }} />
+                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: bgColor }} />
+                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: primaryColor }} />
+                    <div className="w-4 h-4 rounded-full border border-white shadow-sm" style={{ backgroundColor: accentColor }} />
                   </div>
                   <span className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight text-center group-hover:text-gray-900 dark:group-hover:text-white">{name}</span>
                 </button>
@@ -196,9 +230,19 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
           </div>
         </div>
 
-        {/* Colors */}
-        <div className="space-y-3">
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Renkler</h4>
+        {/* Colors — no hex codes, circle pickers + random button */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Renkler</h4>
+            <button
+              onClick={applyRandomColors}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 hover:text-gray-900 dark:hover:text-white transition-colors"
+              title="Rastgele renk paleti uygula"
+            >
+              <Shuffle className="w-3 h-3" />
+              Rastgele
+            </button>
+          </div>
           <ColorPicker label="Ana Renk" value={colors.primary || '#f97316'} onChange={(v) => updateColor('primary', v)} />
           <ColorPicker label="Arka Plan" value={colors.background || '#ffffff'} onChange={(v) => updateColor('background', v)} />
           <ColorPicker label="Metin" value={colors.foreground || '#1a1a1a'} onChange={(v) => updateColor('foreground', v)} />
@@ -207,24 +251,48 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
           <ColorPicker label="İkincil" value={colors.secondary || '#f4f4f5'} onChange={(v) => updateColor('secondary', v)} />
         </div>
 
-        {/* Fonts */}
+        {/* Fonts — 20 options with live preview */}
         <div className="space-y-3">
           <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Yazı Tipleri</h4>
           <div className="space-y-1.5">
             <label className="text-xs text-gray-500 dark:text-gray-400">Başlık Fontu</label>
             <Select value={fonts.heading || 'Inter'} onValueChange={(v) => onUpdateTheme({ fonts: { ...fonts, heading: v } })}>
-              <SelectTrigger className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" style={{ fontFamily: `'${fonts.heading || 'Inter'}', sans-serif` }}>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 z-[70]">
-                {fontOptions.map(f => <SelectItem key={f} value={f} style={{ fontFamily: `'${f}', sans-serif` }}>{f}</SelectItem>)}
+                {FONTS.map(({ family, category }, i) => {
+                  const prevCategory = i > 0 ? FONTS[i - 1].category : null;
+                  return (
+                    <div key={family}>
+                      {category !== prevCategory && (
+                        <div className="px-2 pt-2 pb-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{category}</div>
+                      )}
+                      <SelectItem value={family} style={{ fontFamily: `'${family}', sans-serif` }}>{family}</SelectItem>
+                    </div>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs text-gray-500 dark:text-gray-400">Gövde Fontu</label>
             <Select value={fonts.body || 'Inter'} onValueChange={(v) => onUpdateTheme({ fonts: { ...fonts, body: v } })}>
-              <SelectTrigger className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" style={{ fontFamily: `'${fonts.body || 'Inter'}', sans-serif` }}>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 z-[70]">
-                {fontOptions.map(f => <SelectItem key={f} value={f} style={{ fontFamily: `'${f}', sans-serif` }}>{f}</SelectItem>)}
+                {FONTS.map(({ family, category }, i) => {
+                  const prevCategory = i > 0 ? FONTS[i - 1].category : null;
+                  return (
+                    <div key={family}>
+                      {category !== prevCategory && (
+                        <div className="px-2 pt-2 pb-0.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{category}</div>
+                      )}
+                      <SelectItem value={family} style={{ fontFamily: `'${family}', sans-serif` }}>{family}</SelectItem>
+                    </div>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
@@ -250,15 +318,23 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
 }
 
 function ColorPicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   return (
-    <div className="flex items-center gap-2">
-      <input type="color" value={value} onChange={(e) => onChange(e.target.value)}
-        className="w-8 h-8 rounded-lg border border-border cursor-pointer p-0.5" />
-      <div className="flex-1">
-        <label className="text-xs text-muted-foreground">{label}</label>
-        <Input value={value} onChange={(e) => onChange(e.target.value)}
-          className="text-xs h-7 mt-0.5" />
-      </div>
+    <div className="flex items-center justify-between py-1.5">
+      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <label className="cursor-pointer group" onClick={() => inputRef.current?.click()}>
+        <div
+          className="w-7 h-7 rounded-full border-2 border-white shadow-md ring-1 ring-gray-200 dark:ring-zinc-600 group-hover:scale-110 transition-transform"
+          style={{ backgroundColor: value }}
+        />
+        <input
+          ref={inputRef}
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="sr-only"
+        />
+      </label>
     </div>
   );
 }
