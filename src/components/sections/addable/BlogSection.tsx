@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Tag, ArrowRight, BookOpen } from 'lucide-react';
 import type { SectionComponentProps } from '../types';
 import BlogPostDetailSection from './BlogPostDetailSection';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BlogPost {
   title: string;
@@ -23,9 +24,24 @@ function formatDate(dateStr: string) {
   }
 }
 
+function getCategoryQuery(category: string, title: string): string {
+  const cat = category?.toLowerCase() || '';
+  if (cat.includes('ipuç') || cat.includes('tips')) return 'tips advice professional guide';
+  if (cat.includes('rehber') || cat.includes('guide')) return 'guide tutorial steps learning';
+  if (cat.includes('başar') || cat.includes('success')) return 'success achievement business growth';
+  if (cat.includes('sağlık') || cat.includes('health')) return 'healthcare medical wellness professional';
+  if (cat.includes('hukuk') || cat.includes('law')) return 'law legal office professional';
+  // Başlıktan keyword çıkar (ilk 3 anlamlı kelime)
+  const keywords = title.split(' ').filter(w => w.length > 3).slice(0, 3).join(' ');
+  if (keywords.length > 5) return `${keywords} professional`;
+  return 'professional blog article modern office';
+}
+
 export function BlogSection({ section, isEditing, onUpdate }: SectionComponentProps) {
   const props = section.props || {};
   const [activeBlogSlug, setActiveBlogSlug] = useState<string | null>(null);
+  const [autoImages, setAutoImages] = useState<Record<string, string>>({});
+  const fetchedRef = useRef(false);
 
   const sectionTitle = props.sectionTitle || 'Blog & Haberler';
   const sectionSubtitle = props.sectionSubtitle || 'Güncel makalelerimizi ve sektör bilgilerini keşfedin';
@@ -74,6 +90,36 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
     },
   ];
 
+  // Pixabay otomatik görsel çekme — sadece bir kez, boş görseller için
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    const fetchMissing = async () => {
+      for (const post of posts) {
+        if (!post.image) {
+          const query = getCategoryQuery(post.category, post.title);
+          try {
+            const { data } = await supabase.functions.invoke('search-pixabay', {
+              body: { query, perPage: 5 },
+            });
+            if (data?.images?.[0]) {
+              setAutoImages(prev => ({
+                ...prev,
+                [post.slug]: data.images[0].webformatURL,
+              }));
+            }
+          } catch {
+            // sessizce geç
+          }
+        }
+      }
+    };
+
+    fetchMissing();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const activePost = activeBlogSlug ? posts.find(p => p.slug === activeBlogSlug) : null;
 
   if (activePost) {
@@ -112,70 +158,73 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
 
         {/* Posts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {posts.map((post, index) => (
-            <motion.div
-              key={post.slug}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group cursor-pointer"
-              onClick={() => {
-                if (isEditing) {
-                  setActiveBlogSlug(post.slug);
-                } else {
-                  const pathParts = window.location.pathname.split('/');
-                  const sub = pathParts[2];
-                  window.location.href = `/site/${sub}/blog/${post.slug}`;
-                }
-              }}
-            >
-              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
-                {/* Image */}
-                <div className="w-full aspect-[3/2] relative overflow-hidden bg-muted">
-                  {post.image ? (
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <BookOpen className="w-10 h-10 text-primary/40" />
+          {posts.map((post, index) => {
+              const displayImage = post.image || autoImages[post.slug] || '';
+              return (
+              <motion.div
+                key={post.slug}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="group cursor-pointer"
+                onClick={() => {
+                  if (isEditing) {
+                    setActiveBlogSlug(post.slug);
+                  } else {
+                    const pathParts = window.location.pathname.split('/');
+                    const sub = pathParts[2];
+                    window.open(`/site/${sub}/blog/${post.slug}`, '_blank');
+                  }
+                }}
+              >
+                <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                  {/* Image 3:2 */}
+                  <div className="w-full aspect-[3/2] relative overflow-hidden bg-muted">
+                    {displayImage ? (
+                      <img
+                        src={displayImage}
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <BookOpen className="w-10 h-10 text-primary/40 animate-pulse" />
+                      </div>
+                    )}
+                    {/* Category badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm text-[11px] font-semibold text-foreground shadow-sm">
+                        <Tag className="w-2.5 h-2.5 text-primary" />
+                        {post.category}
+                      </span>
                     </div>
-                  )}
-                  {/* Category badge */}
-                  <div className="absolute top-3 left-3">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/90 backdrop-blur-sm text-[11px] font-semibold text-foreground shadow-sm">
-                      <Tag className="w-2.5 h-2.5 text-primary" />
-                      {post.category}
-                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(post.date)}
+                    </div>
+
+                    <h3 className="text-base font-bold text-foreground mb-2 line-clamp-2 leading-snug font-heading-dynamic group-hover:text-primary transition-colors">
+                      {post.title}
+                    </h3>
+
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed font-body-dynamic flex-1">
+                      {post.excerpt}
+                    </p>
+
+                    <div className="mt-4 pt-4 border-t border-border flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-200">
+                      Devamını Oku
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
                   </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-5 flex flex-col flex-1">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-                    <Calendar className="w-3 h-3" />
-                    {formatDate(post.date)}
-                  </div>
-
-                  <h3 className="text-base font-bold text-foreground mb-2 line-clamp-2 leading-snug font-heading-dynamic group-hover:text-primary transition-colors">
-                    {post.title}
-                  </h3>
-
-                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed font-body-dynamic flex-1">
-                    {post.excerpt}
-                  </p>
-
-                  <div className="mt-4 pt-4 border-t border-border flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:gap-3 transition-all duration-200">
-                    Devamını Oku
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+              );
+            })}
         </div>
       </div>
     </section>

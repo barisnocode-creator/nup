@@ -106,7 +106,7 @@ export default function PublicBlogPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className="group cursor-pointer"
-                onClick={() => navigate(`/site/${subdomain}/blog/${post.slug}`)}
+                onClick={() => window.open(`/site/${subdomain}/blog/${post.slug}`, '_blank')}
               >
                 <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                   <div className="w-full aspect-[3/2] relative overflow-hidden bg-muted">
