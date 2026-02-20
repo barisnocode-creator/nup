@@ -1,138 +1,61 @@
 
-## Netlify'dan Vercel'e Geçiş Planı
+## Mevcut Durum — Ne Yapıldı, Ne Eksik
 
-### Neden Vercel?
+### ✅ Tamamlananlar
+- `VERCEL_API_TOKEN` secret eklendi
+- DB sütunları `vercel_project_id`, `vercel_url`, `vercel_custom_domain` olarak yeniden adlandırıldı
+- `deploy-to-vercel` Edge Function oluşturuldu (1387 satır, tam render mantığı içeriyor)
+- `verify-domain` Edge Function Vercel'e güncellendi
+- `PublishModal.tsx` — `handlePublish` artık `deploy-to-vercel` çağırıyor ✅
+- `supabase/config.toml` güncellendi
 
-Vercel, Netlify gibi statik HTML deploy etmeyi REST API üzerinden tam olarak destekler. Deploy akışı çok benzer: dosyayı inline olarak gönderir, Vercel bir deployment URL'si döner. Custom domain eklemek de aynı şekilde API ile yapılır. İkisi arasındaki temel fark **API endpoint yapısı** ve **authentication yöntemi**dir.
+### ❌ Eksik — 2 Sorun Var
 
----
-
-### Değişiklik Kapsamı
-
-Sistemde Netlify'a bağımlı olan **3 yer** var:
-
-| # | Bileşen | Değişiklik |
-|---|---|---|
-| 1 | `supabase/functions/deploy-to-netlify/` | Yeni `deploy-to-vercel` edge function oluşturulacak |
-| 2 | `supabase/functions/verify-domain/index.ts` | Netlify domain kayıt kodu → Vercel domain kayıt koduna çevrilecek |
-| 3 | `src/components/website-preview/PublishModal.tsx` | `deploy-to-netlify` çağrısı → `deploy-to-vercel` olarak güncellenecek |
-
-Veritabanında `netlify_site_id`, `netlify_url`, `netlify_custom_domain` sütunları var. Bunları `vercel_project_id`, `vercel_url`, `vercel_custom_domain` olarak yeniden adlandırmak gerekecek — ya da mevcut sütunları "yeniden amaçlandırarak" kullanmaya devam edebiliriz. Temizlik açısından yeniden adlandırmak daha doğru olur.
-
----
-
-### Teknik Detaylar
-
-#### Vercel Deploy Akışı (Netlify'dan Farkı)
-
-**Netlify:**
-```
-POST /sites → site_id alınır
-POST /sites/{id}/deploys → deploy_id alınır (SHA-1 ile)
-PUT /deploys/{id}/files/index.html → dosya yüklenir
-```
-
-**Vercel:**
-```
-POST /v11/projects → project_id alınır
-POST /v13/deployments → files[] içinde base64 HTML inline gönderilir → deployment URL hemen döner
-```
-
-Vercel daha basit: tek bir API çağrısıyla dosyayı da gönderip deployment URL'sini alabilirsiniz. SHA-1 hesabına gerek yok.
-
-#### Vercel Custom Domain:
-```
-POST /v9/projects/{projectId}/domains
-Body: { "name": "example.com" }
-```
-
----
-
-### Adım Adım Uygulama
-
-**Adım 1: Vercel API Token Secret'ı ekle**
-
-`VERCEL_API_TOKEN` adında yeni bir secret eklenecek. Bunun için Vercel dashboard → Settings → Tokens'tan token üretilmesi gerekiyor.
-
-**Adım 2: Veritabanı migration — sütunları yeniden adlandır**
-
-```sql
-ALTER TABLE projects
-  RENAME COLUMN netlify_site_id TO vercel_project_id;
-ALTER TABLE projects
-  RENAME COLUMN netlify_url TO vercel_url;
-ALTER TABLE projects
-  RENAME COLUMN netlify_custom_domain TO vercel_custom_domain;
-```
-
-Bu sayede mevcut veri korunur, sadece sütun isimleri değişir.
-
-**Adım 3: Yeni `deploy-to-vercel` edge function yaz**
-
-`supabase/functions/deploy-to-netlify/` klasörü silinip yerine `supabase/functions/deploy-to-vercel/` oluşturulacak.
-
-Ana deploy mantığı (HTML üretimi — ~1300 satır render kodu) **aynen korunacak**, sadece Netlify API çağrıları Vercel API çağrılarıyla değiştirilecek:
-
+**Sorun 1: `handleUpdate` hâlâ Netlify çağırıyor (satır 275-287)**
 ```typescript
-// Vercel'de proje oluşturma
-POST https://api.vercel.com/v11/projects
-{ name: "openlucius-{subdomain}" }
-
-// Vercel'de deployment (inline base64 HTML)
-POST https://api.vercel.com/v13/deployments
-{
-  name: "openlucius-{subdomain}",
-  files: [{ file: "index.html", data: "<base64 HTML>", encoding: "base64" }],
-  projectId: vercelProjectId,
-  target: "production"
-}
+// YANLIŞ — hâlâ Netlify:
+const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+  body: { projectId },
+});
+if (!deployError && deployData?.netlifyUrl) {   // netlifyUrl kontrolü de yanlış
 ```
 
-**Adım 4: `verify-domain/index.ts` güncelle**
+**Sorun 2: `handleUpdate` başarı kontrolü `netlifyUrl` bekliyor**
+Vercel fonksiyonu `vercelUrl` döndürüyor ama eski kod `netlifyUrl` arıyor — güncelleme her zaman "başarısız" görünüyor.
 
-Netlify domain registration kodu kaldırılıp yerine Vercel domain API'si kullanılacak:
+---
 
+## Yapılacak Değişiklik — Tek Dosya, 2 Satır
+
+**Dosya:** `src/components/website-preview/PublishModal.tsx`
+
+**Satır 275:** `'deploy-to-netlify'` → `'deploy-to-vercel'`  
+**Satır 279:** `deployData?.netlifyUrl` → `deployData?.vercelUrl`
+
+### Technical Detail
 ```typescript
-// Vercel'e domain ekle
-POST https://api.vercel.com/v9/projects/{projectId}/domains
-Authorization: Bearer VERCEL_API_TOKEN
-{ "name": "example.com" }
+// ÖNCE (satır 275-285):
+const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
+  body: { projectId },
+});
+if (!deployError && deployData?.netlifyUrl) {
+  toast({ title: '✅ Site güncellendi!', ... });
+
+// SONRA:
+const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
+  body: { projectId },
+});
+if (!deployError && deployData?.vercelUrl) {
+  toast({ title: '✅ Site güncellendi!', ... });
 ```
 
-SSL Vercel'de otomatik — ayrıca poll etmeye gerek yok.
-
-**Adım 5: `PublishModal.tsx` güncelle**
-
-`deploy-to-netlify` → `deploy-to-vercel` function adı değişir. `netlify_url` / `netlify_custom_domain` referansları → `vercel_url` / `vercel_custom_domain` olarak güncellenir.
-
 ---
 
-### Önkoşul: Vercel API Token
+## Sonuç
 
-Bu değişiklikleri uygulamadan önce sizden **Vercel API token**'ı almanız gerekiyor:
+Bu küçük ama kritik düzeltme ile:
+- Yeni yayınlama → `deploy-to-vercel` ✅ (zaten düzgün)
+- Mevcut site güncelleme → `deploy-to-vercel` ✅ (bu düzeltmeyle)
+- Başarı kontrolü → `vercelUrl` ✅ (bu düzeltmeyle)
 
-1. [vercel.com/account/tokens](https://vercel.com/account/tokens) adresine gidin
-2. "Create Token" ile yeni bir token oluşturun
-3. Token'ı bana bildirin, sisteme ekleyeceğim
-
----
-
-### Etkilenmeyen Şeyler
-
-- HTML render mantığı (tüm section renderer'lar) birebir korunacak
-- Domain doğrulama (DNS TXT kontrolü) değişmeyecek
-- Kullanıcı arayüzü (PublishModal görünümü) değişmeyecek
-- Mevcut yayınlanmış siteler etkilenmez (sadece yeni yayınlamalar Vercel'e gidecek)
-
----
-
-### Özet
-
-| Değişiklik | Etki |
-|---|---|
-| `deploy-to-netlify` → `deploy-to-vercel` | Yeni yayınlamalar Vercel'e gider |
-| `verify-domain` Netlify kodu → Vercel | Custom domain bağlama Vercel üzerinden çalışır |
-| DB sütunları yeniden adlandırılır | Temiz bir veri modeli |
-| `PublishModal.tsx` function adı güncellenir | UI doğru function'ı çağırır |
-
-**Başlamadan önce:** Vercel API token'ınızı paylaşmanız ya da sisteme eklemeniz gerekiyor.
+Netlify'a hiçbir çağrı kalmayacak. `deploy-to-netlify` Edge Function silinebilir (isteğe bağlı, şimdilik zarar vermez).
