@@ -169,6 +169,33 @@ export const hotelLuxuryPreset: ThemePresetValues = {
   },
 };
 
+// MedCare Pro — clean white bg, medical green/teal accent
+export const medcareProPreset: ThemePresetValues = {
+  fontFamily: { heading: "Plus Jakarta Sans", body: "Inter" },
+  borderRadius: "12px",
+  colors: {
+    background: ["#f8fffe", "#0a1a15"],
+    foreground: ["#0d2618", "#e8f5f0"],
+    primary: ["#059669", "#34d399"],
+    "primary-foreground": ["#ffffff", "#0a1a15"],
+    secondary: ["#ecfdf5", "#1a2e24"],
+    "secondary-foreground": ["#065f46", "#6ee7b7"],
+    muted: ["#ecfdf5", "#1a2e24"],
+    "muted-foreground": ["#6b7280", "#9ca3af"],
+    accent: ["#059669", "#34d399"],
+    "accent-foreground": ["#ffffff", "#0a1a15"],
+    destructive: ["#ef4444", "#f87171"],
+    "destructive-foreground": ["#ffffff", "#ffffff"],
+    border: ["#d1fae5", "#1a3a28"],
+    input: ["#d1fae5", "#1a3a28"],
+    ring: ["#059669", "#34d399"],
+    card: ["#ffffff", "#0f2018"],
+    "card-foreground": ["#0d2618", "#e8f5f0"],
+    popover: ["#ffffff", "#0f2018"],
+    "popover-foreground": ["#0d2618", "#e8f5f0"],
+  },
+};
+
 // Engineer Portfolio — dark bg, blue accents
 export const engineerPortfolioPreset: ThemePresetValues = {
   fontFamily: { heading: "Space Grotesk", body: "Inter" },
@@ -201,6 +228,7 @@ export const namedPresets: { name: string; preset: ThemePresetValues }[] = [
   { name: "Pastel Zarif", preset: pastelElegantPreset },
   { name: "Canlı Cesur", preset: vibrantBoldPreset },
   { name: "Kurumsal Mavi", preset: corporateBluePreset },
+  { name: "MedCare Pro", preset: medcareProPreset },
   { name: "Dental Klinik", preset: dentalClinicPreset },
   { name: "Restoran Zarif", preset: restaurantElegantPreset },
   { name: "Otel Lüks", preset: hotelLuxuryPreset },
@@ -208,6 +236,7 @@ export const namedPresets: { name: string; preset: ThemePresetValues }[] = [
 ];
 
 export const templateToPreset: Record<string, ThemePresetValues> = {
+  "medcare-pro": medcareProPreset,
   "specialty-cafe": specialtyCafePreset,
   "dental-clinic": dentalClinicPreset,
   "restaurant-elegant": restaurantElegantPreset,
