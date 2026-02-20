@@ -127,11 +127,11 @@ export const specialtyCafe: TemplateDefinition = {
     {
       type: 'AppointmentBooking',
       defaultProps: {
-        sectionTitle: 'Rezervasyon',
-        sectionSubtitle: 'Masa Ayırın',
-        sectionDescription: 'Özel anlarınız için masa ayırtın.',
-        submitButtonText: 'Rezervasyon Yap',
-        successMessage: 'Rezervasyonunuz alındı!',
+        sectionTitle: 'Randevu / Rezervasyon',
+        sectionSubtitle: 'Hemen Başlayın',
+        sectionDescription: 'Birkaç adımda kolayca işleminizi tamamlayın.',
+        submitButtonText: 'Gönder',
+        successMessage: 'Talebiniz alındı!',
       },
     },
     {
@@ -340,11 +340,11 @@ export const restaurantElegant: TemplateDefinition = {
     {
       type: 'AppointmentBooking',
       defaultProps: {
-        sectionTitle: 'Rezervasyon',
-        sectionSubtitle: 'Masa Ayırın',
-        sectionDescription: 'Özel bir akşam yemeği için masa ayırtın.',
-        submitButtonText: 'Rezervasyon Yap',
-        successMessage: 'Rezervasyonunuz alındı!',
+        sectionTitle: 'Randevu / Rezervasyon',
+        sectionSubtitle: 'Hemen Başlayın',
+        sectionDescription: 'Birkaç adımda kolayca işleminizi tamamlayın.',
+        submitButtonText: 'Gönder',
+        successMessage: 'Talebiniz alındı!',
       },
     },
     {

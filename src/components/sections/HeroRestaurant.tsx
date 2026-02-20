@@ -6,8 +6,8 @@ export function HeroRestaurant({ section, isEditing }: SectionComponentProps) {
   const title = p.title || 'Lezzetin Sanatla Buluştuğu Yer';
   const description = p.description || 'Şefimizin özenle hazırladığı menümüzle unutulmaz bir gastronomi deneyimi yaşayın.';
   const badge = p.badge || '★ Fine Dining';
-  const primaryBtn = p.primaryButtonText || 'Rezervasyon';
-  const secondaryBtn = p.secondaryButtonText || 'Menü';
+  const primaryBtn = p.primaryButtonText ?? 'Rezervasyon';
+  const secondaryBtn = p.secondaryButtonText ?? 'Menü';
   const image = p.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80';
 
   return (
