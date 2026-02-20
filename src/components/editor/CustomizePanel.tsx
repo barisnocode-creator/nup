@@ -28,6 +28,10 @@ const universalToggles: AddableToggle[] = [
   { key: 'faq', label: 'Sık Sorulan Sorular (FAQ)' },
   { key: 'messageForm', label: 'Mesaj Bırak / İletişim Formu' },
   { key: 'workingHours', label: 'Çalışma Saatleri & Harita' },
+  { key: 'callUs', label: '📞 Sizi Arayalım' },
+  { key: 'socialProof', label: '⭐ Sosyal Kanıt / Memnuniyet' },
+  { key: 'teamGrid', label: '👥 Ekibimiz' },
+  { key: 'promotionBanner', label: '🎉 Kampanya & Duyuru' },
 ];
 
 const sectorToggles: AddableToggle[] = [

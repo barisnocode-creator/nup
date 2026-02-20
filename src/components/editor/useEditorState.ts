@@ -17,6 +17,10 @@ const addableSectionConfig: Record<string, { type: string; defaultProps: Record<
   caseEvaluation: { type: 'AddableCaseEvaluation', defaultProps: {} },
   beforeAfter: { type: 'AddableBeforeAfter', defaultProps: {} },
   petRegistration: { type: 'AddablePetRegistration', defaultProps: {} },
+  callUs: { type: 'AddableCallUs', defaultProps: {} },
+  socialProof: { type: 'AddableSocialProof', defaultProps: {} },
+  teamGrid: { type: 'AddableTeamGrid', defaultProps: {} },
+  promotionBanner: { type: 'AddablePromotionBanner', defaultProps: {} },
 };
 
 interface EditorState {

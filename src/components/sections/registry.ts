@@ -13,6 +13,10 @@ import { RoomAvailabilitySection } from './addable/RoomAvailabilitySection';
 import { CaseEvaluationSection } from './addable/CaseEvaluationSection';
 import { BeforeAfterSection } from './addable/BeforeAfterSection';
 import { PetRegistrationSection } from './addable/PetRegistrationSection';
+import { CallUsSection } from './addable/CallUsSection';
+import { SocialProofSection } from './addable/SocialProofSection';
+import { TeamGridSection } from './addable/TeamGridSection';
+import { PromotionBannerSection } from './addable/PromotionBannerSection';
 import { HeroOverlay } from './HeroOverlay';
 import { HeroCafe } from './HeroCafe';
 import { ServicesGrid } from './ServicesGrid';
@@ -120,6 +124,10 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'AddableCaseEvaluation': CaseEvaluationSection,
   'AddableBeforeAfter': BeforeAfterSection,
   'AddablePetRegistration': PetRegistrationSection,
+  'AddableCallUs': CallUsSection,
+  'AddableSocialProof': SocialProofSection,
+  'AddableTeamGrid': TeamGridSection,
+  'AddablePromotionBanner': PromotionBannerSection,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
