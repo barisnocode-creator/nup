@@ -17,13 +17,21 @@ interface SectionEditPanelProps {
 
 const sectionTypeLabels: Record<string, string> = {
   'hero-centered': 'Hero (Ortala)', 'hero-split': 'Hero (İki Parça)', 'hero-overlay': 'Hero (Overlay)',
-  'HeroCafe': 'Hero Cafe', 'services-grid': 'Hizmetler', 'about-section': 'Hakkımızda',
-  'statistics-counter': 'İstatistikler', 'testimonials-carousel': 'Müşteri Yorumları',
-  'TestimonialsCarousel': 'Müşteri Yorumları', 'contact-form': 'İletişim Formu',
-  'ContactForm': 'İletişim Formu', 'cta-banner': 'Aksiyon Çağrısı', 'CTABanner': 'Aksiyon Çağrısı',
-  'faq-accordion': 'SSS', 'image-gallery': 'Galeri', 'pricing-table': 'Fiyatlandırma',
-  'appointment-booking': 'Randevu', 'AppointmentBooking': 'Randevu', 'MenuShowcase': 'Menü',
+  'HeroCafe': 'Hero Cafe', 'HeroRestaurant': 'Hero Restoran', 'HeroDental': 'Hero Klinik',
+  'HeroHotel': 'Hero Otel', 'HeroPortfolio': 'Hero Portfolyo',
+  'services-grid': 'Hizmetler', 'ServicesGrid': 'Hizmetler', 'about-section': 'Hakkımızda',
+  'AboutSection': 'Hakkımızda', 'statistics-counter': 'İstatistikler',
+  'testimonials-carousel': 'Müşteri Yorumları', 'TestimonialsCarousel': 'Müşteri Yorumları',
+  'contact-form': 'İletişim Formu', 'ContactForm': 'İletişim Formu',
+  'cta-banner': 'Aksiyon Çağrısı', 'CTABanner': 'Aksiyon Çağrısı',
+  'faq-accordion': 'SSS', 'image-gallery': 'Galeri', 'ImageGallery': 'Galeri',
+  'pricing-table': 'Fiyatlandırma', 'appointment-booking': 'Randevu',
+  'AppointmentBooking': 'Randevu', 'MenuShowcase': 'Menü', 'RestaurantMenu': 'Restoran Menüsü',
   'CafeStory': 'Hikaye', 'CafeFeatures': 'Özellikler', 'CafeGallery': 'Galeri',
+  'ChefShowcase': 'Şef Tanıtımı', 'RoomShowcase': 'Oda Seçenekleri',
+  'HotelAmenities': 'Otel Hizmetleri', 'ProjectShowcase': 'Projeler',
+  'DentalServices': 'Diş Hizmetleri', 'DentalBooking': 'Randevu', 'DentalTips': 'İpuçları',
+  'SkillsGrid': 'Beceriler', 'StatisticsCounter': 'İstatistikler',
 };
 
 export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClose }: SectionEditPanelProps) {
@@ -67,47 +75,126 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
 }
 
 // ---- Array item field config ----
+// FAZ 2: Genişletilmiş schema — stats, plans, features eklendi
 const arrayFieldSchemas: Record<string, { fields: { key: string; label: string; type?: 'textarea' }[] }> = {
-  services: { fields: [{ key: 'title', label: 'Başlık' }, { key: 'description', label: 'Açıklama', type: 'textarea' }, { key: 'icon', label: 'İkon' }, { key: 'image', label: 'Görsel URL' }] },
-  testimonials: { fields: [{ key: 'name', label: 'İsim' }, { key: 'role', label: 'Rol' }, { key: 'content', label: 'Yorum', type: 'textarea' }, { key: 'avatar', label: 'Avatar URL' }] },
-  items: { fields: [{ key: 'question', label: 'Soru' }, { key: 'answer', label: 'Cevap', type: 'textarea' }, { key: 'name', label: 'İsim' }, { key: 'price', label: 'Fiyat' }, { key: 'description', label: 'Açıklama' }, { key: 'category', label: 'Kategori' }] },
-  features: { fields: [{ key: 'icon', label: 'İkon' }, { key: 'title', label: 'Başlık' }, { key: 'description', label: 'Açıklama', type: 'textarea' }] },
+  services: { fields: [
+    { key: 'title', label: 'Başlık' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+    { key: 'icon', label: 'İkon' },
+    { key: 'image', label: 'Görsel URL' },
+    { key: 'price', label: 'Fiyat' },
+  ]},
+  testimonials: { fields: [
+    { key: 'name', label: 'İsim' },
+    { key: 'role', label: 'Rol / Ünvan' },
+    { key: 'content', label: 'Yorum', type: 'textarea' },
+    { key: 'avatar', label: 'Avatar URL' },
+  ]},
+  items: { fields: [
+    { key: 'name', label: 'Ad' },
+    { key: 'question', label: 'Soru' },
+    { key: 'answer', label: 'Cevap', type: 'textarea' },
+    { key: 'price', label: 'Fiyat' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+    { key: 'category', label: 'Kategori' },
+    { key: 'image', label: 'Görsel URL' },
+  ]},
+  features: { fields: [
+    { key: 'icon', label: 'İkon (emoji veya Lucide ismi)' },
+    { key: 'title', label: 'Başlık' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+  ]},
+  stats: { fields: [
+    { key: 'value', label: 'Değer (örn: 500+)' },
+    { key: 'label', label: 'Etiket' },
+    { key: 'suffix', label: 'Son Ek' },
+  ]},
+  plans: { fields: [
+    { key: 'name', label: 'Plan Adı' },
+    { key: 'price', label: 'Fiyat' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+    { key: 'period', label: 'Dönem (ay/yıl)' },
+  ]},
+  tips: { fields: [
+    { key: 'icon', label: 'İkon' },
+    { key: 'title', label: 'Başlık' },
+    { key: 'content', label: 'İçerik', type: 'textarea' },
+  ]},
+  projects: { fields: [
+    { key: 'title', label: 'Başlık' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+    { key: 'image', label: 'Görsel URL' },
+    { key: 'tag', label: 'Etiket' },
+  ]},
+  rooms: { fields: [
+    { key: 'name', label: 'Oda Adı' },
+    { key: 'description', label: 'Açıklama', type: 'textarea' },
+    { key: 'price', label: 'Fiyat' },
+    { key: 'image', label: 'Görsel URL' },
+  ]},
+};
+
+// FAZ 2: Genişletilmiş Türkçe etiket haritası
+const labelMap: Record<string, string> = {
+  title: 'Başlık',
+  subtitle: 'Alt Başlık',
+  description: 'Açıklama',
+  sectionTitle: 'Bölüm Başlığı',
+  sectionSubtitle: 'Bölüm Alt Başlığı',
+  sectionDescription: 'Bölüm Açıklaması',
+  primaryButtonText: 'Ana Buton Metni',
+  primaryButtonLink: 'Ana Buton Linki',
+  secondaryButtonText: 'İkinci Buton Metni',
+  secondaryButtonLink: 'İkinci Buton Linki',
+  buttonText: 'Buton Metni',
+  buttonLink: 'Buton Linki',
+  backgroundImage: 'Arka Plan Görseli',
+  image: 'Görsel URL',
+  imagePosition: 'Görsel Konumu',
+  address: 'Adres',
+  phone: 'Telefon',
+  email: 'E-posta',
+  hours: 'Çalışma Saatleri',
+  submitButtonText: 'Gönder Butonu',
+  successMessage: 'Başarı Mesajı',
+  siteName: 'Site Adı',
+  badge: 'Rozet Metni',
+  floatingBadge: 'Yüzen Rozet',
+  floatingBadgeSubtext: 'Rozet Alt Yazısı',
+  name: 'Ad / İsim',
+  role: 'Ünvan / Rol',
+  content: 'İçerik',
+  bio: 'Biyografi',
+  tagline: 'Slogan',
+  features: 'Özellikler (metin)',
+  infoItems: 'Bilgi Etiketleri (virgülle ayır)',
 };
 
 function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpdateProps: (props: Record<string, any>) => void }) {
   const props = section.props || {};
 
-  const labelMap: Record<string, string> = {
-    title: 'Başlık', subtitle: 'Alt Başlık', description: 'Açıklama',
-    sectionTitle: 'Bölüm Başlığı', sectionSubtitle: 'Bölüm Alt Başlığı', sectionDescription: 'Bölüm Açıklaması',
-    primaryButtonText: 'Ana Buton', primaryButtonLink: 'Ana Buton Linki',
-    secondaryButtonText: 'İkinci Buton', secondaryButtonLink: 'İkinci Buton Linki',
-    buttonText: 'Buton Metni', buttonLink: 'Buton Linki',
-    backgroundImage: 'Arka Plan Görseli', image: 'Görsel', imagePosition: 'Görsel Konumu',
-    features: 'Özellikler', address: 'Adres', phone: 'Telefon', email: 'E-posta',
-    submitButtonText: 'Gönder Butonu', successMessage: 'Başarı Mesajı', siteName: 'Site Adı',
-    badge: 'Rozet', floatingBadge: 'Yüzen Rozet', floatingBadgeSubtext: 'Rozet Alt Metin',
-  };
+  const textareaFields = ['description', 'sectiondescription', 'content', 'bio', 'features'];
 
-  const textareaFields = ['description', 'sectionDescription', 'features', 'content'];
-  const arrayKeys = ['services', 'testimonials', 'items'];
-  const skipFields = ['stats', 'images', 'plans', 'infoItems'];
+  // FAZ 2a: Genişletilmiş array key listesi
+  const arrayKeys = ['services', 'testimonials', 'items', 'features', 'stats', 'plans', 'tips', 'projects', 'rooms'];
+  // FAZ 2a: Sadece gerçek nesne/görsel dizileri atla
+  const skipFields = ['images', 'theme', 'style'];
 
   // Regular (non-array) fields
   const entries = Object.entries(props).filter(([key, val]) => {
-    if (skipFields.includes(key) || arrayKeys.includes(key)) return false;
-    if (typeof val === 'object' && val !== null && Array.isArray(val)) return false;
+    if (skipFields.includes(key)) return false;
+    if (arrayKeys.includes(key) && Array.isArray(val)) return false;
+    if (Array.isArray(val)) return false;
     if (typeof val === 'object' && val !== null) return false;
+    // Boolean alanları da göster (switch/toggle gibi çalışır)
     return true;
   });
 
   // Array fields that exist in this section
   const arrayEntries = arrayKeys.filter(k => Array.isArray(props[k]) && props[k].length > 0);
-  // Also check for 'features' as array (CafeFeatures uses it)
-  if (Array.isArray(props.features)) {
-    if (!arrayEntries.includes('features')) arrayEntries.push('features');
-    // Remove from regular entries
-  }
+
+  // infoItems: string[] (virgülle ayrılmış metin olarak göster)
+  const hasInfoItems = Array.isArray(props.infoItems);
 
   return (
     <>
@@ -115,6 +202,7 @@ function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpd
         const label = labelMap[key] || key;
         const isTextarea = textareaFields.some(f => key.toLowerCase().includes(f));
         const isImage = key === 'image' || key === 'backgroundImage';
+        const isBool = typeof value === 'boolean';
 
         if (key === 'imagePosition') {
           return (
@@ -127,6 +215,20 @@ function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpd
                   <SelectItem value="right">Sağ</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+          );
+        }
+
+        if (isBool) {
+          return (
+            <div key={key} className="flex items-center justify-between">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</label>
+              <button
+                onClick={() => onUpdateProps({ [key]: !value })}
+                className={`relative w-10 h-5 rounded-full transition-colors ${value ? 'bg-blue-600' : 'bg-gray-200'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${value ? 'translate-x-5' : ''}`} />
+              </button>
             </div>
           );
         }
@@ -150,12 +252,25 @@ function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpd
         );
       })}
 
+      {/* infoItems: string dizisi — virgülle ayrılmış metin */}
+      {hasInfoItems && (
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Bilgi Etiketleri (virgülle ayırın)</label>
+          <Input
+            value={(props.infoItems as string[]).join(', ')}
+            onChange={(e) => onUpdateProps({ infoItems: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) })}
+            className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white"
+            placeholder="Örn: Organik, Taze, Est. 2020"
+          />
+        </div>
+      )}
+
       {/* Array Editors */}
       {arrayEntries.map(arrKey => (
         <ArrayEditor key={arrKey} arrKey={arrKey} items={props[arrKey]} onUpdate={(newItems) => onUpdateProps({ [arrKey]: newItems })} />
       ))}
 
-      {entries.length === 0 && arrayEntries.length === 0 && (
+      {entries.length === 0 && arrayEntries.length === 0 && !hasInfoItems && (
         <p className="text-sm text-gray-500 text-center py-4">Bu bölüm için düzenlenebilir alan bulunmuyor.</p>
       )}
     </>
@@ -166,12 +281,15 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const schema = arrayFieldSchemas[arrKey];
   const arrayLabel: Record<string, string> = {
-    services: 'Hizmetler', testimonials: 'Müşteri Yorumları', items: 'Öğeler', features: 'Özellikler',
+    services: 'Hizmetler', testimonials: 'Müşteri Yorumları', items: 'Öğeler',
+    features: 'Özellikler', stats: 'İstatistikler', plans: 'Planlar',
+    tips: 'İpuçları', projects: 'Projeler', rooms: 'Odalar',
   };
 
   const addItem = () => {
     const newItem: Record<string, string> = {};
     if (schema) schema.fields.forEach(f => { newItem[f.key] = ''; });
+    else Object.keys(items[0] || {}).forEach(k => { if (typeof items[0][k] === 'string') newItem[k] = ''; });
     onUpdate([...items, newItem]);
     setOpenIndex(items.length);
   };
@@ -187,10 +305,11 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
     onUpdate(updated);
   };
 
-  // Filter schema fields to only show ones that exist in items
+  // FAZ 2b: Düzeltilmiş getVisibleFields — schema'daki her alanı item'da var olanlarla eşleştir
   const getVisibleFields = (item: any) => {
     if (!schema) return [];
-    return schema.fields.filter(f => f.key in item || item[f.key] !== undefined);
+    // item'da tanımlı olan tüm schema alanlarını göster (boş string dahil)
+    return schema.fields.filter(f => f.key in item);
   };
 
   return (
@@ -204,7 +323,7 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
 
       {items.map((item, index) => {
         const isOpen = openIndex === index;
-        const itemTitle = item.title || item.name || item.question || `#${index + 1}`;
+        const itemTitle = item.title || item.name || item.question || item.value || `#${index + 1}`;
         const fields = getVisibleFields(item);
 
         return (
@@ -240,10 +359,10 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
                     )}
                   </div>
                 )) : (
-                  // Fallback: show all string keys
+                  // Fallback: item'daki tüm string key'leri göster
                   Object.entries(item).filter(([, v]) => typeof v === 'string').map(([k, v]) => (
                     <div key={k} className="space-y-1">
-                      <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{k}</label>
+                      <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{labelMap[k] || k}</label>
                       <Input value={String(v || '')} onChange={(e) => updateItem(index, k, e.target.value)}
                         className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
                     </div>
@@ -258,6 +377,7 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
   );
 }
 
+// FAZ 1: StyleFields — dropdown değerleri styleUtils.ts anahtarlarıyla hizalandı
 function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdateStyle: (style: Record<string, any>) => void }) {
   const style = (section.style || {}) as StyleProps;
   const selectClasses = "text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700";
@@ -265,13 +385,16 @@ function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdat
 
   return (
     <>
+      {/* FAZ 1: titleSize → styleUtils.ts anahtarları: lg | xl | 2xl | 3xl */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Başlık Boyutu</label>
-        <Select value={style.titleSize || 'default'} onValueChange={(v) => onUpdateStyle({ titleSize: v })}>
+        <Select value={style.titleSize || '2xl'} onValueChange={(v) => onUpdateStyle({ titleSize: v })}>
           <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
           <SelectContent className={contentClasses}>
-            <SelectItem value="small">Küçük</SelectItem><SelectItem value="default">Varsayılan</SelectItem>
-            <SelectItem value="large">Büyük</SelectItem><SelectItem value="xl">Çok Büyük</SelectItem>
+            <SelectItem value="lg">Küçük</SelectItem>
+            <SelectItem value="xl">Orta</SelectItem>
+            <SelectItem value="2xl">Varsayılan</SelectItem>
+            <SelectItem value="3xl">Büyük</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -281,8 +404,10 @@ function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdat
         <Select value={style.titleWeight || 'bold'} onValueChange={(v) => onUpdateStyle({ titleWeight: v })}>
           <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
           <SelectContent className={contentClasses}>
-            <SelectItem value="normal">Normal</SelectItem><SelectItem value="medium">Orta</SelectItem>
-            <SelectItem value="semibold">Yarı Kalın</SelectItem><SelectItem value="bold">Kalın</SelectItem>
+            <SelectItem value="normal">Normal</SelectItem>
+            <SelectItem value="medium">Orta</SelectItem>
+            <SelectItem value="semibold">Yarı Kalın</SelectItem>
+            <SelectItem value="bold">Kalın</SelectItem>
             <SelectItem value="extrabold">Çok Kalın</SelectItem>
           </SelectContent>
         </Select>
@@ -293,14 +418,17 @@ function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdat
         <Select value={style.bgColor || 'background'} onValueChange={(v) => onUpdateStyle({ bgColor: v })}>
           <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
           <SelectContent className={contentClasses}>
-            <SelectItem value="background">Varsayılan</SelectItem><SelectItem value="muted">Açık</SelectItem>
-            <SelectItem value="primary">Ana Renk</SelectItem><SelectItem value="secondary">İkincil</SelectItem>
+            <SelectItem value="background">Varsayılan</SelectItem>
+            <SelectItem value="muted">Açık</SelectItem>
+            <SelectItem value="primary">Ana Renk</SelectItem>
+            <SelectItem value="secondary">İkincil</SelectItem>
             <SelectItem value="card">Kart</SelectItem>
+            <SelectItem value="transparent">Şeffaf</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Custom BG Color */}
+      {/* Özel arka plan rengi */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Özel Arka Plan Rengi</label>
         <div className="flex items-center gap-2">
@@ -309,6 +437,9 @@ function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdat
             className="w-8 h-8 rounded border border-gray-200 dark:border-zinc-700 cursor-pointer p-0.5" />
           <Input value={style.customBgColor || ''} onChange={(e) => onUpdateStyle({ customBgColor: e.target.value })}
             placeholder="Boş = tema rengi" className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+          {style.customBgColor && (
+            <button onClick={() => onUpdateStyle({ customBgColor: '' })} className="text-xs text-red-400 hover:text-red-600 whitespace-nowrap">Sıfırla</button>
+          )}
         </div>
       </div>
 
@@ -317,17 +448,37 @@ function StyleFields({ section, onUpdateStyle }: { section: SiteSection; onUpdat
         <Select value={style.textAlign || 'center'} onValueChange={(v) => onUpdateStyle({ textAlign: v })}>
           <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
           <SelectContent className={contentClasses}>
-            <SelectItem value="left">Sol</SelectItem><SelectItem value="center">Orta</SelectItem><SelectItem value="right">Sağ</SelectItem>
+            <SelectItem value="left">Sol</SelectItem>
+            <SelectItem value="center">Orta</SelectItem>
+            <SelectItem value="right">Sağ</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
+      {/* FAZ 1: sectionPadding → styleUtils.ts anahtarları: sm | md | lg | xl */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">İç Boşluk</label>
-        <Select value={style.sectionPadding || 'default'} onValueChange={(v) => onUpdateStyle({ sectionPadding: v })}>
+        <Select value={style.sectionPadding || 'md'} onValueChange={(v) => onUpdateStyle({ sectionPadding: v })}>
           <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
           <SelectContent className={contentClasses}>
-            <SelectItem value="compact">Az</SelectItem><SelectItem value="default">Varsayılan</SelectItem><SelectItem value="spacious">Geniş</SelectItem>
+            <SelectItem value="sm">Az (py-12)</SelectItem>
+            <SelectItem value="md">Varsayılan (py-20)</SelectItem>
+            <SelectItem value="lg">Geniş (py-28)</SelectItem>
+            <SelectItem value="xl">Çok Geniş (py-36)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Başlık rengi */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Başlık Rengi</label>
+        <Select value={style.titleColor || 'default'} onValueChange={(v) => onUpdateStyle({ titleColor: v })}>
+          <SelectTrigger className={selectClasses}><SelectValue /></SelectTrigger>
+          <SelectContent className={contentClasses}>
+            <SelectItem value="default">Varsayılan</SelectItem>
+            <SelectItem value="primary">Ana Renk</SelectItem>
+            <SelectItem value="white">Beyaz</SelectItem>
+            <SelectItem value="muted">Soluk</SelectItem>
           </SelectContent>
         </Select>
       </div>

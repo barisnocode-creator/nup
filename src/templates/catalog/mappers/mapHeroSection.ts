@@ -28,14 +28,19 @@ export function mapHeroSection(
   // CTA text from sector profile
   const ctaText = safeGet(projectData, 'generatedContent.pages.home.hero.ctaText', '')
     || profile?.ctaText || '';
-  if (ctaText && sectionProps.buttonText !== undefined) overrides.buttonText = ctaText;
-  // primaryButtonText / secondaryButtonText for restaurant-style heroes
-  if (ctaText && sectionProps.primaryButtonText !== undefined) {
-    overrides.primaryButtonText = ctaText;
-  }
-  // Secondary button: use appointment label or services label from sector
-  if (sectionProps.secondaryButtonText !== undefined && profile) {
-    overrides.secondaryButtonText = profile.sectionLabels.services;
+
+  // FAZ 3: Sektör profili varsa buton metinlerini HER ZAMAN override et
+  if (profile) {
+    const sectorCta = ctaText || profile.ctaText || 'İletişime Geç';
+    const sectorServices = profile.sectionLabels?.services || 'Hizmetlerimiz';
+
+    if (sectionProps.buttonText !== undefined) overrides.buttonText = sectorCta;
+    if (sectionProps.primaryButtonText !== undefined) overrides.primaryButtonText = sectorCta;
+    if (sectionProps.secondaryButtonText !== undefined) overrides.secondaryButtonText = sectorServices;
+  } else if (ctaText) {
+    // Sektör profili yoksa sadece ctaText varsa uygula
+    if (sectionProps.buttonText !== undefined) overrides.buttonText = ctaText;
+    if (sectionProps.primaryButtonText !== undefined) overrides.primaryButtonText = ctaText;
   }
 
   // HeroPortfolio special mapping
