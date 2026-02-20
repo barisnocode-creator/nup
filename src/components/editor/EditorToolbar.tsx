@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, Pencil, Palette, Globe, Loader2, Undo2, Monitor, Tablet, Smartphone, Save } from 'lucide-react';
+import { ArrowLeft, Eye, Pencil, Palette, Globe, Loader2, Undo2, Monitor, Tablet, Smartphone, Save, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -17,12 +17,13 @@ interface EditorToolbarProps {
   onChangeDevice: (device: 'desktop' | 'tablet' | 'mobile') => void;
   activeTemplateName?: string;
   onSave?: () => void;
+  isPublished?: boolean;
 }
 
 export function EditorToolbar({
   projectName, isEditing, onToggleEdit, onOpenCustomize, customizePanelOpen,
   onPublish, isSaving, hasUnsavedChanges, canUndo, onUndo, previewDevice, onChangeDevice,
-  activeTemplateName, onSave,
+  activeTemplateName, onSave, isPublished = false,
 }: EditorToolbarProps) {
   const navigate = useNavigate();
 
@@ -118,8 +119,17 @@ export function EditorToolbar({
           </button>
         )}
 
-        <button onClick={onPublish} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 active:scale-95 shadow-md shadow-blue-600/20">
-          <Globe className="w-3.5 h-3.5" /> Yayınla
+        <button
+          onClick={onPublish}
+          className={cn(
+            'flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-95 shadow-md',
+            isPublished
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-600/20'
+              : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-600/20'
+          )}
+        >
+          {isPublished ? <RefreshCw className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+          {isPublished ? 'Güncelle' : 'Yayınla'}
         </button>
       </div>
     </div>

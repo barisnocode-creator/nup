@@ -140,6 +140,7 @@ export function SiteEditor({
         onChangeDevice={setPreviewDevice}
         activeTemplateName={activeTemplateName ?? undefined}
         onSave={forceSave}
+        isPublished={isPublished}
       />
 
       <div className="flex-1 flex overflow-hidden relative">
