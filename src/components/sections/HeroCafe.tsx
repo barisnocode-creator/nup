@@ -1,11 +1,17 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ImageIcon } from 'lucide-react';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
 /**
  * Cafe-style split hero — uses theme CSS variables for colors/fonts
  */
-export function HeroCafe({ section, isEditing }: SectionComponentProps) {
+export function HeroCafe({ section, isEditing, onUpdate }: SectionComponentProps) {
   const { props } = section;
+  const sector = props._sector || 'cafe';
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-primary">
@@ -92,7 +98,7 @@ export function HeroCafe({ section, isEditing }: SectionComponentProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="relative"
+            className="relative group"
           >
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
               <img
@@ -101,6 +107,15 @@ export function HeroCafe({ section, isEditing }: SectionComponentProps) {
                 className="w-full h-[500px] lg:h-[600px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/30 via-transparent to-transparent" />
+              {isEditing && (
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Görseli Değiştir
+                </button>
+              )}
             </div>
 
             {/* Floating badge on image */}
@@ -113,6 +128,15 @@ export function HeroCafe({ section, isEditing }: SectionComponentProps) {
           </motion.div>
         </div>
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); }}
+          defaultQuery={getSectorImageQuery('hero', sector)}
+        />
+      )}
     </section>
   );
 }

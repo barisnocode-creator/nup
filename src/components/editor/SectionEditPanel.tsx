@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, ChevronRight, ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PixabayImagePicker } from '@/components/sections/PixabayImagePicker';
+import { getQueryForSection } from '@/components/sections/sectorImageQueries';
 import type { SiteSection } from '@/components/sections/types';
 import type { StyleProps } from '@/components/sections/styleUtils';
 
@@ -36,6 +38,10 @@ const sectionTypeLabels: Record<string, string> = {
 
 export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClose }: SectionEditPanelProps) {
   const label = sectionTypeLabels[section.type] || section.type;
+  const [imagePickerField, setImagePickerField] = useState<string | null>(null);
+
+  const sector = section.props?._sector || 'default';
+  const defaultQuery = getQueryForSection(section.type, sector);
 
   return (
     <motion.div
@@ -59,7 +65,7 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
         </TabsList>
 
         <TabsContent value="content" className="flex-1 overflow-y-auto p-4 space-y-4">
-          <ContentFields section={section} onUpdateProps={onUpdateProps} />
+          <ContentFields section={section} onUpdateProps={onUpdateProps} onOpenImagePicker={setImagePickerField} />
         </TabsContent>
 
         <TabsContent value="style" className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -70,6 +76,17 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
       <div className="px-4 py-3 border-t border-gray-200 dark:border-zinc-700 shrink-0">
         <button onClick={onClose} className="w-full py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">Tamam</button>
       </div>
+
+      {/* Global Pixabay image picker for panel */}
+      <PixabayImagePicker
+        isOpen={imagePickerField !== null}
+        onClose={() => setImagePickerField(null)}
+        onSelect={(url) => {
+          if (imagePickerField) onUpdateProps({ [imagePickerField]: url });
+          setImagePickerField(null);
+        }}
+        defaultQuery={defaultQuery}
+      />
     </motion.div>
   );
 }
@@ -170,7 +187,11 @@ const labelMap: Record<string, string> = {
   infoItems: 'Bilgi Etiketleri (virgülle ayır)',
 };
 
-function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpdateProps: (props: Record<string, any>) => void }) {
+function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
+  section: SiteSection;
+  onUpdateProps: (props: Record<string, any>) => void;
+  onOpenImagePicker: (field: string) => void;
+}) {
   const props = section.props || {};
 
   const textareaFields = ['description', 'sectiondescription', 'content', 'bio', 'features'];
@@ -244,6 +265,18 @@ function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpd
             {isTextarea ? (
               <Textarea value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
                 className="text-sm min-h-[80px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
+            ) : isImage ? (
+              <div className="flex gap-2">
+                <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
+                  className="flex-1 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
+                <button
+                  onClick={() => onOpenImagePicker(key)}
+                  title="Pixabay'dan görsel seç"
+                  className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </button>
+              </div>
             ) : (
               <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
                 className="text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
@@ -279,6 +312,7 @@ function ContentFields({ section, onUpdateProps }: { section: SiteSection; onUpd
 
 function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]; onUpdate: (items: any[]) => void }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [imagePickerTarget, setImagePickerTarget] = useState<{ index: number; field: string } | null>(null);
   const schema = arrayFieldSchemas[arrKey];
   const arrayLabel: Record<string, string> = {
     services: 'Hizmetler', testimonials: 'Müşteri Yorumları', items: 'Öğeler',
@@ -305,75 +339,100 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
     onUpdate(updated);
   };
 
-  // FAZ 2b: Düzeltilmiş getVisibleFields — schema'daki her alanı item'da var olanlarla eşleştir
   const getVisibleFields = (item: any) => {
     if (!schema) return [];
-    // item'da tanımlı olan tüm schema alanlarını göster (boş string dahil)
     return schema.fields.filter(f => f.key in item);
   };
 
   return (
-    <div className="space-y-2 border border-gray-200 dark:border-zinc-700 rounded-lg p-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">{arrayLabel[arrKey] || arrKey} ({items.length})</h4>
-        <button onClick={addItem} className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Yeni ekle">
-          <Plus className="w-3.5 h-3.5" />
-        </button>
+    <>
+      <div className="space-y-2 border border-gray-200 dark:border-zinc-700 rounded-lg p-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">{arrayLabel[arrKey] || arrKey} ({items.length})</h4>
+          <button onClick={addItem} className="p-1 rounded text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors" title="Yeni ekle">
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {items.map((item, index) => {
+          const isOpen = openIndex === index;
+          const itemTitle = item.title || item.name || item.question || item.value || `#${index + 1}`;
+          const fields = getVisibleFields(item);
+
+          return (
+            <div key={index} className="border border-gray-100 dark:border-zinc-800 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenIndex(isOpen ? null : index)}
+                className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-750 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2">
+                  {isOpen ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{itemTitle}</span>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeItem(index); }}
+                  className="p-1 rounded text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  title="Sil"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </button>
+
+              {isOpen && (
+                <div className="p-3 space-y-2 bg-white dark:bg-zinc-900">
+                  {fields.length > 0 ? fields.map(f => {
+                    const isImgField = f.key === 'image' || f.key === 'avatar';
+                    return (
+                      <div key={f.key} className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{f.label}</label>
+                        {f.type === 'textarea' ? (
+                          <Textarea value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
+                            className="text-xs min-h-[60px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+                        ) : isImgField ? (
+                          <div className="flex gap-1.5">
+                            <Input value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
+                              className="flex-1 text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+                            <button
+                              onClick={() => setImagePickerTarget({ index, field: f.key })}
+                              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
+                              title="Görsel seç"
+                            >
+                              <ImageIcon className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Input value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
+                            className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+                        )}
+                      </div>
+                    );
+                  }) : (
+                    Object.entries(item).filter(([, v]) => typeof v === 'string').map(([k, v]) => (
+                      <div key={k} className="space-y-1">
+                        <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{labelMap[k] || k}</label>
+                        <Input value={String(v || '')} onChange={(e) => updateItem(index, k, e.target.value)}
+                          className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {items.map((item, index) => {
-        const isOpen = openIndex === index;
-        const itemTitle = item.title || item.name || item.question || item.value || `#${index + 1}`;
-        const fields = getVisibleFields(item);
-
-        return (
-          <div key={index} className="border border-gray-100 dark:border-zinc-800 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setOpenIndex(isOpen ? null : index)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-750 transition-colors text-left"
-            >
-              <div className="flex items-center gap-2">
-                {isOpen ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{itemTitle}</span>
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); removeItem(index); }}
-                className="p-1 rounded text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                title="Sil"
-              >
-                <Trash2 className="w-3 h-3" />
-              </button>
-            </button>
-
-            {isOpen && (
-              <div className="p-3 space-y-2 bg-white dark:bg-zinc-900">
-                {fields.length > 0 ? fields.map(f => (
-                  <div key={f.key} className="space-y-1">
-                    <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{f.label}</label>
-                    {f.type === 'textarea' ? (
-                      <Textarea value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
-                        className="text-xs min-h-[60px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
-                    ) : (
-                      <Input value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
-                        className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
-                    )}
-                  </div>
-                )) : (
-                  // Fallback: item'daki tüm string key'leri göster
-                  Object.entries(item).filter(([, v]) => typeof v === 'string').map(([k, v]) => (
-                    <div key={k} className="space-y-1">
-                      <label className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{labelMap[k] || k}</label>
-                      <Input value={String(v || '')} onChange={(e) => updateItem(index, k, e.target.value)}
-                        className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
+      {/* Pixabay picker for array item images */}
+      <PixabayImagePicker
+        isOpen={imagePickerTarget !== null}
+        onClose={() => setImagePickerTarget(null)}
+        onSelect={(url) => {
+          if (imagePickerTarget) updateItem(imagePickerTarget.index, imagePickerTarget.field, url);
+          setImagePickerTarget(null);
+        }}
+        defaultQuery="professional photo"
+      />
+    </>
   );
 }
 

@@ -1,10 +1,18 @@
+import { useState } from 'react';
+import { ImageIcon } from 'lucide-react';
 import { resolveStyles } from './styleUtils';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
-export function AboutSection({ section }: SectionComponentProps) {
+export function AboutSection({ section, isEditing, onUpdate }: SectionComponentProps) {
   const { props, style } = section;
   const s = resolveStyles({ ...style });
+  const sector = props._sector || 'default';
   const featureList = props.features ? props.features.split('\n').filter((f: string) => f.trim()) : [];
+  const image = props.image || '/placeholder.svg';
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className={`${s.sectionPadding} ${s.bgColor}`}>
@@ -27,12 +35,32 @@ export function AboutSection({ section }: SectionComponentProps) {
               </ul>
             )}
           </div>
-          <div className={`relative ${props.imagePosition === 'left' ? 'lg:order-1' : ''}`}>
+          <div className={`relative group ${props.imagePosition === 'left' ? 'lg:order-1' : ''}`}>
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-3xl blur-2xl opacity-30" />
-            <img src={props.image || "/placeholder.svg"} alt={props.title} className="relative rounded-2xl shadow-xl w-full object-cover aspect-[4/3]" />
+            <div className="relative rounded-2xl shadow-xl overflow-hidden">
+              <img src={image} alt={props.title} className="w-full object-cover aspect-[4/3]" />
+              {isEditing && (
+                <button
+                  onClick={() => setPickerOpen(true)}
+                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100"
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Görseli Değiştir
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); }}
+          defaultQuery={getSectorImageQuery('about', sector)}
+        />
+      )}
     </section>
   );
 }
