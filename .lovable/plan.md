@@ -1,266 +1,113 @@
 
-## Sorunun Kökü: deploy-to-netlify Section Type Uyumsuzluğu
+## Blog Sayfaları Tema Uyumu — Kök Sorun ve Düzeltme Planı
 
-### Neden Site Bozuluyor?
+### Gerçek Sorunun Teşhisi
 
-Editör ve Netlify deploy fonksiyonu **farklı diller konuşuyor**:
+Veritabanı incelemesinde `site_theme.colors` değerlerinin **HEX formatında** saklandığı görüldü:
 
-```
-Editörde kaydedilen section type'ları (site_sections tablosunda):
-  HeroCafe, CafeFeatures, MenuShowcase, CafeStory, CafeGallery,
-  TestimonialsCarousel, AppointmentBooking, ContactForm, CTABanner,
-  HeroRestaurant, ChefShowcase, RestaurantMenu, HeroHotel, RoomShowcase,
-  HotelAmenities, ImageGallery, StatisticsCounter, FAQAccordion,
-  HeroPortfolio, SkillsGrid, ProjectShowcase, HeroDental, DentalServices,
-  DentalTips, DentalBooking, AboutSection, AddableSiteFooter, AddableBlog...
-
-deploy-to-netlify renderSection() switch-case:
-  "hero-centered", "hero-overlay", "hero-split",
-  "statistics-counter", "about-section", "services-grid",
-  "testimonials-carousel", "image-gallery", "faq-accordion",
-  "contact-form", "cta-banner", "pricing-table",
-  "appointment-booking", "pilates-hero", "pilates-features"...
-  → default: boş string döndür ("")
+```json
+{
+  "primary": "#f97316",
+  "background": "#ffffff",
+  "foreground": "#1a1a1a"
+}
 ```
 
-**Sonuç:** Template değiştirilip yayınlandığında tüm section'lar `default` case'e düşüyor → her biri `""` döndürüyor → HTML içi tamamen boş → site bozuluyor.
+Ancak Tailwind CSS değişken sistemi **HSL formatında** bekliyor:
+
+```css
+:root {
+  --primary: 24 95% 53%;   /* HSL, NOT #f97316 */
+}
+```
+
+Tailwind'in `bg-primary`, `text-foreground`, `border-border` gibi sınıfları `hsl(var(--primary))` olarak hesaplandığı için, `--primary: #f97316` şeklinde set edildiğinde **renk hiç uygulanmıyor** — site SaaS dashboardın varsayılan turuncu temasıyla görünüyor.
+
+Bu sorun 3 yerde aynı anda var:
+1. `useSiteTheme.ts` — blog sayfaları için (HEX doğrudan inject ediliyor)
+2. `PublicWebsite.tsx` → `buildThemeStyle()` — ana public site için (aynı hata)
+3. Font injection — `--font-heading` / `--font-body` doğrudan değişkenlere yazılıyor, bunlar doğru ama sadece `font-heading-dynamic` / `font-body-dynamic` CSS class'ları kullanan elementlerde geçerli oluyor
+
+### Neden Blog Sayfaları Özellikle Etkileniyor?
+
+`PublicWebsite.tsx`, sitedeki `SectionRenderer` bileşenlerini render ediyor ve bu bileşenler zaten inline `style` prop'larıyla ya da kendi CSS class'larıyla render edilebiliyor. Blog sayfaları ise tamamen Tailwind CSS variable'larına dayandığından (bg-background, text-foreground, text-primary vb.) tema uygulanmadığında SaaS'ın kendi renkleriyle görünüyor.
+
+### Çözüm Planı — 3 Dosya Değişikliği
 
 ---
 
-## Plan: deploy-to-netlify Tam Section Eşleme
+#### Değişiklik 1: `src/hooks/useSiteTheme.ts` — HEX→HSL Dönüşümü
 
-### Değiştirilecek Tek Dosya
-
-`supabase/functions/deploy-to-netlify/index.ts`
-
-Bu dosyada iki şey yapılacak:
-
-**1. Yeni render fonksiyonları eklenmesi** (eksik olan tüm section tipleri için):
-- `renderHeroCafe` — HeroCafe hero bölümü
-- `renderHeroDental` — HeroDental hero
-- `renderHeroRestaurant` — HeroRestaurant hero
-- `renderHeroHotel` — HeroHotel hero (tarih picker olmadan)
-- `renderHeroPortfolio` — HeroPortfolio (isim, bio, avatar, CTA)
-- `renderCafeFeatures` — CafeFeatures 4'lü ikon + açıklama grid
-- `renderMenuShowcase` — MenuShowcase (items array)
-- `renderCafeStory` — CafeStory (görsel + metin + özellik listesi)
-- `renderCafeGallery` — CafeGallery (images array, 2x2 grid)
-- `renderChefShowcase` — ChefShowcase (şef isim, bio, görsel)
-- `renderRestaurantMenu` — RestaurantMenu (kategorili menü)
-- `renderRoomShowcase` — RoomShowcase (oda kartları)
-- `renderHotelAmenities` — HotelAmenities (olanak kartları)
-- `renderHeroPortfolio` — Portfolio hero
-- `renderSkillsGrid` — SkillsGrid (skill badge grid)
-- `renderProjectShowcase` — ProjectShowcase (proje kartları)
-- `renderDentalServices` — DentalServices (4 servis kartı)
-- `renderDentalTips` — DentalTips (ipucu kartları)
-- `renderDentalBooking` — DentalBooking (adımlı randevu = AppointmentBooking ile aynı)
-- `renderAboutSection` — zaten mevcut (about-section), PascalCase alias ekle
-- `renderAddableSiteFooter` — SiteFooter (siteName, tagline, phone, email)
-- `renderAddableBlog` — Blog bölümü (4 yazı kartı)
-
-**2. switch-case içine tüm PascalCase eşlemeleri eklenmesi:**
+`loadGoogleFont` import'unun yanına `hexToHsl` ve `isValidHex` da `useThemeColors.ts`'den import edilip kullanılacak:
 
 ```typescript
-// Mevcut (sadece kebab-case):
-case "hero-centered": return renderHeroCentered(section);
-case "about-section": return renderAboutSection(section);
+// Şu an (YANLIŞ):
+root.style.setProperty(`--${key}`, val);  // val = "#f97316" → CSS'de çalışmaz
 
-// Yeni (hem PascalCase hem kebab-case):
-case "HeroCentered":
-case "hero-centered":
-  return renderHeroCentered(section);
-
-case "HeroCafe":
-case "hero-cafe":
-  return renderHeroCafe(section);
-
-case "HeroDental":
-case "hero-dental":
-  return renderHeroDental(section);
-
-case "HeroRestaurant":
-case "hero-restaurant":
-  return renderHeroRestaurant(section);
-
-case "HeroHotel":
-case "hero-hotel":
-  return renderHeroHotel(section);
-
-case "HeroPortfolio":
-case "hero-portfolio":
-  return renderHeroPortfolio(section);
-
-case "AboutSection":
-case "about-section":
-  return renderAboutSection(section);
-
-case "StatisticsCounter":
-case "statistics-counter":
-  return renderStatisticsCounter(section);
-
-case "ServicesGrid":
-case "services-grid":
-  return renderServicesGrid(section);
-
-case "TestimonialsCarousel":
-case "testimonials-carousel":
-  return renderTestimonialsCarousel(section);
-
-case "FAQAccordion":
-case "faq-accordion":
-  return renderFAQAccordion(section);
-
-case "ImageGallery":
-case "image-gallery":
-  return renderImageGallery(section);
-
-case "ContactForm":
-case "contact-form":
-  return renderContactForm(section, projectId);
-
-case "CTABanner":
-case "cta-banner":
-  return renderCTABanner(section);
-
-case "PricingTable":
-case "pricing-table":
-  return renderPricingTable(section);
-
-case "AppointmentBooking":
-case "appointment-booking":
-case "DentalBooking":
-case "dental-booking":
-  return renderAppointmentBooking(section);
-
-case "CafeFeatures":
-case "cafe-features":
-  return renderCafeFeatures(section);
-
-case "MenuShowcase":
-case "menu-showcase":
-  return renderMenuShowcase(section);
-
-case "CafeStory":
-case "cafe-story":
-  return renderCafeStory(section);
-
-case "CafeGallery":
-case "cafe-gallery":
-  return renderCafeGallery(section);
-
-case "ChefShowcase":
-case "chef-showcase":
-  return renderChefShowcase(section);
-
-case "RestaurantMenu":
-case "restaurant-menu":
-  return renderRestaurantMenu(section);
-
-case "RoomShowcase":
-case "room-showcase":
-  return renderRoomShowcase(section);
-
-case "HotelAmenities":
-case "hotel-amenities":
-  return renderHotelAmenities(section);
-
-case "SkillsGrid":
-case "skills-grid":
-  return renderSkillsGrid(section);
-
-case "ProjectShowcase":
-case "project-showcase":
-  return renderProjectShowcase(section);
-
-case "DentalServices":
-case "dental-services":
-  return renderDentalServices(section);
-
-case "DentalTips":
-case "dental-tips":
-  return renderDentalTips(section);
-
-case "AddableSiteFooter":
-  return renderAddableSiteFooter(section);
-
-case "AddableBlog":
-  return renderAddableBlog(section);
-
-// Addable sections (silently ignored if no renderer — placeholder göster)
-case "AddableAppointment":
-  return renderAppointmentBooking(section);
-case "AddableFAQ":
-  return renderFAQAccordion(section);
-case "AddableMessageForm":
-  return renderContactForm(section, projectId);
-case "AddableWorkingHours":
-case "AddableOnlineConsultation":
-case "AddableInsurance":
-case "AddableMenuHighlights":
-case "AddableRoomAvailability":
-case "AddableCaseEvaluation":
-case "AddableBeforeAfter":
-case "AddablePetRegistration":
-case "AddableCallUs":
-case "AddableSocialProof":
-case "AddableTeamGrid":
-case "AddablePromotionBanner":
-  return renderGenericAddable(section); // Basit placeholder renderer
+// Düzeltme (DOĞRU):
+const converted = isValidHex(val) ? hexToHsl(val) : val;
+root.style.setProperty(`--${key}`, converted);  // "24 95% 53%" → çalışır
 ```
 
-### Render Fonksiyonu Örnekleri
+Ek olarak font değişkenleri ayarlanırken `--font-heading-dynamic` ve `--font-body-dynamic` yerine doğrudan `--font-heading` / `--font-body` set ediliyor (bu zaten doğru). Cleanup kısmına `--font-heading` ve `--font-body` de eklenmeli.
 
-**renderCafeFeatures:**
-```html
-<section style="background:var(--muted); padding:5rem 0">
-  <div style="max-width:72rem;margin:0 auto;padding:0 1.5rem">
-    <h2 style="text-align:center;color:var(--foreground)">{{title}}</h2>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2rem">
-      <!-- feature kartları: icon + title + description -->
-    </div>
-  </div>
-</section>
+---
+
+#### Değişiklik 2: `src/pages/PublicWebsite.tsx` — `buildThemeStyle()` Fonksiyonu Düzeltme
+
+`buildThemeStyle()` fonksiyonu da HEX değerleri doğrudan `<style>` tag'ına yazıyor:
+
+```typescript
+// Şu an (YANLIŞ):
+vars[`--${key}`] = val;  // "--primary: #f97316"
+
+// Düzeltme (DOĞRU):
+import { hexToHsl, isValidHex } from '@/hooks/useThemeColors';
+vars[`--${key}`] = isValidHex(val) ? hexToHsl(val) : val;  // "--primary: 24 95% 53%"
 ```
 
-**renderAddableSiteFooter:**
-```html
-<footer style="background:var(--foreground);color:var(--background);padding:3rem 0">
-  <div style="max-width:72rem;margin:0 auto;padding:0 1.5rem">
-    <h3>{{siteName}}</h3>
-    <p>{{tagline}}</p>
-    <div>📞 {{phone}} | 📧 {{email}} | 📍 {{address}}</div>
-    <p>© 2026 {{siteName}}</p>
-  </div>
-</footer>
-```
+Bu, ana public sitede de (`/site/:subdomain`) tema renklerinin doğru yansımasını sağlar — blog sayfaları bunun "yan etkisi" değil, bağımsız bir düzeltme.
 
-**renderAddableBlog:**
-```html
-<section style="background:var(--background);padding:5rem 0">
-  <div style="max-width:72rem;margin:0 auto">
-    <h2>{{sectionTitle}}</h2>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem">
-      <!-- post1Title, post1Excerpt, post1Category, post1Image kartları -->
-    </div>
-  </div>
-</section>
-```
+---
 
-### HeroHotel için Önemli Not
+#### Değişiklik 3: `src/pages/PublicBlogPage.tsx` — Header ve Footer'ı Site Temasıyla Uyumlu Hale Getirme
 
-HeroHotel'in React bileşeninde tarih picker var — bu Netlify'da çalışmaz. Deploy fonksiyonunda sadece başlık + açıklama + CTA butonu gösterilecek (tarih picker olmadan), tıpkı diğer hero'lar gibi.
+Blog liste sayfası zaten `useSiteTheme` hook'unu kullanıyor ve Tailwind CSS variable sınıfları kullanıyor (bg-background, text-primary vb.). HEX→HSL düzeltmesi yapıldıktan sonra bu sayfa otomatik olarak doğru renkleri alacak.
+
+Ek iyileştirmeler:
+- **Header navigasyonu**: Sitenin `AddableSiteFooter` section'ından alınan logoya/isme göre header'ı zenginleştir
+- **"Tüm Yazıları Gör" butonu** yerine sitedeki blog section başlığını kullan
+- **Back navigasyonu**: `/site/:subdomain` yerine sitenin kendisine dönme linki düzelt (şu an doğru ama görsel iyileştirme yapılacak)
+
+---
+
+#### Değişiklik 4: `src/components/sections/addable/BlogPostDetailSection.tsx` — Tema Desteği
+
+Blog yazı detay sayfası da aynı Tailwind değişkenlerini kullanıyor. HEX→HSL düzeltmesi yapıldıktan sonra otomatik çalışacak, ancak:
+- **Sitenin footer bilgilerini** `AddableSiteFooter`'dan okuyarak sayfanın altına basit bir navigasyon ekle
+- **Meta title** içinde site adını daha iyi kulllan
+
+---
 
 ### Değişiklik Özeti
 
-| Dosya | Değişiklik |
-|---|---|
-| `supabase/functions/deploy-to-netlify/index.ts` | ~20 yeni render fonksiyonu + switch-case'e tüm PascalCase alias'lar |
+| # | Dosya | Değişiklik |
+|---|---|---|
+| 1 | `src/hooks/useSiteTheme.ts` | HEX→HSL dönüşümü ekle, `hexToHsl` + `isValidHex` import et, cleanup'a font değişkenlerini ekle |
+| 2 | `src/pages/PublicWebsite.tsx` | `buildThemeStyle()` içinde HEX→HSL dönüşümü, `hexToHsl` import et |
+| 3 | `src/pages/PublicBlogPage.tsx` | Header'da siteName daha belirgin göster, `theme` objesinden `sections` array'ini de al, siteFooter'dan contact bilgilerini çek |
+| 4 | `src/pages/PublicBlogPostPage.tsx` | Hata yoksa değişiklik yok — useSiteTheme düzeltmesi yeterli |
 
-**Sadece 1 dosya** — kapsamlı ama odaklı bir değişiklik.
+---
 
 ### Beklenen Sonuç
 
-Template değiştirilip "Güncelle" butonuna basıldığında:
-- Önceki: Boş sayfa (tüm section'lar `default` case'e düşüyor)
-- Sonrası: Editördeki görünümle birebir uyumlu, tema renklerini kullanan tam HTML sayfası
+**Önce (şu an):**
+- Blog sayfaları açıldığında SaaS'ın turuncu teması görünüyor
+- `--primary: #f97316` şeklinde set ediliyor → Tailwind bunu `hsl(#f97316)` olarak yorumlamaya çalışıyor → geçersiz → varsayılan renk kullanılıyor
+
+**Sonra (düzeltme sonrası):**
+- Blog sayfaları açıldığında sitenin kendi tema renkleri (örn. Dental Klinik → mavi, Restoran → altın, Kafe → terrakota) doğru uygulanıyor
+- `--primary: 24 95% 53%` → `hsl(24 95% 53%)` → tam olarak ayarlanan renk gösteriliyor
+- Fontlar (Playfair Display, Lora, Space Grotesk vb.) Google Fonts'tan yüklenip doğru uygulanıyor
+- Border radius temanın `borderRadius` değerini yansıtıyor
