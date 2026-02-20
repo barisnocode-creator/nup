@@ -1,105 +1,81 @@
 
-## Sitede Üst Navigasyon (Header) Ekleme ve İçerik İyileştirmesi
+## Sorun: "Ücretsiz İlk Muayene" Metni Nereden Geliyor?
 
-### Sorun Teşhisi
+### Kök Neden
 
-Ekran görüntüsünde 2 ayrı sorun tespit edildi:
+`src/templates/catalog/mappers/mapCtaSection.ts` dosyasında `ctaDescMap` adlı bir harita var. Site oluşturulurken sektör `doctor` olarak algılandığında bu harita devreye giriyor ve CTABanner bölümünün açıklama metnini şu şekilde dolduruyur:
 
-**Sorun 1 — Üst navigasyon görünmüyor**
-`site_sections` veritabanı kaydında şu 10 bölüm var:
-`HeroMedical → ServicesGrid → StatisticsCounter → AboutSection → TestimonialsCarousel → FAQAccordion → AppointmentBooking → CTABanner → ContactForm → AddableSiteFooter`
-
-Bu dizide **bir header/navbar bileşeni yok**. HeroMedical bölümünün içinde navigasyon menüsü bulunmuyor — sadece hero içeriği var. Dolayısıyla sitenin üst kısmında "Ana Sayfa / Hizmetler / İletişim" gibi navigasyon linkleri hiç render edilmiyor.
-
-**Sorun 2 — Editör mobilde sıkışık görünüyor**
-EditorToolbar `h-14` yüksekliğinde ve mobilde tüm genişliği kaplıyor; orta bölümdeki Düzenle/Önizleme + cihaz toggle butonları mobil ekranda sığmıyor.
-
----
-
-### Çözüm Planı — 3 Dosya Değişikliği
-
----
-
-#### Değişiklik 1: `SiteHeader` bileşeni ekle (YENİ DOSYA)
-`src/components/sections/addable/SiteHeader.tsx`
-
-Sitenin üst kısmında gösterilecek şeffaf/blur navigasyon barı:
-
-- Scroll'da arka plan blur/opak olur (sticky davranış)
-- Logo: Badge prop'undan veya siteName'den alınır
-- Navigasyon linkleri: Mevcut `site_sections`'a bakarak otomatik üretilir (ServicesGrid varsa "Hizmetler", ContactForm varsa "İletişim" vb.)
-- Mobilde hamburger menü
-- Randevu Al butonu (primary renk ile)
-- `SectionComponentProps` interface'ini implement eder, section registry'e eklenir
-
-```tsx
-// Navigasyon linkleri otomatik oluşturma mantığı:
-// sections prop'undan section type'lara bakılır, label'lar üretilir
-const navItems = [
-  { label: 'Ana Sayfa', anchor: 'hero' },
-  // ServicesGrid varsa:
-  { label: 'Hizmetler', anchor: 'services' },
-  // AboutSection varsa:
-  { label: 'Hakkımızda', anchor: 'about' },
-  // FAQAccordion varsa:
-  { label: 'SSS', anchor: 'faq' },
-  // ContactForm varsa:
-  { label: 'İletişim', anchor: 'contact' },
-];
+```
+"İlk muayeneniz ücretsiz. Randevunuzu hemen alın ve sağlığınızı güvence altına alın."
 ```
 
+Aynı durum `veterinary` için de geçerli: `"İlk muayene ücretsizdir."`
+
+Bu metinler site ilk oluşturulduğunda veritabanına yazılıyor. Şu an projenin `site_sections` içindeki `CTABanner` bölümünün `description` prop'unda bu metin saklı durumda.
+
+### Etkilenen Yerler — 2 Değişiklik
+
 ---
 
-#### Değişiklik 2: `registry.ts` — SiteHeader'ı kaydet
+#### Değişiklik 1: `mapCtaSection.ts` — Varsayılan CTA metinlerini düzelt
+
+`ctaDescMap` içindeki hatalı varsayılan metinler güncellenir:
+
+| Sektör | Önce | Sonra |
+|---|---|---|
+| `doctor` | "İlk muayeneniz ücretsiz. Randevunuzu hemen alın..." | "Randevunuzu hemen alın ve sağlığınızı güvence altına alın." |
+| `dentist` | "İlk muayeneniz ücretsiz! Sağlıklı gülüşünüz..." | "Sağlıklı gülüşünüz için hemen randevu alın." |
+| `veterinary` | "İlk muayene ücretsizdir..." | "Dostunuzun sağlığı için hemen randevu alın." |
+
+Bu değişiklik yeni oluşturulacak siteler için geçerli olacak.
+
+---
+
+#### Değişiklik 2: `CallUsSection.tsx` — "Ücretsiz İlk Görüşme" rozeti
+
+`CallUsSection` bileşeninde `badge2` değeri varsayılan olarak `'Ücretsiz İlk Görüşme'` olarak ayarlı. Bu rozet doktorlar için yanıltıcı olabilir:
 
 ```typescript
-import { SiteHeader } from './addable/SiteHeader';
-// ...
-'AddableSiteHeader': SiteHeader,
+badge2 = 'Ücretsiz İlk Görüşme',  // ← değiştirilecek
 ```
+
+→ `badge2 = 'Hızlı Randevu'` olarak değiştirilecek.
 
 ---
 
-#### Değişiklik 3: `EditorCanvas.tsx` — Otomatik SiteHeader inject et
+#### Değişiklik 3 (Kritik): Mevcut projedeki veritabanı kaydını düzelt
 
-`EditorCanvas`'ta, bölümler render edilmeden önce, eğer `sections` içinde `AddableSiteHeader` yoksa, canvas'ın en üstüne otomatik olarak `SiteHeader`'ı ekle:
+Proje veritabanında zaten yazılmış olan `CTABanner` bölümünün `description` prop'unu güncellemek gerekiyor. Bunun için bir SQL güncelleme sorgusu çalıştırılacak:
 
-```tsx
-// sections[0].type.includes('Hero') ise ve AddableSiteHeader yoksa:
-<SiteHeader section={{ id: '__header__', type: 'AddableSiteHeader', props: {} }} sections={sections} />
-{sections.map(...)}
+```sql
+UPDATE projects
+SET site_sections = (
+  SELECT jsonb_agg(
+    CASE
+      WHEN (s->>'type') = 'CTABanner'
+        AND (s->'props'->>'description') ILIKE '%ücretsiz%muayene%'
+      THEN jsonb_set(s, '{props,description}',
+        '"Randevunuzu hemen alın ve sağlığınızı güvence altına alın."')
+      ELSE s
+    END
+  )
+  FROM jsonb_array_elements(site_sections) AS s
+)
+WHERE user_id = (SELECT id FROM auth.users WHERE ... )
 ```
 
-Bu sayede mevcut projelerde (ve yeni projelerde) her zaman üst navigasyon görünür olacak.
-
----
-
-#### Değişiklik 4 (Bonus): `EditorToolbar.tsx` — Mobil responsive iyileştirme
-
-Mevcut toolbar'da orta kısımdaki butonlar mobilde sığmıyor. `flex-1 flex items-center justify-center` yapısı mobilde taşıyor.
-
-- `sm:` breakpoint ile device toggle'ı sadece tablet/desktop'ta göster
-- Projeismi `max-w-[100px]` mobilde kısalt
-- Düzenle/Önizleme toggle'ı mobilde sadece ikon göster
+Bu sayede mevcut projenizde görünen metin anında düzeltilir, yeni proje oluşturmak gerekmez.
 
 ---
 
 ### Değişiklik Özeti
 
-| # | Dosya | Ne Değişiyor |
+| # | Dosya | Değişiklik |
 |---|---|---|
-| 1 | `src/components/sections/addable/SiteHeader.tsx` | YENİ — sticky blur navbar, auto nav links, hamburger mobil menü |
-| 2 | `src/components/sections/registry.ts` | `AddableSiteHeader` kaydı eklenir |
-| 3 | `src/components/editor/EditorCanvas.tsx` | Canvas'a otomatik SiteHeader inject edilir (eğer yoksa) |
-| 4 | `src/components/editor/EditorToolbar.tsx` | Mobil responsive iyileştirme |
-
----
+| 1 | `src/templates/catalog/mappers/mapCtaSection.ts` | `doctor`, `dentist`, `veterinary` için CTA açıklamalarındaki "ücretsiz muayene" ifadeleri kaldırılır |
+| 2 | `src/components/sections/addable/CallUsSection.tsx` | `badge2` varsayılanı `'Hızlı Randevu'` olarak güncellenir |
+| 3 | Veritabanı (SQL) | Mevcut projenin `CTABanner` `description` prop'u düzeltilir |
 
 ### Beklenen Sonuç
 
-| Durum | Önce | Sonra |
-|---|---|---|
-| Mobil önizleme | Üstte hiç navigasyon yok | Sticky blur header, hamburger menü |
-| Masaüstü önizleme | Üstte hiç navigasyon yok | Şeffaf sticky header, linkleri sectionlara göre otomatik oluşur |
-| Editör mobilde | Toolbar butonları sığmıyor, taşıyor | Mobil uyumlu, kompakt toolbar |
-| Mevcut projeler | Header yok | Otomatik inject edilir, kaydetmek gerekmez |
+Sitenizdeki "Ücretsiz İlk Muayene" ifadesi kaldırılır, yerine randevu almayı teşvik eden nötr bir metin gelir. Yeni oluşturulacak doktor/diş hekimi/veteriner siteleri de artık bu yanıltıcı varsayılanla başlamaz.
