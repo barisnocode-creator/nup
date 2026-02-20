@@ -29,7 +29,7 @@ export function HeroOverlay({ section, isEditing, onUpdate }: SectionComponentPr
       {isEditing && (
         <button
           onClick={() => setPickerOpen(true)}
-          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-background/90 text-foreground text-sm font-medium shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 text-gray-800 text-xs font-medium hover:bg-white hover:shadow-md transition-all backdrop-blur-sm border border-white/30 opacity-0 group-hover:opacity-100"
         >
           <ImageIcon className="w-4 h-4" />
           Arka Plan Değiştir

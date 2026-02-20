@@ -205,20 +205,18 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
                       </span>
                     </div>
 
-                    {/* Image change overlay — editor only */}
+                    {/* Image change button — editor only */}
                     {isEditing && (
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingImageSlug(post.slug);
-                          }}
-                          className="px-3 py-2 bg-white rounded-lg text-xs font-semibold text-gray-800 shadow-lg flex items-center gap-1.5 hover:bg-gray-50 transition-colors"
-                        >
-                          <ImageIcon className="w-3.5 h-3.5" />
-                          Görsel Değiştir
-                        </button>
-                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingImageSlug(post.slug);
+                        }}
+                        className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 text-gray-800 text-xs font-medium hover:bg-white hover:shadow-md transition-all backdrop-blur-sm border border-white/30 opacity-0 group-hover:opacity-100"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                        Görsel Değiştir
+                      </button>
                     )}
                   </div>
 

@@ -57,9 +57,9 @@ export function HeroPortfolio({ section, isEditing, onUpdate }: SectionComponent
               {isEditing && (
                 <button
                   onClick={() => setPickerOpen(true)}
-                  className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                  className="absolute -top-1 -right-1 z-20 w-8 h-8 rounded-full flex items-center justify-center bg-white/90 text-gray-800 hover:bg-white shadow-md border border-white/30 opacity-0 group-hover:opacity-100 transition-all"
                 >
-                  <ImageIcon className="w-6 h-6 text-white" />
+                  <ImageIcon className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>

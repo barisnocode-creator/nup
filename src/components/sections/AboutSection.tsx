@@ -42,7 +42,7 @@ export function AboutSection({ section, isEditing, onUpdate }: SectionComponentP
               {isEditing && (
                 <button
                   onClick={() => setPickerOpen(true)}
-                  className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100"
+                  className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 text-gray-800 text-xs font-medium hover:bg-white hover:shadow-md transition-all backdrop-blur-sm border border-white/30 opacity-0 group-hover:opacity-100"
                 >
                   <ImageIcon className="w-3.5 h-3.5" />
                   Görseli Değiştir

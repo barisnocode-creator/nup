@@ -37,15 +37,13 @@ export function HeroSplit({ section, isEditing, onUpdate }: SectionComponentProp
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {isEditing && (
-                <div
-                  className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                <button
                   onClick={() => setPickerOpen(true)}
+                  className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/90 text-gray-800 text-xs font-medium hover:bg-white hover:shadow-md transition-all backdrop-blur-sm border border-white/30 opacity-0 group-hover:opacity-100"
                 >
-                  <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-background/90 text-foreground text-sm font-semibold shadow-lg">
-                    <ImageIcon className="w-4 h-4" />
-                    Görseli Değiştir
-                  </div>
-                </div>
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  Görseli Değiştir
+                </button>
               )}
             </div>
           </div>
