@@ -19,6 +19,8 @@ interface BlogPostDetailSectionProps {
   allPosts: BlogPost[];
   siteName: string;
   onBack: () => void;
+  /** If provided, related post clicks navigate to /site/{subdomain}/blog/{slug} */
+  subdomain?: string;
 }
 
 function formatDate(dateStr: string) {
@@ -65,9 +67,9 @@ ${post.title} hakkında kapsamlı bir rehber sunmaya çalıştık. Daha fazla bi
   `.trim();
 }
 
-export default function BlogPostDetailSection({ post, allPosts, siteName, onBack }: BlogPostDetailSectionProps) {
+export default function BlogPostDetailSection({ post, allPosts, siteName, onBack, subdomain }: BlogPostDetailSectionProps) {
   const [copied, setCopied] = useState(false);
-  const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/blog/${post.slug}` : '';
+  const canonicalUrl = typeof window !== 'undefined' ? `${window.location.origin}/site/${subdomain || ''}/blog/${post.slug}` : '';
   const relatedPosts = allPosts.filter(p => p.slug !== post.slug).slice(0, 3);
   const fullContent = buildFullContent(post);
 
@@ -267,10 +269,16 @@ export default function BlogPostDetailSection({ post, allPosts, siteName, onBack
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {relatedPosts.map(related => (
                   <div
-                    key={related.slug}
-                    onClick={onBack}
-                    className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5"
-                  >
+                     key={related.slug}
+                     onClick={() => {
+                       if (subdomain) {
+                         window.location.href = `/site/${subdomain}/blog/${related.slug}`;
+                       } else {
+                         onBack();
+                       }
+                     }}
+                     className="group cursor-pointer bg-card border border-border rounded-xl overflow-hidden hover:shadow-md transition-all hover:-translate-y-0.5"
+                   >
                     {related.image && (
                       <div className="w-full aspect-[3/2] overflow-hidden bg-muted">
                         <img src={related.image} alt={related.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />

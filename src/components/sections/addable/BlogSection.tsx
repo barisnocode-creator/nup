@@ -120,7 +120,15 @@ export function BlogSection({ section, isEditing, onUpdate }: SectionComponentPr
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group cursor-pointer"
-              onClick={() => setActiveBlogSlug(post.slug)}
+              onClick={() => {
+                if (isEditing) {
+                  setActiveBlogSlug(post.slug);
+                } else {
+                  const pathParts = window.location.pathname.split('/');
+                  const sub = pathParts[2];
+                  window.location.href = `/site/${sub}/blog/${post.slug}`;
+                }
+              }}
             >
               <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                 {/* Image */}
