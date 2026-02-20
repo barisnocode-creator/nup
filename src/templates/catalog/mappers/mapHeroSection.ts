@@ -29,6 +29,14 @@ export function mapHeroSection(
   const ctaText = safeGet(projectData, 'generatedContent.pages.home.hero.ctaText', '')
     || profile?.ctaText || '';
   if (ctaText && sectionProps.buttonText !== undefined) overrides.buttonText = ctaText;
+  // primaryButtonText / secondaryButtonText for restaurant-style heroes
+  if (ctaText && sectionProps.primaryButtonText !== undefined) {
+    overrides.primaryButtonText = ctaText;
+  }
+  // Secondary button: use appointment label or services label from sector
+  if (sectionProps.secondaryButtonText !== undefined && profile) {
+    overrides.secondaryButtonText = profile.sectionLabels.services;
+  }
 
   // HeroPortfolio special mapping
   if (businessName && sectionProps.name !== undefined) {
