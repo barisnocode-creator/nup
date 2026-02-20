@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, ChevronDown, ChevronRight, ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, ChevronRight, ImageIcon, Youtube } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -98,7 +98,7 @@ const arrayFieldSchemas: Record<string, { fields: { key: string; label: string; 
     { key: 'title', label: 'Başlık' },
     { key: 'description', label: 'Açıklama', type: 'textarea' },
     { key: 'icon', label: 'İkon' },
-    { key: 'image', label: 'Görsel URL' },
+    { key: 'image', label: 'Görsel' },
     { key: 'price', label: 'Fiyat' },
   ]},
   testimonials: { fields: [
@@ -185,6 +185,7 @@ const labelMap: Record<string, string> = {
   tagline: 'Slogan',
   features: 'Özellikler (metin)',
   infoItems: 'Bilgi Etiketleri (virgülle ayır)',
+  videoUrl: 'YouTube Linki',
 };
 
 function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
@@ -223,6 +224,7 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
         const label = labelMap[key] || key;
         const isTextarea = textareaFields.some(f => key.toLowerCase().includes(f));
         const isImage = key === 'image' || key === 'backgroundImage';
+        const isVideo = key === 'videoUrl';
         const isBool = typeof value === 'boolean';
 
         if (key === 'imagePosition') {
@@ -283,6 +285,23 @@ function ContentFields({ section, onUpdateProps, onOpenImagePicker }: {
                   </div>
                 )}
               </button>
+            ) : isVideo ? (
+              <div className="space-y-1.5">
+                <div className="flex gap-1.5">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 shrink-0">
+                    <Youtube className="w-4 h-4 text-red-500" />
+                  </div>
+                  <Input
+                    value={String(value || '')}
+                    onChange={(e) => onUpdateProps({ [key]: e.target.value })}
+                    placeholder="https://youtube.com/watch?v=..."
+                    className="h-8 text-xs bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white"
+                  />
+                </div>
+                {value && (
+                  <p className="text-[10px] text-green-600 dark:text-green-400">✓ Video bağlı</p>
+                )}
+              </div>
             ) : (
               <Input value={String(value || '')} onChange={(e) => onUpdateProps({ [key]: e.target.value })}
                 className="h-8 text-sm bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-white" />
@@ -395,17 +414,28 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
                           <Textarea value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
                             className="text-xs min-h-[60px] resize-y bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
                         ) : isImgField ? (
-                          <div className="flex gap-1.5">
-                            <Input value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
-                              className="flex-1 text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />
-                            <button
-                              onClick={() => setImagePickerTarget({ index, field: f.key })}
-                              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-primary/20"
-                              title="Görsel seç"
-                            >
-                              <ImageIcon className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => setImagePickerTarget({ index, field: f.key })}
+                            className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 border-2 border-dashed border-gray-200 dark:border-zinc-700 hover:border-orange-400 transition-all group focus:outline-none"
+                          >
+                            {item[f.key] ? (
+                              <>
+                                <img src={item[f.key]} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                  <span className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/90 text-gray-900 text-[10px] font-medium shadow">
+                                    <ImageIcon className="w-3 h-3" />
+                                    Görseli Değiştir
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center gap-1.5 h-full py-4 text-gray-400">
+                                <ImageIcon className="w-5 h-5 opacity-50" />
+                                <span className="text-[10px] font-medium">Görsel Ekle</span>
+                                <span className="text-[9px] opacity-60">Tıkla → Pixabay'dan seç</span>
+                              </div>
+                            )}
+                          </button>
                         ) : (
                           <Input value={item[f.key] || ''} onChange={(e) => updateItem(index, f.key, e.target.value)}
                             className="text-xs h-8 bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700" />

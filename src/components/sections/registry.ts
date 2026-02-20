@@ -16,6 +16,7 @@ import { BeforeAfterSection } from './addable/BeforeAfterSection';
 import { PetRegistrationSection } from './addable/PetRegistrationSection';
 import { CallUsSection } from './addable/CallUsSection';
 import { SocialProofSection } from './addable/SocialProofSection';
+import { VideoSection } from './addable/VideoSection';
 import { TeamGridSection } from './addable/TeamGridSection';
 import { PromotionBannerSection } from './addable/PromotionBannerSection';
 import { HeroOverlay } from './HeroOverlay';
@@ -131,6 +132,7 @@ export const sectionRegistry: Record<string, SectionComponent> = {
   'AddableSocialProof': SocialProofSection,
   'AddableTeamGrid': TeamGridSection,
   'AddablePromotionBanner': PromotionBannerSection,
+  'AddableVideo': VideoSection,
 };
 
 export function getSectionComponent(type: string): SectionComponent | null {
@@ -177,4 +179,5 @@ export const sectionCatalog: SectionCatalogItem[] = [
   { type: 'hotel-amenities', label: 'Otel Olanakları', category: 'hotel' },
   { type: 'project-showcase', label: 'Proje Vitrini', category: 'portfolio' },
   { type: 'skills-grid', label: 'Yetenek Kartları', category: 'portfolio' },
+  { type: 'AddableVideo', label: 'YouTube Video', category: 'content' },
 ];
