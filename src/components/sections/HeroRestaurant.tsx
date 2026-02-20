@@ -32,7 +32,7 @@ export function HeroRestaurant({ section, isEditing, onUpdate }: SectionComponen
       {isEditing && (
         <button
           onClick={() => setPickerOpen(true)}
-          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20"
+          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/90 text-gray-800 text-xs font-medium hover:bg-white hover:shadow-md transition-all backdrop-blur-sm border border-white/30"
         >
           <ImageIcon className="w-3.5 h-3.5" />
           Görseli Değiştir
