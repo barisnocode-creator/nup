@@ -178,6 +178,8 @@ export function useEditorState(initialSections: SiteSection[] = [], initialTheme
           if (old[key]) mergedProps[key] = old[key];
         }
       }
+      // Inject sector so image pickers can use sector-aware queries
+      mergedProps._sector = sector;
       return {
         id: `${secDef.type}_${Date.now()}_${i}`,
         type: secDef.type,

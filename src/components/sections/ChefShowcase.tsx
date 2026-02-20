@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ImageIcon } from 'lucide-react';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
-export function ChefShowcase({ section }: SectionComponentProps) {
+export function ChefShowcase({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
+  const sector = p._sector || 'restaurant';
   const subtitle = p.subtitle || 'Baş Şefimiz';
   const title = p.title || 'Chef Ahmet Yılmaz';
   const description = p.description || '15 yıllık deneyimiyle dünya mutfaklarını harmanlayan şefimiz, her tabağı bir sanat eserine dönüştürür.';
@@ -12,6 +17,8 @@ export function ChefShowcase({ section }: SectionComponentProps) {
     { name: 'Kuzu İncik', description: '12 saat pişirilmiş, kırmızı şarap soslu' },
     { name: 'Çikolata Fondü', description: 'Belçika çikolatası, vanilya dondurma' },
   ];
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className="py-20 md:py-28 bg-background">
@@ -23,12 +30,22 @@ export function ChefShowcase({ section }: SectionComponentProps) {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
-            className="relative"
+            className="relative group"
           >
             <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[3/4]">
               <img src={image} alt={title} className="w-full h-full object-cover" />
             </div>
             <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-3xl border-2 border-primary/20" />
+
+            {isEditing && (
+              <button
+                onClick={() => setPickerOpen(true)}
+                className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20 opacity-0 group-hover:opacity-100"
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                Görseli Değiştir
+              </button>
+            )}
           </motion.div>
 
           {/* Content */}
@@ -67,6 +84,15 @@ export function ChefShowcase({ section }: SectionComponentProps) {
           </motion.div>
         </div>
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); }}
+          defaultQuery={getSectorImageQuery('chef', sector)}
+        />
+      )}
     </section>
   );
 }

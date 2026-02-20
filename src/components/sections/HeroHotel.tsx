@@ -1,8 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ImageIcon } from 'lucide-react';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
-export function HeroHotel({ section, isEditing }: SectionComponentProps) {
+export function HeroHotel({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
+  const sector = p._sector || 'hotel';
   const title = p.title || 'Lüksün ve Konforun Buluştuğu Yer';
   const description = p.description || 'Eşsiz manzara ve birinci sınıf hizmetlerle unutulmaz bir konaklama deneyimi.';
   const badge = p.badge || '★★★★★';
@@ -11,9 +16,22 @@ export function HeroHotel({ section, isEditing }: SectionComponentProps) {
   // Show date picker only for hotel/accommodation sectors; for others show a plain CTA button
   const isHotelMode = !p.buttonText || p.buttonText === 'Oda Ara' || p.buttonText === '';
 
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Parallax background */}
+      {/* Edit image button */}
+      {isEditing && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20"
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          Görseli Değiştir
+        </button>
+      )}
+
       <div className="absolute inset-0">
         <img src={image} alt={title} className="w-full h-full object-cover scale-105" style={{ transform: 'scale(1.05)' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
@@ -84,6 +102,15 @@ export function HeroHotel({ section, isEditing }: SectionComponentProps) {
           </motion.div>
         </div>
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); }}
+          defaultQuery={getSectorImageQuery('hero', sector)}
+        />
+      )}
     </section>
   );
 }

@@ -1,14 +1,21 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { ImageIcon } from 'lucide-react';
+import { PixabayImagePicker } from './PixabayImagePicker';
+import { getSectorImageQuery } from './sectorImageQueries';
 import type { SectionComponentProps } from './types';
 
-export function HeroRestaurant({ section, isEditing }: SectionComponentProps) {
+export function HeroRestaurant({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
+  const sector = p._sector || 'restaurant';
   const title = p.title || 'Lezzetin Sanatla Buluştuğu Yer';
   const description = p.description || 'Şefimizin özenle hazırladığı menümüzle unutulmaz bir gastronomi deneyimi yaşayın.';
   const badge = p.badge || '★ Fine Dining';
   const primaryBtn = p.primaryButtonText ?? 'Rezervasyon';
   const secondaryBtn = p.secondaryButtonText ?? 'Menü';
   const image = p.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80';
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
@@ -20,6 +27,17 @@ export function HeroRestaurant({ section, isEditing }: SectionComponentProps) {
 
       {/* Grain overlay */}
       <div className="absolute inset-0 opacity-[0.04] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIgb3BhY2l0eT0iMC4wNSIvPjwvc3ZnPg==')]" />
+
+      {/* Edit image button */}
+      {isEditing && (
+        <button
+          onClick={() => setPickerOpen(true)}
+          className="absolute top-4 right-4 z-20 flex items-center gap-2 px-3 py-2 rounded-lg bg-black/50 text-white text-xs font-medium hover:bg-black/70 transition-all backdrop-blur-sm border border-white/20"
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          Görseli Değiştir
+        </button>
+      )}
 
       <div className="relative z-10 text-center max-w-4xl mx-auto px-6">
         <motion.span
@@ -83,6 +101,15 @@ export function HeroRestaurant({ section, isEditing }: SectionComponentProps) {
           </motion.div>
         )}
       </div>
+
+      {isEditing && (
+        <PixabayImagePicker
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(url) => { onUpdate?.({ image: url }); }}
+          defaultQuery={getSectorImageQuery('hero', sector)}
+        />
+      )}
     </section>
   );
 }
