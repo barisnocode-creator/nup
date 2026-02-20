@@ -622,7 +622,8 @@ function ArrayEditor({ arrKey, items, onUpdate }: { arrKey: string; items: any[]
 
   const getVisibleFields = (item: any) => {
     if (!schema) return [];
-    return schema.fields.filter(f => f.key in item);
+    // Schema varsa tüm alanları göster (yeni eklenen boş itemler için de)
+    return schema.fields;
   };
 
   return (
