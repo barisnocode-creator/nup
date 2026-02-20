@@ -18,7 +18,7 @@ export function HeroRestaurant({ section, isEditing, onUpdate }: SectionComponen
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[calc(100vh-7rem)] flex items-center justify-center overflow-hidden">
       {/* Background image */}
       <div className="absolute inset-0">
         <img src={image} alt={title} className="w-full h-full object-cover" />

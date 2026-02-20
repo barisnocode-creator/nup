@@ -35,12 +35,13 @@ interface EditorCanvasProps {
   sector?: string;
   addableSections?: Record<string, boolean>;
   onToggleAddableSection?: (key: string) => void;
+  projectName?: string;
 }
 
 export function EditorCanvas({
   sections, isEditing, selectedSectionId, onSelectSection,
   onUpdateProps, onMoveUp, onMoveDown, onRemove, onDuplicate, onAddAt,
-  previewDevice = 'desktop', sector, addableSections = {}, onToggleAddableSection,
+  previewDevice = 'desktop', sector, addableSections = {}, onToggleAddableSection, projectName,
 }: EditorCanvasProps) {
   const handleSectionClick = useCallback((e: React.MouseEvent, sectionId: string) => {
     if (!isEditing) return;
@@ -65,7 +66,7 @@ export function EditorCanvas({
         {/* Auto-inject site header if not present */}
         {!hasHeader && (
           <SiteHeader
-            section={{ id: '__header__', type: 'AddableSiteHeader', props: {} }}
+            section={{ id: '__header__', type: 'AddableSiteHeader', props: { siteName: projectName || '' } }}
             sections={sections}
           />
         )}

@@ -12,7 +12,7 @@ export function HeroSplit({ section, isEditing, onUpdate }: SectionComponentProp
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <section className={`relative min-h-[600px] flex items-center ${s.bgColor} ${s.sectionPadding}`}>
+    <section className={`relative min-h-[calc(100vh-7rem)] flex items-center ${s.bgColor} ${s.sectionPadding}`}>
       <div className="container mx-auto px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">

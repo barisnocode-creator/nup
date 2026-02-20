@@ -40,7 +40,7 @@ export function HeroPortfolio({ section, isEditing, onUpdate }: SectionComponent
   };
 
   return (
-    <section className="min-h-screen flex items-center bg-background py-20">
+    <section className="min-h-[calc(100vh-7rem)] flex items-center bg-background py-20">
       <div className="container mx-auto px-6">
         <div className="max-w-3xl mx-auto text-center">
           {/* Avatar */}
