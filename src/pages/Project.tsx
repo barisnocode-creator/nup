@@ -129,36 +129,43 @@ export default function Project() {
       if (p.generated_content) {
         const catalogDef = getCatalogTemplate(p.template_id || '');
         let newSections: SiteSection[];
+        const projectData = {
+          generatedContent: p.generated_content,
+          formData: p.form_data,
+          sector: effectiveSector,
+        };
 
         if (catalogDef && catalogDef.sections.length > 0) {
-          newSections = catalogDef.sections.map((sec, i) => ({
-            id: `${sec.type}_${i}_${Date.now()}`,
-            type: sec.type === 'HeroCentered' ? 'hero-centered' :
-                  sec.type === 'HeroSplit' ? 'hero-split' :
-                  sec.type === 'HeroOverlay' ? 'hero-overlay' :
-                  sec.type === 'ServicesGrid' ? 'services-grid' :
-                  sec.type === 'AboutSection' ? 'about-section' :
-                  sec.type === 'StatisticsCounter' ? 'statistics-counter' :
-                  sec.type === 'TestimonialsCarousel' ? 'testimonials-carousel' :
-                  sec.type === 'ContactForm' ? 'contact-form' :
-                  sec.type === 'CTABanner' ? 'cta-banner' :
-                  sec.type === 'FAQAccordion' ? 'faq-accordion' :
-                  sec.type === 'ImageGallery' ? 'image-gallery' :
-                  sec.type === 'PricingTable' ? 'pricing-table' :
-                  sec.type === 'AppointmentBooking' ? 'appointment-booking' :
-                  sec.type === 'NaturalHeader' ? 'natural-header' :
-                  sec.type === 'NaturalHero' ? 'natural-hero' :
-                  sec.type === 'NaturalIntro' ? 'natural-intro' :
-                  sec.type === 'NaturalArticleGrid' ? 'natural-article-grid' :
-                  sec.type === 'NaturalNewsletter' ? 'natural-newsletter' :
-                  sec.type === 'NaturalFooter' ? 'natural-footer' :
-                  sec.type,
-            locked: sec.required || i === 0,
-            props: sec.defaultProps,
-          }));
+          // Filter sections incompatible with sector first
+          const { filterIncompatibleSections: filterSecs } = await import('@/templates/catalog/mappers');
+          const { mapContentToTemplate } = await import('@/templates/catalog/contentMapper');
+          const filtered = filterSecs(catalogDef.sections, effectiveSector || '');
+          const mapped = mapContentToTemplate(filtered, projectData);
+
+          newSections = mapped.map((sec, i) => {
+            const props = { ...sec.defaultProps };
+            // ── Inject Pixabay images into section props ──────────────
+            injectImages(sec.type, props, p.generated_content);
+            // ── Inject contact info ───────────────────────────────────
+            injectContactInfo(props, p.generated_content, p.form_data);
+            // ── Inject _sector for pickers ────────────────────────────
+            props._sector = effectiveSector || '';
+            return {
+              id: `${sec.type}_${i}_${Date.now()}`,
+              type: sec.type,
+              locked: sec.required || i === 0,
+              props,
+            };
+          });
+
+          // Ensure footer is last section
+          if (!newSections.find(s => s.type === 'AddableSiteFooter')) {
+            newSections.push(buildFooterSection(p.generated_content, p.form_data));
+          }
         } else {
           // Minimal fallback from generated_content
           newSections = createSectionsFromContent(p.generated_content);
+          newSections.push(buildFooterSection(p.generated_content, p.form_data));
         }
 
         setSections(newSections);
@@ -180,9 +187,40 @@ export default function Project() {
         toast({ title: 'Oluşturma hatası', description: 'Web sitesi oluşturulamadı.', variant: 'destructive' });
         return;
       }
-      setProject(prev => prev ? { ...prev, generated_content: data.content, status: 'generated' } : null);
-      // Create sections from generated content
-      const newSections = createSectionsFromContent(data.content);
+      const gc = data.content;
+      setProject(prev => prev ? { ...prev, generated_content: gc, status: 'generated' } : null);
+
+      // Re-fetch project to get template_id that was saved by edge function
+      const { data: freshProj } = await supabase.from('projects')
+        .select('template_id, form_data')
+        .eq('id', projectId)
+        .single();
+
+      const effectiveSector = resolveEffectiveSector(freshProj?.form_data || proj.form_data);
+      const catalogDef = getCatalogTemplate(freshProj?.template_id || '');
+      let newSections: SiteSection[];
+
+      if (catalogDef && catalogDef.sections.length > 0) {
+        const { filterIncompatibleSections: filterSecs } = await import('@/templates/catalog/mappers');
+        const { mapContentToTemplate } = await import('@/templates/catalog/contentMapper');
+        const projectData = { generatedContent: gc, formData: freshProj?.form_data || proj.form_data, sector: effectiveSector };
+        const filtered = filterSecs(catalogDef.sections, effectiveSector || '');
+        const mapped = mapContentToTemplate(filtered, projectData);
+        newSections = mapped.map((sec, i) => {
+          const props = { ...sec.defaultProps };
+          injectImages(sec.type, props, gc);
+          injectContactInfo(props, gc, freshProj?.form_data || proj.form_data);
+          props._sector = effectiveSector || '';
+          return { id: `${sec.type}_${i}_${Date.now()}`, type: sec.type, locked: sec.required || i === 0, props };
+        });
+        if (!newSections.find(s => s.type === 'AddableSiteFooter')) {
+          newSections.push(buildFooterSection(gc, freshProj?.form_data || proj.form_data));
+        }
+      } else {
+        newSections = createSectionsFromContent(gc);
+        newSections.push(buildFooterSection(gc, proj.form_data));
+      }
+
       setSections(newSections);
       await supabase.from('projects').update({
         site_sections: newSections as any,
@@ -283,6 +321,122 @@ export default function Project() {
       }}
     />
   );
+}
+
+// ── Inject Pixabay images into section props based on section type ──
+function injectImages(sectionType: string, props: Record<string, any>, gc: any) {
+  const images = gc?.images || {};
+  const heroTypes = ['HeroCafe', 'HeroRestaurant', 'HeroHotel', 'HeroMedical', 'HeroOverlay',
+    'HeroCentered', 'HeroSplit', 'HeroDental', 'HeroPortfolio'];
+  const aboutTypes = ['AboutSection', 'CafeStory', 'ChefShowcase'];
+  const galleryTypes = ['CafeGallery', 'ImageGallery'];
+
+  if (heroTypes.includes(sectionType)) {
+    const img = images.heroHome || images.heroSplit || images.heroHotel || images.heroCafe || '';
+    if (img) {
+      if (sectionType === 'HeroPortfolio') props.avatar = img;
+      else props.image = img;
+    }
+  } else if (aboutTypes.includes(sectionType)) {
+    const img = images.aboutImage || images.heroAbout || '';
+    if (img) props.image = img;
+  } else if (galleryTypes.includes(sectionType)) {
+    const galleryImgs = images.galleryImages as string[] | undefined;
+    if (galleryImgs && galleryImgs.length > 0) {
+      const labels = ['İç Mekan', 'Atmosfer', 'Detay', 'Ekip', 'Hizmet', 'Genel'];
+      props.images = galleryImgs.slice(0, 4).map((src: string, i: number) => ({
+        src,
+        alt: labels[i] || `Görsel ${i + 1}`,
+      }));
+    }
+  } else if (sectionType === 'CTABanner') {
+    const img = images.ctaImage || '';
+    if (img) props.image = img;
+  } else if (sectionType === 'MenuShowcase' || sectionType === 'ServicesGrid') {
+    // Services from generated content
+    const servicesList = gc?.pages?.services?.servicesList || gc?.pages?.home?.highlights || [];
+    if (servicesList.length > 0 && props.services) {
+      props.services = props.services.map((srv: any, i: number) => ({
+        ...srv,
+        image: servicesList[i]?.image || srv.image || '',
+        title: servicesList[i]?.title || srv.title,
+        description: servicesList[i]?.description || srv.description,
+      }));
+    }
+  } else if (sectionType === 'AddableBlog') {
+    // Blog posts with images from Pixabay
+    const posts = gc?.pages?.blog?.posts || [];
+    for (let i = 0; i < 4; i++) {
+      const k = i + 1;
+      if (posts[i]) {
+        if (!props[`post${k}Image`] && posts[i].featuredImage) {
+          props[`post${k}Image`] = posts[i].featuredImage;
+        }
+        if (posts[i].title) props[`post${k}Title`] = posts[i].title;
+        if (posts[i].excerpt) props[`post${k}Excerpt`] = posts[i].excerpt;
+        if (posts[i].category) props[`post${k}Category`] = posts[i].category;
+        if (posts[i].id) props[`post${k}Slug`] = posts[i].id;
+        if (posts[i].publishedAt) props[`post${k}Date`] = posts[i].publishedAt;
+        if (posts[i].content) props[`post${k}Content`] = posts[i].content;
+      }
+    }
+  }
+}
+
+// ── Inject contact/business info into relevant sections ────────────
+function injectContactInfo(props: Record<string, any>, gc: any, formData: any) {
+  const contact = gc?.pages?.contact?.info || {};
+  const meta = gc?.metadata || {};
+  const extracted = formData?.extractedData || {};
+
+  const phone = contact.phone || extracted.phone || formData?.businessInfo?.phone || '';
+  const email = contact.email || extracted.email || formData?.businessInfo?.email || '';
+  const address = contact.address || extracted.address || '';
+
+  // ContactForm
+  if (props.sectionTitle !== undefined) {
+    if (phone) props.phone = phone;
+    if (email) props.email = email;
+    if (address) props.address = address;
+  }
+
+  // SiteFooter & general
+  if (props.siteName !== undefined) {
+    props.siteName = meta.siteName || extracted.businessName || formData?.businessInfo?.businessName || props.siteName;
+    props.tagline = meta.tagline || extracted.uniqueValue || '';
+    if (phone) props.phone = phone;
+    if (email) props.email = email;
+    if (address) props.address = address;
+  }
+
+  // Hero stats
+  const stats = gc?.pages?.home?.statistics || [];
+  if (stats.length > 0 && props.stat1Value !== undefined) {
+    for (let i = 0; i < Math.min(stats.length, 4); i++) {
+      const k = i + 1;
+      if (stats[i]?.value) props[`stat${k}Value`] = stats[i].value;
+      if (stats[i]?.label) props[`stat${k}Label`] = stats[i].label;
+    }
+  }
+}
+
+// ── Build footer section from project data ──────────────────────
+function buildFooterSection(gc: any, formData: any): SiteSection {
+  const contact = gc?.pages?.contact?.info || {};
+  const meta = gc?.metadata || {};
+  const extracted = formData?.extractedData || {};
+
+  return {
+    id: `AddableSiteFooter_footer_${Date.now()}`,
+    type: 'AddableSiteFooter',
+    props: {
+      siteName: meta.siteName || extracted.businessName || formData?.businessInfo?.businessName || '',
+      tagline: meta.tagline || extracted.uniqueValue || '',
+      phone: contact.phone || extracted.phone || formData?.businessInfo?.phone || '',
+      email: contact.email || extracted.email || formData?.businessInfo?.email || '',
+      address: contact.address || extracted.address || '',
+    },
+  };
 }
 
 // Helper: create minimal sections from generated_content
