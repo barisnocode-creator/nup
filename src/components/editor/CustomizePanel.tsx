@@ -95,12 +95,12 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
         {/* Template Change */}
         <div className="space-y-3">
-          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Şablon</h4>
+          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Şablon</h4>
           <button
             onClick={onOpenTemplateModal}
-            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm font-medium hover:bg-accent transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 text-sm font-medium hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 transition-colors"
           >
-            <LayoutGrid className="w-4 h-4 text-muted-foreground" />
+            <LayoutGrid className="w-4 h-4 text-gray-400 shrink-0" />
             Template Değiştir
           </button>
         </div>
@@ -110,17 +110,17 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
           <div className="space-y-1">
             <button
               onClick={() => setIsSectionsOpen(prev => !prev)}
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-border bg-muted text-foreground text-sm font-medium hover:bg-accent transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-gray-50 text-gray-700 text-sm font-medium hover:bg-orange-50 hover:border-orange-200 hover:text-orange-700 transition-colors"
             >
-              <LayoutList className="w-4 h-4 text-muted-foreground shrink-0" />
+              <LayoutList className="w-4 h-4 text-gray-400 shrink-0" />
               <span className="flex-1 text-left">Eklenebilir Bölümler</span>
               {activeCount > 0 && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500 text-white">
                   {activeCount} aktif
                 </span>
               )}
               <ChevronDown
-                className="w-4 h-4 text-muted-foreground shrink-0 transition-transform duration-200"
+                className="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200"
                 style={{ transform: isSectionsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
               />
             </button>
@@ -147,9 +147,9 @@ export function CustomizePanel({ theme, onUpdateTheme, onClose, onOpenTemplateMo
                     {sectorSpecificToggles.length > 0 && (
                       <>
                         <div className="flex items-center gap-2 py-1">
-                          <div className="flex-1 h-px bg-border" />
-                          <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">Sektörünüze Özel</span>
-                          <div className="flex-1 h-px bg-border" />
+                          <div className="flex-1 h-px bg-gray-200" />
+                          <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">Sektörünüze Özel</span>
+                          <div className="flex-1 h-px bg-gray-200" />
                         </div>
                         {sectorSpecificToggles.map(t => (
                           <AddableToggleRow
@@ -265,11 +265,21 @@ function ColorPicker({ label, value, onChange }: { label: string; value: string;
 function AddableToggleRow({ label, checked, onToggle }: { label: string; checked: boolean; onToggle: () => void }) {
   return (
     <div
-      className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50 border border-border/50 hover:border-border transition-colors cursor-pointer"
+      className={`flex items-center justify-between py-2 px-3 rounded-lg border transition-colors cursor-pointer ${
+        checked
+          ? 'bg-orange-50 border-orange-200 hover:border-orange-300'
+          : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:bg-white'
+      }`}
       onClick={(e) => { e.stopPropagation(); onToggle(); }}
     >
-      <span className="text-xs font-medium text-foreground leading-tight pr-2">{label}</span>
-      <Switch checked={checked} onCheckedChange={() => onToggle()} onClick={(e) => e.stopPropagation()} className="shrink-0" />
+      <span className={`text-xs font-medium leading-tight pr-2 ${checked ? 'text-orange-800' : 'text-gray-700'}`}>{label}</span>
+      <Switch
+        checked={checked}
+        onCheckedChange={() => onToggle()}
+        onClick={(e) => e.stopPropagation()}
+        className={`shrink-0 ${checked ? '[&[data-state=checked]]:bg-orange-500' : ''}`}
+      />
     </div>
   );
 }
+
