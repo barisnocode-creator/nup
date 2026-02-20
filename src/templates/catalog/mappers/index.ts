@@ -14,6 +14,7 @@ import { mapCtaSection, compatibleSectors as ctaSectors } from './mapCtaSection'
 import { mapTeamSection, compatibleSectors as teamSectors } from './mapTeamSection';
 import { mapTestimonialsSection, compatibleSectors as testimonialsSectors } from './mapTestimonialsSection';
 import { mapAppointmentSection, compatibleSectors as appointmentSectors } from './mapAppointmentSection';
+import { mapFaqSection } from './mapFaqSection';
 
 type MapperFn = (props: Record<string, any>, data: ProjectData) => Record<string, any>;
 
@@ -59,6 +60,9 @@ register(['TestimonialsCarousel'], mapTestimonialsSection, testimonialsSectors);
 
 // Appointment / Booking
 register(['AppointmentBooking', 'DentalBooking'], mapAppointmentSection, appointmentSectors);
+
+// FAQ
+register(['FAQAccordion'], mapFaqSection, []);
 
 // ─── Sector-incompatible section definitions ─────────────────────
 // Key = section type, Value = list of sectors where this section IS compatible.

@@ -8,6 +8,8 @@ export function HeroHotel({ section, isEditing }: SectionComponentProps) {
   const badge = p.badge || '★★★★★';
   const image = p.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80';
   const buttonText = p.buttonText || 'Oda Ara';
+  // Show date picker only for hotel/accommodation sectors; for others show a plain CTA button
+  const isHotelMode = !p.buttonText || p.buttonText === 'Oda Ara' || p.buttonText === '';
 
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
@@ -46,29 +48,39 @@ export function HeroHotel({ section, isEditing }: SectionComponentProps) {
             {description}
           </motion.p>
 
-          {/* Search bar */}
+          {/* Search bar (hotel mode) or CTA button (other sectors) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}
-            className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-white/20"
           >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-              <div>
-                <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Giriş</label>
-                <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
+            {isHotelMode ? (
+              <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-4 md:p-6 border border-white/20">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Giriş</label>
+                    <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
+                  </div>
+                  <div>
+                    <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Çıkış</label>
+                    <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
+                  </div>
+                  <a
+                    href={isEditing ? '#' : (p.buttonLink || '#rooms')}
+                    className="inline-flex items-center justify-center px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-all duration-300 font-body-dynamic"
+                  >
+                    {buttonText}
+                  </a>
+                </div>
               </div>
-              <div>
-                <label className="block text-white/60 text-xs uppercase tracking-wider mb-2 font-body-dynamic">Çıkış</label>
-                <input type="date" className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:border-primary font-body-dynamic" />
-              </div>
+            ) : (
               <a
-                href={isEditing ? '#' : (p.buttonLink || '#rooms')}
-                className="inline-flex items-center justify-center px-8 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:opacity-90 transition-all duration-300 font-body-dynamic"
+                href={isEditing ? '#' : (p.buttonLink || '#contact')}
+                className="inline-flex items-center justify-center px-10 py-4 bg-primary text-primary-foreground rounded-xl font-semibold text-lg hover:opacity-90 transition-all duration-300 font-body-dynamic"
               >
                 {buttonText}
               </a>
-            </div>
+            )}
           </motion.div>
         </div>
       </div>

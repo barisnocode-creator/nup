@@ -4,6 +4,32 @@ import { getSectorProfile } from '../sectorProfiles';
 
 export const compatibleSectors: string[] = []; // all sectors
 
+const badgeMap: Record<string, string> = {
+  doctor: 'Uzman Klinik',
+  dentist: 'Diş Kliniği',
+  lawyer: 'Hukuk Bürosu',
+  restaurant: '★ Fine Dining',
+  cafe: 'Specialty Coffee',
+  hotel: '★★★★★',
+  beauty_salon: 'Güzellik Merkezi',
+  gym: 'Fitness & Wellness',
+  veterinary: 'Veteriner Kliniği',
+  pharmacy: 'Eczane',
+};
+
+const infoItemsMap: Record<string, string[]> = {
+  lawyer: ['Deneyimli Avukatlar', 'Ücretsiz İlk Danışma', 'Gizlilik Güvencesi'],
+  doctor: ['Uzman Hekim', 'Modern Ekipman', 'Randevulu Sistem'],
+  dentist: ['Uzman Diş Hekimi', 'Ağrısız Tedavi', 'Steril Ortam'],
+  restaurant: ['Fine Dining', 'Taze Malzeme', 'Michelin Kalitesi'],
+  cafe: ['Single Origin', 'Organik', 'El Yapımı'],
+  hotel: ['Lüks Konfor', '5 Yıldızlı Hizmet', 'Eşsiz Manzara'],
+  beauty_salon: ['Uzman Ekip', 'Premium Ürünler', 'Kişisel Bakım'],
+  gym: ['Uzman Eğitmen', 'Modern Ekipman', 'Kişisel Program'],
+  veterinary: ['Uzman Veteriner', 'Steril Ortam', '7/24 Acil'],
+  pharmacy: ['Uzman Eczacı', 'Geniş Ürün Yelpazesi', 'Danışmanlık'],
+};
+
 export function mapHeroSection(
   sectionProps: Record<string, any>,
   projectData: ProjectData
@@ -20,10 +46,25 @@ export function mapHeroSection(
   const businessName = safeGet(projectData, 'formData.businessName', '')
     || safeGet(projectData, 'generatedContent.metadata.siteName', '');
 
+  const sectorKey = projectData.sector?.toLowerCase().replace(/[\s-]/g, '_') || '';
+
   if (title) overrides.title = title;
   if (description) overrides.description = description;
   if (subtitle) overrides.subtitle = subtitle;
-  if (businessName && sectionProps.badge !== undefined) overrides.badge = businessName;
+
+  // Badge: businessName first, then sector-specific badge
+  if (sectionProps.badge !== undefined) {
+    if (businessName) {
+      overrides.badge = businessName;
+    } else if (badgeMap[sectorKey]) {
+      overrides.badge = badgeMap[sectorKey];
+    }
+  }
+
+  // infoItems: sector-specific tags
+  if (sectionProps.infoItems !== undefined && infoItemsMap[sectorKey]) {
+    overrides.infoItems = infoItemsMap[sectorKey];
+  }
 
   // CTA text from sector profile
   const ctaText = safeGet(projectData, 'generatedContent.pages.home.hero.ctaText', '')
