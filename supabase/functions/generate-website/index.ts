@@ -52,53 +52,85 @@ interface FormData {
   extractedData?: ExtractedBusinessData;
 }
 
-// Sector-to-catalog template mapping for smart template selection
+// Sector-to-catalog template mapping — maps to ACTUAL template IDs in definitions.ts
 const sectorTemplateMap: Record<string, string> = {
-  wellness: 'wellness-studio',
-  pilates: 'wellness-studio',
-  yoga: 'wellness-studio',
-  fitness: 'wellness-studio',
-  spa: 'wellness-studio',
-  lawyer: 'corporate-services',
-  finance: 'corporate-services',
-  consulting: 'corporate-services',
-  corporate: 'corporate-services',
-  insurance: 'corporate-services',
-  accounting: 'corporate-services',
-  doctor: 'medical-clinic',
-  dentist: 'medical-clinic',
-  pharmacist: 'medical-clinic',
-  clinic: 'medical-clinic',
-  health: 'medical-clinic',
-  hospital: 'medical-clinic',
-  veterinary: 'medical-clinic',
-  creative: 'creative-agency',
-  design: 'creative-agency',
-  marketing: 'creative-agency',
-  agency: 'creative-agency',
-  photography: 'creative-agency',
-  food: 'restaurant-cafe',
-  restaurant: 'restaurant-cafe',
-  cafe: 'restaurant-cafe',
-  bakery: 'restaurant-cafe',
-  catering: 'restaurant-cafe',
-  video: 'video-production',
-  film: 'video-production',
-  media: 'video-production',
-  production: 'video-production',
-  software: 'saas-platform',
-  saas: 'saas-platform',
-  startup: 'saas-platform',
-  app: 'saas-platform',
-  technology: 'saas-platform',
-  retail: 'retail-boutique',
-  shop: 'retail-boutique',
-  store: 'retail-boutique',
-  ecommerce: 'retail-boutique',
-  boutique: 'retail-boutique',
+  // ── Sağlık ─────────────────────────────────────
+  doctor: 'medcare-pro',
+  physician: 'medcare-pro',
+  health: 'medcare-pro',
+  hospital: 'medcare-pro',
+  clinic: 'medcare-pro',
+  medical: 'medcare-pro',
+  veterinary: 'medcare-pro',
+  physiotherapy: 'medcare-pro',
+  optometry: 'medcare-pro',
+  pharmacy: 'medcare-pro',
+  pharmacist: 'medcare-pro',
+  psychiatry: 'medcare-pro',
+  psychologist: 'medcare-pro',
+  dentist: 'dental-clinic',
+  dental: 'dental-clinic',
+  orthodontics: 'dental-clinic',
+  // ── Yeme & İçme ────────────────────────────────
+  cafe: 'specialty-cafe',
+  coffee: 'specialty-cafe',
+  bakery: 'specialty-cafe',
+  patisserie: 'specialty-cafe',
+  food: 'specialty-cafe',
+  catering: 'specialty-cafe',
+  restaurant: 'restaurant-elegant',
+  bistro: 'restaurant-elegant',
+  bar: 'restaurant-elegant',
+  'fine-dining': 'restaurant-elegant',
+  steakhouse: 'restaurant-elegant',
+  seafood: 'restaurant-elegant',
+  // ── Konaklama ──────────────────────────────────
+  hotel: 'hotel-luxury',
+  resort: 'hotel-luxury',
+  hostel: 'hotel-luxury',
+  accommodation: 'hotel-luxury',
+  motel: 'hotel-luxury',
+  apart: 'hotel-luxury',
+  // ── Teknoloji & Portfolyo ───────────────────────
+  developer: 'engineer-portfolio',
+  engineer: 'engineer-portfolio',
+  freelancer: 'engineer-portfolio',
+  designer: 'engineer-portfolio',
+  photographer: 'engineer-portfolio',
+  videographer: 'engineer-portfolio',
+  architect: 'engineer-portfolio',
+  // ── Genel Profesyonel (avukat, danışman, eğitim vb.) ──
+  lawyer: 'medcare-pro',
+  attorney: 'medcare-pro',
+  legal: 'medcare-pro',
+  consultant: 'medcare-pro',
+  consulting: 'medcare-pro',
+  finance: 'medcare-pro',
+  accounting: 'medcare-pro',
+  insurance: 'medcare-pro',
+  education: 'medcare-pro',
+  teacher: 'medcare-pro',
+  coaching: 'medcare-pro',
+  retail: 'medcare-pro',
+  shop: 'medcare-pro',
+  store: 'medcare-pro',
+  beauty_salon: 'medcare-pro',
+  gym: 'medcare-pro',
+  fitness: 'medcare-pro',
+  wellness: 'medcare-pro',
+  yoga: 'medcare-pro',
+  pilates: 'medcare-pro',
+  spa: 'medcare-pro',
+  marketing: 'medcare-pro',
+  agency: 'medcare-pro',
+  creative: 'engineer-portfolio',
+  technology: 'engineer-portfolio',
+  software: 'engineer-portfolio',
+  startup: 'engineer-portfolio',
+  app: 'engineer-portfolio',
 };
 
-// Template selection logic - sector-aware catalog mapping with backward compatibility
+// Template selection logic - sector-aware catalog mapping
 function selectTemplate(profession: string, tone?: string, sector?: string): string {
   const keys = [sector, profession].filter(Boolean).map(k => k!.toLowerCase());
   
@@ -111,8 +143,8 @@ function selectTemplate(profession: string, tone?: string, sector?: string): str
     }
   }
   
-  // Backward compatible fallback
-  return 'pilates1';
+  // Default fallback — always a valid template ID
+  return 'medcare-pro';
 }
 
 // Sector-specific content instructions
