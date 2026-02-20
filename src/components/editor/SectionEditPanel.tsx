@@ -45,9 +45,9 @@ export function SectionEditPanel({ section, onUpdateProps, onUpdateStyle, onClos
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="fixed top-14 right-0 bottom-0 w-[360px] bg-white dark:bg-zinc-900 border-l border-gray-200 dark:border-zinc-700 shadow-lg z-40 flex flex-col overflow-hidden"
+      initial={{ opacity: 0, y: -4, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.97 }}
+      transition={{ duration: 0.15, ease: 'easeOut' }}
+      className="fixed top-16 right-3 w-[310px] max-h-[calc(100vh-80px)] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl shadow-lg z-[60] overflow-hidden flex flex-col"
       role="region" aria-label="Bölüm düzenleme paneli"
       onKeyDown={(e) => e.key === 'Escape' && onClose()} tabIndex={-1}
     >
