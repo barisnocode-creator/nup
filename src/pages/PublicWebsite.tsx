@@ -26,11 +26,22 @@ function buildThemeStyle(theme: SiteTheme | undefined): string {
   const vars: Record<string, string> = {};
   for (const [key, val] of Object.entries(c)) {
     if (typeof val === 'string') {
-      // Convert HEX to HSL so Tailwind's hsl(var(--x)) works correctly
       vars[`--${key}`] = isValidHex(val) ? hexToHsl(val) : val;
     }
   }
   return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
+}
+
+// Platform domains that should NOT be treated as custom domains
+const PLATFORM_HOSTNAMES = [
+  'localhost',
+  'lovable.app',
+  'lovable.dev',
+  'webcontainer.io',
+];
+
+function isPlatformDomain(hostname: string): boolean {
+  return PLATFORM_HOSTNAMES.some(ph => hostname === ph || hostname.endsWith(`.${ph}`));
 }
 
 export default function PublicWebsite() {
@@ -41,41 +52,97 @@ export default function PublicWebsite() {
 
   useEffect(() => {
     async function fetchProject() {
-      if (!subdomain) { setNotFound(true); setLoading(false); return; }
+      const hostname = window.location.hostname;
+      const isCustomDomain = !isPlatformDomain(hostname) && !subdomain;
 
-      const { data, error } = await supabase
-        .from('public_projects')
-        .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
-        .eq('subdomain', subdomain)
-        .maybeSingle();
+      // Case 1: /site/:subdomain route
+      if (subdomain) {
+        const { data, error } = await supabase
+          .from('public_projects')
+          .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
+          .eq('subdomain', subdomain)
+          .maybeSingle();
 
-      if (error || !data) { setNotFound(true); setLoading(false); return; }
-
-      const projectData = data as unknown as PublicProject;
-      setProject(projectData);
-      setLoading(false);
-
-      if (projectData.generated_content?.metadata?.siteName) {
-        document.title = `${projectData.generated_content.metadata.siteName} | Open Lucius`;
+        if (error || !data) { setNotFound(true); setLoading(false); return; }
+        setProject(data as unknown as PublicProject);
+        setLoading(false);
+        return;
       }
 
-      // Inject sitemap link tag
-      if (projectData.subdomain) {
-        const existingLink = document.querySelector('link[rel="sitemap"]');
-        if (!existingLink) {
-          const link = document.createElement('link');
-          link.rel = 'sitemap';
-          link.type = 'application/xml';
-          link.title = 'Sitemap';
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-          const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || '';
-          link.href = `${supabaseUrl}/functions/v1/sitemap?subdomain=${projectData.subdomain}`;
-          document.head.appendChild(link);
+      // Case 2: Custom domain (hostname lookup)
+      if (isCustomDomain) {
+        // First check custom_domains table for project_id
+        const { data: domainData } = await supabase
+          .from('custom_domains_safe')
+          .select('project_id')
+          .eq('domain', hostname)
+          .in('status', ['verified', 'active'])
+          .maybeSingle();
+
+        if (domainData?.project_id) {
+          const { data } = await supabase
+            .from('public_projects')
+            .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
+            .eq('id', domainData.project_id)
+            .maybeSingle();
+
+          if (data) {
+            setProject(data as unknown as PublicProject);
+            setLoading(false);
+            return;
+          }
         }
+
+        // Also check custom_domain column on public_projects
+        const { data: projectByDomain } = await supabase
+          .from('public_projects')
+          .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
+          .eq('custom_domain', hostname)
+          .maybeSingle();
+
+        if (projectByDomain) {
+          setProject(projectByDomain as unknown as PublicProject);
+          setLoading(false);
+          return;
+        }
+
+        setNotFound(true);
+        setLoading(false);
+        return;
       }
+
+      // No subdomain and platform domain → 404
+      setNotFound(true);
+      setLoading(false);
     }
+
     fetchProject();
   }, [subdomain]);
+
+  // Set document title
+  useEffect(() => {
+    if (project?.generated_content?.metadata?.siteName) {
+      document.title = `${project.generated_content.metadata.siteName} | Open Lucius`;
+    } else if (project?.name) {
+      document.title = project.name;
+    }
+  }, [project]);
+
+  // Inject sitemap link
+  useEffect(() => {
+    if (project?.subdomain) {
+      const existingLink = document.querySelector('link[rel="sitemap"]');
+      if (!existingLink) {
+        const link = document.createElement('link');
+        link.rel = 'sitemap';
+        link.type = 'application/xml';
+        link.title = 'Sitemap';
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+        link.href = `${supabaseUrl}/functions/v1/sitemap?subdomain=${project.subdomain}`;
+        document.head.appendChild(link);
+      }
+    }
+  }, [project?.subdomain]);
 
   usePageView(project?.id || null, '/public');
 

@@ -58,7 +58,6 @@ interface PublishModalProps {
 
 type AvailabilityStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
-// Generate a URL-friendly slug from business name
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -67,6 +66,11 @@ function generateSlug(name: string): string {
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
     .substring(0, 50);
+}
+
+function buildPublicUrl(subdomain: string, customDomain?: string | null): string {
+  if (customDomain) return `https://${customDomain}`;
+  return `https://expert-page-gen.lovable.app/site/${subdomain}`;
 }
 
 export function PublishModal({ 
@@ -88,13 +92,12 @@ export function PublishModal({
   const [domainModalOpen, setDomainModalOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | undefined>();
   const [domainSuggestions, setDomainSuggestions] = useState<{ domain: string; price: string }[]>([]);
-  const [vercelUrl, setVercelUrl] = useState('');
 
   const fetchProjectData = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('projects')
-        .select('profession, form_data, vercel_url, vercel_custom_domain')
+        .select('profession, form_data, custom_domain')
         .eq('id', projectId)
         .single();
 
@@ -103,8 +106,6 @@ export function PublishModal({
         const businessName = formData?.businessName || formData?.extractedData?.businessName || projectName;
         const profession = data.profession || '';
         setDomainSuggestions(generateDomainSuggestions(businessName, profession));
-
-        if (data.vercel_url) setVercelUrl(data.vercel_url);
         return data;
       }
     } catch (err) {
@@ -128,13 +129,8 @@ export function PublishModal({
       
       if (isPublished && currentSubdomain) {
         fetchProjectData().then((data) => {
-          if (data) {
-            const url = data.vercel_custom_domain 
-              ? `https://${data.vercel_custom_domain}`
-              : data.vercel_url || null;
-            if (url) setPublishedUrl(url);
-            if (data.vercel_url) setVercelUrl(data.vercel_url);
-          }
+          const url = buildPublicUrl(currentSubdomain, data?.custom_domain as string | null);
+          setPublishedUrl(url);
         });
       } else {
         fetchProjectData();
@@ -151,25 +147,25 @@ export function PublishModal({
         
         if (value.length < 3) {
           setStatus('invalid');
-          setSuggestion('Subdomain must be at least 3 characters');
+          setSuggestion('Subdomain en az 3 karakter olmalı');
           return;
         }
         
         if (value.length > 50) {
           setStatus('invalid');
-          setSuggestion('Subdomain must be less than 50 characters');
+          setSuggestion('Subdomain en fazla 50 karakter olabilir');
           return;
         }
         
         if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(value) && value.length > 2) {
           setStatus('invalid');
-          setSuggestion('Only lowercase letters, numbers, and dashes allowed');
+          setSuggestion('Sadece küçük harf, rakam ve tire kullanılabilir');
           return;
         }
         
         if (/^-|-$/.test(value)) {
           setStatus('invalid');
-          setSuggestion('Cannot start or end with a dash');
+          setSuggestion('Tire ile başlayamaz veya bitemez');
           return;
         }
 
@@ -218,58 +214,36 @@ export function PublishModal({
 
     setIsPublishing(true);
     try {
+      // First save subdomain
       const { error } = await supabase
         .from('projects')
-        .update({
-          subdomain,
-          is_published: true,
-          published_at: new Date().toISOString(),
-        })
+        .update({ subdomain })
         .eq('id', projectId);
 
       if (error) throw error;
 
-      let deployedVercelUrl = '';
-      try {
-        const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
-          body: { projectId },
-        });
+      // Call deploy function (now just marks as published)
+      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
+        body: { projectId },
+      });
 
-        if (!deployError && deployData?.vercelUrl) {
-          deployedVercelUrl = deployData.vercelUrl;
-          setVercelUrl(deployedVercelUrl);
-        } else {
-          console.warn('Vercel deploy warning:', deployError || deployData?.error);
-          throw new Error(deployError?.message || deployData?.error || 'Vercel deploy başarısız oldu.');
-        }
-      } catch (deployErr: any) {
-        console.error('Vercel deploy failed:', deployErr);
-        toast({
-          title: 'Deploy Hatası',
-          description: deployErr.message || 'Vercel deploy başarısız. Lütfen tekrar deneyin.',
-          variant: 'destructive',
-        });
-        setIsPublishing(false);
-        return;
-      }
+      if (deployError) throw new Error(deployError.message || 'Yayınlama başarısız.');
 
-      const url = deployedVercelUrl;
+      const url = deployData?.url || buildPublicUrl(subdomain);
       setPublishedUrl(url);
       setShowSuccess(true);
       
       toast({
-        title: 'Website published!',
-        description: deployedVercelUrl 
-          ? 'Your website is now live on Vercel!' 
-          : 'Your website is now live and accessible to everyone.',
+        title: 'Siteniz yayında! 🎉',
+        description: 'Web siteniz artık herkes tarafından erişilebilir.',
       });
 
       onPublished?.(subdomain);
     } catch (err: any) {
       console.error('Publish error:', err);
       toast({
-        title: 'Publish failed',
-        description: err.message || 'Failed to publish website. Please try again.',
+        title: 'Yayınlama hatası',
+        description: err.message || 'Yayınlama başarısız. Lütfen tekrar deneyin.',
         variant: 'destructive',
       });
     } finally {
@@ -284,15 +258,13 @@ export function PublishModal({
         body: { projectId },
       });
 
-      if (!deployError && deployData?.vercelUrl) {
-        toast({
-          title: '✅ Site güncellendi!',
-          description: 'Değişiklikler canlıya alındı.',
-        });
-        onClose();
-      } else {
-        throw new Error(deployError?.message || 'Deploy başarısız.');
-      }
+      if (deployError) throw new Error(deployError.message || 'Güncelleme başarısız.');
+
+      toast({
+        title: '✅ Site güncellendi!',
+        description: 'Değişiklikler anında canlıya yansıdı.',
+      });
+      onClose();
     } catch (err: any) {
       toast({ title: 'Hata', description: err.message || 'Güncelleme başarısız.', variant: 'destructive' });
     } finally {
@@ -302,10 +274,7 @@ export function PublishModal({
 
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(publishedUrl);
-    toast({
-      title: 'Link copied!',
-      description: 'Website URL copied to clipboard.',
-    });
+    toast({ title: 'Link kopyalandı!' });
   };
 
   const handleClose = () => {
@@ -317,30 +286,21 @@ export function PublishModal({
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'checking':
-        return <Loader2 className="w-4 h-4 animate-spin text-gray-400" />;
-      case 'available':
-        return <Check className="w-4 h-4 text-emerald-500" />;
+      case 'checking': return <Loader2 className="w-4 h-4 animate-spin text-gray-400" />;
+      case 'available': return <Check className="w-4 h-4 text-emerald-500" />;
       case 'taken':
-      case 'invalid':
-        return <X className="w-4 h-4 text-red-500" />;
-      default:
-        return null;
+      case 'invalid': return <X className="w-4 h-4 text-red-500" />;
+      default: return null;
     }
   };
 
   const getStatusText = () => {
     switch (status) {
-      case 'checking':
-        return 'Checking availability...';
-      case 'available':
-        return 'Available!';
-      case 'taken':
-        return 'Already taken';
-      case 'invalid':
-        return suggestion || 'Invalid format';
-      default:
-        return '';
+      case 'checking': return 'Kontrol ediliyor...';
+      case 'available': return 'Kullanılabilir!';
+      case 'taken': return 'Bu adres alınmış';
+      case 'invalid': return suggestion || 'Geçersiz format';
+      default: return '';
     }
   };
 
@@ -357,12 +317,11 @@ export function PublishModal({
               Değişiklikleri Yayınla
             </DialogTitle>
             <DialogDescription className="text-base text-gray-500">
-              Siteniz zaten canlı. Yaptığınız değişiklikleri güncelleyin.
+              Siteniz zaten canlı. Editördeki değişiklikler kaydedildiğinde otomatik yansır.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-4">
-            {/* Current live URL */}
             {publishedUrl && (
               <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200">
                 <p className="text-xs text-gray-500 mb-1">✅ Şu an canlı adresiniz:</p>
@@ -390,11 +349,13 @@ export function PublishModal({
               </div>
             )}
 
-            <p className="text-sm text-gray-500 text-center">
-              Editörde yaptığınız değişiklikleri canlı siteye aktarmak için aşağıdaki butona tıklayın.
-            </p>
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+              <p className="text-xs text-blue-700">
+                💡 Editördeki değişiklikler kaydedildiğinde canlı siteye otomatik yansır. 
+                Yayınlama tarihi güncellenmek istenirse aşağıdaki butonu kullanın.
+              </p>
+            </div>
 
-            {/* Update Button */}
             <Button
               size="lg"
               className="w-full h-12 text-base gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
@@ -409,12 +370,11 @@ export function PublishModal({
               ) : (
                 <>
                   <RefreshCw className="w-5 h-5" />
-                  Değişiklikleri Yayınla
+                  Yayınlama Tarihini Güncelle
                 </>
               )}
             </Button>
 
-            {/* Domain Settings */}
             <CustomDomainCollapsible onOpenDomainModal={() => setDomainModalOpen(true)} />
 
             <Button variant="outline" onClick={handleClose} className="w-full border-gray-300 text-gray-700">
@@ -443,26 +403,18 @@ export function PublishModal({
               <Check className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             </div>
             <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
-              Your website is live! 🎉
+              Siteniz yayında! 🎉
             </DialogTitle>
             <DialogDescription className="text-base text-gray-500">
-              Share your new website with the world
+              Web sitenizi paylaşın
             </DialogDescription>
           </DialogHeader>
 
-          {/* URL Display */}
           <div className="py-4 space-y-4">
             <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-              <p className="text-sm text-gray-500 mb-2">Your website address:</p>
+              <p className="text-sm text-gray-500 mb-2">Site adresiniz:</p>
               <p className="font-medium text-orange-600 break-all">{publishedUrl}</p>
             </div>
-
-            {vercelUrl && vercelUrl !== publishedUrl && (
-              <div className="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                <p className="text-sm text-gray-500 mb-2">Vercel URL:</p>
-                <p className="font-medium text-orange-600 break-all">{vercelUrl}</p>
-              </div>
-            )}
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button 
@@ -471,19 +423,18 @@ export function PublishModal({
                 onClick={handleCopyUrl}
               >
                 <Copy className="w-4 h-4 mr-2" />
-                Copy Link
+                Linki Kopyala
               </Button>
               <Button 
                 className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
                 onClick={() => window.open(publishedUrl, '_blank')}
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Open Website
+                Siteyi Aç
               </Button>
             </div>
           </div>
 
-          {/* Domain Suggestions */}
           {domainSuggestions.length > 0 && (
             <DomainSuggestionCard
               suggestions={domainSuggestions}
@@ -495,7 +446,6 @@ export function PublishModal({
             />
           )}
 
-          {/* Custom Domain Link - Collapsible */}
           <CustomDomainCollapsible onOpenDomainModal={() => setDomainModalOpen(true)} />
 
           <Button variant="outline" onClick={handleClose} className="mt-2 border-gray-300 text-gray-700">
@@ -503,7 +453,6 @@ export function PublishModal({
           </Button>
         </DialogContent>
 
-        {/* Domain Settings Modal */}
         <DomainSettingsModal
           isOpen={domainModalOpen}
           onClose={() => {
@@ -525,24 +474,23 @@ export function PublishModal({
             <Globe className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
           <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
-            Publish Your Website
+            Web Sitenizi Yayınlayın
           </DialogTitle>
           <DialogDescription className="text-base text-gray-500">
-            Choose a unique address for your website
+            Siteniz için benzersiz bir adres seçin
           </DialogDescription>
         </DialogHeader>
 
-        {/* Subdomain Input */}
         <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="subdomain" className="text-gray-700">Website Address</Label>
+            <Label htmlFor="subdomain" className="text-gray-700">Site Adresi</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <Input
                   id="subdomain"
                   value={subdomain}
                   onChange={handleSubdomainChange}
-                  placeholder="your-clinic-name"
+                  placeholder="isletme-adi"
                   className="pr-10 bg-white border-gray-300 text-gray-900"
                   maxLength={50}
                 />
@@ -550,19 +498,14 @@ export function PublishModal({
                   {getStatusIcon()}
                 </div>
               </div>
-              <span className="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
-                .openlucius.app
-              </span>
             </div>
             
-            {/* Status message */}
             {status !== 'idle' && (
               <p className={`text-sm ${status === 'available' ? 'text-emerald-600' : status === 'checking' ? 'text-gray-400' : 'text-red-500'}`}>
                 {getStatusText()}
               </p>
             )}
 
-            {/* Suggestion */}
             {suggestion && status === 'taken' && (
               <button
                 className="text-sm text-orange-600 hover:underline"
@@ -571,23 +514,21 @@ export function PublishModal({
                   checkAvailability(suggestion);
                 }}
               >
-                Try: {suggestion}
+                Deneyin: {suggestion}
               </button>
             )}
           </div>
 
-          {/* Preview URL */}
           {subdomain.length >= 3 && status === 'available' && (
             <div className="p-3 rounded-lg bg-orange-50 border border-orange-200">
-              <p className="text-xs text-gray-500 mb-1">Your website will be live at:</p>
+              <p className="text-xs text-gray-500 mb-1">Siteniz şu adreste yayınlanacak:</p>
               <p className="text-sm font-medium text-orange-600">
-                Vercel üzerinden yayınlanacak
+                {buildPublicUrl(subdomain)}
               </p>
             </div>
           )}
         </div>
 
-        {/* Publish Button */}
         <Button 
           size="lg" 
           className="w-full h-12 text-base gap-2 bg-orange-500 hover:bg-orange-600 text-white"
@@ -597,18 +538,18 @@ export function PublishModal({
           {isPublishing ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              Publishing...
+              Yayınlanıyor...
             </>
           ) : (
             <>
               <Globe className="w-5 h-5" />
-              Publish Now
+              Şimdi Yayınla
             </>
           )}
         </Button>
 
         <p className="text-xs text-center text-gray-400">
-          Your website will be publicly accessible after publishing
+          Yayınlandıktan sonra siteniz herkes tarafından erişilebilir olacak
         </p>
       </DialogContent>
     </Dialog>
