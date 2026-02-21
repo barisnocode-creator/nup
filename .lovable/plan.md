@@ -1,127 +1,137 @@
 
 
-# MedCare Pro Template Yeniden Tasarimi
+# Tum Templateler Icin Hardcoded Icerik Temizligi
 
-## Mevcut Sorunlar
-
-1. **Preview gorseli yanlis** — `template-preview-dental.jpg` kullaniliyor, kendi ozel preview gorseli yok
-2. **HeroMedical icinde hardcoded fallback'ler** — "Uzman Klinik", "Sagliginiz Icin Profesyonel Bakim", "12K+", "Hasta Puani" gibi sabit Turkce metinler var. Kullanicinin sektoru ne olursa olsun bu metinler gorunuyor
-3. **StatisticsCounter bos geliyor** — defaultProps'ta tum stat degerleri `""`, mapper yok, sonuc: istatistik bolumu tamamen bos kalabiliyor
-4. **ServicesGrid icinde hardcoded fallback** — Bilesenin kendi icinde "Hizli Teslimat", "Yaratici Cozumler" gibi generic default servisler var (satir 7-14)
-5. **Template gorselleri generic** — Unsplash URL'leri sabit, sektore gore degismiyor
+MedCare Pro'da yaptigimiz gibi, kalan 5 template'in (Specialty Cafe, Dental Clinic, Restaurant Elegant, Hotel Luxury, Engineer Portfolio) tum bilesenlerindeki hardcoded Turkce/Ingilizce fallback metinleri kaldirilacak. Icerik sadece mapper'lardan ve sectorProfile'dan gelecek.
 
 ---
 
-## Yapilacak Degisiklikler
+## Etkilenen Bilesenler ve Degisiklikler
 
-### 1. HeroMedical.tsx — Hardcoded fallback'leri kaldir
+### 1. HeroCafe.tsx
+- Satir 44: `"Where Every Cup Tells a Story"` -> `''`
+- Satir 53: `"A specialty cafe in the heart of..."` -> `''`
+- Bos title/description durumunda render'i gizle
 
-Tum sabit metin fallback'leri bos string'e cekilecek. Icerik mapper'dan gelecek.
+### 2. HeroDental.tsx
+- Satir 11: `'Saglikli Gulusler Icin Profesyonel Bakim'` -> `''`
+- Satir 12: `'Uzman dis hekimlerimiz...'` -> `''`
+- Satir 13: `'Randevu Alin'` -> `''`
+- Satir 16: `'Dis Klinigi'` -> `''`
+- Bos alanlar icin conditional render ekle
 
-| Satir | Onceki | Sonraki |
-|-------|--------|---------|
-| 18 | `p.badge \|\| 'Uzman Klinik'` | `p.badge \|\| ''` |
-| 19 | `p.title \|\| 'Sagliginiz Icin...'` | `p.title \|\| ''` |
-| 20 | `p.description \|\| 'Deneyimli uzman...'` | `p.description \|\| ''` |
-| 21 | `p.primaryButtonText \|\| 'Randevu Al'` | `p.primaryButtonText \|\| ''` |
-| 23 | `p.secondaryButtonText \|\| 'Hizmetlerimiz'` | `p.secondaryButtonText \|\| ''` |
-| 26 | `p.floatingBadge \|\| 'Ucretsiz Ilk Muayene'` | `p.floatingBadge \|\| ''` |
-| 28-33 | `'12K+'`, `'Mutlu Hasta'`, `'%95'` vb. | `''` (bos string) |
-| 35-39 | `['Modern Ekipman', 'Uzman Kadro', '7/24 Destek']` | `[]` |
-| 211 | `'Hasta Puani'` | `p.statCardLabel \|\| ''` |
+### 3. HeroRestaurant.tsx
+- Satir 11: `'Lezzetin Sanatla Bulustugu Yer'` -> `''`
+- Satir 12: `'Sefimizin ozenle hazirladi...'` -> `''`
+- Satir 13: `'Fine Dining'` -> `''`
+- Satir 14: `'Rezervasyon'` -> `''`
+- Satir 15: `'Menu'` -> `''`
+- Bos butonlari gizle
 
-Bos olan alanlar render edilmeyecek (zaten cogu `{x && <Element>}` kontrolune sahip, olmayanlara da bu kontrol eklenecek).
+### 4. HeroHotel.tsx
+- Satir 11: `'Luksun ve Konforun Bulustugu Yer'` -> `''`
+- Satir 12: `'Essiz manzara...'` -> `''`
+- Satir 15: `'Oda Ara'` -> `''`
+- Satir 17: `isHotelMode` kontrolunu buttonText bos degilse calistir
 
-### 2. ServicesGrid.tsx — Generic default servisleri kaldir
+### 5. HeroPortfolio.tsx
+- Satir 11: `'Ahmet Yilmaz'` -> `''`
+- Satir 12: `'Full Stack Developer'` -> `''`
+- Satir 13: `'React, Node.js ve cloud...'` -> `''`
+- Satir 15-20: `socials` default dizisi -> `[]`
+- Satir 21: `'Projelerimi Gor'` -> `''`
 
-Satir 7-14'teki `defaultServices` dizisini bos diziye cevir:
+### 6. CafeFeatures.tsx
+- Satir 7-12: `defaultFeatures` -> `[]` (bos dizi)
+- Satir 20: `"Why Choose Us"` -> `''`
+- Satir 24: `"Crafted With Care"` -> `''`
+- Bos features dizisinde bolumu gizle
 
-```typescript
-const defaultServices: any[] = [];
-```
+### 7. CafeStory.tsx
+- Satir 42: `'Our Story'` -> `''`
+- Satir 45: `'Founded in the heart of the city...'` -> `''`
 
-Servisler tamamen mapper'dan veya sectorProfile'dan gelecek.
+### 8. CafeGallery.tsx
+- Satir 20: `"Gallery"` -> `''`
+- Satir 24: `"Our Space"` -> `''`
+- Satir 7-12: default images dizisi kalabilir (gorsel placeholder)
 
-### 3. StatisticsCounter icin mapper ekle (mappers/index.ts)
+### 9. DentalServices.tsx
+- Satir 9-14: `defaultServices` -> `[]` (bos dizi)
+- Satir 18: `'Hizmetlerimiz'` -> `''`
+- Satir 19: `'Uzman Bakim'` -> `''`
+- Satir 20: `'Modern ekipman ve deneyimli...'` -> `''`
 
-MedCare Pro'daki `StatisticsCounter` icin yeni bir mapper register edilecek:
+### 10. DentalTips.tsx
+- Satir 10-15: `defaultTips` -> `[]` (bos dizi)
+- Satir 19: `'Agiz Sagligi Ipuclari'` -> `''`
+- Satir 20: `'Bilmeniz Gerekenler'` -> `''`
 
-```typescript
-register(['StatisticsCounter'], (props, data) => {
-  const profile = getSectorProfile(data.sector);
-  // generatedContent'ten veya sectorProfile'dan istatistikleri doldur
-  // Ornek: Hasta sayisi, memnuniyet orani, yil deneyim, uzman sayisi
-}, []);
-```
+### 11. ChefShowcase.tsx
+- Satir 11: `'Bas Sefimiz'` -> `''`
+- Satir 12: `'Chef Ahmet Yilmaz'` -> `''`
+- Satir 13: `'15 yillik deneyimiyle...'` -> `''`
+- Satir 15-19: `signatureDishes` default -> `[]`
+- Satir 64: `'Imza Yemekler'` -> props'tan gelecek
 
-### 4. sectorProfiles.ts — Her sektore stats verisi ekle
+### 12. RoomShowcase.tsx
+- Satir 7-32: `defaultRooms` -> `[]`
+- Satir 36: `'Odalarimiz'` -> `''`
+- Satir 37: `'Konfor ve Zarafet'` -> `''`
+- Satir 83: `'Rezervasyon'` butonu -> props'tan gelecek
 
-`SectorProfile` interface'ine `stats` alani eklenir:
+### 13. HotelAmenities.tsx
+- Satir 9-16: `defaultAmenities` -> `[]`
+- Satir 20: `'Olanaklar'` -> `''`
+- Satir 21: `'Premium Hizmetler'` -> `''`
 
-```typescript
-stats?: Array<{ value: string; label: string }>;
-```
+### 14. ProjectShowcase.tsx
+- Satir 5-27: `defaultProjects` -> `[]`
+- Satir 31: `'Projeler'` -> `''`
+- Satir 32: `'Son Calismalarim'` -> `''`
 
-Ornek (doctor):
-```typescript
-stats: [
-  { value: '10.000+', label: 'Mutlu Hasta' },
-  { value: '%98', label: 'Memnuniyet' },
-  { value: '15+', label: 'Yil Deneyim' },
-  { value: '25+', label: 'Uzman Hekim' },
-]
-```
+### 15. SkillsGrid.tsx
+- Satir 4-32: `defaultCategories` -> `[]`
+- Satir 36: `'Yetenekler'` -> `''`
+- Satir 37: `'Teknik Beceriler'` -> `''`
 
-Her sektore uygun stats verileri eklenecek (cafe: "Gunluk Fincan", restoran: "Yillik Misafir" vb.).
+### 16. RestaurantMenu.tsx
+- Satir 5-27: `defaultCategories` -> `[]`
+- Satir 31: `'Menumuz'` -> `''`
+- Satir 32: `'Lezzetli Secimler'` -> `''`
 
-### 5. HeroMedical — Stat card icin sektore duyarli gosterim
+### 17. MenuShowcase.tsx
+- Satir 7-14: `default items` -> `[]`
+- Satir 37: `"Our Menu"` -> `''`
 
-Sabit "4.9/5" ve "Hasta Puani" yerine, sektore gore degisen floating stat card:
+### 18. TestimonialsCarousel.tsx
+- Satir 6-9: `defaultTestimonials` -> `[]`
+- Bos testimonials durumunda bolumu gizle
 
-- doctor/dentist: "4.9/5 Hasta Puani"
-- restaurant: "4.8/5 Misafir Puani"  
-- lawyer: "4.9/5 Musteri Puani"
-- cafe: "4.9/5 Musteri Puani"
+### 19. FAQAccordion.tsx
+- Satir 5-10: `defaultItems` -> `[]` (zaten mapper'dan dolmasi lazim)
 
-Bu veri `floatingBadge` ve `statCardLabel` prop'larindan gelecek.
-
-### 6. definitions.ts — MedCare Pro gorsel URL'lerini guncelle
-
-About section icindeki sabit gorsel URL'lerini daha profesyonel/genel olanlarla degistir. Mevcut gorunum dental/doktor odakli — daha generic profesyonel gorseller kullanilacak.
-
-### 7. mappers/index.ts — HeroMedical'a stat mapping ekle
-
-Hero mapper'da `stat1Value`, `stat1Label` vb. alanlari sectorProfile'daki stats verisinden doldur:
-
-```typescript
-// HeroMedical stat mapping
-if (profile?.stats && sectionProps.stat1Value !== undefined) {
-  profile.stats.forEach((stat, i) => {
-    overrides[`stat${i+1}Value`] = stat.value;
-    overrides[`stat${i+1}Label`] = stat.label;
-  });
-}
-```
+### 20. definitions.ts — Kalan hardcoded metin temizligi
+- `sectionSubtitle: 'Degerlendirmeler'` -> `''` (tum template'lerde)
+- `sectionSubtitle: 'Referanslar'` -> `''` (engineer template)
+- `AppointmentBooking` ve `ContactForm` default prop'lari: `'Randevu / Rezervasyon'`, `'Hemen Baslayin'`, `'Iletisim'`, `'Bize Ulasin'` vb. -> `''`
 
 ---
 
-## Degistirilecek Dosyalar
+## Uygulama Sirasi
 
-| Dosya | Degisiklik |
-|---|---|
-| `src/components/sections/HeroMedical.tsx` | Hardcoded fallback'ler kaldirilir, bos alan kontrolu eklenir |
-| `src/components/sections/ServicesGrid.tsx` | `defaultServices` bos diziye cekilir |
-| `src/templates/catalog/sectorProfiles.ts` | `SectorProfile`'a `stats` alani + her sektore stats verisi eklenir |
-| `src/templates/catalog/mappers/index.ts` | `StatisticsCounter` mapper eklenir, hero mapper'a stat mapping eklenir |
-| `src/templates/catalog/mappers/mapHeroSection.ts` | stat1/2/3 Value/Label mapping eklenir |
-| `src/templates/catalog/definitions.ts` | MedCare Pro gorsel URL'leri guncellenir |
+1. **definitions.ts** — Kalan hardcoded Turkce metinleri temizle (AppointmentBooking, ContactForm, TestimonialsCarousel subtitle'lari)
+2. **Hero bilsenleri** (6 dosya) — Tum fallback'leri kaldir, conditional render ekle
+3. **Icerik bilsenleri** (CafeFeatures, CafeStory, CafeGallery, DentalServices, DentalTips, ChefShowcase, RestaurantMenu, MenuShowcase) — Default dizileri bosalt, fallback metinleri kaldir
+4. **Ozel bilsenler** (RoomShowcase, HotelAmenities, ProjectShowcase, SkillsGrid) — Default dizileri bosalt
+5. **Ortak bilsenler** (TestimonialsCarousel, FAQAccordion) — Default dizileri bosalt
 
 ---
 
 ## Beklenen Sonuc
 
-- MedCare Pro template'i acildiginda: sektore uygun icerikler (basliklar, servisler, istatistikler) otomatik dolar
-- "Uzman Klinik", "12K+ Mutlu Hasta" gibi hardcoded metinler hicbir zaman gorunmez
-- Template farkli bir sektore (cafe, restoran, avukat) uygulandiginda bile icerik dogru gelir
-- ServicesGrid'de generic "Hizli Teslimat" metinleri yerine gercek servis verileri gorulur
+- Hicbir bilesenin icinde hardcoded Turkce/Ingilizce metin kalmaz
+- Tum icerikler 3 katmanli oncelik zincirinden gelir: generatedContent > sectorProfile > bos
+- Template degistirildiginde icerik kaybi olmaz
+- Bos prop gelen alanlar render edilmez (sayfa bos metin gostermez)
 
