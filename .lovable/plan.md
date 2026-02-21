@@ -1,112 +1,65 @@
 
+# Eski Turuncu Tema Kalintilerini Temizleme
 
-# NUppel Marka Donusumu ve Yeni Landing Page
+## Sorun
 
-## Ozet
+`index.css` dosyasinda yeni NUppel teması (lacivert/mavi) dogru tanimlanmis, ANCAK 3 dosyada eski turuncu tema hala "varsayilan deger" olarak kodlanmis. Bu dosyalar, rota degisikliklerinde veya editor'den cikarken eski turuncu renkleri ve Playfair Display fontunu zorlayarak yeni temayi eziyor.
 
-"Open Lucius" markasi "NUppel" olarak degistirilecek ve mevcut turuncu temalı landing page, shadcn-landing-page templateinden esinlenen lacivert/beyaz renk semasina sahip modern bir SaaS landing page'e donusturulecek.
+### Sorunlu Dosyalar ve Satirlar:
 
-## Degisiklik Kapsamı
+1. **`src/components/dashboard/DashboardLayout.tsx`** (satir 24-57)
+   - `forceOrange()` fonksiyonu: `--primary: '24 95% 53%'` (turuncu), `--accent: '24 95% 53%'` (turuncu), `--ring`, `--sidebar-primary`, `--sidebar-ring` hepsi turuncu
+   - `--font-heading: 'Playfair Display'` zorluyor
+   - Her rota degisikliginde bu eski degerler uygulanarak yeni tema eziliyor
 
-### 1. Renk Paleti Degisikligi (index.css)
+2. **`src/components/editor/SiteEditor.tsx`** (satir 76-108)
+   - Editor unmount olurken cleanup fonksiyonu ayni eski turuncu degerleri atiyor
+   - Editor'den dashboard'a donuste turuncu tema geri geliyor
 
-Mevcut turuncu (orange) tema yerine lacivert (navy blue) / beyaz paleti uygulanacak:
+3. **`tailwind.config.ts`** (satir 18-19)
+   - `serif` ve `display` font fallback'leri `'Playfair Display'` kullanıyor, `Inter` olmali
 
-- **Primary:** `24 95% 53%` (turuncu) → `222 47% 31%` (koyu lacivert #2B3A67)
-- **Accent:** Turuncu → Acik mavi vurgu (`210 100% 56%` - #1E90FF)  
-- **Ring/Focus:** Turuncu → Lacivert
-- **Sidebar renkleri:** Turuncu → Lacivert
+## Cozum
 
-### 2. Marka Adi Degisikligi (10 dosya)
+Bu 3 dosyadaki hardcoded eski tema degerlerini, `index.css`'teki yeni NUppel temasıyla eslestirmek:
 
-Tum "Open Lucius" referanslari "NUppel" olarak guncellenecek:
+### Degisiklik 1: `DashboardLayout.tsx`
+- Fonksiyon adini `forceOrange` yerine `forceNUppelTheme` olarak degistir
+- Turuncu renkleri lacivert/mavi ile degistir:
+  - `--primary`: `'24 95% 53%'` -> `'222 47% 31%'`
+  - `--accent`: `'24 95% 53%'` -> `'210 100% 56%'`
+  - `--ring`: `'24 95% 53%'` -> `'222 47% 31%'`
+  - `--sidebar-primary`: `'24 95% 53%'` -> `'222 47% 31%'`
+  - `--sidebar-ring`: `'24 95% 53%'` -> `'222 47% 31%'`
+  - `--foreground`: `'0 0% 10%'` -> `'222 47% 11%'`
+  - `--card-foreground`: `'0 0% 10%'` -> `'222 47% 11%'`
+  - `--popover-foreground`: `'0 0% 10%'` -> `'222 47% 11%'`
+  - `--secondary-foreground`: `'0 0% 29%'` -> `'222 47% 20%'`
+  - `--sidebar-foreground`: `'240 5.3% 26.1%'` -> `'220 9% 46%'`
+  - `--sidebar-accent`: `'240 4.8% 95.9%'` -> `'220 14% 96%'`
+  - `--sidebar-accent-foreground`: `'240 5.9% 10%'` -> `'222 47% 20%'`
+- Font: `'Playfair Display'` -> `'Inter'`
 
-- `src/components/landing/Header.tsx` - Logo metni
-- `src/components/landing/Footer.tsx` - Logo ve copyright
-- `src/components/dashboard/DashboardSidebar.tsx` - Sidebar logo
-- `src/pages/Dashboard.tsx` - Karsilama mesaji
-- `src/pages/Project.tsx` - Logo
-- `src/pages/PublicWebsite.tsx` - Site basligi, "Go to" linki, "Powered by"
-- `src/pages/Help.tsx` - Yardim metni
-- `src/components/help/FAQSection.tsx` - SSS cevaplari
-- `src/components/sections/addable/SiteFooter.tsx` - "Powered by"
-- `src/index.css` - Yorum satiri
+### Degisiklik 2: `SiteEditor.tsx`
+- Cleanup fonksiyonundaki ayni eski turuncu degerleri yeni NUppel degerleriyle degistir (DashboardLayout ile ayni degerler)
+- Font: `'Playfair Display'` -> `'Inter'`
 
-### 3. Landing Page Yeniden Tasarimi (shadcn-landing-page stilinde)
+### Degisiklik 3: `tailwind.config.ts`
+- `serif` font fallback: `'Playfair Display'` -> `'Inter'`
+- `display` font fallback: `'Playfair Display'` -> `'Inter'`
 
-Mevcut bilesenler korunup icerik ve stil guncellenecek:
+## Etkilenen Dosyalar
 
-**Header.tsx:**
-- Font-serif yerine modern sans-serif (Inter)
-- Nav linkleri eklenmesi (Ozellikler, Fiyatlandirma, SSS)
-- Dark mode toggle butonu
-- "NUppel" logosu lacivert tonunda
+| Dosya | Degisiklik |
+|-------|-----------|
+| `src/components/dashboard/DashboardLayout.tsx` | Turuncu HSL degerleri -> Lacivert/Mavi, font guncelleme |
+| `src/components/editor/SiteEditor.tsx` | Cleanup fonksiyonundaki turuncu degerler -> Lacivert/Mavi, font guncelleme |
+| `tailwind.config.ts` | Font fallback guncelleme |
 
-**Hero.tsx:**
-- Shadcn stilinde: sol tarafta baslik + aciklama + CTA butonu, sag tarafta mockup/gorsel
-- Gradient glow efekti arka planda (lacivert tonlarinda)
-- "Explore the Possibilities of AI" tarzi buyuk, bold baslik
-- Alt kisimda sponsor/guven seridi
+## Sonuc
 
-**Features.tsx:**
-- Bento grid / card layout (2x2 veya 3 sutun)
-- Her feature karti: ikon + baslik + aciklama
-- Hafif glassmorphism efekti kartlarda
-- Mevcut AI web siteleri ve AI icerik yazimi ozellikleri korunacak
-
-**TrustSection.tsx:**
-- Yatay logo/sponsor seridi (mevcut ikon gridinden donusum)
-- Rakam gostergeleri (1000+ site, 50+ sektor, 30 saniye)
-
-**WebsiteShowcase.tsx:**
-- Mevcut gorsel kartlar korunacak, border/shadow stili lacivert temaya uyarlanacak
-
-**HowItWorks.tsx:**
-- Timeline/stepper tasarimi korunacak, renk guncellemesi
-
-**CTASection.tsx:**
-- Lacivert gradient arka plan
-- Beyaz metin, acik mavi CTA butonu
-
-**Footer.tsx:**
-- NUppel markasi ile guncel footer
-- Ek linkler: Gizlilik, Kullanim Sartlari
-
-### 4. Font Degisikligi
-
-- Heading fontu: `Playfair Display` → `Inter` veya `Plus Jakarta Sans` (modern SaaS tarzi)
-- Body fontu: `Inter` korunacak
-
-## Teknik Detay
-
-### Degisecek dosyalar:
-1. `src/index.css` - Renk paleti + font + yorum
-2. `src/components/landing/Header.tsx` - Yeni navigasyon, NUppel logosu
-3. `src/components/landing/Hero.tsx` - Shadcn stili hero section
-4. `src/components/landing/Features.tsx` - Bento card layout
-5. `src/components/landing/TrustSection.tsx` - Rakam gostergeleri
-6. `src/components/landing/WebsiteShowcase.tsx` - Renk uyumu
-7. `src/components/landing/HowItWorks.tsx` - Renk uyumu
-8. `src/components/landing/CTASection.tsx` - Lacivert gradient
-9. `src/components/landing/Footer.tsx` - NUppel markasi
-10. `src/components/dashboard/DashboardSidebar.tsx` - NUppel logosu
-11. `src/pages/Dashboard.tsx` - NUppel karsilama
-12. `src/pages/Project.tsx` - NUppel logosu
-13. `src/pages/PublicWebsite.tsx` - NUppel referanslari
-14. `src/pages/Help.tsx` - NUppel referansi
-15. `src/components/help/FAQSection.tsx` - NUppel referansi
-16. `src/components/sections/addable/SiteFooter.tsx` - NUppel referansi
-
-### Renk Semasi Detayi:
-- Primary (Lacivert): `222 47% 31%` (#2B3A67)
-- Accent (Parlak Mavi): `210 100% 56%` (#1E90FF)
-- Background: Beyaz `0 0% 100%`
-- Foreground: Koyu gri `222 47% 11%`
-- Card arkaplan: Beyaz, hafif mavi-gri border
-
-### Korunan Yapı:
-- Mevcut routing ve authentication sistemi aynen kalacak
-- Dashboard, editor, wizard hic degismeyecek
-- Sadece landing page gorsel kimlik ve marka adi guncellenecek
-- Sohbet (wizard chat) ozelligi aynen korunacak
-
+Bu degisikliklerden sonra:
+- Dashboard'a girildiginde lacivert NUppel teması korunacak (turuncu geri gelmeyecek)
+- Editor'den ciktiginda lacivert tema korunacak
+- Font her yerde Inter olacak, Playfair Display geri gelmeyecek
+- `index.css`'teki tema degerleri artik ezilmeyecek
