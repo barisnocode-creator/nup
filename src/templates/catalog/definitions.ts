@@ -109,7 +109,7 @@ export const specialtyCafe: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Değerlendirmeler',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -120,20 +120,20 @@ export const specialtyCafe: TemplateDefinition = {
     {
       type: 'AppointmentBooking',
       defaultProps: {
-        sectionTitle: 'Randevu / Rezervasyon',
-        sectionSubtitle: 'Hemen Başlayın',
-        sectionDescription: 'Birkaç adımda kolayca işleminizi tamamlayın.',
-        submitButtonText: 'Gönder',
-        successMessage: 'Talebiniz alındı!',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
+        successMessage: '',
       },
     },
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bize Ulaşın',
-        sectionDescription: 'Sorularınız veya önerileriniz için bize yazın.',
-        submitButtonText: 'Mesaj Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
     {
@@ -220,7 +220,7 @@ export const dentalClinic: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Değerlendirmeler',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -231,10 +231,10 @@ export const dentalClinic: TemplateDefinition = {
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bize Ulaşın',
-        sectionDescription: 'Sorularınız için bize yazın, en kısa sürede dönüş yapalım.',
-        submitButtonText: 'Mesaj Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
     {
@@ -322,7 +322,7 @@ export const restaurantElegant: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Değerlendirmeler',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -333,20 +333,20 @@ export const restaurantElegant: TemplateDefinition = {
     {
       type: 'AppointmentBooking',
       defaultProps: {
-        sectionTitle: 'Randevu / Rezervasyon',
-        sectionSubtitle: 'Hemen Başlayın',
-        sectionDescription: 'Birkaç adımda kolayca işleminizi tamamlayın.',
-        submitButtonText: 'Gönder',
-        successMessage: 'Talebiniz alındı!',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
+        successMessage: '',
       },
     },
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bize Ulaşın',
-        sectionDescription: 'Özel etkinlikler ve sorularınız için bize yazın.',
-        submitButtonText: 'Mesaj Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
     {
@@ -428,7 +428,7 @@ export const hotelLuxury: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Değerlendirmeler',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -450,10 +450,10 @@ export const hotelLuxury: TemplateDefinition = {
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bize Ulaşın',
-        sectionDescription: 'Grup rezervasyonları ve özel istekleriniz için bize yazın.',
-        submitButtonText: 'Mesaj Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
     {
@@ -522,7 +522,7 @@ export const engineerPortfolio: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Referanslar',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -533,10 +533,10 @@ export const engineerPortfolio: TemplateDefinition = {
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bir Proje mi Var?',
-        sectionDescription: 'Projenizi konuşmak için bana yazın.',
-        submitButtonText: 'Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
     {
@@ -640,7 +640,7 @@ export const medcarePro: TemplateDefinition = {
       type: 'TestimonialsCarousel',
       defaultProps: {
         sectionTitle: '',
-        sectionSubtitle: 'Değerlendirmeler',
+        sectionSubtitle: '',
         testimonials: [
           { name: '', role: '', content: '', avatar: '' },
           { name: '', role: '', content: '', avatar: '' },
@@ -663,11 +663,11 @@ export const medcarePro: TemplateDefinition = {
     {
       type: 'AppointmentBooking',
       defaultProps: {
-        sectionTitle: 'Online Randevu',
-        sectionSubtitle: 'Hemen Başlayın',
-        sectionDescription: 'Birkaç adımda kolayca randevunuzu oluşturun.',
-        submitButtonText: 'Randevu Al',
-        successMessage: 'Randevunuz başarıyla oluşturuldu!',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
+        successMessage: '',
       },
     },
     {
@@ -682,10 +682,10 @@ export const medcarePro: TemplateDefinition = {
     {
       type: 'ContactForm',
       defaultProps: {
-        sectionTitle: 'İletişim',
-        sectionSubtitle: 'Bize Ulaşın',
-        sectionDescription: 'Sorularınız için bize yazın, en kısa sürede dönüş yapalım.',
-        submitButtonText: 'Mesaj Gönder',
+        sectionTitle: '',
+        sectionSubtitle: '',
+        sectionDescription: '',
+        submitButtonText: '',
       },
     },
   ],

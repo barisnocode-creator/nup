@@ -1,41 +1,15 @@
 import { motion } from 'framer-motion';
 import type { SectionComponentProps } from './types';
 
-const defaultCategories = [
-  {
-    name: 'Frontend',
-    skills: [
-      { name: 'React / Next.js', level: 95 },
-      { name: 'TypeScript', level: 90 },
-      { name: 'Tailwind CSS', level: 92 },
-      { name: 'Framer Motion', level: 85 },
-    ],
-  },
-  {
-    name: 'Backend',
-    skills: [
-      { name: 'Node.js', level: 88 },
-      { name: 'Python', level: 82 },
-      { name: 'PostgreSQL', level: 85 },
-      { name: 'GraphQL', level: 78 },
-    ],
-  },
-  {
-    name: 'DevOps & Diğer',
-    skills: [
-      { name: 'Docker', level: 80 },
-      { name: 'AWS', level: 75 },
-      { name: 'CI/CD', level: 82 },
-      { name: 'Git', level: 92 },
-    ],
-  },
-];
+const defaultCategories: any[] = [];
 
 export function SkillsGrid({ section }: SectionComponentProps) {
   const p = section.props;
-  const subtitle = p.subtitle || 'Yetenekler';
-  const title = p.title || 'Teknik Beceriler';
-  const categories = (p.categories as typeof defaultCategories) || defaultCategories;
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const categories = (p.categories as any[]) || defaultCategories;
+
+  if (!categories.length) return null;
 
   return (
     <section className="py-20 md:py-28 bg-background">

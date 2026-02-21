@@ -6,20 +6,13 @@ const iconMap: Record<string, React.ElementType> = {
   Waves, Sparkles, UtensilsCrossed, Dumbbell, Car, Wifi,
 };
 
-const defaultAmenities = [
-  { icon: 'Waves', title: 'Açık Havuz', description: 'Infinity havuz, güneş terası' },
-  { icon: 'Sparkles', title: 'Spa & Wellness', description: 'Türk hamamı, masaj, sauna' },
-  { icon: 'UtensilsCrossed', title: 'Restoran', description: 'Fine dining, açık büfe kahvaltı' },
-  { icon: 'Dumbbell', title: 'Fitness Center', description: '24 saat açık, kişisel antrenör' },
-  { icon: 'Car', title: 'Vale Park', description: 'Ücretsiz vale ve otopark hizmeti' },
-  { icon: 'Wifi', title: 'Ücretsiz WiFi', description: 'Tüm alanlarda yüksek hızlı internet' },
-];
+const defaultAmenities: any[] = [];
 
 export function HotelAmenities({ section }: SectionComponentProps) {
   const p = section.props;
-  const subtitle = p.subtitle || 'Olanaklar';
-  const title = p.title || 'Premium Hizmetler';
-  const amenities = (p.amenities as typeof defaultAmenities) || defaultAmenities;
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const amenities = (p.amenities as any[]) || defaultAmenities;
 
   return (
     <section className="py-20 md:py-28 bg-card">

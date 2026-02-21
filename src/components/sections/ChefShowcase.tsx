@@ -8,15 +8,12 @@ import type { SectionComponentProps } from './types';
 export function ChefShowcase({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
   const sector = p._sector || 'restaurant';
-  const subtitle = p.subtitle || 'Baş Şefimiz';
-  const title = p.title || 'Chef Ahmet Yılmaz';
-  const description = p.description || '15 yıllık deneyimiyle dünya mutfaklarını harmanlayan şefimiz, her tabağı bir sanat eserine dönüştürür.';
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const description = p.description || '';
   const image = p.image || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=800&q=80';
-  const signatureDishes = p.signatureDishes || [
-    { name: 'Truffle Risotto', description: 'İtalyan arborio pirinci, siyah trüf' },
-    { name: 'Kuzu İncik', description: '12 saat pişirilmiş, kırmızı şarap soslu' },
-    { name: 'Çikolata Fondü', description: 'Belçika çikolatası, vanilya dondurma' },
-  ];
+  const signatureDishes = p.signatureDishes || [];
+  const signatureDishesLabel = p.signatureDishesLabel || '';
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -60,8 +57,9 @@ export function ChefShowcase({ section, isEditing, onUpdate }: SectionComponentP
             <h2 className="text-4xl md:text-5xl font-bold text-foreground font-heading-dynamic">{title}</h2>
             <p className="text-lg text-muted-foreground leading-relaxed font-body-dynamic">{description}</p>
 
+            {(signatureDishes as Array<{ name: string; description: string }>).length > 0 && (
             <div className="pt-6 space-y-4">
-              <h3 className="text-sm font-semibold tracking-widest uppercase text-primary font-body-dynamic">İmza Yemekler</h3>
+              {signatureDishesLabel && <h3 className="text-sm font-semibold tracking-widest uppercase text-primary font-body-dynamic">{signatureDishesLabel}</h3>}
               {(signatureDishes as Array<{ name: string; description: string }>).map((dish, i) => (
                 <motion.div
                   key={i}
@@ -81,6 +79,7 @@ export function ChefShowcase({ section, isEditing, onUpdate }: SectionComponentP
                 </motion.div>
               ))}
             </div>
+            )}
           </motion.div>
         </div>
       </div>

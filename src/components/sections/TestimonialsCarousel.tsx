@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { resolveStyles } from './styleUtils';
 import type { SectionComponentProps } from './types';
 
-const defaultTestimonials = [
-  { name: "Ahmet Yılmaz", role: "CEO, Tech Corp", content: "Harika bir deneyim yaşadık.", avatar: "" },
-  { name: "Zeynep Kaya", role: "Pazarlama Müdürü", content: "Web sitemiz sayesinde satışlarımız arttı.", avatar: "" },
-  { name: "Mehmet Demir", role: "Kurucu", content: "Hızlı teslimat ve kaliteli iş.", avatar: "" },
-];
+const defaultTestimonials: any[] = [];
 
 export function TestimonialsCarousel({ section }: SectionComponentProps) {
   const { props, style } = section;
@@ -23,6 +19,8 @@ export function TestimonialsCarousel({ section }: SectionComponentProps) {
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
+
+  if (!testimonials.length) return null;
 
   return (
     <section ref={sectionRef} className={`${s.sectionPadding} ${s.bgColor}`}>

@@ -2,12 +2,7 @@ import { useState } from 'react';
 import { resolveStyles } from './styleUtils';
 import type { SectionComponentProps } from './types';
 
-const defaultItems = [
-  { question: "Hizmetleriniz neleri kapsıyor?", answer: "Web sitesi tasarımı, geliştirme, SEO optimizasyonu sunuyoruz." },
-  { question: "Bir proje ne kadar sürede tamamlanır?", answer: "Genellikle 2-6 hafta arasında teslim ediyoruz." },
-  { question: "Ödeme seçenekleri nelerdir?", answer: "Kredi kartı, banka havalesi ve taksitli ödeme seçenekleri sunuyoruz." },
-  { question: "Proje sonrası destek sağlıyor musunuz?", answer: "Evet, 1 yıl ücretsiz teknik destek dahildir." },
-];
+const defaultItems: any[] = [];
 
 export function FAQAccordion({ section }: SectionComponentProps) {
   const { props, style } = section;

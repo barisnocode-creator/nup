@@ -7,19 +7,16 @@ const iconMap: Record<string, React.ElementType> = {
   Lightbulb, Droplets, Clock, Apple, ShieldCheck,
 };
 
-const defaultTips = [
-  { icon: 'Droplets', title: 'Doğru Fırçalama', content: 'Günde en az 2 kez, 2 dakika boyunca yumuşak kıllı fırçayla 45 derece açıyla fırçalayın. Diş ipi kullanmayı unutmayın.' },
-  { icon: 'Clock', title: 'Düzenli Kontrol', content: 'Altı ayda bir diş hekiminizi ziyaret edin. Erken teşhis, tedavi süresini ve maliyetini önemli ölçüde azaltır.' },
-  { icon: 'Apple', title: 'Sağlıklı Beslenme', content: 'Şekerli ve asitli yiyeceklerden kaçının. Kalsiyum ve D vitamini açısından zengin besinler diş sağlığını destekler.' },
-  { icon: 'ShieldCheck', title: 'Koruyucu Tedaviler', content: 'Fissür örtücü ve flor uygulamaları ile dişlerinizi çürüklere karşı koruyun. Özellikle çocuklar için önemlidir.' },
-];
+const defaultTips: any[] = [];
 
 export function DentalTips({ section }: SectionComponentProps) {
   const p = section.props;
-  const title = p.title || 'Ağız Sağlığı İpuçları';
-  const subtitle = p.subtitle || 'Bilmeniz Gerekenler';
+  const title = p.title || '';
+  const subtitle = p.subtitle || '';
   const tips = p.tips || defaultTips;
   const [activeIndex, setActiveIndex] = useState(0);
+
+  if (!tips.length) return null;
 
   return (
     <section className="py-20 md:py-28 bg-secondary/20">

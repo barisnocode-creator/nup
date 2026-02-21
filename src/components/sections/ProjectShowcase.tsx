@@ -2,35 +2,13 @@ import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import type { SectionComponentProps } from './types';
 
-const defaultProjects = [
-  {
-    title: 'E-Ticaret Platformu',
-    description: 'React ve Node.js ile ölçeklenebilir e-ticaret çözümü. 50K+ aktif kullanıcı.',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80',
-    tags: ['React', 'Node.js', 'PostgreSQL'],
-    link: '#',
-  },
-  {
-    title: 'SaaS Dashboard',
-    description: 'Gerçek zamanlı analytics dashboard. WebSocket tabanlı canlı veri akışı.',
-    image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80',
-    tags: ['TypeScript', 'Next.js', 'D3.js'],
-    link: '#',
-  },
-  {
-    title: 'Mobil Sağlık Uygulaması',
-    description: 'AI destekli sağlık takip uygulaması. 100K+ indirme.',
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=600&q=80',
-    tags: ['React Native', 'Python', 'TensorFlow'],
-    link: '#',
-  },
-];
+const defaultProjects: any[] = [];
 
 export function ProjectShowcase({ section, isEditing }: SectionComponentProps) {
   const p = section.props;
-  const subtitle = p.subtitle || 'Projeler';
-  const title = p.title || 'Son Çalışmalarım';
-  const projects = (p.projects as typeof defaultProjects) || defaultProjects;
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const projects = (p.projects as any[]) || defaultProjects;
 
   return (
     <section className="py-20 md:py-28 bg-card">

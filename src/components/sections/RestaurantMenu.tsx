@@ -2,36 +2,16 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { SectionComponentProps } from './types';
 
-const defaultCategories = [
-  {
-    name: 'Başlangıçlar',
-    items: [
-      { name: 'Ahtapot Salatası', description: 'Izgara ahtapot, roka, nar ekşili sos', price: '₺180', image: 'https://images.unsplash.com/photo-1625943553852-781c6dd46faa?w=400&q=80' },
-      { name: 'Humus Tabağı', description: 'Tahin, zeytinyağı, baharat', price: '₺95', image: 'https://images.unsplash.com/photo-1577805947697-89e18249d767?w=400&q=80' },
-    ],
-  },
-  {
-    name: 'Ana Yemekler',
-    items: [
-      { name: 'Kuzu Pirzola', description: 'Biberiye, sarımsak, mevsim sebzeleri', price: '₺380', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80' },
-      { name: 'Somon Fileto', description: 'Teriyaki sos, jasmine pirinç', price: '₺320', image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&q=80' },
-    ],
-  },
-  {
-    name: 'Tatlılar',
-    items: [
-      { name: 'Lava Kek', description: 'Sıcak çikolata, vanilya dondurma', price: '₺120', image: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&q=80' },
-      { name: 'Künefe', description: 'Fıstıklı, şerbetli', price: '₺110', image: 'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=400&q=80' },
-    ],
-  },
-];
+const defaultCategories: any[] = [];
 
 export function RestaurantMenu({ section }: SectionComponentProps) {
   const p = section.props;
-  const subtitle = p.subtitle || 'Menümüz';
-  const title = p.title || 'Lezzetli Seçimler';
-  const categories = (p.categories as typeof defaultCategories) || defaultCategories;
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const categories = (p.categories as any[]) || defaultCategories;
   const [active, setActive] = useState(0);
+
+  if (!categories.length) return null;
 
   return (
     <section className="py-20 md:py-28 bg-card">

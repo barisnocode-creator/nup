@@ -39,10 +39,10 @@ export function CafeStory({ section, isEditing, onUpdate }: SectionComponentProp
               <span className="text-primary text-sm font-semibold tracking-[0.2em] uppercase font-body-dynamic">{p.subtitle}</span>
             )}
             <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight font-heading-dynamic">
-              {p.title || 'Our Story'}
+              {p.title || ''}
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed font-body-dynamic">
-              {p.description || 'Founded in the heart of the city, we\'ve been serving the community with passion and dedication since day one.'}
+              {p.description || ''}
             </p>
             {p.features && (
               <div className="grid grid-cols-2 gap-4 pt-4">

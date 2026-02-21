@@ -4,14 +4,9 @@ import type { SectionComponentProps } from './types';
 export function MenuShowcase({ section, isEditing }: SectionComponentProps) {
   const { props } = section;
 
-  const items = props.items || [
-    { name: 'Espresso', description: 'Rich, bold, and full-bodied', price: '₺45', image: 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400&q=80', category: 'Coffee' },
-    { name: 'Cappuccino', description: 'Perfectly steamed milk and espresso', price: '₺55', image: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400&q=80', category: 'Coffee' },
-    { name: 'Matcha Latte', description: 'Ceremonial grade matcha', price: '₺65', image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400&q=80', category: 'Specialty' },
-    { name: 'Croissant', description: 'Freshly baked, buttery layers', price: '₺40', image: 'https://images.unsplash.com/photo-1555507036-ab1f4038024a?w=400&q=80', category: 'Pastry' },
-    { name: 'Pour Over', description: 'Single-origin, hand-poured', price: '₺70', image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80', category: 'Coffee' },
-    { name: 'Sourdough Toast', description: 'With avocado and microgreens', price: '₺75', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80', category: 'Food' },
-  ];
+  const items = props.items || [];
+
+  if (!items.length) return null;
 
   return (
     <section className="py-24 lg:py-32 bg-secondary">
@@ -34,7 +29,7 @@ export function MenuShowcase({ section, isEditing }: SectionComponentProps) {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-foreground mb-4 font-heading-dynamic"
           >
-            {props.title || "Our Menu"}
+            {props.title || ''}
           </motion.h2>
           {props.description && (
             <motion.p

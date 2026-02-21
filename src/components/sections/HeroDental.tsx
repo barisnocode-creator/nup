@@ -8,12 +8,12 @@ import type { SectionComponentProps } from './types';
 
 export function HeroDental({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
-  const title = p.title || 'Sağlıklı Gülüşler İçin Profesyonel Bakım';
-  const description = p.description || 'Uzman diş hekimlerimiz ve modern teknolojimizle, ailenizin ağız ve diş sağlığını güvenle emanet edebilirsiniz.';
-  const buttonText = p.buttonText || 'Randevu Alın';
+  const title = p.title || '';
+  const description = p.description || '';
+  const buttonText = p.buttonText || '';
   const buttonLink = p.buttonLink || '#appointment';
   const image = p.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&q=80';
-  const badge = p.badge || 'Diş Kliniği';
+  const badge = p.badge || '';
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -32,14 +32,16 @@ export function HeroDental({ section, isEditing, onUpdate }: SectionComponentPro
             transition={{ duration: 0.7, ease: 'easeOut' }}
             className="space-y-6"
           >
-            <motion.span
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium"
-            >
-              {badge}
-            </motion.span>
+            {badge && (
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-block px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium"
+              >
+                {badge}
+              </motion.span>
+            )}
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
@@ -59,21 +61,23 @@ export function HeroDental({ section, isEditing, onUpdate }: SectionComponentPro
               {description}
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-            >
-              <Button size="lg" className="group text-base px-8" asChild={!isEditing}>
-                {isEditing ? (
-                  <span>{buttonText} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
-                ) : (
-                  <a href={buttonLink}>
-                    {buttonText} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </a>
-                )}
-              </Button>
-            </motion.div>
+            {buttonText && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+              >
+                <Button size="lg" className="group text-base px-8" asChild={!isEditing}>
+                  {isEditing ? (
+                    <span>{buttonText} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
+                  ) : (
+                    <a href={buttonLink}>
+                      {buttonText} <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </a>
+                  )}
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Right Image */}

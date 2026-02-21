@@ -4,25 +4,26 @@ import type { SectionComponentProps } from './types';
 export function CafeFeatures({ section, isEditing }: SectionComponentProps) {
   const { props } = section;
 
-  const features = props.features || [
-    { icon: '☕', title: 'Single Origin', description: 'Ethically sourced beans from around the world' },
-    { icon: '🌿', title: 'Organic', description: 'All our ingredients are 100% organic and fresh' },
-    { icon: '🎨', title: 'Latte Art', description: 'Each cup is a work of art crafted by our baristas' },
-    { icon: '🏠', title: 'Cozy Space', description: 'A warm atmosphere to work, read, or simply relax' },
-  ];
+  const features = props.features || [];
+
+  if (!features.length) return null;
 
   return (
     <section className="py-24 lg:py-32 bg-foreground">
       <div className="container mx-auto px-6 lg:px-12">
         <div className="text-center mb-16">
-          <motion.span initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="inline-block text-primary text-sm font-semibold tracking-[0.2em] uppercase mb-4 font-body-dynamic">
-            {props.subtitle || "Why Choose Us"}
-          </motion.span>
-          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold text-background font-heading-dynamic">
-            {props.title || "Crafted With Care"}
-          </motion.h2>
+          {(props.subtitle) && (
+            <motion.span initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className="inline-block text-primary text-sm font-semibold tracking-[0.2em] uppercase mb-4 font-body-dynamic">
+              {props.subtitle}
+            </motion.span>
+          )}
+          {(props.title) && (
+            <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+              className="text-4xl md:text-5xl font-bold text-background font-heading-dynamic">
+              {props.title}
+            </motion.h2>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
