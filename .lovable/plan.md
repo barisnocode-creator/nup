@@ -1,49 +1,47 @@
 
 
-# Custom Domain Altyapisi Duzeltme Plani
+# Yayinlama Akisi Analizi — Vercel Olmadan Zaten Calisiyor
 
-## Sorunun Ozeti
+## Mevcut Durum
 
-nuppel.com gibi ozel domainler "Website Not Found" gosteriyor cunku sistemde birden fazla uyumsuzluk var.
+Vercel'i kaldirdiktan sonra yayinlama akisini inceledim. Iyi haber: **sistem zaten Vercel olmadan calisiyor**. Herhangi bir yeniden tasarim gerekmez.
 
-## Tespit Edilen Sorunlar
+## Nasil Calisiyor?
 
-### 1. Yanlis IP Adresi (Kritik)
+Yayinlama akisi tamamen **veritabani tabanli** (database-driven):
 
-DNS talimatlari kullanicilara `75.2.60.5` (eski Vercel IP) adresini gosteriyor. Dogru IP `185.158.133.1` (Lovable platformu) olmali.
+1. **Kullanici "Yayinla" butonuna basar** (PublishModal.tsx)
+2. **Sadece DB guncellenir**: `projects` tablosunda `subdomain`, `is_published=true`, `published_at` alanlari set edilir
+3. **Canli site otomatik sunulur**: `/site/:subdomain` rotasi uzerinden `PublicWebsite.tsx` componenti, `public_projects` view'indan veriyi ceker ve React ile render eder
+4. **Custom domain** icin: `App.tsx`'deki `isCustomDomain` kontrolu, platform disindaki hostname'leri algilar ve `PublicWebsite` componentini dogrudan gosterir. Bu component `custom_domains_safe` tablosunu sorgulayarak dogru projeyi bulur.
 
-**Etkilenen yerler:**
-- `src/components/website-dashboard/DomainTab.tsx` - satir 253-257'deki hardcoded IP
-- `get_domain_dns_instructions` veritabani fonksiyonu - `75.2.60.5` IP adresi
+```text
+Kullanici Editoru
+    |
+    v
+"Yayinla" butonu
+    |
+    v
+DB Guncelle (subdomain, is_published=true)
+    |
+    v
+Canli Site: expert-page-gen.lovable.app/site/{subdomain}
+    |
+    v
+PublicWebsite.tsx → public_projects view → SectionRenderer
+```
 
-### 2. nuppel.com Icin Veritabani Kaydi Yok
+## Guncelleme Akisi
 
-DNS dogru yere isaret etse bile, `custom_domains` tablosunda `nuppel.com` kaydi olmadigi icin PublicWebsite componenti hangi projeyi gosterecegini bilemiyor.
+"Guncelle" butonu sadece `published_at` tarihini gunceller. Editorle yapilan degisiklikler (`site_sections`, `site_theme`) veritabanina kaydedildiginde canli siteye **aninda** yansiyor, cunku `PublicWebsite.tsx` her ziyarette DB'den guncel veriyi cekiyor.
 
-Bu kayit ya kullanici tarafindan editorden eklenmeli ya da manuell olusturulmali.
+## Sonuc
 
-## Yapilacak Degisiklikler
+Hicbir kod degisikligi gerekmez. Deploy-to-vercel edge function'i zaten sadece Vercel'e deployment atiyordu; kaldirildiktan sonra yayinlama akisi daha da basitlesti. Mevcut sistem:
 
-### Adim 1: DNS IP Adresini Duzelt (DomainTab.tsx)
+- Subdomain ile yayinlama: **Calisiyor** (`/site/:subdomain`)
+- Custom domain ile yayinlama: **Calisiyor** (`custom_domains_safe` tablosu + hostname eslesmesi)
+- Icerik guncelleme: **Calisiyor** (DB'ye kaydet = aninda canli)
 
-`src/components/website-dashboard/DomainTab.tsx` dosyasinda satir 253 ve 257'deki `75.2.60.5` degerleri `185.158.133.1` olarak guncellenecek.
-
-### Adim 2: DNS IP Adresini Duzelt (DB Function)
-
-`get_domain_dns_instructions` veritabani fonksiyonu SQL migration ile guncellenecek. Iki A kaydi icin de IP `75.2.60.5` yerine `185.158.133.1` olacak.
-
-### Adim 3: nuppel.com Domain Kaydini Olustur
-
-nuppel.com icin `custom_domains` tablosuna kayit eklenecek. Bunun icin kullaniciya hangi projeye baglanacagi sorulacak (dashboard uzerinden Domain Ayarlari ile de yapilabilir).
-
-## Etkilenen Dosyalar
-
-| Dosya | Islem |
-|---|---|
-| `src/components/website-dashboard/DomainTab.tsx` | IP guncelle (75.2.60.5 -> 185.158.133.1) |
-| SQL Migration | `get_domain_dns_instructions` fonksiyonunu guncelle |
-
-## Teknik Not
-
-PublishModal.tsx'deki `buildPublicUrl` fonksiyonu `expert-page-gen.lovable.app/site/subdomain` formatinda URL uretiyor. Custom domain akisi bundan bagimsiz calisir: kullanici domain ekler, DNS yapilandirir, dogrular ve `custom_domains` tablosundaki `active` statusu ile PublicWebsite componenti hostname eslemesi yapar.
+Ek bir islem yapmaniza gerek yok.
 
