@@ -125,7 +125,7 @@ export function EditorCanvas({
           section={{
             id: '__footer__',
             type: 'AddableSiteFooter',
-            props: {},
+            props: { siteName: projectName || '' },
           }}
           sections={sections}
         />

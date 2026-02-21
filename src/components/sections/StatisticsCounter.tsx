@@ -8,12 +8,15 @@ export function StatisticsCounter({ section }: SectionComponentProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
-  const stats = [
-    { value: props.stat1Value, label: props.stat1Label },
-    { value: props.stat2Value, label: props.stat2Label },
-    { value: props.stat3Value, label: props.stat3Label },
-    { value: props.stat4Value, label: props.stat4Label },
-  ].filter(st => st.value && st.label);
+  const stats = (Array.isArray(props.stats) && props.stats.length > 0
+    ? props.stats
+    : [
+        { value: props.stat1Value, label: props.stat1Label },
+        { value: props.stat2Value, label: props.stat2Label },
+        { value: props.stat3Value, label: props.stat3Label },
+        { value: props.stat4Value, label: props.stat4Label },
+      ]
+  ).filter((st: any) => st.value && st.label);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

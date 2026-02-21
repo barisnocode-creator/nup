@@ -14,7 +14,7 @@ export function HeroHotel({ section, isEditing, onUpdate }: SectionComponentProp
   const image = p.image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80';
   const buttonText = p.buttonText || '';
   // Show date picker only for hotel/accommodation sectors; for others show a plain CTA button
-  const isHotelMode = buttonText && (!p.buttonText || p.buttonText === 'Oda Ara' || p.buttonText === '');
+  const isHotelMode = sector && ['hotel', 'resort', 'accommodation', 'motel', 'hostel'].some(s => sector.includes(s));
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
