@@ -1,191 +1,144 @@
 
+# Vercel Deployment Entegrasyonu -- Tek Render Sistemi ile
 
-# Tek Render Sistemi -- Vercel HTML Uretimini Kaldirma Plani
+## Mevcut Durum
 
-## Mevcut Sorun
+Suanki `deploy-to-vercel` fonksiyonu sadece veritabaninda `is_published = true` isaretliyor. Gercek bir Vercel deploy'u yapmiyor. Siteler `expert-page-gen.lovable.app/site/{subdomain}` uzerinden sunuluyor.
 
-Sistemde iki ayri render motoru var:
+## Sorun
 
-1. **Editor/Preview (React)**: `SectionRenderer.tsx` + 50+ React bilesen -- animasyonlar, tema degiskenleri, Tailwind CSS
-2. **Yayinlanan Site (Vercel)**: `deploy-to-vercel/index.ts` icerisinde 1338 satirlik elle yazilmis HTML string uretici -- animasyon yok, font/renk kaymasi, her yeni section icin ayri renderer yazmak gerekiyor
+- Kullanici kendi alan adini bagladiginda, DNS Lovable'in domainini gosteriyor ama Vercel'de barindirilmiyor
+- `verify-domain` fonksiyonu Vercel'e domain kaydetmeye calisiyor ama ortada bir Vercel projesi yok (cunku deploy edilmiyor)
+- Ozel domain akisi tam calismiyor
 
-Sonuc: Editor'de gorunen ile yayinlanan site hicbir zaman birebir ayni degil.
+## Cozum: Vercel'e Redirect Projesi Deploy Etme
 
----
-
-## Cozum: Tek Render Sistemi
-
-Yayinlanan siteler icin ayri HTML uretmeyi tamamen birakiyoruz. Yerine, **ayni React uygulamasi** uzerinden tum siteler sunulacak.
+Her kullanici sitesi icin Vercel'e **kucuk bir redirect/rewrite projesi** deploy edilecek. Bu proje icerigi kendisi uretmeyecek, sadece tum trafigi ana React uygulamasina yonlendirecek.
 
 ```text
-SUAN (yanlis):
-klinik.vercel.app  -->  Statik HTML (farkli gorunum, animasyon yok)
-
-OLMASI GEREKEN:
-expert-page-gen.lovable.app/site/klinik  -->  PublicWebsite.tsx
-                                                    |
-                                              SectionRenderer (ayni bilesenler)
-                                                    |
-                                        Editor ile birebir ayni gorunum
+kullanici.com --> Vercel Projesi --> Rewrite --> expert-page-gen.lovable.app/site/{subdomain}
+                                                          |
+                                                   PublicWebsite.tsx
+                                                          |
+                                                   SectionRenderer (ayni bilesenler)
 ```
 
-**Kritik avantaj**: `PublicWebsite.tsx` zaten var ve calisiyor! `/site/:subdomain` rotasi uzerinden `SectionRenderer` ile ayni React bilesenlerini kullaniyor. Tek yapmamiz gereken, Vercel deploy islemini basitlestirmek.
+Bu sayede:
+- Tek Render Sistemi korunur (editor = canli site)
+- Her sitenin kendi Vercel projesi olur (custom domain destegi)
+- SSL Vercel tarafindan otomatik saglanir
+- Icerik her zaman guncel (rewrite ile ana app'ten cekilir)
 
 ---
 
 ## Degisiklik Plani
 
-### Adim 1: deploy-to-vercel Edge Function -- Basitlestirme
+### Adim 1: deploy-to-vercel Edge Function -- Vercel Rewrite Deploy
 
 **Dosya:** `supabase/functions/deploy-to-vercel/index.ts`
 
-1338 satirlik HTML renderer tamamen kaldirilacak. Yerine sadece su islemleri yapacak:
+Fonksiyon su islemleri yapacak:
 
-- Projeyi `is_published = true` olarak isaretler
-- `subdomain` kaydeder
-- `published_at` tarihini gunceller
-- Vercel deploy **yapmaz** (HTML uretmez)
-- Mevcut `vercel_project_id` varsa Vercel'deki siteyi redirect'e cevirir (ana uygulamaya yonlendirir)
+1. Kullaniciyi dogrula, proje sahipligini kontrol et
+2. Veritabaninda `is_published = true`, `published_at = now()` olarak guncelle
+3. Vercel API'sine `vercel.json` + bos `index.html` deploy et:
+   - `vercel.json` icinde rewrite kurali: `/**` --> `https://expert-page-gen.lovable.app/site/{subdomain}/**`
+4. Vercel proje ID'sini ve URL'yi veritabanina kaydet (`vercel_project_id`, `vercel_url`)
+5. Eger proje daha once deploy edildiyse, mevcut Vercel projesine yeni deployment yap (tekrar olusturma)
 
-Fonksiyon ~50 satira dusecek (1338'den).
-
-### Adim 2: PublicWebsite.tsx -- Custom Domain Destegi
-
-**Dosya:** `src/pages/PublicWebsite.tsx`
-
-Mevcut hali sadece URL parametresinden (`/site/:subdomain`) subdomain okuyor. Ek olarak:
-
-- `window.location.hostname` kontrol edilecek
-- Eger hostname bilinen bir platform domaini degilse (lovable.app degil), `custom_domains` tablosundan proje aranacak
-- Boylece `klinik.com` gibi ozel alan adlari da ayni React bilesenleriyle render edilecek
+Vercel'e gonderilecek dosyalar (sadece 2 dosya):
 
 ```text
-Akis:
-1. hostname = "klinik.com" mi?
-2. Evet --> custom_domains tablosunda ara --> project_id bul
-3. public_projects'ten site_sections + site_theme cek
-4. SectionRenderer ile render et (editor ile birebir ayni)
+vercel.json:
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "https://expert-page-gen.lovable.app/site/{subdomain}/$1" }
+  ]
+}
+
+index.html:
+<!-- Bos, rewrite uzerinden yuklenir -->
 ```
 
-### Adim 3: App.tsx -- Custom Domain Routing
-
-**Dosya:** `src/App.tsx`
-
-Ana routing'e bir "domain resolver" eklenir:
-
-- Sayfa yuklendiginde `window.location.hostname` kontrol edilir
-- Eger hostname platform domaini degilse (lovable.app veya localhost degilse), otomatik olarak `PublicWebsite` bilesenine yonlendirilir
-- Normal kullanici rotalarini (dashboard, editor vs.) etkilemez
-
-### Adim 4: PublishModal.tsx -- URL Gosterimini Guncelle
+### Adim 2: PublishModal.tsx -- Vercel URL Gosterimi
 
 **Dosya:** `src/components/website-preview/PublishModal.tsx`
 
-- Vercel URL yerine platform URL'si gosterilecek: `expert-page-gen.lovable.app/site/{subdomain}`
-- Guncelleme butonu artik Vercel'e deploy yapmak yerine sadece `is_published` ve `published_at`'i guncelleyecek (degisiklikler aninda canli olacak cunku ayni DB'den okuyor)
-- Custom domain bagli ise o URL gosterilecek
+- Vercel'den donen URL'yi (`deployData.url`) gosterecek
+- "Guncelle" butonu tekrar Vercel deploy tetikleyecek (rewrite guncelleme)
+- Custom domain varsa o URL gosterilecek
 
-### Adim 5: public_projects View -- custom_domain ile Arama
+### Adim 3: Custom Domain Akisi -- Vercel Entegrasyonu
 
-Veritabaninda `public_projects` gorunumune `custom_domain` alani zaten mevcut. `PublicWebsite.tsx`'ten hostname ile sorgulama yapilabilecek.
+Custom domain akisi zaten `verify-domain` fonksiyonunda mevcut. Vercel projesi deploy edildikten sonra:
 
-### Adim 6: EditorToolbar -- Guncelle Butonu Basitlestirme
+1. Kullanici domain ekler (`add-custom-domain`)
+2. DNS dogrulamasi yapar (`verify-domain`)
+3. `verify-domain` dogrulama basarili olunca Vercel'e domain kaydeder (`registerVercelDomain`)
+4. Vercel SSL otomatik saglar
 
-**Dosya:** `src/components/website-preview/EditorToolbar.tsx` (veya ilgili toolbar)
-
-"Guncelle" butonu artik Vercel deploy tetiklemeyecek. Site zaten DB'den canli okunuyor, editordeki degisiklikler kaydedildiginde otomatik olarak canli siteye yansiyacak. "Guncelle" butonu sadece `published_at` tarihini guncelleyecek.
-
----
-
-## Kaldirilacak Kod
-
-| Dosya/Bolum | Satir Sayisi | Aciklama |
-|---|---|---|
-| `deploy-to-vercel` HTML renderers | ~1100 satir | 80+ section renderer fonksiyonu |
-| `deploy-to-vercel` Vercel API cagrilari | ~100 satir | base64 encoding, deployment API |
-| Toplam kaldirilacak | **~1200 satir** | |
-
----
-
-## Ozel Alan Adi (Custom Domain) Akisi
-
-```text
-SUAN:
-kullanici.com --> CNAME --> Vercel project --> Statik HTML
-
-YENI:
-kullanici.com --> CNAME --> expert-page-gen.lovable.app
-                                    |
-                        App.tsx hostname kontrol eder
-                                    |
-                        PublicWebsite yukler (React)
-                                    |
-                        SectionRenderer (editor ile ayni)
-```
-
-Custom domain DNS kayitlari:
-- A kaydi: Lovable'in IP'sine (185.158.133.1)
-- CNAME: expert-page-gen.lovable.app
-
-**Not**: Lovable altyapisi zaten custom domain destekliyor. `verify-domain` ve `add-custom-domain` fonksiyonlari DNS dogrulamasini yapiyor. Domain dogrulandiktan sonra, Lovable platformu o domain'i bu projeye yonlendirecek.
-
----
-
-## Etkilenen Dosyalar
-
-| Dosya | Degisiklik | Karmasiklik |
-|---|---|---|
-| `supabase/functions/deploy-to-vercel/index.ts` | 1338 satir --> ~50 satir (HTML renderer kaldir) | Yuksek |
-| `src/pages/PublicWebsite.tsx` | Custom domain hostname cozumlemesi ekle | Orta |
-| `src/App.tsx` | Domain-based routing ekle | Orta |
-| `src/components/website-preview/PublishModal.tsx` | URL gosterimini guncelle, Vercel deploy kaldir | Orta |
-| `src/components/website-preview/EditorToolbar.tsx` | Guncelle butonunu basitlestir | Dusuk |
-| `src/components/website-preview/DomainSettingsModal.tsx` | DNS talimatlari guncelle (Lovable IP) | Dusuk |
-
----
-
-## Avantajlar
-
-- **Birebir parity**: Editor = yayinlanan site (ayni React bilesenleri)
-- **Animasyonlar calisiyor**: Framer Motion, IntersectionObserver, parallax -- hepsi yayinda
-- **1200+ satir kod kaldirilir**: Bakim yuku azalir
-- **Yeni section = 1 yere yaz**: Her yeni bolum otomatik olarak yayinda da calisiyor
-- **Anlik guncelleme**: Editorde kaydet = canli sitede gorunur (Vercel deploy beklemeye gerek yok)
-- **Font/renk tutarliligi**: CSS variables ayni sekilde calisiyor
-
-## Riskler ve Cozumleri
-
-| Risk | Cozum |
-|---|---|
-| SEO -- SPA'da sayfa kaynagi bos gorunebilir | `<meta>` tag'lari ve Open Graph bilgileri `document.head`'e enjekte ediliyor (mevcut kodda zaten var) |
-| Performans -- Ana app buyuyebilir | PublicWebsite zaten lazy-loaded, ek yuk minimal |
-| Mevcut Vercel URL'leri bozulur | Vercel projelerini kaldiramayiz ama yeni yayinlamalarda kullanilmayacak. Eski URL'ler icin redirect middleware eklenebilir |
+Bu akis **zaten kodda mevcut**, sadece `vercel_project_id` dolu olmasi gerekiyor (Adim 1 bunu sagliyor).
 
 ---
 
 ## Teknik Detaylar
 
-### PublicWebsite.tsx -- Hostname Cozumleme Mantigi
+### Vercel Deployment API Kullanimi
+
+Vercel v13 Deployments API ile dosya deploy etme:
 
 ```text
-function resolveProject():
-  1. URL'de /site/:subdomain varsa --> subdomain ile ara (mevcut mantik)
-  2. Yoksa hostname kontrol et
-     - hostname lovable.app veya localhost ise --> 404
-     - baska bir hostname ise:
-       a. public_projects'te custom_domain = hostname ile ara
-       b. Bulunamazsa 404
-       c. Bulunursa --> site_sections + site_theme ile render et
+POST https://api.vercel.com/v13/deployments
+{
+  "name": "site-{subdomain}",
+  "files": [
+    { "file": "vercel.json", "data": "base64..." },
+    { "file": "index.html", "data": "base64..." }
+  ],
+  "projectSettings": {
+    "framework": null
+  },
+  "target": "production"
+}
 ```
 
-### deploy-to-vercel Yeni Hali (ozet)
+### Mevcut Secrets (Hazir)
 
-```text
-Deno.serve(async (req) => {
-  // Auth kontrol
-  // Projeyi getir
-  // is_published = true, published_at = now() olarak guncelle
-  // { success: true, url: "expert-page-gen.lovable.app/site/{subdomain}" } don
-})
-```
+- `VERCEL_API_TOKEN` -- Zaten mevcut
+- `VERCEL_TEAM_ID` -- Zaten mevcut
 
+### Veritabani Guncellemeleri
+
+`projects` tablosundaki mevcut sutunlar kullanilacak:
+- `vercel_project_id` -- Vercel proje ID'si
+- `vercel_url` -- Vercel deployment URL'si  
+- `vercel_custom_domain` -- Vercel'deki custom domain
+
+Yeni sutun veya tablo gerekmiyor.
+
+---
+
+## Etkilenen Dosyalar
+
+| Dosya | Degisiklik |
+|---|---|
+| `supabase/functions/deploy-to-vercel/index.ts` | Vercel rewrite deploy mantigi ekle (~80 satir) |
+| `src/components/website-preview/PublishModal.tsx` | Vercel URL gosterimini guncelle |
+
+---
+
+## Avantajlar
+
+- **Tek Render Sistemi korunur**: Icerik hala ayni React bilesenleriyle render edilir
+- **Custom domain Vercel uzerinden**: SSL ve domain yonetimi Vercel'in guclu altyapisiyla
+- **Hafif deploy**: Her siteye sadece 2 dosya (vercel.json + index.html) deploy edilir
+- **Anlik guncelleme**: Rewrite sayesinde editordeki degisiklikler hemen yansir
+- **Mevcut kod uyumu**: `verify-domain` fonksiyonu zaten Vercel domain entegrasyonuna sahip
+
+## Risk
+
+| Risk | Cozum |
+|---|---|
+| Rewrite latency | Vercel CDN edge'de rewrite yapar, ek gecikme minimal (~10ms) |
+| SEO | Rewrite 308 degil, proxy gibi calisir -- arama motorlari icin sorun yok |
+| Vercel rate limit | Her deploy sadece 2 dosya, API limiti dahilinde |
