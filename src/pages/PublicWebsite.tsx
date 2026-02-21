@@ -32,20 +32,7 @@ function buildThemeStyle(theme: SiteTheme | undefined): string {
   return Object.entries(vars).map(([k, v]) => `${k}: ${v}`).join('; ');
 }
 
-// Platform domains that should NOT be treated as custom domains
-const PLATFORM_HOSTNAMES = [
-  'localhost',
-  'lovable.app',
-  'lovable.dev',
-  'webcontainer.io',
-  'lovableproject.com',
-  'nuppel.com',
-  'www.nuppel.com',
-];
-
-function isPlatformDomain(hostname: string): boolean {
-  return PLATFORM_HOSTNAMES.some(ph => hostname === ph || hostname.endsWith(`.${ph}`));
-}
+import { isPlatformDomain } from '@/config/domains';
 
 export default function PublicWebsite() {
   const { subdomain } = useParams<{ subdomain: string }>();

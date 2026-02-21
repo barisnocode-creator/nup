@@ -9,6 +9,7 @@ import { DomainSettingsModal } from './DomainSettingsModal';
 import { DomainSuggestionCard, generateDomainSuggestions } from './DomainSuggestionCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { buildPublicUrl } from '@/config/domains';
 
 function CustomDomainCollapsible({ onOpenDomainModal }: { onOpenDomainModal: () => void }) {
   const [open, setOpen] = useState(false);
@@ -68,9 +69,7 @@ function generateSlug(name: string): string {
     .substring(0, 50);
 }
 
-function buildPublicUrl(subdomain: string): string {
-  return `https://expert-page-gen.lovable.app/site/${subdomain}`;
-}
+// buildPublicUrl is now imported from @/config/domains
 
 export function PublishModal({ 
   isOpen, 
