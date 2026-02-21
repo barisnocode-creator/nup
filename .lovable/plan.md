@@ -1,137 +1,120 @@
 
 
-# Tum Templateler Icin Hardcoded Icerik Temizligi
+# Template Test Sonuclari — Kalan Sorunlar ve Duzeltmeler
 
-MedCare Pro'da yaptigimiz gibi, kalan 5 template'in (Specialty Cafe, Dental Clinic, Restaurant Elegant, Hotel Luxury, Engineer Portfolio) tum bilesenlerindeki hardcoded Turkce/Ingilizce fallback metinleri kaldirilacak. Icerik sadece mapper'lardan ve sectorProfile'dan gelecek.
+## Tespit Edilen Sorunlar
 
----
+### 1. HeroMedical.tsx — Hala hardcoded fallback var (Satir 211)
+`statCardValue || '4.9/5'` ifadesi, `statCardValue` bos oldugunda sabit '4.9/5' gosteriyor. Bu deger mapper'dan gelecegi icin fallback kaldirilmali.
 
-## Etkilenen Bilesenler ve Degisiklikler
-
-### 1. HeroCafe.tsx
-- Satir 44: `"Where Every Cup Tells a Story"` -> `''`
-- Satir 53: `"A specialty cafe in the heart of..."` -> `''`
-- Bos title/description durumunda render'i gizle
-
-### 2. HeroDental.tsx
-- Satir 11: `'Saglikli Gulusler Icin Profesyonel Bakim'` -> `''`
-- Satir 12: `'Uzman dis hekimlerimiz...'` -> `''`
-- Satir 13: `'Randevu Alin'` -> `''`
-- Satir 16: `'Dis Klinigi'` -> `''`
-- Bos alanlar icin conditional render ekle
-
-### 3. HeroRestaurant.tsx
-- Satir 11: `'Lezzetin Sanatla Bulustugu Yer'` -> `''`
-- Satir 12: `'Sefimizin ozenle hazirladi...'` -> `''`
-- Satir 13: `'Fine Dining'` -> `''`
-- Satir 14: `'Rezervasyon'` -> `''`
-- Satir 15: `'Menu'` -> `''`
-- Bos butonlari gizle
-
-### 4. HeroHotel.tsx
-- Satir 11: `'Luksun ve Konforun Bulustugu Yer'` -> `''`
-- Satir 12: `'Essiz manzara...'` -> `''`
-- Satir 15: `'Oda Ara'` -> `''`
-- Satir 17: `isHotelMode` kontrolunu buttonText bos degilse calistir
-
-### 5. HeroPortfolio.tsx
-- Satir 11: `'Ahmet Yilmaz'` -> `''`
-- Satir 12: `'Full Stack Developer'` -> `''`
-- Satir 13: `'React, Node.js ve cloud...'` -> `''`
-- Satir 15-20: `socials` default dizisi -> `[]`
-- Satir 21: `'Projelerimi Gor'` -> `''`
-
-### 6. CafeFeatures.tsx
-- Satir 7-12: `defaultFeatures` -> `[]` (bos dizi)
-- Satir 20: `"Why Choose Us"` -> `''`
-- Satir 24: `"Crafted With Care"` -> `''`
-- Bos features dizisinde bolumu gizle
-
-### 7. CafeStory.tsx
-- Satir 42: `'Our Story'` -> `''`
-- Satir 45: `'Founded in the heart of the city...'` -> `''`
-
-### 8. CafeGallery.tsx
-- Satir 20: `"Gallery"` -> `''`
-- Satir 24: `"Our Space"` -> `''`
-- Satir 7-12: default images dizisi kalabilir (gorsel placeholder)
-
-### 9. DentalServices.tsx
-- Satir 9-14: `defaultServices` -> `[]` (bos dizi)
-- Satir 18: `'Hizmetlerimiz'` -> `''`
-- Satir 19: `'Uzman Bakim'` -> `''`
-- Satir 20: `'Modern ekipman ve deneyimli...'` -> `''`
-
-### 10. DentalTips.tsx
-- Satir 10-15: `defaultTips` -> `[]` (bos dizi)
-- Satir 19: `'Agiz Sagligi Ipuclari'` -> `''`
-- Satir 20: `'Bilmeniz Gerekenler'` -> `''`
-
-### 11. ChefShowcase.tsx
-- Satir 11: `'Bas Sefimiz'` -> `''`
-- Satir 12: `'Chef Ahmet Yilmaz'` -> `''`
-- Satir 13: `'15 yillik deneyimiyle...'` -> `''`
-- Satir 15-19: `signatureDishes` default -> `[]`
-- Satir 64: `'Imza Yemekler'` -> props'tan gelecek
-
-### 12. RoomShowcase.tsx
-- Satir 7-32: `defaultRooms` -> `[]`
-- Satir 36: `'Odalarimiz'` -> `''`
-- Satir 37: `'Konfor ve Zarafet'` -> `''`
-- Satir 83: `'Rezervasyon'` butonu -> props'tan gelecek
-
-### 13. HotelAmenities.tsx
-- Satir 9-16: `defaultAmenities` -> `[]`
-- Satir 20: `'Olanaklar'` -> `''`
-- Satir 21: `'Premium Hizmetler'` -> `''`
-
-### 14. ProjectShowcase.tsx
-- Satir 5-27: `defaultProjects` -> `[]`
-- Satir 31: `'Projeler'` -> `''`
-- Satir 32: `'Son Calismalarim'` -> `''`
-
-### 15. SkillsGrid.tsx
-- Satir 4-32: `defaultCategories` -> `[]`
-- Satir 36: `'Yetenekler'` -> `''`
-- Satir 37: `'Teknik Beceriler'` -> `''`
-
-### 16. RestaurantMenu.tsx
-- Satir 5-27: `defaultCategories` -> `[]`
-- Satir 31: `'Menumuz'` -> `''`
-- Satir 32: `'Lezzetli Secimler'` -> `''`
-
-### 17. MenuShowcase.tsx
-- Satir 7-14: `default items` -> `[]`
-- Satir 37: `"Our Menu"` -> `''`
-
-### 18. TestimonialsCarousel.tsx
-- Satir 6-9: `defaultTestimonials` -> `[]`
-- Bos testimonials durumunda bolumu gizle
-
-### 19. FAQAccordion.tsx
-- Satir 5-10: `defaultItems` -> `[]` (zaten mapper'dan dolmasi lazim)
-
-### 20. definitions.ts — Kalan hardcoded metin temizligi
-- `sectionSubtitle: 'Degerlendirmeler'` -> `''` (tum template'lerde)
-- `sectionSubtitle: 'Referanslar'` -> `''` (engineer template)
-- `AppointmentBooking` ve `ContactForm` default prop'lari: `'Randevu / Rezervasyon'`, `'Hemen Baslayin'`, `'Iletisim'`, `'Bize Ulasin'` vb. -> `''`
+**Dosya:** `src/components/sections/HeroMedical.tsx`
+**Duzeltme:** `{statCardValue || '4.9/5'}` yerine `{statCardValue}` kullanilacak. Zaten satir 199'da `(statCardValue || statCardLabel)` kontrolu oldugu icin card bos ise gorunmeyecek.
 
 ---
 
-## Uygulama Sirasi
+### 2. HeroMedical.tsx — Badge span bos olsa bile render ediliyor (Satir 73-78)
+`badge` degeri bos string oldugunda, yesil noktali bos badge span'i gorunuyor. Diger hero'larda oldugu gibi `{badge && (...)}` kontrolu eklenmeli.
 
-1. **definitions.ts** — Kalan hardcoded Turkce metinleri temizle (AppointmentBooking, ContactForm, TestimonialsCarousel subtitle'lari)
-2. **Hero bilsenleri** (6 dosya) — Tum fallback'leri kaldir, conditional render ekle
-3. **Icerik bilsenleri** (CafeFeatures, CafeStory, CafeGallery, DentalServices, DentalTips, ChefShowcase, RestaurantMenu, MenuShowcase) — Default dizileri bosalt, fallback metinleri kaldir
-4. **Ozel bilsenler** (RoomShowcase, HotelAmenities, ProjectShowcase, SkillsGrid) — Default dizileri bosalt
-5. **Ortak bilsenler** (TestimonialsCarousel, FAQAccordion) — Default dizileri bosalt
+**Dosya:** `src/components/sections/HeroMedical.tsx`
+**Duzeltme:** Satir 73-78'deki badge blogu `{badge && (...)}` ile sarilacak.
+
+---
+
+### 3. EditorCanvas.tsx — Footer'a props gecirilmiyor (Satir 124-131)
+Header'a `projectName` gecilmesi duzeltildi ama footer'a hala `props: {}` gonderiliyor. Footer'da site adi "Site Adi" placeholder olarak gorunuyor.
+
+**Dosya:** `src/components/editor/EditorCanvas.tsx`
+**Duzeltme:** Footer section'a da `props: { siteName: projectName || '' }` gecirilecek.
+
+---
+
+### 4. StatisticsCounter.tsx — stats[] dizi formatini desteklemiyor
+Hotel ve Engineer template'leri definitions'ta `stats: [{ value, label }]` dizisi kullaniyor ama bilesenin kendisi sadece `stat1Value/stat1Label` formatini okuyor. Mapper her iki formata da yaziyor ama bilesen diziyi render edemez.
+
+**Dosya:** `src/components/sections/StatisticsCounter.tsx`
+**Duzeltme:** Bilesen, hem `stats[]` dizisi hem de `stat1Value` formatini okuyacak sekilde guncellenmeli. Once `props.stats` dizisine bak, yoksa `stat1Value`'dan oku.
+
+---
+
+### 5. HeroHotel.tsx — isHotelMode mantigi bozuk (Satir 17)
+```typescript
+const isHotelMode = buttonText && (!p.buttonText || p.buttonText === 'Oda Ara' || p.buttonText === '');
+```
+Bu mantik yanlis: `buttonText` degiskeni zaten `p.buttonText || ''` ile atanmis; sonra `!p.buttonText` kontrol ediliyor ki bu zaten `buttonText` bos oldugunda tetiklenir. Ayrica `p.buttonText === ''` durumunda isHotelMode true oluyor ama `buttonText &&` kontrolu ile basliyor ki bos string'de false doner. Net sonuc: isHotelMode neredeyse hic true olamaz.
+
+**Dosya:** `src/components/sections/HeroHotel.tsx`
+**Duzeltme:** Sektore gore karar verilecek: `const isHotelMode = ['hotel', 'resort', 'accommodation'].some(s => sector.includes(s));`
+
+---
+
+### 6. DentalBooking.tsx — Hardcoded fallback'ler (Satir 268-272)
+Hala sabit Turkce metinler mevcut:
+- `'Online Randevu'`
+- `'Hemen Baslayin'`
+- `'Birkac adimda kolayca randevunuzu olusturun.'`
+- `'Randevunuz Alindi!'`
+- `'Randevu Olustur'`
+
+**Dosya:** `src/components/sections/DentalBooking.tsx`
+**Duzeltme:** Bu fallback'ler `''` ile degistirilmeli, icerik mapper veya sectorProfile'dan gelmeli.
+
+---
+
+### 7. SiteFooter.tsx — Hardcoded aciklama metni (Satir 66)
+```
+"Profesyonel hizmetlerimizle yaninizdayiz. Kaliteli ve guvenilir cozumler sunmak icin calisiyoruz."
+```
+Bu metin tum sektorler icin ayni gorunuyor.
+
+**Dosya:** `src/components/sections/addable/SiteFooter.tsx`
+**Duzeltme:** `p.description || ''` prop'undan okunmali, sectorProfile'dan doldurulmali.
+
+---
+
+## Degistirilecek Dosyalar
+
+| Dosya | Sorun | Oncelik |
+|---|---|---|
+| `src/components/sections/HeroMedical.tsx` | statCardValue hardcoded fallback + badge bos render | Yuksek |
+| `src/components/editor/EditorCanvas.tsx` | Footer'a siteName gecirilmiyor | Yuksek |
+| `src/components/sections/StatisticsCounter.tsx` | stats[] dizi formati desteklenmiyor | Yuksek |
+| `src/components/sections/HeroHotel.tsx` | isHotelMode mantik hatasi | Orta |
+| `src/components/sections/DentalBooking.tsx` | Hardcoded Turkce fallback'ler | Orta |
+| `src/components/sections/addable/SiteFooter.tsx` | Hardcoded aciklama metni | Dusuk |
+
+---
+
+## Yapilacaklar (Sirasiyla)
+
+### Adim 1: HeroMedical duzeltmeleri
+- Satir 211: `statCardValue || '4.9/5'` → `statCardValue`
+- Satir 73-78: Badge blogu `{badge && (...)}` ile sarilacak
+
+### Adim 2: EditorCanvas footer
+- Satir 124-131: Footer props'a `siteName: projectName || ''` eklenecek
+
+### Adim 3: StatisticsCounter dual-format
+- `props.stats` dizisi varsa onu kullan, yoksa `stat1Value` formatina bak
+- Her iki format da `.filter(s => s.value && s.label)` ile boslar filtrelenmeli
+
+### Adim 4: HeroHotel isHotelMode
+- Sektore dayali mantik: `const isHotelMode = sector && ['hotel', 'resort', 'accommodation', 'motel', 'hostel'].some(s => sector.includes(s));`
+
+### Adim 5: DentalBooking fallback temizligi
+- Tum sabit metinler `''` ile degistirilecek
+- Mapper'da DentalBooking icin sektore duyarli basliklar eklenecek (zaten `AppointmentBooking` mapper var, DentalBooking da kapsamali)
+
+### Adim 6: SiteFooter aciklama
+- `p.description` prop'u eklenmeli, bos oldugunda paragraf gizlenmeli
 
 ---
 
 ## Beklenen Sonuc
 
-- Hicbir bilesenin icinde hardcoded Turkce/Ingilizce metin kalmaz
-- Tum icerikler 3 katmanli oncelik zincirinden gelir: generatedContent > sectorProfile > bos
-- Template degistirildiginde icerik kaybi olmaz
-- Bos prop gelen alanlar render edilmez (sayfa bos metin gostermez)
+- HeroMedical'da bos badge gorunmez, stat card deger yoksa gorunmez
+- Editorde footer gercek site adini gosterir
+- Hotel/Engineer template'lerinde istatistik bolumu duzgun dolar
+- Hotel hero'sunda CTA butonu sektore gore dogru gorunur
+- DentalBooking'de sektore gore uygun basliklar gorulur
+- Footer'da generic aciklama yerine sektore ozel veya bos metin gorulur
 
