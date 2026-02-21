@@ -262,7 +262,7 @@ export function DomainTab({ projectId, subdomain, customDomain }: DomainTabProps
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            🔒 SSL sertifikası Vercel tarafından otomatik olarak sağlanır (Let's Encrypt).
+            🔒 SSL sertifikası otomatik olarak sağlanır (Let's Encrypt).
           </p>
         </CardContent>
       </Card>
