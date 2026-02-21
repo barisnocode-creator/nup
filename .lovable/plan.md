@@ -1,54 +1,49 @@
 
 
-# Vercel'i Sistemden Tamamen Kaldir
+# Custom Domain Altyapisi Duzeltme Plani
 
-## Ozet
+## Sorunun Ozeti
 
-Vercel ile ilgili tum kodlari, edge function'lari ve referanslari projeden temizleyecegiz.
+nuppel.com gibi ozel domainler "Website Not Found" gosteriyor cunku sistemde birden fazla uyumsuzluk var.
 
-## Degisiklikler
+## Tespit Edilen Sorunlar
 
-### 1. Edge Function Sil: `deploy-to-vercel`
+### 1. Yanlis IP Adresi (Kritik)
 
-`supabase/functions/deploy-to-vercel/index.ts` dosyasi tamamen silinecek.
+DNS talimatlari kullanicilara `75.2.60.5` (eski Vercel IP) adresini gosteriyor. Dogru IP `185.158.133.1` (Lovable platformu) olmali.
 
-`supabase/config.toml`'dan ilgili bolum kaldirilacak:
-```
-[functions.deploy-to-vercel]
-verify_jwt = false
-```
+**Etkilenen yerler:**
+- `src/components/website-dashboard/DomainTab.tsx` - satir 253-257'deki hardcoded IP
+- `get_domain_dns_instructions` veritabani fonksiyonu - `75.2.60.5` IP adresi
 
-### 2. Edge Function Guncelle: `verify-domain`
+### 2. nuppel.com Icin Veritabani Kaydi Yok
 
-`supabase/functions/verify-domain/index.ts` dosyasindaki Vercel domain kayit mantigi kaldirilacak:
-- `getVercelToken()`, `getVercelTeamId()`, `registerVercelDomain()` fonksiyonlari silinecek
-- Domain dogrulama sonrasi Vercel'e domain ekleme blogu kaldirilacak
-- `vercel_project_id` sorgusu kaldirilacak
-- Domain basariyla dogrulandiginda sadece DB'deki status guncellenmesiyle yetinilecek
+DNS dogru yere isaret etse bile, `custom_domains` tablosunda `nuppel.com` kaydi olmadigi icin PublicWebsite componenti hangi projeyi gosterecegini bilemiyor.
 
-### 3. UI Metinlerini Guncelle
+Bu kayit ya kullanici tarafindan editorden eklenmeli ya da manuell olusturulmali.
 
-| Dosya | Degisiklik |
-|---|---|
-| `src/components/website-dashboard/DomainTab.tsx` (satir 265) | "SSL sertifikasi Vercel tarafindan otomatik olarak saglanir" → "SSL sertifikasi otomatik olarak saglanir (Let's Encrypt)." |
-| `src/components/website-preview/DomainSettingsModal.tsx` (satir 102) | "Domain dogrulandi, Vercel'e baglandi ve SSL aktif!" → "Domain dogrulandi ve SSL aktif!" |
+## Yapilacak Degisiklikler
 
-### 4. Dokunulmayan Dosyalar
+### Adim 1: DNS IP Adresini Duzelt (DomainTab.tsx)
 
-- `src/integrations/supabase/types.ts` — Bu dosya otomatik uretiliyor, elle degistirilmez. Veritabanindaki `vercel_*` sutunlari kalsa da kod artik bunlari okumayacak/yazmayacak.
-- `remove-domain/index.ts`, `add-custom-domain/index.ts` — Bunlarda Vercel referansi yok, degisiklik gerekmez.
+`src/components/website-dashboard/DomainTab.tsx` dosyasinda satir 253 ve 257'deki `75.2.60.5` degerleri `185.158.133.1` olarak guncellenecek.
 
-## Kaldirilan Dosyalar
+### Adim 2: DNS IP Adresini Duzelt (DB Function)
 
-- `supabase/functions/deploy-to-vercel/index.ts`
+`get_domain_dns_instructions` veritabani fonksiyonu SQL migration ile guncellenecek. Iki A kaydi icin de IP `75.2.60.5` yerine `185.158.133.1` olacak.
 
-## Toplam Etkilenen Dosyalar
+### Adim 3: nuppel.com Domain Kaydini Olustur
+
+nuppel.com icin `custom_domains` tablosuna kayit eklenecek. Bunun icin kullaniciya hangi projeye baglanacagi sorulacak (dashboard uzerinden Domain Ayarlari ile de yapilabilir).
+
+## Etkilenen Dosyalar
 
 | Dosya | Islem |
 |---|---|
-| `supabase/functions/deploy-to-vercel/index.ts` | SIL |
-| `supabase/config.toml` | `deploy-to-vercel` bolumu kaldir |
-| `supabase/functions/verify-domain/index.ts` | Vercel fonksiyonlarini ve entegrasyon blogunu kaldir |
-| `src/components/website-dashboard/DomainTab.tsx` | "Vercel" metnini kaldir |
-| `src/components/website-preview/DomainSettingsModal.tsx` | "Vercel" metnini kaldir |
+| `src/components/website-dashboard/DomainTab.tsx` | IP guncelle (75.2.60.5 -> 185.158.133.1) |
+| SQL Migration | `get_domain_dns_instructions` fonksiyonunu guncelle |
+
+## Teknik Not
+
+PublishModal.tsx'deki `buildPublicUrl` fonksiyonu `expert-page-gen.lovable.app/site/subdomain` formatinda URL uretiyor. Custom domain akisi bundan bagimsiz calisir: kullanici domain ekler, DNS yapilandirir, dogrular ve `custom_domains` tablosundaki `active` statusu ile PublicWebsite componenti hostname eslemesi yapar.
 
