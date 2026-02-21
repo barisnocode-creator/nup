@@ -156,7 +156,7 @@ export function SiteFooter({ section, sections = [] }: SiteFooterProps) {
             © {year} {siteName}. Tüm hakları saklıdır.
           </p>
           <p className="text-background/30 text-xs">
-            Powered by <span className="text-background/50">Open Lucius</span>
+            Powered by <span className="text-background/50">NUppel</span>
           </p>
         </div>
       </div>

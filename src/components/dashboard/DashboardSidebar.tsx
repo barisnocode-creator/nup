@@ -100,7 +100,7 @@ export function DashboardSidebar({ activeProjectId }: DashboardSidebarProps) {
             <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold">Open Lucius</span>
+            <span className="text-xl font-extrabold tracking-tight">N<span className="text-primary">Uppel</span></span>
           )}
         </div>
       </SidebarHeader>

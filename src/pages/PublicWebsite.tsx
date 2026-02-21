@@ -112,7 +112,7 @@ export default function PublicWebsite() {
   // Set document title
   useEffect(() => {
     if (project?.generated_content?.metadata?.siteName) {
-      document.title = `${project.generated_content.metadata.siteName} | Open Lucius`;
+      document.title = `${project.generated_content.metadata.siteName} | NUppel`;
     } else if (project?.name) {
       document.title = project.name;
     }
@@ -176,7 +176,7 @@ export default function PublicWebsite() {
             </p>
           </div>
           <a href="/" className="inline-flex items-center gap-2 text-primary hover:underline">
-            Go to Open Lucius
+            Go to NUppel
           </a>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function PublicWebsite() {
           className="flex items-center gap-2 px-3 py-2 rounded-full bg-background/90 backdrop-blur-sm border shadow-lg text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <span>Powered by</span>
-          <span className="font-semibold text-foreground">Open Lucius</span>
+          <span className="font-semibold text-foreground">NUppel</span>
         </a>
       </div>
     </>

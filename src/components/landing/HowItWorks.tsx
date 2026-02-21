@@ -1,4 +1,5 @@
 import { UserCircle, FileEdit, Rocket } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const steps = [
   {
@@ -23,25 +24,27 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section className="section-padding bg-background">
+    <section id="how-it-works" className="section-padding bg-background">
       <div className="container mx-auto px-4">
-        {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-medium mb-4 text-foreground">
-            Nasıl Çalışır?
+          <span className="text-sm font-semibold text-primary uppercase tracking-wider">Nasıl Çalışır</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold mt-3 mb-4 text-foreground tracking-tight">
+            3 adımda web siteniz hazır
           </h2>
           <p className="text-muted-foreground text-lg">
-            3 basit adımda profesyonel web sitenize kavuşun
+            Basit adımlarla profesyonel web sitenize kavuşun
           </p>
         </div>
 
-        {/* Steps */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
           {steps.map((step, index) => (
-            <div 
+            <motion.div
               key={step.step}
-              className="text-center animate-fade-in"
-              style={{ animationDelay: `${index * 0.15}s` }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: index * 0.15 }}
+              className="text-center"
             >
               <div className="relative inline-flex mb-6">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -51,13 +54,9 @@ export function HowItWorks() {
                   {step.step}
                 </span>
               </div>
-              <h3 className="font-serif text-xl font-medium text-foreground mb-2">
-                {step.title}
-              </h3>
-              <p className="text-muted-foreground">
-                {step.description}
-              </p>
-            </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">{step.title}</h3>
+              <p className="text-muted-foreground">{step.description}</p>
+            </motion.div>
           ))}
         </div>
       </div>

@@ -4,37 +4,37 @@
 
 @import '../src/styles/section-animations.css';
 
-/* Open Lucius Design System - Minimalist & Professional (Durable Style) */
+/* NUppel Design System - Modern SaaS (Navy Blue & White) */
 
 @layer base {
   :root {
-    /* Font Variables - Dynamic Fonts */
-    --font-heading: 'Playfair Display', Georgia, serif;
+    /* Font Variables - Modern Sans-Serif */
+    --font-heading: 'Inter', system-ui, sans-serif;
     --font-body: 'Inter', system-ui, sans-serif;
     
-    /* Clean & Minimal Theme - Black/White with Orange accents */
+    /* Navy Blue & White Theme */
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Primary: Vibrant Orange */
-    --primary: 24 95% 53%;
+    /* Primary: Navy Blue */
+    --primary: 222 47% 31%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Light Gray */
+    /* Secondary: Cool Gray */
     --secondary: 220 14% 96%;
-    --secondary-foreground: 0 0% 29%;
+    --secondary-foreground: 222 47% 20%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent: Orange */
-    --accent: 24 95% 53%;
+    /* Accent: Bright Blue */
+    --accent: 210 100% 56%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -42,7 +42,7 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 24 95% 53%;
+    --ring: 222 47% 31%;
 
     --radius: 0.5rem;
 
@@ -52,61 +52,61 @@
     --accent-purple: 262 83% 58%;
 
     /* Custom colors */
-    --heading: 0 0% 10%;
-    --body: 0 0% 29%;
+    --heading: 222 47% 11%;
+    --body: 222 47% 20%;
     --body-light: 220 9% 46%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 220 9% 46%;
-    --sidebar-primary: 24 95% 53%;
+    --sidebar-primary: 222 47% 31%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 0 0% 29%;
+    --sidebar-accent-foreground: 222 47% 20%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 95% 53%;
+    --sidebar-ring: 222 47% 31%;
   }
 
   .dark {
-    --background: 0 0% 5%;
+    --background: 222 47% 5%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 8%;
+    --card: 222 47% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 8%;
+    --popover: 222 47% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 24 95% 58%;
+    --primary: 210 100% 56%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 222 30% 15%;
     --secondary-foreground: 0 0% 80%;
 
-    --muted: 0 0% 15%;
+    --muted: 222 30% 15%;
     --muted-foreground: 0 0% 65%;
 
-    --accent: 24 95% 58%;
+    --accent: 210 100% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 24 95% 58%;
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 210 100% 56%;
 
     --heading: 0 0% 98%;
     --body: 0 0% 80%;
     --body-light: 0 0% 65%;
 
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 24 95% 58%;
+    --sidebar-primary: 210 100% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent: 222 30% 15%;
     --sidebar-accent-foreground: 0 0% 80%;
-    --sidebar-border: 0 0% 18%;
-    --sidebar-ring: 24 95% 58%;
+    --sidebar-border: 222 30% 18%;
+    --sidebar-ring: 210 100% 56%;
   }
 }
 
