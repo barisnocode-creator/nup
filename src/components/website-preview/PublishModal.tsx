@@ -68,8 +68,9 @@ function generateSlug(name: string): string {
     .substring(0, 50);
 }
 
-function buildPublicUrl(subdomain: string, customDomain?: string | null): string {
+function buildPublicUrl(subdomain: string, customDomain?: string | null, vercelUrl?: string | null): string {
   if (customDomain) return `https://${customDomain}`;
+  if (vercelUrl) return vercelUrl;
   return `https://expert-page-gen.lovable.app/site/${subdomain}`;
 }
 
@@ -97,7 +98,7 @@ export function PublishModal({
     try {
       const { data } = await supabase
         .from('projects')
-        .select('profession, form_data, custom_domain')
+        .select('profession, form_data, custom_domain, vercel_url')
         .eq('id', projectId)
         .single();
 
@@ -129,7 +130,7 @@ export function PublishModal({
       
       if (isPublished && currentSubdomain) {
         fetchProjectData().then((data) => {
-          const url = buildPublicUrl(currentSubdomain, data?.custom_domain as string | null);
+          const url = buildPublicUrl(currentSubdomain, data?.custom_domain as string | null, data?.vercel_url as string | null);
           setPublishedUrl(url);
         });
       } else {
@@ -229,7 +230,7 @@ export function PublishModal({
 
       if (deployError) throw new Error(deployError.message || 'Yayınlama başarısız.');
 
-      const url = deployData?.url || buildPublicUrl(subdomain);
+      const url = deployData?.url || buildPublicUrl(subdomain, null, deployData?.vercelUrl);
       setPublishedUrl(url);
       setShowSuccess(true);
       
