@@ -36,7 +36,7 @@ export function RoomShowcase({ section, isEditing }: SectionComponentProps) {
               transition={{ delay: i * 0.15 }}
               className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/30 hover:shadow-2xl transition-all duration-500"
             >
-              <div className="relative h-56 overflow-hidden">
+              <div className="relative aspect-[4/3] overflow-hidden">
                 <img src={room.image} alt={room.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 <div className="absolute top-4 right-4 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-bold font-heading-dynamic">
                   {room.price}<span className="text-xs font-normal opacity-80">{room.unit}</span>
