@@ -32,6 +32,7 @@ const PLATFORM_HOSTNAMES = [
   'lovable.dev',
   'webcontainer.io',
   'lovableproject.com',
+  'nuppel.com',
 ];
 
 function isPlatformDomain(hostname: string): boolean {
