@@ -70,12 +70,14 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
           {/* ── Left Column ── */}
           <div className="space-y-8">
             {/* Badge */}
+            {badge && (
             <motion.div {...fadeUp(0)}>
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold tracking-wide font-body-dynamic">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 {badge}
               </span>
             </motion.div>
+            )}
 
             {/* Title */}
             <motion.h1
@@ -208,7 +210,7 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
                   <span className="text-xl">⭐</span>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-foreground font-heading-dynamic">{statCardValue || '4.9/5'}</div>
+                  <div className="text-lg font-bold text-foreground font-heading-dynamic">{statCardValue}</div>
                   <div className="text-xs text-muted-foreground font-body-dynamic">{statCardLabel}</div>
                 </div>
               </div>

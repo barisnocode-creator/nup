@@ -265,11 +265,11 @@ function TimeSlotPicker({ slots, selectedSlot, onSelect, slotDuration, selectedD
 /* ── Main Component ─────────────────────────────────── */
 export function DentalBooking({ section, isEditing }: SectionComponentProps) {
   const p = section.props;
-  const title = p.title || p.sectionTitle || 'Online Randevu';
-  const subtitle = p.subtitle || p.sectionSubtitle || 'Hemen Başlayın';
-  const description = p.description || p.sectionDescription || 'Birkaç adımda kolayca randevunuzu oluşturun.';
-  const successMessage = p.successMessage || 'Randevunuz Alındı!';
-  const submitText = p.submitButtonText || p.buttonText || 'Randevu Oluştur';
+  const title = p.title || p.sectionTitle || '';
+  const subtitle = p.subtitle || p.sectionSubtitle || '';
+  const description = p.description || p.sectionDescription || '';
+  const successMessage = p.successMessage || '';
+  const submitText = p.submitButtonText || p.buttonText || '';
 
   // State
   const [step, setStep] = useState(0);

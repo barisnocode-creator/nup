@@ -62,9 +62,11 @@ export function SiteFooter({ section, sections = [] }: SiteFooterProps) {
           <div className="lg:col-span-1">
             <h3 className="text-background text-xl font-bold mb-2 font-heading-dynamic">{siteName}</h3>
             {tagline && <p className="text-primary/80 text-sm mb-3 font-medium">{tagline}</p>}
-            <p className="text-background/60 text-sm leading-relaxed font-body-dynamic">
-              Profesyonel hizmetlerimizle yanınızdayız. Kaliteli ve güvenilir çözümler sunmak için çalışıyoruz.
-            </p>
+            {(p.description) && (
+              <p className="text-background/60 text-sm leading-relaxed font-body-dynamic">
+                {p.description}
+              </p>
+            )}
           </div>
 
           {/* Site Map Column */}
