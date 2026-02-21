@@ -91,7 +91,7 @@ export default function Analytics() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString('tr-TR', { month: 'short', day: 'numeric' });
   };
 
   const chartData = analytics?.viewsOverTime.map(d => ({

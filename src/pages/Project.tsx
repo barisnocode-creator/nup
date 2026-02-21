@@ -8,7 +8,7 @@ import { AuthWallOverlay } from '@/components/website-preview/AuthWallOverlay';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { SiteEditor } from '@/components/editor/SiteEditor';
 import { useToast } from '@/hooks/use-toast';
-import { usePageView } from '@/hooks/usePageView';
+
 import { getCatalogTemplate } from '@/templates/catalog';
 import { resolveEffectiveSector } from '@/utils/inferSector';
 import { filterIncompatibleSections } from '@/templates/catalog/mappers';
@@ -45,7 +45,7 @@ export default function Project() {
   const [sections, setSections] = useState<SiteSection[]>([]);
   const [theme, setTheme] = useState<SiteTheme>({});
 
-  usePageView(id, '/preview');
+  
 
   // Set window globals for booking components to access
   useEffect(() => {
