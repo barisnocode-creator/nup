@@ -1,71 +1,127 @@
 
 
-# Editör Üst Kısım Yerleşim Düzeltmesi
+# MedCare Pro Template Yeniden Tasarimi
 
-## Sorunlar
+## Mevcut Sorunlar
 
-1. **Auto-inject edilen SiteHeader boş props ile oluşturuluyor** — `props: {}` geçiliyor, bu yüzden site adı "Site" olarak görünüyor, telefon ve CTA bilgileri eksik kalıyor.
-
-2. **SiteHeader ile Hero bölümü çakışıyor** — Header `sticky top-14` kullanıyor (editör toolbar'ın altında kalması için) ama hero bölümleri (`HeroRestaurant`, `HeroCentered`, `HeroOverlay`) `min-h-screen` veya `min-h-[600px]` ile tam ekran kaplıyor. Header hero'nun üstüne biniyor ve içerik arkasında kalıyor.
-
-3. **Full-screen hero'larda yükseklik hesabı yanlış** — `min-h-screen` editörde toolbar (56px) + header (56px) = 112px fazladan yer kaplıyor, sayfa aşağı taşıyor.
-
----
-
-## Yapılacak Değişiklikler
-
-### 1. EditorCanvas.tsx — Header'a doğru props geçir
-
-Auto-inject edilen SiteHeader'a proje bilgilerini geçirmek gerekiyor. Bunun için `EditorCanvas`'a `projectName` prop'u eklenecek ve header'a `siteName` olarak aktarılacak.
-
-- `EditorCanvasProps` interface'ine `projectName?: string` eklenir
-- Auto-inject header'da `props: { siteName: projectName }` kullanılır
-- `SiteEditor.tsx`'den `projectName` EditorCanvas'a geçirilir
-
-### 2. EditorCanvas.tsx — Hero bölümlerine padding-top ekle
-
-Header sticky olduğu için hero bölümlerinin üst kısmına header yüksekliği kadar (56px) boşluk bırakılması gerekiyor. Ancak bunu hero bileşenlerinin kendisine eklemek yerine, canvas wrapper'da ilk section'a `pt-0` verip header'ın hero üzerine binmesine izin verilecek (overlay hero'lar için bu istenilen davranış).
-
-Asıl sorun: Tam ekran hero'lar (`min-h-screen`) editör ortamında viewport'u aşıyor. Bunun çözümü hero bileşenlerinde `min-h-screen` yerine `min-h-[calc(100vh-112px)]` kullanmak (toolbar 56px + header 56px).
-
-### 3. Hero bileşenlerinde yükseklik düzeltmesi
-
-Etkilenen dosyalar:
-- `HeroRestaurant.tsx`: `min-h-screen` yerine `min-h-[calc(100vh-7rem)]`
-- `HeroCentered.tsx`: `min-h-[700px]` yerine `min-h-[calc(100vh-7rem)]`
-- `HeroOverlay.tsx`: `min-h-[600px]` — bu zaten kısa, sorun yok
-- `HeroPortfolio.tsx`: `min-h-screen` yerine `min-h-[calc(100vh-7rem)]`
-- `HeroMedical.tsx`: Bu zaten `py-20 md:py-28` padding ile çalışıyor, min-h-screen yok — sorun yok
-- `HeroCafe.tsx`: Kontrol edilecek
-- `HeroHotel.tsx`: Kontrol edilecek
-- `HeroDental.tsx`: Kontrol edilecek
-- `HeroSplit.tsx`: Kontrol edilecek
-
-### 4. SiteEditor.tsx — projectName'i canvas'a aktar
-
-`EditorCanvas` çağrısına `projectName` prop'u eklenir.
+1. **Preview gorseli yanlis** — `template-preview-dental.jpg` kullaniliyor, kendi ozel preview gorseli yok
+2. **HeroMedical icinde hardcoded fallback'ler** — "Uzman Klinik", "Sagliginiz Icin Profesyonel Bakim", "12K+", "Hasta Puani" gibi sabit Turkce metinler var. Kullanicinin sektoru ne olursa olsun bu metinler gorunuyor
+3. **StatisticsCounter bos geliyor** — defaultProps'ta tum stat degerleri `""`, mapper yok, sonuc: istatistik bolumu tamamen bos kalabiliyor
+4. **ServicesGrid icinde hardcoded fallback** — Bilesenin kendi icinde "Hizli Teslimat", "Yaratici Cozumler" gibi generic default servisler var (satir 7-14)
+5. **Template gorselleri generic** — Unsplash URL'leri sabit, sektore gore degismiyor
 
 ---
 
-## Teknik Detaylar
+## Yapilacak Degisiklikler
+
+### 1. HeroMedical.tsx — Hardcoded fallback'leri kaldir
+
+Tum sabit metin fallback'leri bos string'e cekilecek. Icerik mapper'dan gelecek.
+
+| Satir | Onceki | Sonraki |
+|-------|--------|---------|
+| 18 | `p.badge \|\| 'Uzman Klinik'` | `p.badge \|\| ''` |
+| 19 | `p.title \|\| 'Sagliginiz Icin...'` | `p.title \|\| ''` |
+| 20 | `p.description \|\| 'Deneyimli uzman...'` | `p.description \|\| ''` |
+| 21 | `p.primaryButtonText \|\| 'Randevu Al'` | `p.primaryButtonText \|\| ''` |
+| 23 | `p.secondaryButtonText \|\| 'Hizmetlerimiz'` | `p.secondaryButtonText \|\| ''` |
+| 26 | `p.floatingBadge \|\| 'Ucretsiz Ilk Muayene'` | `p.floatingBadge \|\| ''` |
+| 28-33 | `'12K+'`, `'Mutlu Hasta'`, `'%95'` vb. | `''` (bos string) |
+| 35-39 | `['Modern Ekipman', 'Uzman Kadro', '7/24 Destek']` | `[]` |
+| 211 | `'Hasta Puani'` | `p.statCardLabel \|\| ''` |
+
+Bos olan alanlar render edilmeyecek (zaten cogu `{x && <Element>}` kontrolune sahip, olmayanlara da bu kontrol eklenecek).
+
+### 2. ServicesGrid.tsx — Generic default servisleri kaldir
+
+Satir 7-14'teki `defaultServices` dizisini bos diziye cevir:
+
+```typescript
+const defaultServices: any[] = [];
+```
+
+Servisler tamamen mapper'dan veya sectorProfile'dan gelecek.
+
+### 3. StatisticsCounter icin mapper ekle (mappers/index.ts)
+
+MedCare Pro'daki `StatisticsCounter` icin yeni bir mapper register edilecek:
+
+```typescript
+register(['StatisticsCounter'], (props, data) => {
+  const profile = getSectorProfile(data.sector);
+  // generatedContent'ten veya sectorProfile'dan istatistikleri doldur
+  // Ornek: Hasta sayisi, memnuniyet orani, yil deneyim, uzman sayisi
+}, []);
+```
+
+### 4. sectorProfiles.ts — Her sektore stats verisi ekle
+
+`SectorProfile` interface'ine `stats` alani eklenir:
+
+```typescript
+stats?: Array<{ value: string; label: string }>;
+```
+
+Ornek (doctor):
+```typescript
+stats: [
+  { value: '10.000+', label: 'Mutlu Hasta' },
+  { value: '%98', label: 'Memnuniyet' },
+  { value: '15+', label: 'Yil Deneyim' },
+  { value: '25+', label: 'Uzman Hekim' },
+]
+```
+
+Her sektore uygun stats verileri eklenecek (cafe: "Gunluk Fincan", restoran: "Yillik Misafir" vb.).
+
+### 5. HeroMedical — Stat card icin sektore duyarli gosterim
+
+Sabit "4.9/5" ve "Hasta Puani" yerine, sektore gore degisen floating stat card:
+
+- doctor/dentist: "4.9/5 Hasta Puani"
+- restaurant: "4.8/5 Misafir Puani"  
+- lawyer: "4.9/5 Musteri Puani"
+- cafe: "4.9/5 Musteri Puani"
+
+Bu veri `floatingBadge` ve `statCardLabel` prop'larindan gelecek.
+
+### 6. definitions.ts — MedCare Pro gorsel URL'lerini guncelle
+
+About section icindeki sabit gorsel URL'lerini daha profesyonel/genel olanlarla degistir. Mevcut gorunum dental/doktor odakli — daha generic profesyonel gorseller kullanilacak.
+
+### 7. mappers/index.ts — HeroMedical'a stat mapping ekle
+
+Hero mapper'da `stat1Value`, `stat1Label` vb. alanlari sectorProfile'daki stats verisinden doldur:
+
+```typescript
+// HeroMedical stat mapping
+if (profile?.stats && sectionProps.stat1Value !== undefined) {
+  profile.stats.forEach((stat, i) => {
+    overrides[`stat${i+1}Value`] = stat.value;
+    overrides[`stat${i+1}Label`] = stat.label;
+  });
+}
+```
+
+---
+
+## Degistirilecek Dosyalar
 
 | Dosya | Degisiklik |
 |---|---|
-| `src/components/editor/EditorCanvas.tsx` | `projectName` prop ekle, auto-inject header'a `siteName` geçir |
-| `src/components/editor/SiteEditor.tsx` | `projectName`'i EditorCanvas'a aktar |
-| `src/components/sections/HeroRestaurant.tsx` | `min-h-screen` -> `min-h-[calc(100vh-7rem)]` |
-| `src/components/sections/HeroCentered.tsx` | `min-h-[700px]` -> `min-h-[calc(100vh-7rem)]` |
-| `src/components/sections/HeroPortfolio.tsx` | `min-h-screen` -> `min-h-[calc(100vh-7rem)]` |
-| `src/components/sections/HeroCafe.tsx` | Gerekirse ayni duzeltme |
-| `src/components/sections/HeroHotel.tsx` | Gerekirse ayni duzeltme |
-| `src/components/sections/HeroDental.tsx` | Gerekirse ayni duzeltme |
-| `src/components/sections/HeroSplit.tsx` | Gerekirse ayni duzeltme |
+| `src/components/sections/HeroMedical.tsx` | Hardcoded fallback'ler kaldirilir, bos alan kontrolu eklenir |
+| `src/components/sections/ServicesGrid.tsx` | `defaultServices` bos diziye cekilir |
+| `src/templates/catalog/sectorProfiles.ts` | `SectorProfile`'a `stats` alani + her sektore stats verisi eklenir |
+| `src/templates/catalog/mappers/index.ts` | `StatisticsCounter` mapper eklenir, hero mapper'a stat mapping eklenir |
+| `src/templates/catalog/mappers/mapHeroSection.ts` | stat1/2/3 Value/Label mapping eklenir |
+| `src/templates/catalog/definitions.ts` | MedCare Pro gorsel URL'leri guncellenir |
 
 ---
 
 ## Beklenen Sonuc
 
-- Editorde site header'da gercek proje adi gorunur ("Site" yerine "Kafe Ali" gibi)
-- Hero bolumu ekranin tamami kadar yukseklik kaplar ama toolbar ve header ile cakismaz
-- Ust kisimda bozuk yerlesim sorunu ortadan kalkar
+- MedCare Pro template'i acildiginda: sektore uygun icerikler (basliklar, servisler, istatistikler) otomatik dolar
+- "Uzman Klinik", "12K+ Mutlu Hasta" gibi hardcoded metinler hicbir zaman gorunmez
+- Template farkli bir sektore (cafe, restoran, avukat) uygulandiginda bile icerik dogru gelir
+- ServicesGrid'de generic "Hizli Teslimat" metinleri yerine gercek servis verileri gorulur
 
