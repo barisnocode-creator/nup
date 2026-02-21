@@ -131,10 +131,13 @@ export function PublishModal({
         setShowSuccess(true);
         fetchProjectData().then((data) => {
           if (data) {
-            const url = data.netlify_custom_domain 
+            // Primary: React app route (editor-identical rendering)
+            // Custom domain takes priority only when it's truly active
+            const url = data.netlify_custom_domain
               ? `https://${data.netlify_custom_domain}`
-              : data.netlify_url || `${window.location.origin}/site/${currentSubdomain}`;
+              : `${window.location.origin}/site/${currentSubdomain}`;
             setPublishedUrl(url);
+            if (data.netlify_url) setNetlifyUrl(data.netlify_url);
           }
         });
       } else {
@@ -229,31 +232,29 @@ export function PublishModal({
 
       if (error) throw error;
 
-      let deployedNetlifyUrl = '';
+      // Primary URL is always the React app route — same rendering as editor
+      const primaryUrl = `${window.location.origin}/site/${subdomain}`;
+      setPublishedUrl(primaryUrl);
+
+      // Deploy to Netlify in background for custom domain support
       try {
         const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-netlify', {
           body: { projectId },
         });
 
         if (!deployError && deployData?.netlifyUrl) {
-          deployedNetlifyUrl = deployData.netlifyUrl;
-          setNetlifyUrl(deployedNetlifyUrl);
+          setNetlifyUrl(deployData.netlifyUrl);
         } else {
           console.warn('Netlify deploy warning:', deployError || deployData?.error);
         }
       } catch (netlifyErr) {
         console.warn('Netlify deploy failed, site still published on platform:', netlifyErr);
       }
-
-      const url = deployedNetlifyUrl;
-      setPublishedUrl(url);
       setShowSuccess(true);
       
       toast({
         title: 'Website published!',
-        description: deployedNetlifyUrl 
-          ? 'Your website is now live on Netlify!' 
-          : 'Your website is now live and accessible to everyone.',
+        description: 'Your website is now live and accessible to everyone.',
       });
 
       onPublished?.(subdomain);

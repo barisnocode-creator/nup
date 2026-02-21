@@ -39,23 +39,50 @@ export default function PublicWebsite() {
 
   useEffect(() => {
     async function fetchProject() {
-      if (!subdomain) { setNotFound(true); setLoading(false); return; }
+      const FIELDS = 'id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id';
 
-      const { data, error } = await supabase
-        .from('public_projects')
-        .select('id, name, profession, subdomain, generated_content, site_sections, site_theme, template_id')
-        .eq('subdomain', subdomain)
-        .maybeSingle();
-
-      if (error || !data) { setNotFound(true); setLoading(false); return; }
-
-      const projectData = data as unknown as PublicProject;
-      setProject(projectData);
-      setLoading(false);
-
-      if (projectData.generated_content?.metadata?.siteName) {
-        document.title = `${projectData.generated_content.metadata.siteName} | Open Lucius`;
+      function applyProject(data: unknown) {
+        const projectData = data as unknown as PublicProject;
+        setProject(projectData);
+        setLoading(false);
+        if (projectData.generated_content?.metadata?.siteName) {
+          document.title = `${projectData.generated_content.metadata.siteName} | Open Lucius`;
+        }
       }
+
+      // 1) Try by subdomain URL param
+      if (subdomain) {
+        const { data } = await supabase
+          .from('public_projects')
+          .select(FIELDS)
+          .eq('subdomain', subdomain)
+          .maybeSingle();
+        if (data) { applyProject(data); return; }
+
+        // 2) Lovable may pass the full domain (e.g. "nuppel.com") as the path param
+        const { data: data2 } = await supabase
+          .from('public_projects')
+          .select(FIELDS)
+          .eq('custom_domain', subdomain)
+          .maybeSingle();
+        if (data2) { applyProject(data2); return; }
+      }
+
+      // 3) Custom domain serving the SPA directly at "/" — look up by current hostname
+      const hostname = window.location.hostname;
+      const isMainDomain = ['localhost', 'lovable.app', 'lovable.dev', 'openlucius.app', 'openlucius.com']
+        .some(d => hostname === d || hostname.endsWith('.' + d));
+      if (!isMainDomain) {
+        const { data: data3 } = await supabase
+          .from('public_projects')
+          .select(FIELDS)
+          .eq('custom_domain', hostname)
+          .maybeSingle();
+        if (data3) { applyProject(data3); return; }
+      }
+
+      setNotFound(true);
+      setLoading(false);
     }
     fetchProject();
   }, [subdomain]);
