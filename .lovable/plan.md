@@ -1,47 +1,84 @@
 
+# Custom Domain Sorunu - Analiz ve Cozum Plani
 
-# Yayinlama Akisi Analizi — Vercel Olmadan Zaten Calisiyor
+## Sorunun Koku
 
-## Mevcut Durum
+Custom domain (ornegin nuppel.com) uzerinden siteye erisim calismiyordu. Analiz sonucunda birden fazla sorun tespit edildi.
 
-Vercel'i kaldirdiktan sonra yayinlama akisini inceledim. Iyi haber: **sistem zaten Vercel olmadan calisiyor**. Herhangi bir yeniden tasarim gerekmez.
+## Tespit Edilen Sorunlar
 
-## Nasil Calisiyor?
+### 1. nuppel.com Icin Veritabani Kaydi Yok
 
-Yayinlama akisi tamamen **veritabani tabanli** (database-driven):
+`custom_domains` tablosunda `nuppel.com` icin hicbir kayit bulunmuyor. Veritabaninda sadece 1 custom domain kaydi var:
+- `barisyakuthukukburosu.com` (status: pending, dogrulanmamis)
 
-1. **Kullanici "Yayinla" butonuna basar** (PublishModal.tsx)
-2. **Sadece DB guncellenir**: `projects` tablosunda `subdomain`, `is_published=true`, `published_at` alanlari set edilir
-3. **Canli site otomatik sunulur**: `/site/:subdomain` rotasi uzerinden `PublicWebsite.tsx` componenti, `public_projects` view'indan veriyi ceker ve React ile render eder
-4. **Custom domain** icin: `App.tsx`'deki `isCustomDomain` kontrolu, platform disindaki hostname'leri algilar ve `PublicWebsite` componentini dogrudan gosterir. Bu component `custom_domains_safe` tablosunu sorgulayarak dogru projeyi bulur.
+`PublicWebsite.tsx` hostname eslemesi yaptiginda `custom_domains_safe` tablosunda bu domain'i bulamiyor ve "Website Not Found" gosteriyor.
+
+### 2. Vercel Kaldirildi Ama Altyapi Alternatifi Yok
+
+Vercel kaldirildiktan sonra verify-domain edge function'i sadece veritabanini guncelliyor (status -> active). Ancak:
+
+- Domain'in DNS'i `185.158.133.1` IP'sine yonlendiginde bu trafigin React uygulamasina (`expert-page-gen.lovable.app`) ulasmasini saglayan bir reverse proxy/CDN katmani gerekiyor
+- SSL sertifikasi saglanmiyor (Vercel bunu otomatik yapiyordu)
+
+Bu, Lovable platformunun kendi domain mekanizmasi (`185.158.133.1`) uzerinden saglanabilir.
+
+### 3. Kod Tarafindaki Mantik Dogru Calisiyor
+
+`PublicWebsite.tsx`'deki akis aslinda dogru:
+1. `isPlatformDomain` kontrol ediyor
+2. Custom domain ise `custom_domains_safe` tablosundan `verified/active` statuslu kayit ariyor
+3. Bulamazsa `public_projects.custom_domain` sutunundan ariyor
+4. Bulamazsa 404 gosteriyor
+
+Mantik dogru, sorun verinin olmamasi.
+
+## Cozum Plani
+
+### Adim 1: nuppel.com'u Kaydet (Veritabani)
+
+nuppel.com domain'ini `custom_domains` tablosuna ekleyecegiz. Bunun icin once hangi projeye baglanacagini belirlemek lazim.
+
+**Kullaniciya sorulacak**: nuppel.com hangi projeye baglanacak?
+
+### Adim 2: Custom Domain Altyapisi Icin Lovable Platform Domain Mekanizmasini Kullan
+
+Lovable platformu custom domainler icin `185.158.133.1` IP'sini kullaniyor ve bu IP arkasinda SSL + reverse proxy altyapisi var. Sitenin bu mekanizma uzerinden sunulmasi icin:
+
+1. Lovable proje ayarlarindan domain'i baglamak gerekiyor
+2. Veya kendi hosting cozumu (Cloudflare Tunnel, nginx reverse proxy vb.) kurulmali
+
+### Adim 3: verify-domain Edge Function'ini Kontrol Et
+
+Dogrulama basarili oldugunda `projects.custom_domain` sutununu dogru sekilde guncelliyor. Bu deger `public_projects` view'inda gorunur ve `PublicWebsite.tsx` tarafindan kullanilir. Bu kisim dogru calisiyor.
+
+## Teknik Detay
 
 ```text
-Kullanici Editoru
+Custom Domain Akisi (Mevcut):
+
+Kullanici domain ekler (add-custom-domain)
     |
     v
-"Yayinla" butonu
+DNS kayitlarini yapilandirir (A: 185.158.133.1, TXT: _lovable)
     |
     v
-DB Guncelle (subdomain, is_published=true)
+Dogrulama (verify-domain) → status: active
     |
     v
-Canli Site: expert-page-gen.lovable.app/site/{subdomain}
+projects.custom_domain guncellenir
     |
     v
-PublicWebsite.tsx → public_projects view → SectionRenderer
+PublicWebsite.tsx hostname eslemesi yapar
+    |
+    v
+Site render edilir
 ```
 
-## Guncelleme Akisi
+Eksik olan: DNS'in `185.158.133.1`'e yonlendiginde bu trafigin gercekten `expert-page-gen.lovable.app` uygulamasina ulasmasi. Bu bir hosting/altyapi kararidir ve kod degisikligi ile cozulemez.
 
-"Guncelle" butonu sadece `published_at` tarihini gunceller. Editorle yapilan degisiklikler (`site_sections`, `site_theme`) veritabanina kaydedildiginde canli siteye **aninda** yansiyor, cunku `PublicWebsite.tsx` her ziyarette DB'den guncel veriyi cekiyor.
+## Onerilen Yaklasim
 
-## Sonuc
-
-Hicbir kod degisikligi gerekmez. Deploy-to-vercel edge function'i zaten sadece Vercel'e deployment atiyordu; kaldirildiktan sonra yayinlama akisi daha da basitlesti. Mevcut sistem:
-
-- Subdomain ile yayinlama: **Calisiyor** (`/site/:subdomain`)
-- Custom domain ile yayinlama: **Calisiyor** (`custom_domains_safe` tablosu + hostname eslesmesi)
-- Icerik guncelleme: **Calisiyor** (DB'ye kaydet = aninda canli)
-
-Ek bir islem yapmaniza gerek yok.
-
+1. **Kisa vadede**: Siteleri subdomain uzerinden sunmaya devam edin (`/site/subdomain`). Bu zaten calisiyor.
+2. **Custom domain icin**: Lovable platformunun kendi domain baglama ozelligini kullanin (Proje Ayarlari -> Domains). Bu, Lovable'in `185.158.133.1` altyapisini kullanarak SSL ve routing saglar.
+3. **Alternatif**: Cloudflare gibi bir CDN/proxy arkasinda custom domain'i `expert-page-gen.lovable.app/site/{subdomain}` adresine yonlendirin.
