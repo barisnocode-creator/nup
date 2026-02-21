@@ -592,6 +592,8 @@ export const medcarePro: TemplateDefinition = {
         stat3Value: '',
         stat3Label: '',
         features: [],
+        statCardValue: '',
+        statCardLabel: '',
       },
     },
     {

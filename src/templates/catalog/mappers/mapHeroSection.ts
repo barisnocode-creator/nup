@@ -84,6 +84,34 @@ export function mapHeroSection(
     if (sectionProps.primaryButtonText !== undefined) overrides.primaryButtonText = ctaText;
   }
 
+  // HeroMedical stat mapping from sectorProfile
+  if (profile?.stats) {
+    profile.stats.forEach((stat, i) => {
+      const vKey = `stat${i + 1}Value`;
+      const lKey = `stat${i + 1}Label`;
+      if (sectionProps[vKey] !== undefined && !sectionProps[vKey]) overrides[vKey] = stat.value;
+      if (sectionProps[lKey] !== undefined && !sectionProps[lKey]) overrides[lKey] = stat.label;
+    });
+  }
+
+  // HeroMedical features from sectorProfile
+  if (profile?.features && Array.isArray(sectionProps.features) && sectionProps.features.length === 0) {
+    overrides.features = profile.features;
+  }
+
+  // HeroMedical floatingBadge from sectorProfile
+  if (profile?.floatingBadge && sectionProps.floatingBadge !== undefined && !sectionProps.floatingBadge) {
+    overrides.floatingBadge = profile.floatingBadge;
+  }
+
+  // HeroMedical stat card
+  if (profile?.statCardValue && sectionProps.statCardValue !== undefined && !sectionProps.statCardValue) {
+    overrides.statCardValue = profile.statCardValue;
+  }
+  if (profile?.statCardLabel && sectionProps.statCardLabel !== undefined && !sectionProps.statCardLabel) {
+    overrides.statCardLabel = profile.statCardLabel;
+  }
+
   // HeroPortfolio special mapping
   if (businessName && sectionProps.name !== undefined) {
     overrides.name = businessName;

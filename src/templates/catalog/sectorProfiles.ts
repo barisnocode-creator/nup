@@ -19,6 +19,11 @@ export interface SectorProfile {
     gallery: string;
     appointment: string;
   };
+  stats?: Array<{ value: string; label: string }>;
+  floatingBadge?: string;
+  statCardValue?: string;
+  statCardLabel?: string;
+  features?: string[];
 }
 
 export const sectorProfiles: Record<string, SectorProfile> = {
@@ -37,6 +42,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Hakkımızda',
     aboutDescription: 'Yılların deneyimi ve hasta odaklı yaklaşımımızla, ailenizin sağlığını güvence altına alıyoruz. Modern kliniğimizde, son teknoloji cihazlarla hizmet veriyoruz.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Doktorlarımız', gallery: 'Kliniğimiz', appointment: 'Randevu Al' },
+    stats: [
+      { value: '10.000+', label: 'Mutlu Hasta' },
+      { value: '%98', label: 'Memnuniyet' },
+      { value: '15+', label: 'Yıl Deneyim' },
+    ],
+    floatingBadge: 'Ücretsiz İlk Muayene',
+    statCardValue: '4.9/5',
+    statCardLabel: 'Hasta Puanı',
+    features: ['Modern Ekipman', 'Uzman Kadro', '7/24 Destek'],
   },
   dentist: {
     sector: 'dentist',
@@ -53,6 +67,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Kliniğimiz Hakkında',
     aboutDescription: 'Son teknoloji cihazlar ve sterilizasyon standartlarıyla, ağrısız diş tedavisi deneyimi sunuyoruz.',
     sectionLabels: { services: 'Tedavilerimiz', team: 'Diş Hekimlerimiz', gallery: 'Kliniğimiz', appointment: 'Randevu Al' },
+    stats: [
+      { value: '8.000+', label: 'Tedavi Edilen Hasta' },
+      { value: '%99', label: 'Memnuniyet' },
+      { value: '10+', label: 'Yıl Deneyim' },
+    ],
+    floatingBadge: 'Ağrısız Tedavi',
+    statCardValue: '4.9/5',
+    statCardLabel: 'Hasta Puanı',
+    features: ['Steril Ortam', 'Uzman Hekim', 'Ağrısız Tedavi'],
   },
   pharmacy: {
     sector: 'pharmacy',
@@ -69,6 +92,14 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Eczanemiz',
     aboutDescription: 'Uzman eczacılarımız, sağlığınız için doğru ilacı ve kullanım bilgisini size sunmak için burada.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Eczacılarımız', gallery: 'Eczanemiz', appointment: 'Bize Ulaşın' },
+    stats: [
+      { value: '5.000+', label: 'Mutlu Müşteri' },
+      { value: '%100', label: 'Güvenilirlik' },
+      { value: '20+', label: 'Yıl Deneyim' },
+    ],
+    statCardValue: '4.8/5',
+    statCardLabel: 'Müşteri Puanı',
+    features: ['Uzman Eczacı', 'Geniş Ürün Yelpazesi', 'Danışmanlık'],
   },
   restaurant: {
     sector: 'restaurant',
@@ -85,6 +116,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Hikayemiz',
     aboutDescription: 'Yılların birikimi ve tutkuyla, geleneksel tatları modern dokunuşlarla buluşturuyoruz.',
     sectionLabels: { services: 'Menümüz', team: 'Şeflerimiz', gallery: 'Mekanımız', appointment: 'Rezervasyon' },
+    stats: [
+      { value: '500+', label: 'Günlük Misafir' },
+      { value: '150+', label: 'Menü Çeşidi' },
+      { value: '12+', label: 'Yıl Deneyim' },
+    ],
+    floatingBadge: 'Rezervasyon Açık',
+    statCardValue: '4.8/5',
+    statCardLabel: 'Misafir Puanı',
+    features: ['Taze Malzeme', 'Usta Şefler', 'Özel Menü'],
   },
   cafe: {
     sector: 'cafe',
@@ -101,6 +141,14 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Biz Kimiz',
     aboutDescription: 'Kahve tutkumuzla yola çıkarak, şehrin en özel kahve deneyimini sunmak için buradayız.',
     sectionLabels: { services: 'Menümüz', team: 'Baristalarımız', gallery: 'Mekanımız', appointment: 'İletişim' },
+    stats: [
+      { value: '300+', label: 'Günlük Fincan' },
+      { value: '50+', label: 'Kahve Çeşidi' },
+      { value: '8+', label: 'Yıl Deneyim' },
+    ],
+    statCardValue: '4.9/5',
+    statCardLabel: 'Müşteri Puanı',
+    features: ['Single Origin', 'Organik', 'El Yapımı'],
   },
   hotel: {
     sector: 'hotel',
@@ -117,6 +165,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Otelimiz Hakkında',
     aboutDescription: 'Misafirperverlik geleneğimizi modern konforla birleştirerek, unutulmaz bir konaklama deneyimi sunuyoruz.',
     sectionLabels: { services: 'Odalarımız', team: 'Ekibimiz', gallery: 'Otelimiz', appointment: 'Rezervasyon' },
+    stats: [
+      { value: '120+', label: 'Lüks Oda' },
+      { value: '%98', label: 'Doluluk Oranı' },
+      { value: '25+', label: 'Yıl Deneyim' },
+    ],
+    floatingBadge: 'Erken Rezervasyon İndirimi',
+    statCardValue: '4.9/5',
+    statCardLabel: 'Misafir Puanı',
+    features: ['5 Yıldız Hizmet', 'Spa & Wellness', 'Eşsiz Manzara'],
   },
   lawyer: {
     sector: 'lawyer',
@@ -133,6 +190,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Büromuz Hakkında',
     aboutDescription: 'Güçlü hukuki bilgi birikimi ve müvekkil odaklı yaklaşımımızla, adalet yolunda birlikte yürüyoruz.',
     sectionLabels: { services: 'Uzmanlık Alanlarımız', team: 'Avukatlarımız', gallery: 'Büromuz', appointment: 'Randevu Al' },
+    stats: [
+      { value: '2.000+', label: 'Çözülen Dava' },
+      { value: '%95', label: 'Başarı Oranı' },
+      { value: '20+', label: 'Yıl Deneyim' },
+    ],
+    floatingBadge: 'Ücretsiz İlk Danışma',
+    statCardValue: '4.9/5',
+    statCardLabel: 'Müvekkil Puanı',
+    features: ['Deneyimli Avukatlar', 'Gizlilik Güvencesi', 'Hızlı Çözüm'],
   },
   beauty_salon: {
     sector: 'beauty_salon',
@@ -149,6 +215,14 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Salonumuz',
     aboutDescription: 'Modern ve şık salonumuzda, kendinizi özel hissetmeniz için profesyonel bakım sunuyoruz.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Uzmanlarımız', gallery: 'Çalışmalarımız', appointment: 'Randevu Al' },
+    stats: [
+      { value: '3.000+', label: 'Mutlu Müşteri' },
+      { value: '%97', label: 'Memnuniyet' },
+      { value: '10+', label: 'Yıl Deneyim' },
+    ],
+    statCardValue: '4.8/5',
+    statCardLabel: 'Müşteri Puanı',
+    features: ['Premium Ürünler', 'Uzman Ekip', 'Kişisel Bakım'],
   },
   gym: {
     sector: 'gym',
@@ -165,6 +239,15 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Hakkımızda',
     aboutDescription: 'Sağlıklı bir yaşam tarzını benimsemeniz için gereken tüm imkânları tek çatı altında sunuyoruz.',
     sectionLabels: { services: 'Programlarımız', team: 'Eğitmenlerimiz', gallery: 'Salonumuz', appointment: 'Ücretsiz Deneme' },
+    stats: [
+      { value: '1.000+', label: 'Aktif Üye' },
+      { value: '50+', label: 'Grup Dersi' },
+      { value: '15+', label: 'Uzman Eğitmen' },
+    ],
+    floatingBadge: 'Ücretsiz Deneme',
+    statCardValue: '4.7/5',
+    statCardLabel: 'Üye Puanı',
+    features: ['Modern Ekipman', 'Uzman Eğitmen', 'Kişisel Program'],
   },
   veterinary: {
     sector: 'veterinary',
@@ -181,6 +264,14 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Kliniğimiz',
     aboutDescription: 'Hayvan sevgisi ve mesleki tecrübemizle, evcil dostlarınıza en kaliteli sağlık hizmetini veriyoruz.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Veterinerlerimiz', gallery: 'Kliniğimiz', appointment: 'Randevu Al' },
+    stats: [
+      { value: '5.000+', label: 'Tedavi Edilen Dost' },
+      { value: '%98', label: 'Memnuniyet' },
+      { value: '12+', label: 'Yıl Deneyim' },
+    ],
+    statCardValue: '4.9/5',
+    statCardLabel: 'Hasta Sahibi Puanı',
+    features: ['Uzman Veteriner', 'Steril Ortam', '7/24 Acil'],
   },
   engineer: {
     sector: 'engineer',
@@ -197,6 +288,14 @@ export const sectorProfiles: Record<string, SectorProfile> = {
     aboutTitle: 'Hakkımızda',
     aboutDescription: 'Teknoloji tutkusuyla, işletmenizin dijital dönüşümüne öncülük ediyoruz.',
     sectionLabels: { services: 'Hizmetlerimiz', team: 'Ekibimiz', gallery: 'Projelerimiz', appointment: 'İletişime Geç' },
+    stats: [
+      { value: '200+', label: 'Tamamlanan Proje' },
+      { value: '50+', label: 'Mutlu Müşteri' },
+      { value: '10+', label: 'Yıl Deneyim' },
+    ],
+    statCardValue: '5.0/5',
+    statCardLabel: 'Müşteri Puanı',
+    features: ['Full-Stack Geliştirme', 'Modern Teknoloji', 'Hızlı Teslimat'],
   },
   designer: {
     sector: 'designer',

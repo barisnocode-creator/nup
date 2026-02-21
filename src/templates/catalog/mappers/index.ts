@@ -102,14 +102,7 @@ register(['MenuShowcase', 'RestaurantMenu'], (props, data) => {
 register(['StatisticsCounter'], (props, data) => {
   // Önce generatedContent statistics bak
   const gcStats = safeGet<any[]>(data, 'generatedContent.pages.home.statistics', []);
-  if (gcStats && gcStats.length > 0) {
-    return { ...props, stats: gcStats.slice(0, 4).map((s: any) => ({
-      value: s.value || s.number || '',
-      label: s.label || s.title || '',
-      suffix: s.suffix || '',
-    }))};
-  }
-
+  
   const statsByKey: Record<string, Array<{ value: string; label: string; suffix?: string }>> = {
     doctor: [
       { value: '15', label: 'Yıllık Deneyim', suffix: '+' },
@@ -156,15 +149,36 @@ register(['StatisticsCounter'], (props, data) => {
   };
 
   const sectorKey = data.sector?.toLowerCase().replace(/[\s-]/g, '_') || '';
-  const stats = statsByKey[sectorKey];
-  if (stats && Array.isArray(props.stats)) {
-    return { ...props, stats };
+  const sectorStats = statsByKey[sectorKey];
+
+  // Determine source: generatedContent > sectorStats > nothing
+  const sourceStats = (gcStats && gcStats.length > 0) 
+    ? gcStats.slice(0, 4).map((s: any) => ({ value: s.value || s.number || '', label: s.label || s.title || '' }))
+    : sectorStats || [];
+
+  if (sourceStats.length === 0) {
+    if (!props.sectionTitle) return { ...props, sectionTitle: 'Rakamlarla Biz' };
+    return props;
   }
-  // sectionTitle fallback
-  if (!props.sectionTitle) {
-    return { ...props, sectionTitle: 'Rakamlarla Biz' };
+
+  const overrides: Record<string, any> = {};
+
+  // Handle stats[] array format (hotel, engineer templates)
+  if (Array.isArray(props.stats)) {
+    overrides.stats = sourceStats;
   }
-  return props;
+
+  // Handle stat1Value/stat1Label format (MedCare Pro)
+  if (props.stat1Value !== undefined) {
+    sourceStats.forEach((stat: any, i: number) => {
+      overrides[`stat${i + 1}Value`] = stat.value;
+      overrides[`stat${i + 1}Label`] = stat.label;
+    });
+  }
+
+  if (!props.sectionTitle && !props.title) overrides.title = 'Rakamlarla Biz';
+
+  return { ...props, ...overrides };
 }, []);
 
 // DentalTips — sektöre göre sağlık ipuçları
