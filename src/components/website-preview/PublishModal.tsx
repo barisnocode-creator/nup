@@ -68,9 +68,7 @@ function generateSlug(name: string): string {
     .substring(0, 50);
 }
 
-function buildPublicUrl(subdomain: string, customDomain?: string | null, vercelUrl?: string | null): string {
-  if (customDomain) return `https://${customDomain}`;
-  if (vercelUrl) return vercelUrl;
+function buildPublicUrl(subdomain: string): string {
   return `https://expert-page-gen.lovable.app/site/${subdomain}`;
 }
 
@@ -98,7 +96,7 @@ export function PublishModal({
     try {
       const { data } = await supabase
         .from('projects')
-        .select('profession, form_data, custom_domain, vercel_url')
+        .select('profession, form_data')
         .eq('id', projectId)
         .single();
 
@@ -129,13 +127,9 @@ export function PublishModal({
       }
       
       if (isPublished && currentSubdomain) {
-        fetchProjectData().then((data) => {
-          const url = buildPublicUrl(currentSubdomain, data?.custom_domain as string | null, data?.vercel_url as string | null);
-          setPublishedUrl(url);
-        });
-      } else {
-        fetchProjectData();
+        setPublishedUrl(buildPublicUrl(currentSubdomain));
       }
+      fetchProjectData();
     }
   }, [isOpen, projectName, currentSubdomain, isPublished, fetchProjectData]);
 
@@ -215,22 +209,18 @@ export function PublishModal({
 
     setIsPublishing(true);
     try {
-      // First save subdomain
       const { error } = await supabase
         .from('projects')
-        .update({ subdomain })
+        .update({
+          subdomain,
+          is_published: true,
+          published_at: new Date().toISOString(),
+        })
         .eq('id', projectId);
 
       if (error) throw error;
 
-      // Call deploy function (now just marks as published)
-      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
-        body: { projectId },
-      });
-
-      if (deployError) throw new Error(deployError.message || 'Yayınlama başarısız.');
-
-      const url = deployData?.url || buildPublicUrl(subdomain, null, deployData?.vercelUrl);
+      const url = buildPublicUrl(subdomain);
       setPublishedUrl(url);
       setShowSuccess(true);
       
@@ -255,11 +245,12 @@ export function PublishModal({
   const handleUpdate = async () => {
     setIsPublishing(true);
     try {
-      const { data: deployData, error: deployError } = await supabase.functions.invoke('deploy-to-vercel', {
-        body: { projectId },
-      });
+      const { error } = await supabase
+        .from('projects')
+        .update({ published_at: new Date().toISOString() })
+        .eq('id', projectId);
 
-      if (deployError) throw new Error(deployError.message || 'Güncelleme başarısız.');
+      if (error) throw error;
 
       toast({
         title: '✅ Site güncellendi!',
