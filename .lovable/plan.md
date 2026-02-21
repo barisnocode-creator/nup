@@ -1,120 +1,114 @@
 
 
-# Template Test Sonuclari — Kalan Sorunlar ve Duzeltmeler
+# Editorde Icerik Kalitesi, Gorsel Boyutlandirma ve Sticky Header Iyilestirmeleri
 
-## Tespit Edilen Sorunlar
+## Mevcut Sorunlar
 
-### 1. HeroMedical.tsx — Hala hardcoded fallback var (Satir 211)
-`statCardValue || '4.9/5'` ifadesi, `statCardValue` bos oldugunda sabit '4.9/5' gosteriyor. Bu deger mapper'dan gelecegi icin fallback kaldirilmali.
+### 1. Header scroll davranisi
+SiteHeader `sticky top-14` ile konumlandiriliyor (EditorToolbar 56px yuksekliginde). Ancak EditorCanvas icinde scroll olan konteyner `overflow-auto` ile calistigindan, `sticky` dogrudan calismayabilir. Ayrica template'de bos bolumler olunca header "havada" kaliyor — header her zaman tarayici tavaninda (toolbar hemen altinda) sabit kalmali.
 
-**Dosya:** `src/components/sections/HeroMedical.tsx`
-**Duzeltme:** `{statCardValue || '4.9/5'}` yerine `{statCardValue}` kullanilacak. Zaten satir 199'da `(statCardValue || statCardLabel)` kontrolu oldugu icin card bos ise gorunmeyecek.
+### 2. Gorsel boyutlandirma sorunu
+Template hero ve galeri gorsellerinde `object-cover` kullaniliyor ancak bazi bilesenler (CafeGallery, ImageGallery) resim boyutlarini kontrol etmiyor. Unsplash URL'lerinde `w=600&q=80` parametreleri var ama render sirasinda farkli boyutlarda goruntuleniyor.
 
----
-
-### 2. HeroMedical.tsx — Badge span bos olsa bile render ediliyor (Satir 73-78)
-`badge` degeri bos string oldugunda, yesil noktali bos badge span'i gorunuyor. Diger hero'larda oldugu gibi `{badge && (...)}` kontrolu eklenmeli.
-
-**Dosya:** `src/components/sections/HeroMedical.tsx`
-**Duzeltme:** Satir 73-78'deki badge blogu `{badge && (...)}` ile sarilacak.
+### 3. Site adi ve navigasyon
+SiteHeader'a `siteName` geciliyor ancak bu deger bazen bos geliyor veya "Site" fallback'i gorunuyor. `projectName` her zaman EditorCanvas'tan gecirilmeli.
 
 ---
 
-### 3. EditorCanvas.tsx — Footer'a props gecirilmiyor (Satir 124-131)
-Header'a `projectName` gecilmesi duzeltildi ama footer'a hala `props: {}` gonderiliyor. Footer'da site adi "Site Adi" placeholder olarak gorunuyor.
+## Yapilacak Degisiklikler
+
+### Adim 1: SiteHeader — `sticky` davranisini duzelt
+
+**Dosya:** `src/components/sections/addable/SiteHeader.tsx`
+
+- `sticky top-14` yerine `sticky top-0` kullanilacak (cunku header zaten EditorCanvas scroll konteynerinin icinde)
+- EditorCanvas icindeki scroll konteyner `position: relative` oldugu icin sticky bu konteyner icinde calisacak
+- Bos bolum olsa bile header her zaman gorunur alanda kalacak
+
+### Adim 2: EditorCanvas — Header icin scroll konteyner duzeltmesi
 
 **Dosya:** `src/components/editor/EditorCanvas.tsx`
-**Duzeltme:** Footer section'a da `props: { siteName: projectName || '' }` gecirilecek.
 
----
+- SiteHeader'in `sticky` calismasi icin EditorCanvas'taki ust `div` (`flex-1 overflow-auto`) yapisi korunacak
+- Header'a `projectName`, `phone` (contactSection'dan) ve diger bilgiler gecirilecek
+- Ic konteyner (`min-h-screen mx-auto`) icinde header'in `sticky top-0 z-40` ile tavana yapismasini saglayacak duzenleme
 
-### 4. StatisticsCounter.tsx — stats[] dizi formatini desteklemiyor
-Hotel ve Engineer template'leri definitions'ta `stats: [{ value, label }]` dizisi kullaniyor ama bilesenin kendisi sadece `stat1Value/stat1Label` formatini okuyor. Mapper her iki formata da yaziyor ama bilesen diziyi render edemez.
+### Adim 3: Hero bilsenleri — `min-h-[calc(100vh-7rem)]` duzeltmesi
 
-**Dosya:** `src/components/sections/StatisticsCounter.tsx`
-**Duzeltme:** Bilesen, hem `stats[]` dizisi hem de `stat1Value` formatini okuyacak sekilde guncellenmeli. Once `props.stats` dizisine bak, yoksa `stat1Value`'dan oku.
+**Dosyalar:** `HeroCafe.tsx`, `HeroRestaurant.tsx`, `HeroHotel.tsx`, `HeroMedical.tsx`, `HeroPortfolio.tsx`, `HeroDental.tsx`
 
----
+- Hero bilsenlerinin yuksekligi `min-h-[calc(100vh-7rem)]` kullaniliyor. Toolbar (56px) + SiteHeader (56px) = 112px = 7rem. Bu dogru.
+- Ancak bazi hero bilsenlerinde bu deger eksik veya farkli. Tutarlilik saglanacak.
 
-### 5. HeroHotel.tsx — isHotelMode mantigi bozuk (Satir 17)
-```typescript
-const isHotelMode = buttonText && (!p.buttonText || p.buttonText === 'Oda Ara' || p.buttonText === '');
-```
-Bu mantik yanlis: `buttonText` degiskeni zaten `p.buttonText || ''` ile atanmis; sonra `!p.buttonText` kontrol ediliyor ki bu zaten `buttonText` bos oldugunda tetiklenir. Ayrica `p.buttonText === ''` durumunda isHotelMode true oluyor ama `buttonText &&` kontrolu ile basliyor ki bos string'de false doner. Net sonuc: isHotelMode neredeyse hic true olamaz.
+### Adim 4: Gorsel boyutlandirma
 
-**Dosya:** `src/components/sections/HeroHotel.tsx`
-**Duzeltme:** Sektore gore karar verilecek: `const isHotelMode = ['hotel', 'resort', 'accommodation'].some(s => sector.includes(s));`
+**Dosyalar:** `CafeGallery.tsx`, `ImageGallery.tsx`, `ChefShowcase.tsx`, `RoomShowcase.tsx`, `ProjectShowcase.tsx`
 
----
+- Tum gorsel konteynerleri `aspect-ratio` veya sabit yukseklik (`h-64`, `h-80`) ile kontrol edilecek
+- `object-cover` sinifi tum gorsel etiketlerine eklenecek (eksik olanlara)
+- Unsplash URL parametreleri `w=800&q=80` olarak standardize edilecek
 
-### 6. DentalBooking.tsx — Hardcoded fallback'ler (Satir 268-272)
-Hala sabit Turkce metinler mevcut:
-- `'Online Randevu'`
-- `'Hemen Baslayin'`
-- `'Birkac adimda kolayca randevunuzu olusturun.'`
-- `'Randevunuz Alindi!'`
-- `'Randevu Olustur'`
+### Adim 5: SiteHeader'a daha fazla veri gecisi
 
-**Dosya:** `src/components/sections/DentalBooking.tsx`
-**Duzeltme:** Bu fallback'ler `''` ile degistirilmeli, icerik mapper veya sectorProfile'dan gelmeli.
+**Dosya:** `src/components/editor/EditorCanvas.tsx`
 
----
+- Header section props'una `phone` ve `ctaLabel` bilgileri de eklenecek
+- `sections` prop'u zaten geciliyor, header bundan nav ogelerini otomatik olusturuyor
+- `siteName` bos geldiginde `projectName` fallback'i zaten mevcut, bu pekistirilecek
 
-### 7. SiteFooter.tsx — Hardcoded aciklama metni (Satir 66)
-```
-"Profesyonel hizmetlerimizle yaninizdayiz. Kaliteli ve guvenilir cozumler sunmak icin calisiyoruz."
-```
-Bu metin tum sektorler icin ayni gorunuyor.
+### Adim 6: Bos alan sorunu — minimum icerik yuksekligi
 
-**Dosya:** `src/components/sections/addable/SiteFooter.tsx`
-**Duzeltme:** `p.description || ''` prop'undan okunmali, sectorProfile'dan doldurulmali.
+**Dosya:** `src/components/editor/EditorCanvas.tsx`
+
+- Ic konteyner `min-h-screen` zaten var
+- Bos bolumler filtrelendikten sonra sayfa kisa kalirsa footer'in sayfanin altina itilmesini saglayacak `flex flex-col` + `flex-grow` yapisi eklenecek
+- Bu sayede header tavanda, footer tabanda kalir ve aradaki bosluk dogal sekilde dolar
 
 ---
 
 ## Degistirilecek Dosyalar
 
-| Dosya | Sorun | Oncelik |
-|---|---|---|
-| `src/components/sections/HeroMedical.tsx` | statCardValue hardcoded fallback + badge bos render | Yuksek |
-| `src/components/editor/EditorCanvas.tsx` | Footer'a siteName gecirilmiyor | Yuksek |
-| `src/components/sections/StatisticsCounter.tsx` | stats[] dizi formati desteklenmiyor | Yuksek |
-| `src/components/sections/HeroHotel.tsx` | isHotelMode mantik hatasi | Orta |
-| `src/components/sections/DentalBooking.tsx` | Hardcoded Turkce fallback'ler | Orta |
-| `src/components/sections/addable/SiteFooter.tsx` | Hardcoded aciklama metni | Dusuk |
+| Dosya | Degisiklik |
+|---|---|
+| `src/components/sections/addable/SiteHeader.tsx` | `sticky top-0` (canvas icinde calismasi icin), z-index duzeltmesi |
+| `src/components/editor/EditorCanvas.tsx` | Header/Footer icin layout duzeltmesi, `flex flex-col` + `min-h-screen`, phone/ctaLabel prop gecisi |
+| `src/components/sections/HeroCafe.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/HeroRestaurant.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/HeroHotel.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/HeroMedical.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/HeroPortfolio.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/HeroDental.tsx` | min-h tutarliligi kontrolu |
+| `src/components/sections/CafeGallery.tsx` | Gorsel aspect-ratio + object-cover kontrolu |
+| `src/components/sections/ImageGallery.tsx` | Gorsel boyut standardizasyonu |
+| `src/components/sections/RoomShowcase.tsx` | Gorsel boyut standardizasyonu |
+| `src/components/sections/ProjectShowcase.tsx` | Gorsel boyut standardizasyonu |
+| `src/components/sections/ChefShowcase.tsx` | Gorsel boyut standardizasyonu |
 
 ---
 
-## Yapilacaklar (Sirasiyla)
+## Teknik Detaylar
 
-### Adim 1: HeroMedical duzeltmeleri
-- Satir 211: `statCardValue || '4.9/5'` → `statCardValue`
-- Satir 73-78: Badge blogu `{badge && (...)}` ile sarilacak
+### Sticky Header Cozumu
+```
+EditorCanvas (overflow-auto, relative)
+  |-- ic konteyner (min-h-screen, flex flex-col)
+       |-- SiteHeader (sticky top-0 z-40)   <- scroll ederken tavanda kalir
+       |-- sections (flex-1)                  <- icerik alani
+       |-- SiteFooter                         <- her zaman en altta
+```
 
-### Adim 2: EditorCanvas footer
-- Satir 124-131: Footer props'a `siteName: projectName || ''` eklenecek
-
-### Adim 3: StatisticsCounter dual-format
-- `props.stats` dizisi varsa onu kullan, yoksa `stat1Value` formatina bak
-- Her iki format da `.filter(s => s.value && s.label)` ile boslar filtrelenmeli
-
-### Adim 4: HeroHotel isHotelMode
-- Sektore dayali mantik: `const isHotelMode = sector && ['hotel', 'resort', 'accommodation', 'motel', 'hostel'].some(s => sector.includes(s));`
-
-### Adim 5: DentalBooking fallback temizligi
-- Tum sabit metinler `''` ile degistirilecek
-- Mapper'da DentalBooking icin sektore duyarli basliklar eklenecek (zaten `AppointmentBooking` mapper var, DentalBooking da kapsamali)
-
-### Adim 6: SiteFooter aciklama
-- `p.description` prop'u eklenmeli, bos oldugunda paragraf gizlenmeli
+### Gorsel Standardizasyonu
+- Hero gorselleri: `w-full h-full object-cover` (konteyner min-h ile kontrol)
+- Galeri gorselleri: `aspect-[4/3] object-cover rounded-lg`
+- Kart gorselleri: `h-48 sm:h-56 object-cover`
+- Avatar/profil gorselleri: `aspect-square object-cover rounded-full`
 
 ---
 
 ## Beklenen Sonuc
 
-- HeroMedical'da bos badge gorunmez, stat card deger yoksa gorunmez
-- Editorde footer gercek site adini gosterir
-- Hotel/Engineer template'lerinde istatistik bolumu duzgun dolar
-- Hotel hero'sunda CTA butonu sektore gore dogru gorunur
-- DentalBooking'de sektore gore uygun basliklar gorulur
-- Footer'da generic aciklama yerine sektore ozel veya bos metin gorulur
-
+- Site header (site adi + navigasyon) aşagı kaydirirken her zaman tarayicinin ustunde sabit kalir
+- Bos bolumler oldugunda header "havada" kalmaz, tavana yapismis sekilde durur
+- Tum gorseller dogru boyutta ve oranda gorunur
+- Footer her zaman sayfanin en altinda yer alir
+- Template ve icerik secimi kullanicinin sektor/meslek bilgisine gore otomatik yapilir (zaten mevcut — generate-website edge function'daki `selectTemplate` + `sectorProfiles`)
