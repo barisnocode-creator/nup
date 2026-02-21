@@ -15,28 +15,26 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
   const p = section.props;
   const sector = p._sector || 'doctor';
 
-  const badge = p.badge || 'Uzman Klinik';
-  const title = p.title || 'Sağlığınız İçin Profesyonel Bakım';
-  const description = p.description || 'Deneyimli uzman kadromuz ve modern teknolojimizle, güvenilir ve konforlu sağlık hizmetleri sunuyoruz. Her hastaya özel tedavi yaklaşımı.';
-  const primaryButtonText = p.primaryButtonText || 'Randevu Al';
+  const badge = p.badge || '';
+  const title = p.title || '';
+  const description = p.description || '';
+  const primaryButtonText = p.primaryButtonText || '';
   const primaryButtonLink = p.primaryButtonLink || '#appointment';
-  const secondaryButtonText = p.secondaryButtonText || 'Hizmetlerimiz';
+  const secondaryButtonText = p.secondaryButtonText || '';
   const secondaryButtonLink = p.secondaryButtonLink || '#services';
   const image = p.image || 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80';
-  const floatingBadge = p.floatingBadge || 'Ücretsiz İlk Muayene';
+  const floatingBadge = p.floatingBadge || '';
 
-  const stat1Value = p.stat1Value || '12K+';
-  const stat1Label = p.stat1Label || 'Mutlu Hasta';
-  const stat2Value = p.stat2Value || '%95';
-  const stat2Label = p.stat2Label || 'Memnuniyet';
-  const stat3Value = p.stat3Value || '20+';
-  const stat3Label = p.stat3Label || 'Yıl Deneyim';
+  const stat1Value = p.stat1Value || '';
+  const stat1Label = p.stat1Label || '';
+  const stat2Value = p.stat2Value || '';
+  const stat2Label = p.stat2Label || '';
+  const stat3Value = p.stat3Value || '';
+  const stat3Label = p.stat3Label || '';
 
-  const features = p.features || [
-    'Modern Ekipman',
-    'Uzman Kadro',
-    '7/24 Destek',
-  ];
+  const features = p.features || [];
+  const statCardLabel = p.statCardLabel || '';
+  const statCardValue = p.statCardValue || '';
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
@@ -129,9 +127,10 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
             </motion.div>
 
             {/* Stats */}
+            {stats.some(s => s.value && s.label) && (
             <div ref={statsRef} className="pt-4 border-t border-border">
               <div className="grid grid-cols-3 gap-6">
-                {stats.map((stat, index) => (
+                {stats.filter(s => s.value && s.label).map((stat, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.85 }}
@@ -149,6 +148,7 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
                 ))}
               </div>
             </div>
+            )}
           </div>
 
           {/* ── Right Column — Image ── */}
@@ -196,6 +196,7 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
             </div>
 
             {/* Floating stat card — bottom right */}
+            {(statCardValue || statCardLabel) && (
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -207,11 +208,12 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
                   <span className="text-xl">⭐</span>
                 </div>
                 <div>
-                  <div className="text-lg font-bold text-foreground font-heading-dynamic">4.9/5</div>
-                  <div className="text-xs text-muted-foreground font-body-dynamic">Hasta Puanı</div>
+                  <div className="text-lg font-bold text-foreground font-heading-dynamic">{statCardValue || '4.9/5'}</div>
+                  <div className="text-xs text-muted-foreground font-body-dynamic">{statCardLabel}</div>
                 </div>
               </div>
             </motion.div>
+            )}
 
             {/* Decorative dot grid */}
             <div className="absolute -top-6 -left-6 w-24 h-24 opacity-20" style={{

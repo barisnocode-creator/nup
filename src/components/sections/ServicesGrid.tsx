@@ -4,14 +4,7 @@ import { resolveStyles } from './styleUtils';
 import { PixabayImagePicker } from './PixabayImagePicker';
 import type { SectionComponentProps } from './types';
 
-const defaultServices = [
-  { icon: "🚀", title: "Hızlı Teslimat", description: "Projelerinizi belirlenen sürede tamamlıyoruz." },
-  { icon: "💡", title: "Yaratıcı Çözümler", description: "Her proje için özel çözümler sunuyoruz." },
-  { icon: "🛡️", title: "Güvenilir Hizmet", description: "Kaliteli ve güvenilir hizmet anlayışı ile çalışıyoruz." },
-  { icon: "📱", title: "Mobil Uyumlu", description: "Tüm cihazlarda mükemmel görünen tasarımlar." },
-  { icon: "🔧", title: "Teknik Destek", description: "7/24 teknik destek ile yanınızdayız." },
-  { icon: "📈", title: "SEO Optimizasyonu", description: "Arama motorlarında üst sıralarda yer alın." },
-];
+const defaultServices: any[] = [];
 
 export function ServicesGrid({ section, isEditing, onUpdate }: SectionComponentProps) {
   const { props, style } = section;
