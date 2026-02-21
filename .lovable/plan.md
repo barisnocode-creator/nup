@@ -1,114 +1,187 @@
 
 
-# Editorde Icerik Kalitesi, Gorsel Boyutlandirma ve Sticky Header Iyilestirmeleri
+# Analytics Sistemini Dogru Verilere Kavusturma Plani
 
-## Mevcut Sorunlar
+## Mevcut Durum (Kritik Sorunlar)
 
-### 1. Header scroll davranisi
-SiteHeader `sticky top-14` ile konumlandiriliyor (EditorToolbar 56px yuksekliginde). Ancak EditorCanvas icinde scroll olan konteyner `overflow-auto` ile calistigindan, `sticky` dogrudan calismayabilir. Ayrica template'de bos bolumler olunca header "havada" kaliyor — header her zaman tarayici tavaninda (toolbar hemen altinda) sabit kalmali.
+Veritabaninda 556 analytics kaydi var. Bunlarin dagilimi:
+- `/preview`: 484 kayit (%87) — Site sahibinin editor onizlemesi (SAHTE TRAFIK)
+- `/`: 60 kayit — Belirsiz
+- `/public`: 12 kayit — Gercek ziyaretci verisi
 
-### 2. Gorsel boyutlandirma sorunu
-Template hero ve galeri gorsellerinde `object-cover` kullaniliyor ancak bazi bilesenler (CafeGallery, ImageGallery) resim boyutlarini kontrol etmiyor. Unsplash URL'lerinde `w=600&q=80` parametreleri var ama render sirasinda farkli boyutlarda goruntuleniyor.
+Kullanici Analytics sayfasinda "556 goruntulenme" goruyor ama gercekte sadece 12 gercek ziyaret var.
 
-### 3. Site adi ve navigasyon
-SiteHeader'a `siteName` geciliyor ancak bu deger bazen bos geliyor veya "Site" fallback'i gorunuyor. `projectName` her zaman EditorCanvas'tan gecirilmeli.
+---
+
+## Kullanicinin Tercihleri
+
+1. Sadece yayinlanan siteler icin say (preview takibi tamamen kaldirilsin)
+2. Eski kirli veriler icin "Other" secildi — kullaniciya soracagiz
+3. Hesaplamalar veritabaninda SQL ile yapilsin
 
 ---
 
 ## Yapilacak Degisiklikler
 
-### Adim 1: SiteHeader — `sticky` davranisini duzelt
+### Adim 1: Preview Takibini Kaldir
 
-**Dosya:** `src/components/sections/addable/SiteHeader.tsx`
+**Dosya:** `src/pages/Project.tsx`
 
-- `sticky top-14` yerine `sticky top-0` kullanilacak (cunku header zaten EditorCanvas scroll konteynerinin icinde)
-- EditorCanvas icindeki scroll konteyner `position: relative` oldugu icin sticky bu konteyner icinde calisacak
-- Bos bolum olsa bile header her zaman gorunur alanda kalacak
+`usePageView(id, '/preview')` satiri tamamen kaldirilacak. Boylece editor onizlemesi hicbir analytics kaydi olusturmaz.
 
-### Adim 2: EditorCanvas — Header icin scroll konteyner duzeltmesi
+---
 
-**Dosya:** `src/components/editor/EditorCanvas.tsx`
+### Adim 2: Edge Function — Yayinlanmamis Siteleri Reddet
 
-- SiteHeader'in `sticky` calismasi icin EditorCanvas'taki ust `div` (`flex-1 overflow-auto`) yapisi korunacak
-- Header'a `projectName`, `phone` (contactSection'dan) ve diger bilgiler gecirilecek
-- Ic konteyner (`min-h-screen mx-auto`) icinde header'in `sticky top-0 z-40` ile tavana yapismasini saglayacak duzenleme
+**Dosya:** `supabase/functions/track-analytics/index.ts`
 
-### Adim 3: Hero bilsenleri — `min-h-[calc(100vh-7rem)]` duzeltmesi
+Mevcut kodda zaten `!project.is_published && !isOwner` kontrolu var ama `isOwner` ise true donerse yayinlanmamis projeler bile kayit olusturuyor. Degisiklik:
 
-**Dosyalar:** `HeroCafe.tsx`, `HeroRestaurant.tsx`, `HeroHotel.tsx`, `HeroMedical.tsx`, `HeroPortfolio.tsx`, `HeroDental.tsx`
+- `is_published === false` ise kaydi kesinlikle reddet (owner olsa bile)
+- Owner kontrolunu kaldir — sadece `is_published === true` olan projeler icin tracking yapilsin
 
-- Hero bilsenlerinin yuksekligi `min-h-[calc(100vh-7rem)]` kullaniliyor. Toolbar (56px) + SiteHeader (56px) = 112px = 7rem. Bu dogru.
-- Ancak bazi hero bilsenlerinde bu deger eksik veya farkli. Tutarlilik saglanacak.
+---
 
-### Adim 4: Gorsel boyutlandirma
+### Adim 3: Veritabani Fonksiyonu — Server-Side Aggregation
 
-**Dosyalar:** `CafeGallery.tsx`, `ImageGallery.tsx`, `ChefShowcase.tsx`, `RoomShowcase.tsx`, `ProjectShowcase.tsx`
+Yeni bir PostgreSQL fonksiyonu olusturulacak: `get_project_analytics(p_project_id uuid, p_days integer)`
 
-- Tum gorsel konteynerleri `aspect-ratio` veya sabit yukseklik (`h-64`, `h-80`) ile kontrol edilecek
-- `object-cover` sinifi tum gorsel etiketlerine eklenecek (eksik olanlara)
-- Unsplash URL parametreleri `w=800&q=80` olarak standardize edilecek
+Bu fonksiyon tek sorguda su verileri dondurecek:
+- `total_views`: Toplam goruntulenme (preview haric)
+- `views_last_7_days`: Son 7 gunluk goruntulenme
+- `unique_visitors`: Tekil ziyaretci sayisi
+- `mobile_count` / `desktop_count`: Cihaz dagilimi
+- `views_over_time`: Gunluk goruntulenme dizisi (JSONB)
+- `page_views`: Sayfa bazli goruntulenme (JSONB)
+- `hourly_views`: Saatlik dagilim (JSONB)
 
-### Adim 5: SiteHeader'a daha fazla veri gecisi
+Tum hesaplamalar `WHERE page_path != '/preview'` filtresi ile yapilacak.
 
-**Dosya:** `src/components/editor/EditorCanvas.tsx`
+RLS: Fonksiyon `SECURITY DEFINER` olacak ama icinde `auth.uid()` kontrolu yapacak — sadece projenin sahibi cagirabilecek.
 
-- Header section props'una `phone` ve `ctaLabel` bilgileri de eklenecek
-- `sections` prop'u zaten geciliyor, header bundan nav ogelerini otomatik olusturuyor
-- `siteName` bos geldiginde `projectName` fallback'i zaten mevcut, bu pekistirilecek
+---
 
-### Adim 6: Bos alan sorunu — minimum icerik yuksekligi
+### Adim 4: useAnalytics Hook — SQL Fonksiyonuna Gecis
 
-**Dosya:** `src/components/editor/EditorCanvas.tsx`
+**Dosya:** `src/hooks/useAnalytics.ts`
 
-- Ic konteyner `min-h-screen` zaten var
-- Bos bolumler filtrelendikten sonra sayfa kisa kalirsa footer'in sayfanin altina itilmesini saglayacak `flex flex-col` + `flex-grow` yapisi eklenecek
-- Bu sayede header tavanda, footer tabanda kalir ve aradaki bosluk dogal sekilde dolar
+Mevcut yaklasim (tum raw event'leri cek + JavaScript'te hesapla) kaldirilacak. Yerine:
+
+```
+supabase.rpc('get_project_analytics', { p_project_id: projectId, p_days: 30 })
+```
+
+Tek RPC cagrisi ile tum aggregated veriler gelecek. Client-side hesaplama kalmayacak.
+
+Realtime subscription korunacak — yeni INSERT geldiginde `refetch()` cagrilacak.
+
+---
+
+### Adim 5: Eski Kirli Verileri Temizle
+
+Veritabanindaki `/preview` path'li 484 kayit icin bir temizlik migration'i calistirilacak:
+
+```sql
+DELETE FROM analytics_events WHERE page_path = '/preview';
+```
+
+Bu tek seferlik bir islem. Bundan sonra preview kaydi olusturmayacagimiz icin tekrar kirlenme olmayacak.
+
+---
+
+### Adim 6: WebsiteDashboardTab — Sample Data Kaldirma
+
+**Dosya:** `src/components/website-dashboard/WebsiteDashboardTab.tsx`
+
+- `generateSampleData()` fonksiyonu ve sahte veri uretimi tamamen kaldirilacak
+- `totalViews === 0` durumunda "Henuz ziyaretci yok" mesaji gosterilecek (sahte rakamlar yerine)
+- Yayinlanmamis sitelere ozel bilgilendirme banner'i korunacak ama sahte grafik yerine bos durum gosterilecek
+
+---
+
+### Adim 7: Analytics Sayfasi — Bos Durum Iyilestirmesi
+
+**Dosya:** `src/pages/Analytics.tsx`
+
+- Veri yoksa (0 goruntulenme) anlamli bir bos durum gosterilecek:
+  - "Henuz ziyaretciniz yok"
+  - "Sitenizi yayinlayin ve paylasarak ziyaretci kazanin"
+  - Yayinlama durumuna gore CTA butonu
+- Tarih formati `en-US` yerine `tr-TR` olarak duzeltilecek
 
 ---
 
 ## Degistirilecek Dosyalar
 
-| Dosya | Degisiklik |
-|---|---|
-| `src/components/sections/addable/SiteHeader.tsx` | `sticky top-0` (canvas icinde calismasi icin), z-index duzeltmesi |
-| `src/components/editor/EditorCanvas.tsx` | Header/Footer icin layout duzeltmesi, `flex flex-col` + `min-h-screen`, phone/ctaLabel prop gecisi |
-| `src/components/sections/HeroCafe.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/HeroRestaurant.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/HeroHotel.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/HeroMedical.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/HeroPortfolio.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/HeroDental.tsx` | min-h tutarliligi kontrolu |
-| `src/components/sections/CafeGallery.tsx` | Gorsel aspect-ratio + object-cover kontrolu |
-| `src/components/sections/ImageGallery.tsx` | Gorsel boyut standardizasyonu |
-| `src/components/sections/RoomShowcase.tsx` | Gorsel boyut standardizasyonu |
-| `src/components/sections/ProjectShowcase.tsx` | Gorsel boyut standardizasyonu |
-| `src/components/sections/ChefShowcase.tsx` | Gorsel boyut standardizasyonu |
+| Dosya | Degisiklik | Oncelik |
+|---|---|---|
+| `src/pages/Project.tsx` | `usePageView` cagrisini kaldir | Yuksek |
+| `supabase/functions/track-analytics/index.ts` | Sadece `is_published=true` projeleri kabul et | Yuksek |
+| Yeni DB fonksiyonu: `get_project_analytics` | Server-side aggregation | Yuksek |
+| `src/hooks/useAnalytics.ts` | RPC cagrisina gecis, client-side hesaplamayi kaldir | Yuksek |
+| Migration: DELETE preview kayitlari | Eski kirli veriyi temizle | Orta |
+| `src/components/website-dashboard/WebsiteDashboardTab.tsx` | Sample data kaldir, bos durum ekle | Orta |
+| `src/pages/Analytics.tsx` | Bos durum + tarih formati duzeltme | Dusuk |
 
 ---
 
 ## Teknik Detaylar
 
-### Sticky Header Cozumu
-```
-EditorCanvas (overflow-auto, relative)
-  |-- ic konteyner (min-h-screen, flex flex-col)
-       |-- SiteHeader (sticky top-0 z-40)   <- scroll ederken tavanda kalir
-       |-- sections (flex-1)                  <- icerik alani
-       |-- SiteFooter                         <- her zaman en altta
+### PostgreSQL Fonksiyonu Yapisi
+
+```text
+get_project_analytics(p_project_id uuid, p_days integer DEFAULT 30)
+RETURNS jsonb
+SECURITY DEFINER
+
+Dondurecegi yapi:
+{
+  "total_views": 142,
+  "views_last_7_days": 38,
+  "unique_visitors": 67,
+  "mobile_count": 45,
+  "desktop_count": 97,
+  "views_over_time": [{"date": "2026-02-01", "views": 5}, ...],
+  "page_views": [{"path": "/", "views": 80}, ...],
+  "hourly_views": [{"hour": 0, "views": 2}, ...]
+}
+
+WHERE kosullari:
+- project_id = p_project_id
+- page_path != '/preview'  (guvenlik icin ek filtre)
+- created_at >= now() - (p_days || ' days')::interval  (views_over_time icin)
 ```
 
-### Gorsel Standardizasyonu
-- Hero gorselleri: `w-full h-full object-cover` (konteyner min-h ile kontrol)
-- Galeri gorselleri: `aspect-[4/3] object-cover rounded-lg`
-- Kart gorselleri: `h-48 sm:h-56 object-cover`
-- Avatar/profil gorselleri: `aspect-square object-cover rounded-full`
+### Veri Akisi (Sonrasi)
+
+```text
+Ziyaretci siteyi acar
+  |
+  v
+PublicWebsite.tsx -> usePageView(projectId, '/public')
+  |
+  v
+track-analytics Edge Function
+  |-- is_published = false? -> Reddet (200, not_tracked)
+  |-- is_published = true?  -> INSERT analytics_events
+  |
+  v
+Realtime tetiklenir -> Dashboard guncellenir
+  |
+  v
+useAnalytics -> supabase.rpc('get_project_analytics')
+  |
+  v
+Analytics sayfasi: Gercek veriler gosterilir
+```
 
 ---
 
 ## Beklenen Sonuc
 
-- Site header (site adi + navigasyon) aşagı kaydirirken her zaman tarayicinin ustunde sabit kalir
-- Bos bolumler oldugunda header "havada" kalmaz, tavana yapismis sekilde durur
-- Tum gorseller dogru boyutta ve oranda gorunur
-- Footer her zaman sayfanin en altinda yer alir
-- Template ve icerik secimi kullanicinin sektor/meslek bilgisine gore otomatik yapilir (zaten mevcut — generate-website edge function'daki `selectTemplate` + `sectorProfiles`)
+- Analytics'te sadece gercek ziyaretci verileri gorunur (preview sifir)
+- Server-side hesaplama ile 1000 satir limiti sorunu ortadan kalkar
+- Sahte sample data tamamen kaldirilir
+- Bos durumda anlamli mesajlar gosterilir
+- Performans iyilesir (tek SQL sorgusu vs tum raw veri indirme)
+
