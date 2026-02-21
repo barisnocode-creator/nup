@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { isPlatformDomain } from "@/config/domains";
 import Landing from "./pages/Landing";
 
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -24,21 +25,6 @@ const Leads = lazy(() => import("./pages/Leads"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
-
-// Platform domains that serve the dashboard/editor app
-const PLATFORM_HOSTNAMES = [
-  'localhost',
-  'lovable.app',
-  'lovable.dev',
-  'webcontainer.io',
-  'lovableproject.com',
-  'nuppel.com',
-  'www.nuppel.com',
-];
-
-function isPlatformDomain(hostname: string): boolean {
-  return PLATFORM_HOSTNAMES.some(ph => hostname === ph || hostname.endsWith(`.${ph}`));
-}
 
 // Check if current hostname is a custom domain (not platform)
 const isCustomDomain = !isPlatformDomain(window.location.hostname);
