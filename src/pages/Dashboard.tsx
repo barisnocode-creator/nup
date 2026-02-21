@@ -92,7 +92,7 @@ export default function Dashboard() {
           {getGreeting()}, {displayName}! 👋
         </h1>
         <p className="text-muted-foreground text-lg">
-          Welcome to Open Lucius
+          Welcome to NUppel
         </p>
       </div>
 

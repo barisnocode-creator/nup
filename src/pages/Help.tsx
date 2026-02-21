@@ -25,7 +25,7 @@ export default function Help() {
               Hızlı Başlangıç
             </CardTitle>
             <CardDescription>
-              Open Lucius'u kullanmaya başlamak için temel adımlar
+              NUppel'i kullanmaya başlamak için temel adımlar
             </CardDescription>
           </CardHeader>
           <CardContent>

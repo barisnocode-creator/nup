@@ -18,8 +18,8 @@ const faqData: FAQItem[] = [
   // Genel
   {
     category: 'Genel',
-    question: 'Open Lucius nedir?',
-    answer: 'Open Lucius, yapay zeka destekli bir web sitesi oluşturma platformudur. Küçük işletmeler ve profesyoneller için dakikalar içinde profesyonel web siteleri oluşturmanızı sağlar.',
+    question: 'NUppel nedir?',
+    answer: 'NUppel, yapay zeka destekli bir web sitesi oluşturma platformudur. Küçük işletmeler ve profesyoneller için dakikalar içinde profesyonel web siteleri oluşturmanızı sağlar.',
   },
   {
     category: 'Genel',
@@ -61,7 +61,7 @@ const faqData: FAQItem[] = [
   {
     category: 'Yayınlama',
     question: 'Subdomain nasıl alınır?',
-    answer: 'Website Dashboard\'da "Publish" butonuna tıklayın. Açılan modalda istediğiniz subdomain\'i girin (örn: isletmem.openlucius.app) ve yayınlayın.',
+    answer: 'Website Dashboard\'da "Publish" butonuna tıklayın. Açılan modalda istediğiniz subdomain\'i girin (örn: isletmem.nuppel.app) ve yayınlayın.',
   },
   {
     category: 'Yayınlama',

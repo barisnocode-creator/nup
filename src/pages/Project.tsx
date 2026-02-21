@@ -257,7 +257,7 @@ export default function Project() {
               <div className="w-9 h-9 gradient-hero rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">Open Lucius</span>
+              <span className="text-xl font-extrabold tracking-tight">N<span className="text-primary">Uppel</span></span>
             </div>
             <Button variant="ghost" onClick={() => navigate('/dashboard')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
