@@ -29,7 +29,7 @@ export function CafeGallery({ section, isEditing }: SectionComponentProps) {
           {images.map((img: any, i: number) => (
             <motion.div key={i} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.6 }}
               className={`relative overflow-hidden rounded-2xl group ${i === 0 ? 'col-span-2 row-span-2' : ''}`}>
-              <img src={img.src} alt={img.alt} className={`w-full object-cover group-hover:scale-110 transition-transform duration-700 ${i === 0 ? 'h-full min-h-[400px]' : 'h-[250px]'}`} />
+              <img src={img.src} alt={img.alt} className={`w-full object-cover group-hover:scale-110 transition-transform duration-700 ${i === 0 ? 'h-full min-h-[400px]' : 'aspect-[4/3]'}`} />
               <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/30 transition-colors duration-500" />
             </motion.div>
           ))}

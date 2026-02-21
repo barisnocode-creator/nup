@@ -58,9 +58,9 @@ export function EditorCanvas({
   const hasHeader = sections.some(s => s.type === 'AddableSiteHeader');
 
   return (
-    <div className="flex-1 overflow-auto bg-gray-100 dark:bg-zinc-900" onClick={handleCanvasClick}>
+    <div className="flex-1 overflow-auto relative bg-gray-100 dark:bg-zinc-900" onClick={handleCanvasClick}>
       <div
-        className={cn('min-h-screen mx-auto transition-all duration-300 bg-background shadow-lg', previewDevice !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700')}
+        className={cn('min-h-screen mx-auto transition-all duration-300 bg-background shadow-lg flex flex-col', previewDevice !== 'desktop' && 'my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700')}
         style={{ maxWidth }}
       >
         {/* Auto-inject site header if not present */}
@@ -71,6 +71,7 @@ export function EditorCanvas({
           />
         )}
 
+        <div className="flex-1">
         {sections.map((section, index) => {
           const Component = getSectionComponent(section.type);
           const isSelected = selectedSectionId === section.id;
@@ -120,6 +121,7 @@ export function EditorCanvas({
             </button>
           </div>
         )}
+        </div>
 
         <SiteFooter
           section={{

@@ -56,7 +56,7 @@ export function HeroMedical({ section, isEditing, onUpdate }: SectionComponentPr
   ];
 
   return (
-    <section className="relative overflow-hidden bg-background">
+    <section className="relative overflow-hidden bg-background min-h-[calc(100vh-7rem)]">
       {/* Background gradients */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-primary/8 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2" />

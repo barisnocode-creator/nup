@@ -22,7 +22,7 @@ export function HeroDental({ section, isEditing, onUpdate }: SectionComponentPro
   };
 
   return (
-    <section className="relative overflow-hidden bg-secondary/30 py-20 md:py-28">
+    <section className="relative overflow-hidden bg-secondary/30 py-20 md:py-28 min-h-[calc(100vh-7rem)] flex items-center">
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
