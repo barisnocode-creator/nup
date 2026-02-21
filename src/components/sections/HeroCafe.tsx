@@ -41,7 +41,7 @@ export function HeroCafe({ section, isEditing, onUpdate }: SectionComponentProps
               transition={{ duration: 0.8, delay: 0.3 }}
               className="text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground leading-[1.1] tracking-tight font-heading-dynamic"
             >
-              {props.title || "Where Every Cup Tells a Story"}
+              {props.title || ''}
             </motion.h1>
 
             <motion.p
@@ -50,7 +50,7 @@ export function HeroCafe({ section, isEditing, onUpdate }: SectionComponentProps
               transition={{ duration: 0.8, delay: 0.5 }}
               className="text-lg md:text-xl text-primary-foreground/80 max-w-lg leading-relaxed font-body-dynamic"
             >
-              {props.description || "A specialty cafe in the heart of Haight Ashbury, San Francisco. Hand-crafted beverages and artisanal pastries."}
+              {props.description || ''}
             </motion.p>
 
             <motion.div

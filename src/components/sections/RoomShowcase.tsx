@@ -4,38 +4,14 @@ import type { SectionComponentProps } from './types';
 
 const iconMap: Record<string, React.ElementType> = { Wifi, Wind, Coffee, Tv };
 
-const defaultRooms = [
-  {
-    name: 'Deluxe Oda',
-    price: '₺2,500',
-    unit: '/gece',
-    image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80',
-    features: ['Wifi', 'Wind', 'Coffee', 'Tv'],
-    description: '45m², şehir manzarası, king-size yatak',
-  },
-  {
-    name: 'Suite',
-    price: '₺4,200',
-    unit: '/gece',
-    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80',
-    features: ['Wifi', 'Wind', 'Coffee', 'Tv'],
-    description: '75m², deniz manzarası, jakuzi, oturma odası',
-  },
-  {
-    name: 'Aile Odası',
-    price: '₺3,800',
-    unit: '/gece',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600&q=80',
-    features: ['Wifi', 'Wind', 'Coffee', 'Tv'],
-    description: '60m², bağlantılı odalar, çocuk dostu',
-  },
-];
+const defaultRooms: any[] = [];
 
 export function RoomShowcase({ section, isEditing }: SectionComponentProps) {
   const p = section.props;
-  const subtitle = p.subtitle || 'Odalarımız';
-  const title = p.title || 'Konfor ve Zarafet';
-  const rooms = (p.rooms as typeof defaultRooms) || defaultRooms;
+  const subtitle = p.subtitle || '';
+  const title = p.title || '';
+  const rooms = (p.rooms as any[]) || defaultRooms;
+  const bookButtonText = p.bookButtonText || '';
 
   return (
     <section className="py-20 md:py-28 bg-background">
@@ -75,12 +51,14 @@ export function RoomShowcase({ section, isEditing }: SectionComponentProps) {
                     return <Icon key={f} className="w-4 h-4 text-primary" />;
                   })}
                 </div>
-                <a
-                  href={isEditing ? '#' : '#reservation'}
-                  className="inline-flex w-full items-center justify-center px-6 py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-body-dynamic"
-                >
-                  Rezervasyon
-                </a>
+                {bookButtonText && (
+                  <a
+                    href={isEditing ? '#' : '#reservation'}
+                    className="inline-flex w-full items-center justify-center px-6 py-3 bg-primary/10 text-primary rounded-xl font-medium hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-body-dynamic"
+                  >
+                    {bookButtonText}
+                  </a>
+                )}
               </div>
             </motion.div>
           ))}

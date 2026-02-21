@@ -8,17 +8,12 @@ import type { SectionComponentProps } from './types';
 export function HeroPortfolio({ section, isEditing, onUpdate }: SectionComponentProps) {
   const p = section.props;
   const sector = p._sector || 'developer';
-  const name = p.name || 'Ahmet Yılmaz';
-  const title = p.title || 'Full Stack Developer';
-  const bio = p.bio || 'React, Node.js ve cloud teknolojileri konusunda 8+ yıl deneyim. Ölçeklenebilir, kullanıcı odaklı ürünler geliştiriyorum.';
+  const name = p.name || '';
+  const title = p.title || '';
+  const bio = p.bio || '';
   const avatar = p.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80';
-  const socials = (p.socials as Array<{ icon: string; url: string; label: string }>) || [
-    { icon: 'Github', url: '#', label: 'GitHub' },
-    { icon: 'Linkedin', url: '#', label: 'LinkedIn' },
-    { icon: 'Twitter', url: '#', label: 'Twitter' },
-    { icon: 'Mail', url: '#', label: 'Email' },
-  ];
-  const buttonText = p.buttonText || 'Projelerimi Gör';
+  const socials = (p.socials as Array<{ icon: string; url: string; label: string }>) || [];
+  const buttonText = p.buttonText || '';
 
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -88,39 +83,43 @@ export function HeroPortfolio({ section, isEditing, onUpdate }: SectionComponent
           </motion.p>
 
           {/* Social links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex justify-center gap-3 mt-8"
-          >
-            {socials.map((s) => (
-              <a
-                key={s.label}
-                href={isEditing ? '#' : s.url}
-                className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-300"
-                title={s.label}
-              >
-                <SocialIcon name={s.icon} />
-              </a>
-            ))}
-          </motion.div>
+          {socials.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className="flex justify-center gap-3 mt-8"
+            >
+              {socials.map((s) => (
+                <a
+                  key={s.label}
+                  href={isEditing ? '#' : s.url}
+                  className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-300"
+                  title={s.label}
+                >
+                  <SocialIcon name={s.icon} />
+                </a>
+              ))}
+            </motion.div>
+          )}
 
           {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="mt-10"
-          >
-            <a
-              href={isEditing ? '#' : (p.buttonLink || '#projects')}
-              className="inline-flex items-center px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-body-dynamic"
+          {buttonText && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="mt-10"
             >
-              {buttonText}
-              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-            </a>
-          </motion.div>
+              <a
+                href={isEditing ? '#' : (p.buttonLink || '#projects')}
+                className="inline-flex items-center px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:opacity-90 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 font-body-dynamic"
+              >
+                {buttonText}
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </a>
+            </motion.div>
+          )}
         </div>
       </div>
 

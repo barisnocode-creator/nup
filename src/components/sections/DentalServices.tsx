@@ -6,18 +6,13 @@ const iconMap: Record<string, React.ElementType> = {
   Smile, Sparkles, ScanLine, Shield, Heart, Stethoscope,
 };
 
-const defaultServices = [
-  { icon: 'Smile', title: 'Estetik Diş Hekimliği', description: 'Gülüş tasarımı, beyazlatma ve veneer uygulamalarıyla hayalinizdeki gülüşe kavuşun.' },
-  { icon: 'Sparkles', title: 'Diş Temizliği', description: 'Profesyonel diş taşı temizliği ve parlatma ile ağız sağlığınızı koruyun.' },
-  { icon: 'ScanLine', title: 'Dijital Röntgen', description: '3D görüntüleme teknolojisi ile hassas tanı ve tedavi planlaması.' },
-  { icon: 'Shield', title: 'İmplant Tedavisi', description: 'Kayıp dişlerinizi doğal görünümlü, dayanıklı implantlarla tamamlayın.' },
-];
+const defaultServices: any[] = [];
 
 export function DentalServices({ section }: SectionComponentProps) {
   const p = section.props;
-  const title = p.title || 'Hizmetlerimiz';
-  const subtitle = p.subtitle || 'Uzman Bakım';
-  const description = p.description || 'Modern ekipman ve deneyimli kadromuzla kapsamlı diş sağlığı hizmetleri sunuyoruz.';
+  const title = p.title || '';
+  const subtitle = p.subtitle || '';
+  const description = p.description || '';
   const services = p.services || defaultServices;
 
   const containerVariants = {

@@ -17,11 +17,11 @@ export function CafeGallery({ section, isEditing }: SectionComponentProps) {
         <div className="text-center mb-16">
           <motion.span initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="inline-block text-primary text-sm font-semibold tracking-[0.2em] uppercase mb-4 font-body-dynamic">
-            {props.subtitle || "Gallery"}
+            {props.subtitle || ''}
           </motion.span>
           <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-foreground font-heading-dynamic">
-            {props.title || "Our Space"}
+            {props.title || ''}
           </motion.h2>
         </div>
 
