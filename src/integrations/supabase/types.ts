@@ -793,6 +793,10 @@ export type Database = {
         Args: { domain_id: string }
         Returns: Json
       }
+      get_project_analytics: {
+        Args: { p_days?: number; p_project_id: string }
+        Returns: Json
+      }
       hash_visitor_id: { Args: { raw_visitor_id: string }; Returns: string }
       user_owns_project: { Args: { project_id: string }; Returns: boolean }
     }

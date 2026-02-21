@@ -108,30 +108,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is the project owner (for unpublished projects)
-    let isOwner = false;
-    const authHeader = req.headers.get("authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      try {
-        const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-          global: { headers: { Authorization: authHeader } },
-        });
-        const token = authHeader.replace("Bearer ", "");
-        const { data: claimsData } = await authClient.auth.getClaims(token);
-        if (claimsData?.claims?.sub === project.user_id) {
-          isOwner = true;
-        }
-      } catch {
-        // Ignore auth errors - user is not authenticated
-      }
-    }
-
-    // Allow analytics for published projects OR project owners viewing their own projects
-    if (!project.is_published && !isOwner) {
+    // Only track analytics for published projects — no exceptions
+    if (!project.is_published) {
       console.log(`Skipping analytics for unpublished project: ${project_id}`);
-      // Return success but don't track - soft failure to avoid frontend errors
       return new Response(
-        JSON.stringify({ success: false, reason: "not_tracked", message: "Project not published or not owned by user" }),
+        JSON.stringify({ success: false, reason: "not_tracked", message: "Project not published" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

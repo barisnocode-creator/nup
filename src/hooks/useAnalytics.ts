@@ -33,64 +33,44 @@ export function useAnalytics(projectId: string | undefined) {
     try {
       setLoading(true);
 
-      const { data: events, error: fetchError } = await supabase
-        .from('analytics_events')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+      const { data: result, error: rpcError } = await supabase
+        .rpc('get_project_analytics', {
+          p_project_id: projectId,
+          p_days: 30,
+        });
 
-      if (fetchError) {
-        setError(fetchError.message);
+      if (rpcError) {
+        setError(rpcError.message);
         return;
       }
 
-      const now = new Date();
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const totalViews = events?.length || 0;
-      const viewsLast7Days = events?.filter(e => new Date(e.created_at) >= sevenDaysAgo).length || 0;
-      const uniqueVisitorIds = new Set(events?.map(e => e.visitor_id).filter(Boolean));
-      const uniqueVisitors = uniqueVisitorIds.size;
-      const mobileCount = events?.filter(e => e.device_type === 'mobile').length || 0;
-      const desktopCount = events?.filter(e => e.device_type === 'desktop').length || 0;
-
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const viewsByDate = new Map<string, number>();
-      for (let d = new Date(thirtyDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
-        viewsByDate.set(d.toISOString().split('T')[0], 0);
+      if (!result) {
+        setError('No data returned');
+        return;
       }
-      events?.forEach(e => {
-        const dateStr = new Date(e.created_at).toISOString().split('T')[0];
-        if (viewsByDate.has(dateStr)) {
-          viewsByDate.set(dateStr, (viewsByDate.get(dateStr) || 0) + 1);
-        }
-      });
-      const viewsOverTime = Array.from(viewsByDate.entries())
-        .map(([date, views]) => ({ date, views }))
-        .sort((a, b) => a.date.localeCompare(b.date));
 
-      const pageViewsMap = new Map<string, number>();
-      events?.forEach(e => {
-        const path = e.page_path || '/';
-        pageViewsMap.set(path, (pageViewsMap.get(path) || 0) + 1);
-      });
-      const pageViews = Array.from(pageViewsMap.entries())
-        .map(([path, views]) => ({ path, views }))
-        .sort((a, b) => b.views - a.views);
-
-      const hourlyViewsMap = new Map<number, number>();
-      for (let i = 0; i < 24; i++) hourlyViewsMap.set(i, 0);
-      events?.forEach(e => {
-        const hour = new Date(e.created_at).getHours();
-        hourlyViewsMap.set(hour, (hourlyViewsMap.get(hour) || 0) + 1);
-      });
-      const hourlyViews = Array.from(hourlyViewsMap.entries())
-        .map(([hour, views]) => ({ hour, views }))
-        .sort((a, b) => a.hour - b.hour);
+      const r = result as any;
 
       setData({
-        totalViews, viewsLast7Days, uniqueVisitors,
-        deviceBreakdown: { mobile: mobileCount, desktop: desktopCount },
-        viewsOverTime, pageViews, hourlyViews,
+        totalViews: r.total_views || 0,
+        viewsLast7Days: r.views_last_7_days || 0,
+        uniqueVisitors: r.unique_visitors || 0,
+        deviceBreakdown: {
+          mobile: r.mobile_count || 0,
+          desktop: r.desktop_count || 0,
+        },
+        viewsOverTime: (r.views_over_time || []).map((v: any) => ({
+          date: v.date,
+          views: Number(v.views) || 0,
+        })),
+        pageViews: (r.page_views || []).map((v: any) => ({
+          path: v.path,
+          views: Number(v.views) || 0,
+        })),
+        hourlyViews: (r.hourly_views || []).map((v: any) => ({
+          hour: Number(v.hour),
+          views: Number(v.views) || 0,
+        })),
       });
     } catch (err) {
       console.error('Error fetching analytics:', err);
