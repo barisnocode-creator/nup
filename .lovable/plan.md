@@ -1,44 +1,49 @@
 
-
-# Sorun Analizi ve Duzeltme Plani
+# Sorun Tespiti ve Cozum
 
 ## Tespit Edilen Sorun
 
-`App.tsx` dosyasindaki `PLATFORM_HOSTNAMES` listesinde `lovableproject.com` eksik. Bu nedenle:
+`deploy-to-vercel` edge function'i backend'e deploy edilmemisti. Fonksiyon kodu dogru yazilmis ve `config.toml`'da tanimlanmis olmasina ragmen, gercek deploy yapilmamisti. Bu nedenle yayinlama butonuna basildiginda fonksiyon cagrilsa da backend'de bulunamiyor ve hata donuyordu.
 
-1. Lovable preview URL'si (`467ace51-xxxx.lovableproject.com`) bir custom domain olarak algilaniyor
-2. Tum rotalar `PublicWebsite` bilesenine yonlendiriliyor
-3. `PublicWebsite` bu hostname ile bir yayinlanmis site ariyor ama bulamiyor
-4. Sonuc: "Website Not Found" hatasi -- dashboard, editor, login hicbiri gorunmuyor
+## Yapilan Islem
 
-## Cozum
+Edge function basariyla deploy edildi ve test edildi. Test sonucu:
+- Fonksiyon dogru calisiyor (gecersiz proje ID'si icin beklenen "Project not found" hatasi donuyor)
+- Vercel API entegrasyonu hazir (`VERCEL_API_TOKEN` ve `VERCEL_TEAM_ID` secret'lari mevcut)
+- Veritabani sutunlari (`vercel_project_id`, `vercel_url`) mevcut
 
-### Adim 1: App.tsx -- lovableproject.com ekle
+## Mevcut Durum
 
-`PLATFORM_HOSTNAMES` listesine `lovableproject.com` eklenmesi gerekiyor:
+Yayinlama akisi simdi soyle calismali:
 
 ```text
-Mevcut:
-['localhost', 'lovable.app', 'lovable.dev', 'webcontainer.io']
-
-Duzeltilmis:
-['localhost', 'lovable.app', 'lovable.dev', 'webcontainer.io', 'lovableproject.com']
+1. Kullanici editorde "Yayinla" butonuna tiklar
+2. PublishModal acilir, subdomain secilir
+3. "Yayinla" butonuna basilir
+4. deploy-to-vercel edge function cagirilir
+5. Vercel API'sine rewrite projesi deploy edilir
+6. vercel_url ve vercel_project_id veritabanina kaydedilir
+7. Kullaniciya basari mesaji ve URL gosterilir
 ```
 
-### Adim 2: PublicWebsite.tsx -- Ayni listeyi guncelle
+## Ek Kontroller / Olasi Sorunlar
 
-`PublicWebsite.tsx` dosyasinda da ayni `PLATFORM_HOSTNAMES` listesi var ve orada da `lovableproject.com` eksik. Ayni ekleme yapilmali.
+Eger yayinlama hala calismiyorsa, su kontroller yapilmali:
 
-## Etkilenen Dosyalar
+### 1. Vercel API Token Kontrolu
+`VERCEL_API_TOKEN` secret'inin gecerli olup olmadigini dogrulamak gerekir. Token suresi dolmus veya yanlis girilmis olabilir.
 
-| Dosya | Degisiklik |
+### 2. Vercel Team ID Kontrolu  
+`VERCEL_TEAM_ID` dolu ama yanlis bir deger icerebilir. Eger kisisel Vercel hesabi kullaniliyorsa bu bos birakilmali.
+
+### 3. PublishModal'daki Hata Yakalama
+`handlePublish` fonksiyonunda `supabase.functions.invoke` hatalari `deployError.message` ile gosteriliyor. Eger fonksiyon 500 donerse kullaniciya "Yayinlama basarisiz" mesaji gosterilecek.
+
+## Onerilen Adimlar
+
+| Adim | Islem |
 |---|---|
-| `src/App.tsx` | `PLATFORM_HOSTNAMES` listesine `lovableproject.com` ekle (1 satir) |
-| `src/pages/PublicWebsite.tsx` | `PLATFORM_HOSTNAMES` listesine `lovableproject.com` ekle (1 satir) |
-
-## Sonuc
-
-Bu tek satirlik degisiklikle:
-- Lovable preview ortami tekrar normal calisacak (dashboard, editor, login gorunecek)
-- Custom domain algilama mantigi dogru calisacak (sadece gercek custom domainler icin aktif olacak)
-
+| 1 | Edge function zaten deploy edildi (tamamlandi) |
+| 2 | Bir test projesi olusturup "Yayinla" butonuna basarak akisi dogrulayin |
+| 3 | Eger hata alinirsai edge function loglarini kontrol edin |
+| 4 | Gerekirse VERCEL_API_TOKEN degerini guncelleyin |
