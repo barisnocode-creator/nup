@@ -75,36 +75,36 @@ export function SiteEditor({
       // Cleanup: reset ALL theme CSS variables to SaaS defaults
       const defaults: Record<string, string> = {
         '--background': '0 0% 100%',
-        '--foreground': '0 0% 10%',
+        '--foreground': '222 47% 11%',
         '--card': '0 0% 100%',
-        '--card-foreground': '0 0% 10%',
+        '--card-foreground': '222 47% 11%',
         '--popover': '0 0% 100%',
-        '--popover-foreground': '0 0% 10%',
-        '--primary': '24 95% 53%',
+        '--popover-foreground': '222 47% 11%',
+        '--primary': '222 47% 31%',
         '--primary-foreground': '0 0% 100%',
         '--secondary': '220 14% 96%',
-        '--secondary-foreground': '0 0% 29%',
+        '--secondary-foreground': '222 47% 20%',
         '--muted': '220 14% 96%',
         '--muted-foreground': '220 9% 46%',
-        '--accent': '24 95% 53%',
+        '--accent': '210 100% 56%',
         '--accent-foreground': '0 0% 100%',
         '--destructive': '0 84% 60%',
         '--destructive-foreground': '0 0% 100%',
         '--border': '220 13% 91%',
         '--input': '220 13% 91%',
-        '--ring': '24 95% 53%',
+        '--ring': '222 47% 31%',
         '--radius': '0.5rem',
         '--sidebar-background': '0 0% 98%',
-        '--sidebar-foreground': '240 5.3% 26.1%',
-        '--sidebar-primary': '24 95% 53%',
+        '--sidebar-foreground': '220 9% 46%',
+        '--sidebar-primary': '222 47% 31%',
         '--sidebar-primary-foreground': '0 0% 100%',
-        '--sidebar-accent': '240 4.8% 95.9%',
-        '--sidebar-accent-foreground': '240 5.9% 10%',
+        '--sidebar-accent': '220 14% 96%',
+        '--sidebar-accent-foreground': '222 47% 20%',
         '--sidebar-border': '220 13% 91%',
-        '--sidebar-ring': '24 95% 53%',
+        '--sidebar-ring': '222 47% 31%',
       };
       Object.entries(defaults).forEach(([k, v]) => root.style.setProperty(k, v));
-      root.style.setProperty('--font-heading', "'Playfair Display', Georgia, serif");
+      root.style.setProperty('--font-heading', "'Inter', system-ui, sans-serif");
       root.style.setProperty('--font-body', "'Inter', system-ui, sans-serif");
       ['--color-secondary-custom', '--color-accent-custom'].forEach(p => root.style.removeProperty(p));
       root.classList.remove('reduce-motion');
