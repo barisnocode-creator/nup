@@ -1,39 +1,73 @@
 
+# Yayinlama Sistemini Bastan Yazma Plani
 
-# nuppel.com "Website Not Found" Sorunu - Cozum
+## Mevcut Sorun
 
-## Sorunun Koku
+Kod degisiklikleri dogru yapildi (`nuppel.com` PLATFORM_HOSTNAMES listesinde) ancak iki kritik sorun var:
 
-`App.tsx` dosyasindaki `PLATFORM_HOSTNAMES` listesi, hangi domain'lerin ana platform (landing page, dashboard, vs.) olarak sunulacagini belirliyor. Bu listede sadece Lovable domainleri var:
+1. **Kodun yuklenmesi (deploy)**: `nuppel.com` DNS'i Lovable altyapisina (185.158.133.1) yonleniyor, ancak Lovable altyapisi bu domain icin hangi projeyi sunacagini bilmiyor. Lovable'in Settings > Domains bolumunden `nuppel.com`'un bu projeye baglanmasi gerekiyor. Bu bir KOD degisikligi degil, altyapi yapilandirmasi.
 
-```text
-localhost, lovable.app, lovable.dev, webcontainer.io, lovableproject.com
-```
+2. **Tekrarlanan kod**: PLATFORM_HOSTNAMES listesi iki ayri dosyada tekrarlaniyor, bu da senkronizasyon sorunlarina neden oluyor.
 
-`nuppel.com` bu listede olmadigi icin uygulama onu bir musteri custom domain'i sanip `PublicWebsite` bilesenine yonlendiriyor. Orada da veritabaninda `nuppel.com`'a bagli bir proje bulamadiginda "Website Not Found" gosteriyor.
+## Yapilacaklar
 
-## Cozum
+### Adim 1: Merkezi Domain Yapilandirma Dosyasi Olustur
 
-### Adim 1: App.tsx'teki PLATFORM_HOSTNAMES listesine nuppel.com ekle
+`src/config/domains.ts` adinda yeni bir dosya olusturulacak. Tum platform domain bilgileri burada tek yerde tanimlanacak:
 
-`PLATFORM_HOSTNAMES` dizisine `nuppel.com` eklenecek. Boylece `nuppel.com` ve `www.nuppel.com` uzerinden giris yapildiginda normal platform rotalari (Landing, Dashboard, vb.) calisacak.
+- PLATFORM_HOSTNAMES listesi
+- isPlatformDomain() fonksiyonu
+- buildPublicUrl() fonksiyonu (PublishModal'daki hardcoded URL yerine)
 
-### Adim 2: PublicWebsite.tsx'teki PLATFORM_HOSTNAMES listesine de nuppel.com ekle
+### Adim 2: App.tsx'i Guncelle
 
-Ayni liste `PublicWebsite.tsx` icerisinde de tekrarlaniyor. Tutarlilik icin oraya da eklenmeli.
+- Yerel PLATFORM_HOSTNAMES ve isPlatformDomain tanimlarini kaldir
+- `src/config/domains.ts`'den import et
+
+### Adim 3: PublicWebsite.tsx'i Guncelle
+
+- Yerel PLATFORM_HOSTNAMES ve isPlatformDomain tanimlarini kaldir
+- `src/config/domains.ts`'den import et
+
+### Adim 4: PublishModal.tsx'i Guncelle
+
+- Hardcoded `expert-page-gen.lovable.app` URL'ini dinamik hale getir
+- `buildPublicUrl()` fonksiyonunu merkezi dosyadan kullan
+- URL sablonu: `https://{window.location.host}/site/{subdomain}` seklinde calisacak
 
 ## Teknik Detay
 
-Degisecek dosyalar:
-- `src/App.tsx` - PLATFORM_HOSTNAMES dizisine `'nuppel.com'` eklenmesi (satir 29-35)
-- `src/pages/PublicWebsite.tsx` - Ayni diziye `'nuppel.com'` eklenmesi (satir 36-42)
+### Yeni dosya: `src/config/domains.ts`
 
-Bu degisiklikten sonra:
-- `nuppel.com` → Landing page (ana sayfa) gorunecek
-- `nuppel.com/dashboard` → Dashboard acilacak
-- `musteri-domain.com` → Eskisi gibi musteri sitesini gosterecek
+```typescript
+export const PLATFORM_HOSTNAMES = [
+  'localhost',
+  'lovable.app',
+  'lovable.dev',
+  'webcontainer.io',
+  'lovableproject.com',
+  'nuppel.com',
+  'www.nuppel.com',
+];
 
-## Gelecek Icin Oneri
+export function isPlatformDomain(hostname: string): boolean {
+  return PLATFORM_HOSTNAMES.some(
+    ph => hostname === ph || hostname.endsWith(`.${ph}`)
+  );
+}
 
-Platform domain listesini tek bir dosyada tanimlamak (ornegin `src/config/domains.ts`) ve her iki dosyadan import etmek daha temiz olur. Boylece yeni domain eklerken tek yerde guncelleme yeterli olur.
+export function buildPublicUrl(subdomain: string): string {
+  const host = window.location.host;
+  return `${window.location.protocol}//${host}/site/${subdomain}`;
+}
+```
 
+### Degisecek dosyalar:
+- `src/config/domains.ts` (yeni)
+- `src/App.tsx` - yerel tanimlar kaldirilip import edilecek
+- `src/pages/PublicWebsite.tsx` - yerel tanimlar kaldirilip import edilecek  
+- `src/components/website-preview/PublishModal.tsx` - hardcoded URL kaldirilip merkezi fonksiyon kullanilacak
+
+## Onemli Not
+
+Kod degisikligi tek basina `nuppel.com` sorununu cozmez. Lovable altyapisi (185.158.133.1 IP'si) `nuppel.com` icin hangi uygulamayi sunacagini bilmelidir. Bunun icin Lovable projesinin Settings > Domains bolumunden `nuppel.com` domain'inin baglanmasi ve yayinlanmasi (Publish) gerekir.
